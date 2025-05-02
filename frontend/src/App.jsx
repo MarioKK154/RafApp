@@ -7,33 +7,31 @@ import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import ProjectsPage from './pages/ProjectsPage';
-import ProjectCreatePage from './pages/ProjectCreatePage'; // Import Create Page
-import ProjectEditPage from './pages/ProjectEditPage';   // Import Edit Page
+import ProjectCreatePage from './pages/ProjectCreatePage';
+import ProjectEditPage from './pages/ProjectEditPage';
+import TasksListPage from './pages/TasksListPage';       // Import Task List Page
+import TaskCreatePage from './pages/TaskCreatePage';     // Import Task Create Page
+import TaskEditPage from './pages/TaskEditPage';       // Import Task Edit Page
+// TODO: Import Inventory Pages
 import NotFoundPage from './pages/NotFoundPage';
 
-// TODO: Add components for Tasks, Inventory later
-// TODO: Implement ProtectedRoute component
-
 function App() {
+  // TODO: Replace placeholder Navbar with a real one that uses AuthContext
   return (
     <>
-      {/* Basic Navbar Placeholder - Replace with dedicated component later */}
       <nav className="bg-gray-100 dark:bg-gray-700 shadow-md p-4">
         <div className="container mx-auto flex justify-between items-center">
             <Link to="/" className="text-lg font-bold text-indigo-600 dark:text-indigo-300">RafApp</Link>
             <div>
-                {/* Links visible to all */}
                 <Link to="/projects" className="mx-2 text-gray-700 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-300">Projects</Link>
-                 {/* TODO: Add links to Tasks, Inventory etc. */}
-
-                {/* TODO: Add conditional links for Login/Register/Logout based on auth state */}
-                 <Link to="/login" className="mx-2 text-gray-700 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-300">Login</Link>
+                <Link to="/tasks" className="mx-2 text-gray-700 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-300">Tasks</Link> {/* Add Tasks Link */}
+                 {/* TODO: Add Inventory Link */}
+                 <Link to="/login" className="mx-2 text-gray-700 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-300">Login</Link> {/* TODO: Conditional Login/Logout */}
             </div>
         </div>
        </nav>
 
-      {/* Main content area where routes are rendered */}
-      <main className="mt-4"> {/* Add some margin top */}
+      <main className="mt-4">
         <Routes>
           {/* Public Routes */}
           <Route path="/login" element={<LoginPage />} />
@@ -42,12 +40,15 @@ function App() {
           {/* Protected Routes (currently protected inside component logic) */}
           <Route path="/" element={<HomePage />} />
           <Route path="/projects" element={<ProjectsPage />} />
-          <Route path="/projects/new" element={<ProjectCreatePage />} /> {/* Add route for create */}
-          <Route path="/projects/edit/:projectId" element={<ProjectEditPage />} /> {/* Add route for edit */}
-          {/* TODO: Add routes for Tasks, Inventory */}
+          <Route path="/projects/new" element={<ProjectCreatePage />} />
+          <Route path="/projects/edit/:projectId" element={<ProjectEditPage />} />
 
+          <Route path="/tasks" element={<TasksListPage />} />           {/* Add Task List Route */}
+          <Route path="/tasks/new" element={<TaskCreatePage />} />      {/* Add Task Create Route */}
+          <Route path="/tasks/edit/:taskId" element={<TaskEditPage />} /> {/* Add Task Edit Route */}
 
-          {/* Catch-all route for 404 Not Found */}
+          {/* TODO: Add routes for Inventory */}
+
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </main>
