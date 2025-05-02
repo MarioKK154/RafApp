@@ -73,3 +73,6 @@ frontend/coverage
 .vscode/
 .idea/
 *.DS_Store
+
+# Backend
+/backend/uploads/
