@@ -3,13 +3,15 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 # Import routers
-from .routers import auth, users # Add users router import
+from .routers import auth, users, projects, tasks, inventory # Add new routers
 
 # --- FastAPI App Initialization ---
 app = FastAPI(
     title="RafApp API",
     description="API for the Electrical Project Management App",
     version="0.1.0"
+    # Add other OpenAPI metadata if desired
+    # docs_url="/docs", redoc_url="/redoc"
 )
 
 # --- CORS Configuration ---
@@ -28,15 +30,11 @@ app.add_middleware(
 )
 
 # --- Include Routers ---
-# Authentication router (already added)
 app.include_router(auth.router, prefix="/auth", tags=["Authentication"])
-# Users router (newly added)
 app.include_router(users.router, prefix="/users", tags=["Users"])
-
-# Example: Add other routers later
-# from .routers import projects, tasks
-# app.include_router(projects.router, prefix="/projects", tags=["Projects"])
-# app.include_router(tasks.router, prefix="/tasks", tags=["Tasks"])
+app.include_router(projects.router, prefix="/projects", tags=["Projects"])
+app.include_router(tasks.router, prefix="/tasks", tags=["Tasks"])
+app.include_router(inventory.router, prefix="/inventory", tags=["Inventory"])
 
 
 # --- Root Endpoint ---
