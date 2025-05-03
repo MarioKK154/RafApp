@@ -1,4 +1,4 @@
-# backend/app/schemas.py
+# backend/app/schemas.py (Ensure this full content is pasted and SAVED)
 from pydantic import BaseModel, EmailStr, Field, HttpUrl
 from typing import Optional, List
 from datetime import datetime, timedelta
@@ -20,20 +20,23 @@ class ProjectReadBasic(BaseModel):
     id: int
     name: str
 
-    class Config(OrmConfig): pass
+    class Config(OrmConfig):
+        pass
 
 class TaskReadBasic(BaseModel):
     id: int
     title: str
 
-    class Config(OrmConfig): pass
+    class Config(OrmConfig):
+        pass
 
-class UserReadBasic(BaseModel): # Basic user info for project members list perhaps
+class UserReadBasic(BaseModel):
     id: int
     email: EmailStr
     full_name: Optional[str] = None
 
-    class Config(OrmConfig): pass
+    class Config(OrmConfig):
+        pass
 
 
 # --- User Schemas ---
@@ -42,29 +45,30 @@ class UserBase(BaseModel):
     full_name: Optional[str] = None
 
 class UserCreate(UserBase):
-    password: str # Password required only on creation
+    password: str
+
+class UserCreateAdmin(UserBase):
+    password: str
+    role: Optional[str] = "employee"
+    is_active: Optional[bool] = True
+    is_superuser: Optional[bool] = False
 
 class UserRead(UserBase):
     id: int
     is_active: bool
-    is_superuser: bool # Included for completeness
+    is_superuser: bool
     role: str
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
-    # Optional: assigned_projects: List[ProjectReadBasic] = []
-    # Optional: assigned_tasks: List[TaskReadBasic] = [] # Added optional tasks list
 
-    class Config(OrmConfig): pass # Use OrmConfig
+    class Config(OrmConfig): pass
 
-# --- Schema for Admin updating User ---
 class UserUpdateAdmin(BaseModel):
-    # Fields an admin might change. All optional.
     email: Optional[EmailStr] = None
     full_name: Optional[str] = None
     is_active: Optional[bool] = None
     is_superuser: Optional[bool] = None
-    role: Optional[str] = None # e.g., "admin", "project manager", "team leader", "electrician"
-    # Note: Password is NOT updated here. Use a separate process for password changes.
+    role: Optional[str] = None
 
 
 # --- Project Schemas ---
@@ -87,17 +91,14 @@ class ProjectUpdate(ProjectBase):
     start_date: Optional[datetime] = None
     end_date: Optional[datetime] = None
 
-# Schema for reading project details
 class ProjectRead(ProjectBase):
     id: int
     creator_id: int
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
-    # Optional: members: List[UserReadBasic] = [] # Use basic schema to avoid deep nesting
 
-    class Config(OrmConfig): pass # Use OrmConfig
+    class Config(OrmConfig): pass
 
-# Schema for Assigning Member
 class ProjectAssignMember(BaseModel):
     user_id: int
 
@@ -110,31 +111,27 @@ class TaskBase(BaseModel):
     priority: Optional[str] = "Medium"
     due_date: Optional[datetime] = None
     project_id: int
-    assignee_id: Optional[int] = None # Assignee is optional
+    assignee_id: Optional[int] = None
 
 class TaskCreate(TaskBase):
-    pass # Inherits assignee_id (optional on create)
+    pass
 
 class TaskUpdate(BaseModel):
-    # Allow updating these fields, all optional
     title: Optional[str] = None
     description: Optional[str] = None
     status: Optional[str] = None
     priority: Optional[str] = None
     due_date: Optional[datetime] = None
-    project_id: Optional[int] = None # Allow moving tasks
-    assignee_id: Optional[int] = None # Can be set to null to unassign
+    project_id: Optional[int] = None
+    assignee_id: Optional[int] = None
 
 class TaskRead(TaskBase):
     id: int
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
-    # Optional: Include assignee details
-    # assignee: Optional[UserReadBasic] = None
 
     class Config(OrmConfig): pass
 
-# Schema for Assigning User to Task
 class TaskAssignUser(BaseModel):
     user_id: int
 
@@ -169,7 +166,6 @@ class InventoryItemRead(InventoryItemBase):
     id: int
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
-    # Exclude URLs from this base read schema using exclude=True on the fields themselves
     shop_url_1: Optional[HttpUrl | str] = Field(None, exclude=True)
     shop_url_2: Optional[HttpUrl | str] = Field(None, exclude=True)
     shop_url_3: Optional[HttpUrl | str] = Field(None, exclude=True)
@@ -177,12 +173,9 @@ class InventoryItemRead(InventoryItemBase):
     class Config(OrmConfig): pass
 
 class InventoryItemReadWithURLs(InventoryItemRead):
-    # Redeclare fields here to make them included (overriding exclude=True from parent)
     shop_url_1: Optional[HttpUrl | str] = None
     shop_url_2: Optional[HttpUrl | str] = None
     shop_url_3: Optional[HttpUrl | str] = None
-
-    # Inherits Config from parent
 
 
 # --- Drawing Schemas ---
@@ -231,8 +224,3 @@ class TimeLogRead(TimeLogBase):
 class TimeLogStatus(BaseModel):
     is_clocked_in: bool
     current_log: Optional[TimeLogRead] = None
-
-# Optional: Update Forward References if relationships are uncommented and cause issues
-# UserRead.model_rebuild() # Pydantic v2 method
-# ProjectRead.model_rebuild()
-# TaskRead.model_rebuild()
