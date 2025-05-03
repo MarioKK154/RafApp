@@ -1,44 +1,60 @@
 # backend/app/routers/users.py
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from typing import Annotated, List # Import List
+from typing import Annotated, List
 
-from .. import crud, models, schemas, security # Use .. for parent directory imports
-from ..database import get_db # Use .. for parent directory imports
+from .. import crud, models, schemas, security
+from ..database import get_db
 
 router = APIRouter(
-    prefix="/users", # Set prefix for all routes in this router
-    tags=["Users"] # Tag for Swagger UI documentation
+    tags=["Users"],
+    # Base auth required unless overridden below
+    dependencies=[Depends(security.get_current_active_user)]
 )
 
 # Dependency type hints
 DbDependency = Annotated[Session, Depends(get_db)]
-# Dependency to get the current active user (imports from security)
 CurrentUserDependency = Annotated[models.User, Depends(security.get_current_active_user)]
+ManagerOrAdminDependency = Annotated[models.User, Depends(security.require_manager)]
+AdminOnlyDependency = Annotated[models.User, Depends(security.require_admin)]
 
 @router.get("/me", response_model=schemas.UserRead)
 async def read_users_me(current_user: CurrentUserDependency):
-    """
-    Fetches the profile of the currently authenticated user.
-    Requires a valid access token.
-    """
-    # The CurrentUserDependency already fetches and validates the user.
-    # If the code reaches here, current_user is a valid, active user model instance.
+    """Fetches the profile of the currently authenticated user."""
     return current_user
 
-# Optional: Add endpoint to list users (maybe restrict later)
-# This also requires authentication
+# Protect the endpoint to list all users (Manager or Admin)
 @router.get("/", response_model=List[schemas.UserRead])
 async def read_users(
+    # --- CORRECTED PARAMETER ORDER ---
+    # Non-default parameters first
+    db: DbDependency,
+    current_admin_or_manager: ManagerOrAdminDependency, # Require Manager/Admin role
+    # Default parameters last
     skip: int = 0,
-    limit: int = 100,
-    db: DbDependency = None, # Provide default None if not used by current_user
-    current_user: CurrentUserDependency = None # Add dependency to protect route
+    limit: int = 100
+    # --- END CORRECTION ---
 ):
-    """
-    Retrieves a list of users (requires authentication).
-    Pagination supported via skip and limit query parameters.
-    TODO: Add role-based access control (e.g., only admins can list all users).
-    """
+    """Retrieves a list of users (Requires Manager or Admin role)."""
     users = crud.get_users(db=db, skip=skip, limit=limit)
     return users
+
+# Admin Endpoint to Update User
+@router.put("/{user_id}", response_model=schemas.UserRead)
+async def update_user_details_by_admin(
+    # Non-default parameters first
+    user_id: int,
+    user_update_data: schemas.UserUpdateAdmin,
+    db: DbDependency,
+    current_admin: AdminOnlyDependency # Ensure ONLY admin can call this
+):
+    """
+    Updates a user's details (role, active status, etc.) by an administrator.
+    (Requires Admin role).
+    """
+    db_user = crud.get_user(db, user_id=user_id)
+    if not db_user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    updated_user = crud.update_user_by_admin(db=db, user_to_update=db_user, user_data=user_update_data)
+    return updated_user

@@ -1,28 +1,48 @@
 # backend/app/crud.py
-from sqlalchemy.orm import Session, joinedload, contains_eager # Import contains_eager
+from sqlalchemy.orm import Session, joinedload, contains_eager
 from sqlalchemy import desc
 from typing import Optional, List
 from datetime import datetime, timezone
 
 from . import models, schemas
-from .security import get_password_hash
+from .security import get_password_hash # Only needed for create_user
 
-# --- User CRUD ---
-# ... (Keep existing User CRUD) ...
-def get_user(db: Session, user_id: int) -> Optional[models.User]: # ...
+# --- User CRUD Operations ---
+def get_user(db: Session, user_id: int) -> Optional[models.User]:
     return db.query(models.User).filter(models.User.id == user_id).first()
-def get_user_by_email(db: Session, email: str) -> Optional[models.User]: # ...
+
+def get_user_by_email(db: Session, email: str) -> Optional[models.User]:
     return db.query(models.User).filter(models.User.email == email).first()
-def get_users(db: Session, skip: int = 0, limit: int = 100) -> List[models.User]: # ...
+
+def get_users(db: Session, skip: int = 0, limit: int = 100) -> List[models.User]:
     return db.query(models.User).offset(skip).limit(limit).all()
-def create_user(db: Session, user: schemas.UserCreate) -> models.User: # ...
+
+def create_user(db: Session, user: schemas.UserCreate) -> models.User:
     hashed_password = get_password_hash(user.password)
     db_user = models.User(email=user.email, hashed_password=hashed_password, full_name=user.full_name)
     db.add(db_user); db.commit(); db.refresh(db_user)
     return db_user
 
+# --- NEW: Update User by Admin ---
+def update_user_by_admin(db: Session, user_to_update: models.User, user_data: schemas.UserUpdateAdmin) -> models.User:
+    """
+    Updates user attributes based on data provided by an admin.
+    Does NOT update the password.
+    """
+    update_data = user_data.model_dump(exclude_unset=True) # Get only fields that were actually sent
+
+    for key, value in update_data.items():
+        # Only update attributes that exist on the model and are in the schema
+        if hasattr(user_to_update, key):
+            setattr(user_to_update, key, value)
+
+    db.add(user_to_update)
+    db.commit()
+    db.refresh(user_to_update)
+    return user_to_update
+
 # --- Project CRUD ---
-# ... (Keep existing Project CRUD) ...
+# ... (Keep existing Project CRUD functions) ...
 def get_project(db: Session, project_id: int) -> Optional[models.Project]: # ...
     return db.query(models.Project).filter(models.Project.id == project_id).first()
 def get_projects(db: Session, skip: int = 0, limit: int = 100) -> List[models.Project]: # ...
@@ -62,69 +82,42 @@ def is_user_member_of_project(db: Session, project_id: int, user_id: int) -> boo
     member_ids = {member.id for member in project.members}
     return user_id in member_ids
 
-
-# --- Task CRUD Operations (Updated) ---
-
-def get_task(db: Session, task_id: int) -> Optional[models.Task]:
-    # Optionally load assignee eagerly
-    # return db.query(models.Task).options(joinedload(models.Task.assignee)).filter(models.Task.id == task_id).first()
-    return db.query(models.Task).filter(models.Task.id == task_id).first()
-
-def get_tasks(db: Session, project_id: Optional[int] = None, assignee_id: Optional[int] = None, skip: int = 0, limit: int = 100) -> List[models.Task]:
+# --- Task CRUD & Assignment ---
+# ... (Keep existing Task CRUD and Assignment functions) ...
+def get_task(db: Session, task_id: int) -> Optional[models.Task]: # ...
+     return db.query(models.Task).filter(models.Task.id == task_id).first()
+def get_tasks(db: Session, project_id: Optional[int] = None, assignee_id: Optional[int] = None, skip: int = 0, limit: int = 100) -> List[models.Task]: # ...
     query = db.query(models.Task)
-    if project_id is not None:
-        query = query.filter(models.Task.project_id == project_id)
-    if assignee_id is not None: # --- NEW filter
-        query = query.filter(models.Task.assignee_id == assignee_id)
-    return query.order_by(models.Task.id).offset(skip).limit(limit).all() # Added default order
-
-def create_task(db: Session, task: schemas.TaskCreate) -> models.Task:
-    # Ensure assignee_id is None if explicitly passed as None or empty string (or handle in schema)
+    if project_id is not None: query = query.filter(models.Task.project_id == project_id)
+    if assignee_id is not None: query = query.filter(models.Task.assignee_id == assignee_id)
+    return query.order_by(models.Task.id).offset(skip).limit(limit).all()
+def create_task(db: Session, task: schemas.TaskCreate) -> models.Task: # ...
     assignee_id = task.assignee_id if task.assignee_id else None
     db_task = models.Task(**task.model_dump(exclude={'assignee_id'}), assignee_id=assignee_id)
     db.add(db_task); db.commit(); db.refresh(db_task)
     return db_task
-
-def update_task(db: Session, task_id: int, task_update: schemas.TaskUpdate) -> Optional[models.Task]:
+def update_task(db: Session, task_id: int, task_update: schemas.TaskUpdate) -> Optional[models.Task]: # ...
     db_task = get_task(db, task_id)
     if not db_task: return None
     update_data = task_update.model_dump(exclude_unset=True)
     for key, value in update_data.items():
-        # Handle setting assignee_id potentially to None
-        if key == 'assignee_id' and value == '':
-            value = None
+        if key == 'assignee_id' and value == '': value = None
         setattr(db_task, key, value)
     db.add(db_task); db.commit(); db.refresh(db_task)
     return db_task
-
-def delete_task(db: Session, task_id: int) -> Optional[models.Task]:
+def delete_task(db: Session, task_id: int) -> Optional[models.Task]: # ...
     db_task = get_task(db, task_id);
     if not db_task: return None;
     db.delete(db_task); db.commit(); return db_task
-
-# --- NEW: Task Assignment CRUD ---
-
-def assign_user_to_task(db: Session, task: models.Task, user: models.User) -> models.Task:
-    """Assigns a user to a task."""
-    task.assignee_id = user.id
-    db.commit()
-    db.refresh(task)
-    return task
-
-def unassign_user_from_task(db: Session, task: models.Task) -> models.Task:
-    """Unassigns a user from a task."""
-    task.assignee_id = None
-    db.commit()
-    db.refresh(task)
-    return task
-
-def get_tasks_assigned_to_user(db: Session, user_id: int, skip: int = 0, limit: int = 100) -> List[models.Task]:
-    """Gets tasks assigned to a specific user."""
+def assign_user_to_task(db: Session, task: models.Task, user: models.User) -> models.Task: # ...
+    task.assignee_id = user.id; db.commit(); db.refresh(task); return task
+def unassign_user_from_task(db: Session, task: models.Task) -> models.Task: # ...
+    task.assignee_id = None; db.commit(); db.refresh(task); return task
+def get_tasks_assigned_to_user(db: Session, user_id: int, skip: int = 0, limit: int = 100) -> List[models.Task]: # ...
     return get_tasks(db=db, assignee_id=user_id, skip=skip, limit=limit)
 
-
 # --- Inventory CRUD ---
-# ... (Keep existing Inventory CRUD) ...
+# ... (Keep existing Inventory CRUD functions) ...
 def get_inventory_item(db: Session, item_id: int) -> Optional[models.InventoryItem]: # ...
      return db.query(models.InventoryItem).filter(models.InventoryItem.id == item_id).first()
 def get_inventory_items(db: Session, skip: int = 0, limit: int = 100) -> List[models.InventoryItem]: # ...
