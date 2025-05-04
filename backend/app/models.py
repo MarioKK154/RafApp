@@ -1,38 +1,54 @@
 # backend/app/models.py
-# Final Verified Version: Task Comments Added
-from sqlalchemy import ( Column, Integer, String, Boolean, DateTime, ForeignKey, Text, Float, Interval, Table )
+# Uncondensed Version: Task Photos Added
+from sqlalchemy import (
+    Column, Integer, String, Boolean, DateTime, ForeignKey,
+    Text, Float, Interval, Table
+)
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from .database import Base
 
-# Association Table for Project Members
+# --- Association Table for Project Members ---
 project_members_table = Table(
-    "project_members", Base.metadata,
+    "project_members",
+    Base.metadata,
     Column("project_id", Integer, ForeignKey("projects.id"), primary_key=True),
     Column("user_id", Integer, ForeignKey("users.id"), primary_key=True)
 )
+# --- End Association Table Definition ---
+
 
 class User(Base):
     __tablename__ = "users"
+
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
-    full_name = Column(String, index=True, nullable=True) # Made nullable explicit
+    full_name = Column(String, index=True, nullable=True)
     is_active = Column(Boolean, default=True)
     is_superuser = Column(Boolean, default=False)
-    role = Column(String, default="employee")
+    role = Column(String, default="employee") # Roles: admin, project manager, team leader, electrician
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
     # Relationships
     projects_created = relationship("Project", back_populates="creator")
     uploaded_drawings = relationship("Drawing", back_populates="uploader")
     time_logs = relationship("TimeLog", back_populates="user")
-    assigned_projects = relationship("Project", secondary=project_members_table, back_populates="members")
+    assigned_projects = relationship(
+        "Project",
+        secondary=project_members_table,
+        back_populates="members"
+    )
     assigned_tasks = relationship("Task", back_populates="assignee")
-    task_comments = relationship("TaskComment", back_populates="author") # Added
+    task_comments = relationship("TaskComment", back_populates="author")
+    # Relationship to photos uploaded BY this user
+    uploaded_task_photos = relationship("TaskPhoto", back_populates="uploader")
+
 
 class Project(Base):
     __tablename__ = "projects"
+
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, index=True, nullable=False)
     description = Column(Text, nullable=True)
@@ -43,14 +59,21 @@ class Project(Base):
     creator_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
     # Relationships
     creator = relationship("User", back_populates="projects_created")
     tasks = relationship("Task", back_populates="project", cascade="all, delete-orphan")
     drawings = relationship("Drawing", back_populates="project", cascade="all, delete-orphan")
-    members = relationship("User", secondary=project_members_table, back_populates="assigned_projects")
+    members = relationship(
+        "User",
+        secondary=project_members_table,
+        back_populates="assigned_projects"
+    )
+
 
 class Task(Base):
     __tablename__ = "tasks"
+
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, index=True, nullable=False)
     description = Column(Text, nullable=True)
@@ -61,13 +84,18 @@ class Task(Base):
     assignee_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
     # Relationships
     project = relationship("Project", back_populates="tasks")
     assignee = relationship("User", back_populates="assigned_tasks")
-    comments = relationship("TaskComment", back_populates="task", cascade="all, delete-orphan") # Added
+    comments = relationship("TaskComment", back_populates="task", cascade="all, delete-orphan")
+     # Relationship to photos ON this task
+    photos = relationship("TaskPhoto", back_populates="task", cascade="all, delete-orphan")
+
 
 class InventoryItem(Base):
     __tablename__ = "inventory_items"
+
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, index=True, nullable=False)
     description = Column(Text, nullable=True)
@@ -81,8 +109,10 @@ class InventoryItem(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
+
 class Drawing(Base):
     __tablename__ = "drawings"
+
     id = Column(Integer, primary_key=True, index=True)
     filename = Column(String, nullable=False)
     filepath = Column(String, nullable=False, unique=True)
@@ -92,12 +122,15 @@ class Drawing(Base):
     uploaded_at = Column(DateTime(timezone=True), server_default=func.now())
     project_id = Column(Integer, ForeignKey("projects.id"), nullable=False)
     uploader_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+
     # Relationships
     project = relationship("Project", back_populates="drawings")
     uploader = relationship("User", back_populates="uploaded_drawings")
 
+
 class TimeLog(Base):
     __tablename__ = "time_logs"
+
     id = Column(Integer, primary_key=True, index=True)
     start_time = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
     end_time = Column(DateTime(timezone=True), nullable=True)
@@ -106,18 +139,41 @@ class TimeLog(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     project_id = Column(Integer, ForeignKey("projects.id"), nullable=True)
     task_id = Column(Integer, ForeignKey("tasks.id"), nullable=True)
+
     # Relationships
     user = relationship("User", back_populates="time_logs")
     project = relationship("Project")
     task = relationship("Task")
 
+
 class TaskComment(Base):
     __tablename__ = "task_comments"
+
     id = Column(Integer, primary_key=True, index=True)
     content = Column(Text, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     task_id = Column(Integer, ForeignKey("tasks.id"), nullable=False)
     author_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+
     # Relationships
     task = relationship("Task", back_populates="comments")
     author = relationship("User", back_populates="task_comments")
+
+
+# --- TaskPhoto Model ---
+class TaskPhoto(Base):
+    __tablename__ = "task_photos"
+
+    id = Column(Integer, primary_key=True, index=True)
+    filename = Column(String, nullable=False) # Original filename
+    filepath = Column(String, nullable=False, unique=True) # Stored path relative to upload root
+    description = Column(Text, nullable=True)
+    content_type = Column(String, nullable=True) # Store MIME type
+    size_bytes = Column(Integer, nullable=True)
+    uploaded_at = Column(DateTime(timezone=True), server_default=func.now())
+    task_id = Column(Integer, ForeignKey("tasks.id"), nullable=False) # Link to task
+    uploader_id = Column(Integer, ForeignKey("users.id"), nullable=False) # Link to user
+
+    # Relationships
+    task = relationship("Task", back_populates="photos")
+    uploader = relationship("User", back_populates="uploaded_task_photos")

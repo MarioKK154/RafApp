@@ -1,5 +1,5 @@
 # backend/app/crud.py
-# FINAL Corrected Version (Indentation and Syntax)
+# FINAL FINAL Corrected Version (No placeholders, Strict Formatting)
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import desc
 from typing import Optional, List
@@ -115,15 +115,12 @@ def remove_member_from_project(db: Session, project: models.Project, user: model
 
 def get_project_members(db: Session, project_id: int) -> List[models.User]:
     project = get_project(db, project_id)
-    # Use relationship - assumes SQLAlchemy handles loading or configure eager loading if needed
     return project.members if project else []
 
 def is_user_member_of_project(db: Session, project_id: int, user_id: int) -> bool:
     project = get_project(db, project_id)
     if not project:
         return False
-    # Check if user_id exists in the IDs of the members
-    # This might require members to be loaded first if using lazy loading (default)
     member_ids = {member.id for member in project.members}
     return user_id in member_ids
 
@@ -132,7 +129,8 @@ def is_user_member_of_project(db: Session, project_id: int, user_id: int) -> boo
 
 def get_task(db: Session, task_id: int) -> Optional[models.Task]:
     return db.query(models.Task)\
-             .options(joinedload(models.Task.comments).joinedload(models.TaskComment.author))\
+             .options(joinedload(models.Task.comments).joinedload(models.TaskComment.author),
+                      joinedload(models.Task.photos).joinedload(models.TaskPhoto.uploader))\
              .filter(models.Task.id == task_id).first()
 
 def get_tasks(db: Session, project_id: Optional[int] = None, assignee_id: Optional[int] = None, skip: int = 0, limit: int = 100) -> List[models.Task]:
@@ -189,6 +187,40 @@ def get_tasks_assigned_to_user(db: Session, user_id: int, skip: int = 0, limit: 
     return get_tasks(db=db, assignee_id=user_id, skip=skip, limit=limit)
 
 
+# --- Task Comment CRUD ---
+
+def get_comment(db: Session, comment_id: int) -> Optional[models.TaskComment]:
+    return db.query(models.TaskComment).options(joinedload(models.TaskComment.author)).filter(models.TaskComment.id == comment_id).first()
+
+def get_comments_for_task(db: Session, task_id: int, skip: int = 0, limit: int = 100) -> List[models.TaskComment]:
+    return db.query(models.TaskComment)\
+             .filter(models.TaskComment.task_id == task_id)\
+             .order_by(models.TaskComment.created_at.asc())\
+             .options(joinedload(models.TaskComment.author))\
+             .offset(skip)\
+             .limit(limit)\
+             .all()
+
+def create_task_comment(db: Session, comment: schemas.TaskCommentCreate, task_id: int, author_id: int) -> models.TaskComment:
+    db_comment = models.TaskComment(
+        **comment.model_dump(),
+        task_id=task_id,
+        author_id=author_id
+    )
+    db.add(db_comment)
+    db.commit()
+    db.refresh(db_comment)
+    # db.refresh(db_comment, attribute_names=['author']) # Eager load if needed
+    return db_comment
+
+def delete_comment(db: Session, comment_id: int) -> Optional[models.TaskComment]:
+    db_comment = get_comment(db, comment_id)
+    if db_comment:
+        db.delete(db_comment)
+        db.commit()
+    return db_comment
+
+
 # --- Inventory CRUD ---
 
 def get_inventory_item(db: Session, item_id: int) -> Optional[models.InventoryItem]:
@@ -206,8 +238,7 @@ def create_inventory_item(db: Session, item: schemas.InventoryItemCreate) -> mod
 
 def update_inventory_item(db: Session, item_id: int, item_update: schemas.InventoryItemUpdate) -> Optional[models.InventoryItem]:
     db_item = get_inventory_item(db, item_id)
-    if not db_item:
-        return None
+    if not db_item: return None
     update_data = item_update.model_dump(exclude_unset=True)
     for key, value in update_data.items():
         setattr(db_item, key, value)
@@ -218,8 +249,7 @@ def update_inventory_item(db: Session, item_id: int, item_update: schemas.Invent
 
 def delete_inventory_item(db: Session, item_id: int) -> Optional[models.InventoryItem]:
     db_item = get_inventory_item(db, item_id)
-    if not db_item:
-        return None
+    if not db_item: return None
     db.delete(db_item)
     db.commit()
     return db_item
@@ -242,8 +272,7 @@ def create_drawing_metadata(db: Session, drawing: schemas.DrawingCreate) -> mode
 
 def delete_drawing_metadata(db: Session, drawing_id: int) -> Optional[models.Drawing]:
     db_drawing = get_drawing(db, drawing_id)
-    if not db_drawing:
-        return None
+    if not db_drawing: return None
     db.delete(db_drawing)
     db.commit()
     return db_drawing
@@ -263,13 +292,10 @@ def create_timelog_entry(db: Session, timelog_data: schemas.TimeLogCreate, user_
 
 def update_timelog_entry(db: Session, timelog_id: int) -> Optional[models.TimeLog]:
     db_timelog = db.query(models.TimeLog).filter(models.TimeLog.id == timelog_id).first()
-    if not db_timelog or db_timelog.end_time is not None:
-        return None
+    if not db_timelog or db_timelog.end_time is not None: return None
     end_time = datetime.now(timezone.utc)
     start_time = db_timelog.start_time
-    # Ensure start_time is timezone-aware if end_time is
-    if start_time.tzinfo is None and end_time.tzinfo is not None:
-         start_time = start_time.replace(tzinfo=timezone.utc) # Or adjust as needed
+    if start_time.tzinfo is None and end_time.tzinfo is not None: start_time = start_time.replace(tzinfo=timezone.utc)
     duration = end_time - start_time
     db_timelog.end_time = end_time
     db_timelog.duration = duration
@@ -285,26 +311,25 @@ def get_timelogs_for_project(db: Session, project_id: int, skip: int = 0, limit:
      return db.query(models.TimeLog).filter(models.TimeLog.project_id == project_id).order_by(desc(models.TimeLog.start_time)).offset(skip).limit(limit).all()
 
 
-# --- Task Comment CRUD ---
+# --- Task Photo Metadata CRUD ---
 
-def get_comment(db: Session, comment_id: int) -> Optional[models.TaskComment]:
-    return db.query(models.TaskComment).options(joinedload(models.TaskComment.author)).filter(models.TaskComment.id == comment_id).first()
+def get_task_photo(db: Session, photo_id: int) -> Optional[models.TaskPhoto]:
+    return db.query(models.TaskPhoto).options(joinedload(models.TaskPhoto.uploader)).filter(models.TaskPhoto.id == photo_id).first()
 
-def get_comments_for_task(db: Session, task_id: int, skip: int = 0, limit: int = 100) -> List[models.TaskComment]:
-    return db.query(models.TaskComment).filter(models.TaskComment.task_id == task_id).order_by(models.TaskComment.created_at.asc()).options(joinedload(models.TaskComment.author)).offset(skip).limit(limit).all()
+def get_photos_for_task(db: Session, task_id: int, skip: int = 0, limit: int = 100) -> List[models.TaskPhoto]:
+    return db.query(models.TaskPhoto).filter(models.TaskPhoto.task_id == task_id).order_by(models.TaskPhoto.uploaded_at.desc()).options(joinedload(models.TaskPhoto.uploader)).offset(skip).limit(limit).all()
 
-def create_task_comment(db: Session, comment: schemas.TaskCommentCreate, task_id: int, author_id: int) -> models.TaskComment:
-    db_comment = models.TaskComment(**comment.model_dump(), task_id=task_id, author_id=author_id)
-    db.add(db_comment)
+def create_task_photo_metadata(db: Session, photo_data: schemas.TaskPhotoCreate) -> models.TaskPhoto:
+    db_photo = models.TaskPhoto(**photo_data.model_dump())
+    db.add(db_photo)
     db.commit()
-    db.refresh(db_comment)
-    # Eager load author might be needed if not handled by relationship defaults/schema
-    # db.refresh(db_comment, attribute_names=['author'])
-    return db_comment
+    db.refresh(db_photo)
+    # db.refresh(db_photo, attribute_names=['uploader']) # Already eager loaded? Verify if needed
+    return db_photo
 
-def delete_comment(db: Session, comment_id: int) -> Optional[models.TaskComment]:
-    db_comment = get_comment(db, comment_id)
-    if db_comment:
-        db.delete(db_comment)
+def delete_task_photo_metadata(db: Session, photo_id: int) -> Optional[models.TaskPhoto]:
+    db_photo = get_task_photo(db, photo_id)
+    if db_photo:
+        db.delete(db_photo)
         db.commit()
-    return db_comment
+    return db_photo
