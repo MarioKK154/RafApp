@@ -1,10 +1,9 @@
 # backend/app/crud.py
-# FINAL FINAL Corrected Version (No placeholders, Strict Formatting)
+# FINAL FINAL Corrected Version - STRICT Multi-Line Formatting
 from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import desc
+from sqlalchemy import desc, func as sqlfunc
 from typing import Optional, List
 from datetime import datetime, timezone
-
 from . import models, schemas
 from .security import get_password_hash
 
@@ -115,12 +114,16 @@ def remove_member_from_project(db: Session, project: models.Project, user: model
 
 def get_project_members(db: Session, project_id: int) -> List[models.User]:
     project = get_project(db, project_id)
+    # Ensure members relationship is loaded if lazy loading is default
+    # This might require options(joinedload(models.Project.members)) in get_project
+    # or accessing project.members will trigger a load here.
     return project.members if project else []
 
 def is_user_member_of_project(db: Session, project_id: int, user_id: int) -> bool:
     project = get_project(db, project_id)
     if not project:
         return False
+    # This requires members to be loaded
     member_ids = {member.id for member in project.members}
     return user_id in member_ids
 
@@ -128,9 +131,14 @@ def is_user_member_of_project(db: Session, project_id: int, user_id: int) -> boo
 # --- Task CRUD & Assignment ---
 
 def get_task(db: Session, task_id: int) -> Optional[models.Task]:
+    # Eager load relationships needed for display or further processing
     return db.query(models.Task)\
-             .options(joinedload(models.Task.comments).joinedload(models.TaskComment.author),
-                      joinedload(models.Task.photos).joinedload(models.TaskPhoto.uploader))\
+             .options(
+                 joinedload(models.Task.comments).joinedload(models.TaskComment.author),
+                 joinedload(models.Task.photos).joinedload(models.TaskPhoto.uploader),
+                 joinedload(models.Task.assignee), # Load assignee info too
+                 joinedload(models.Task.project) # Load project info
+              )\
              .filter(models.Task.id == task_id).first()
 
 def get_tasks(db: Session, project_id: Optional[int] = None, assignee_id: Optional[int] = None, skip: int = 0, limit: int = 100) -> List[models.Task]:
@@ -150,14 +158,16 @@ def create_task(db: Session, task: schemas.TaskCreate) -> models.Task:
     return db_task
 
 def update_task(db: Session, task_id: int, task_update: schemas.TaskUpdate) -> Optional[models.Task]:
-    db_task = get_task(db, task_id)
+    db_task = get_task(db, task_id) # Use get_task to potentially load relationships
     if not db_task:
         return None
     update_data = task_update.model_dump(exclude_unset=True)
     for key, value in update_data.items():
-        if key == 'assignee_id' and value == '':
-            value = None
-        setattr(db_task, key, value)
+        # Handle unsetting assignee_id
+        if key == 'assignee_id' and (value == '' or value is None):
+            setattr(db_task, key, None)
+        else:
+            setattr(db_task, key, value)
     db.add(db_task)
     db.commit()
     db.refresh(db_task)
@@ -184,6 +194,7 @@ def unassign_user_from_task(db: Session, task: models.Task) -> models.Task:
     return task
 
 def get_tasks_assigned_to_user(db: Session, user_id: int, skip: int = 0, limit: int = 100) -> List[models.Task]:
+    # Reusing get_tasks with filter
     return get_tasks(db=db, assignee_id=user_id, skip=skip, limit=limit)
 
 
@@ -210,7 +221,7 @@ def create_task_comment(db: Session, comment: schemas.TaskCommentCreate, task_id
     db.add(db_comment)
     db.commit()
     db.refresh(db_comment)
-    # db.refresh(db_comment, attribute_names=['author']) # Eager load if needed
+    # db.refresh(db_comment, attribute_names=['author']) # Reload if needed
     return db_comment
 
 def delete_comment(db: Session, comment_id: int) -> Optional[models.TaskComment]:
@@ -227,10 +238,13 @@ def get_inventory_item(db: Session, item_id: int) -> Optional[models.InventoryIt
      return db.query(models.InventoryItem).filter(models.InventoryItem.id == item_id).first()
 
 def get_inventory_items(db: Session, skip: int = 0, limit: int = 100) -> List[models.InventoryItem]:
-     return db.query(models.InventoryItem).offset(skip).limit(limit).all()
+     return db.query(models.InventoryItem).order_by(models.InventoryItem.name).offset(skip).limit(limit).all()
 
 def create_inventory_item(db: Session, item: schemas.InventoryItemCreate) -> models.InventoryItem:
-     db_item = models.InventoryItem(**item.model_dump())
+     item_data = item.model_dump()
+     item_data['quantity_needed'] = float(item_data.get('quantity_needed') or 0.0)
+     item_data['quantity'] = float(item_data.get('quantity') or 0.0)
+     db_item = models.InventoryItem(**item_data)
      db.add(db_item)
      db.commit()
      db.refresh(db_item)
@@ -238,8 +252,12 @@ def create_inventory_item(db: Session, item: schemas.InventoryItemCreate) -> mod
 
 def update_inventory_item(db: Session, item_id: int, item_update: schemas.InventoryItemUpdate) -> Optional[models.InventoryItem]:
     db_item = get_inventory_item(db, item_id)
-    if not db_item: return None
+    if not db_item:
+        return None
     update_data = item_update.model_dump(exclude_unset=True)
+    if 'quantity' in update_data: update_data['quantity'] = float(update_data.get('quantity') or 0.0)
+    if 'quantity_needed' in update_data: update_data['quantity_needed'] = float(update_data.get('quantity_needed') or 0.0)
+    if 'low_stock_threshold' in update_data and update_data['low_stock_threshold'] is not None: update_data['low_stock_threshold'] = float(update_data['low_stock_threshold'])
     for key, value in update_data.items():
         setattr(db_item, key, value)
     db.add(db_item)
@@ -247,12 +265,32 @@ def update_inventory_item(db: Session, item_id: int, item_update: schemas.Invent
     db.refresh(db_item)
     return db_item
 
+def update_inventory_item_needed_quantity(db: Session, item_id: int, quantity_needed: float) -> Optional[models.InventoryItem]:
+    db_item = get_inventory_item(db, item_id)
+    if not db_item:
+        return None
+    db_item.quantity_needed = max(0.0, quantity_needed)
+    db.add(db_item)
+    db.commit()
+    db.refresh(db_item)
+    return db_item
+
 def delete_inventory_item(db: Session, item_id: int) -> Optional[models.InventoryItem]:
     db_item = get_inventory_item(db, item_id)
-    if not db_item: return None
+    if not db_item:
+        return None
     db.delete(db_item)
     db.commit()
     return db_item
+
+
+# --- Shopping List Function ---
+
+def get_shopping_list_items(db: Session) -> List[models.InventoryItem]:
+    return db.query(models.InventoryItem)\
+             .filter(models.InventoryItem.quantity_needed > models.InventoryItem.quantity)\
+             .order_by(models.InventoryItem.name)\
+             .all()
 
 
 # --- Drawing Metadata CRUD ---
@@ -271,11 +309,13 @@ def create_drawing_metadata(db: Session, drawing: schemas.DrawingCreate) -> mode
      return db_drawing
 
 def delete_drawing_metadata(db: Session, drawing_id: int) -> Optional[models.Drawing]:
+    # This is the function where the error likely occurred before
     db_drawing = get_drawing(db, drawing_id)
-    if not db_drawing: return None
-    db.delete(db_drawing)
-    db.commit()
-    return db_drawing
+    if not db_drawing:
+        return None # If not found, return None
+    db.delete(db_drawing) # Delete if found
+    db.commit() # Commit the deletion
+    return db_drawing # Return the deleted object
 
 
 # --- TimeLog CRUD ---
@@ -292,10 +332,12 @@ def create_timelog_entry(db: Session, timelog_data: schemas.TimeLogCreate, user_
 
 def update_timelog_entry(db: Session, timelog_id: int) -> Optional[models.TimeLog]:
     db_timelog = db.query(models.TimeLog).filter(models.TimeLog.id == timelog_id).first()
-    if not db_timelog or db_timelog.end_time is not None: return None
+    if not db_timelog or db_timelog.end_time is not None:
+        return None
     end_time = datetime.now(timezone.utc)
     start_time = db_timelog.start_time
-    if start_time.tzinfo is None and end_time.tzinfo is not None: start_time = start_time.replace(tzinfo=timezone.utc)
+    if start_time.tzinfo is None and end_time.tzinfo is not None:
+        start_time = start_time.replace(tzinfo=timezone.utc)
     duration = end_time - start_time
     db_timelog.end_time = end_time
     db_timelog.duration = duration
@@ -324,7 +366,7 @@ def create_task_photo_metadata(db: Session, photo_data: schemas.TaskPhotoCreate)
     db.add(db_photo)
     db.commit()
     db.refresh(db_photo)
-    # db.refresh(db_photo, attribute_names=['uploader']) # Already eager loaded? Verify if needed
+    db.refresh(db_photo, attribute_names=['uploader']) # Eager load uploader
     return db_photo
 
 def delete_task_photo_metadata(db: Session, photo_id: int) -> Optional[models.TaskPhoto]:

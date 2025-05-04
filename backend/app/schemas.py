@@ -1,10 +1,10 @@
 # backend/app/schemas.py
-# Uncondensed Version: Task Photos Added
+# Uncondensed Version: Includes InventoryItemUpdateNeededQty
 from pydantic import BaseModel, EmailStr, Field, HttpUrl
 from typing import Optional, List
 from datetime import datetime, timedelta
 
-# Base Config
+# --- Base Config ---
 class OrmConfig:
     from_attributes = True
 
@@ -12,32 +12,36 @@ class OrmConfig:
 class ProjectReadBasic(BaseModel):
     id: int
     name: str
-    class Config(OrmConfig): pass
+    class Config(OrmConfig):
+        pass
 
 class TaskReadBasic(BaseModel):
     id: int
     title: str
-    class Config(OrmConfig): pass
+    class Config(OrmConfig):
+        pass
 
 class UserReadBasic(BaseModel):
     id: int
     email: EmailStr
     full_name: Optional[str] = None
-    class Config(OrmConfig): pass
+    class Config(OrmConfig):
+        pass
 
 class TaskCommentReadBasic(BaseModel):
     id: int
     content: str
     created_at: datetime
     author_id: int
-    class Config(OrmConfig): pass
+    class Config(OrmConfig):
+        pass
 
 class TaskPhotoReadBasic(BaseModel):
     id: int
     filename: str
     uploaded_at: datetime
-    class Config(OrmConfig): pass
-
+    class Config(OrmConfig):
+        pass
 
 # --- Token Schemas ---
 class Token(BaseModel):
@@ -51,13 +55,16 @@ class TokenData(BaseModel):
 class UserBase(BaseModel):
     email: EmailStr
     full_name: Optional[str] = None
+
 class UserCreate(UserBase):
     password: str
+
 class UserCreateAdmin(UserBase):
     password: str
     role: Optional[str] = "employee"
     is_active: Optional[bool] = True
     is_superuser: Optional[bool] = False
+
 class UserRead(UserBase):
     id: int
     is_active: bool
@@ -65,7 +72,9 @@ class UserRead(UserBase):
     role: str
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
-    class Config(OrmConfig): pass
+    class Config(OrmConfig):
+        pass
+
 class UserUpdateAdmin(BaseModel):
     email: Optional[EmailStr] = None
     full_name: Optional[str] = None
@@ -81,53 +90,82 @@ class ProjectBase(BaseModel):
     status: Optional[str] = "Planning"
     start_date: Optional[datetime] = None
     end_date: Optional[datetime] = None
-class ProjectCreate(ProjectBase): pass
+
+class ProjectCreate(ProjectBase):
+    pass
+
 class ProjectUpdate(ProjectBase):
-    name: Optional[str] = None; description: Optional[str] = None; address: Optional[str] = None
-    status: Optional[str] = None; start_date: Optional[datetime] = None; end_date: Optional[datetime] = None
+    name: Optional[str] = None
+    description: Optional[str] = None
+    address: Optional[str] = None
+    status: Optional[str] = None
+    start_date: Optional[datetime] = None
+    end_date: Optional[datetime] = None
+
 class ProjectRead(ProjectBase):
-    id: int; creator_id: int; created_at: Optional[datetime] = None; updated_at: Optional[datetime] = None
-    class Config(OrmConfig): pass
+    id: int
+    creator_id: int
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+    class Config(OrmConfig):
+        pass
+
 class ProjectAssignMember(BaseModel):
     user_id: int
 
 # --- Task Schemas ---
 class TaskBase(BaseModel):
-    title: str; description: Optional[str] = None; status: Optional[str] = "To Do"
-    priority: Optional[str] = "Medium"; due_date: Optional[datetime] = None
-    project_id: int; assignee_id: Optional[int] = None
-class TaskCreate(TaskBase): pass
+    title: str
+    description: Optional[str] = None
+    status: Optional[str] = "To Do"
+    priority: Optional[str] = "Medium"
+    due_date: Optional[datetime] = None
+    project_id: int
+    assignee_id: Optional[int] = None
+
+class TaskCreate(TaskBase):
+    pass
+
 class TaskUpdate(BaseModel):
-    title: Optional[str] = None; description: Optional[str] = None; status: Optional[str] = None
-    priority: Optional[str] = None; due_date: Optional[datetime] = None
-    project_id: Optional[int] = None; assignee_id: Optional[int] = None
+    title: Optional[str] = None
+    description: Optional[str] = None
+    status: Optional[str] = None
+    priority: Optional[str] = None
+    due_date: Optional[datetime] = None
+    project_id: Optional[int] = None
+    assignee_id: Optional[int] = None
+
 class TaskRead(TaskBase):
-    id: int; created_at: Optional[datetime] = None; updated_at: Optional[datetime] = None
-    # comments: List['TaskCommentRead'] = [] # Use ForwardRef string if enabling nesting
-    # photos: List['TaskPhotoRead'] = [] # Use ForwardRef string if enabling nesting
-    class Config(OrmConfig): pass
+    id: int
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+    class Config(OrmConfig):
+        pass
+
 class TaskAssignUser(BaseModel):
     user_id: int
 
 # --- Task Comment Schemas ---
 class TaskCommentBase(BaseModel):
     content: str = Field(..., min_length=1)
+
 class TaskCommentCreate(TaskCommentBase):
     pass
+
 class TaskCommentRead(TaskCommentBase):
     id: int
     created_at: datetime
     task_id: int
     author_id: int
     author: Optional[UserReadBasic] = None
-    class Config(OrmConfig): pass
+    class Config(OrmConfig):
+        pass
 
 # --- Task Photo Schemas ---
 class TaskPhotoBase(BaseModel):
     description: Optional[str] = None
 
 class TaskPhotoCreate(TaskPhotoBase):
-    # Fields populated during upload/saving metadata
     filename: str
     filepath: str
     content_type: Optional[str] = None
@@ -138,54 +176,96 @@ class TaskPhotoCreate(TaskPhotoBase):
 class TaskPhotoRead(TaskPhotoBase):
     id: int
     filename: str
-    # filepath: Optional[str] = None # Exclude internal path?
     content_type: Optional[str] = None
     size_bytes: Optional[int] = None
     uploaded_at: datetime
     uploader_id: int
     task_id: int
-    uploader: Optional[UserReadBasic] = None # Include basic uploader info
-    class Config(OrmConfig): pass
+    uploader: Optional[UserReadBasic] = None
+    class Config(OrmConfig):
+        pass
 
 # --- Inventory Schemas ---
 class InventoryItemBase(BaseModel):
-    name: str; description: Optional[str] = None; quantity: Optional[float] = 0.0; unit: Optional[str] = None
-    location: Optional[str] = None; low_stock_threshold: Optional[float] = None
-    shop_url_1: Optional[HttpUrl | str] = None; shop_url_2: Optional[HttpUrl | str] = None; shop_url_3: Optional[HttpUrl | str] = None
-class InventoryItemCreate(InventoryItemBase): pass
+    name: str
+    description: Optional[str] = None
+    quantity: Optional[float] = 0.0
+    quantity_needed: Optional[float] = 0.0 # Added
+    unit: Optional[str] = None
+    location: Optional[str] = None
+    low_stock_threshold: Optional[float] = None
+    shop_url_1: Optional[HttpUrl | str] = None
+    shop_url_2: Optional[HttpUrl | str] = None
+    shop_url_3: Optional[HttpUrl | str] = None
+
+class InventoryItemCreate(InventoryItemBase):
+    pass
+
 class InventoryItemUpdate(InventoryItemBase):
-    name: Optional[str]=None; description: Optional[str]=None; quantity: Optional[float]=None; unit: Optional[str]=None
-    location: Optional[str]=None; low_stock_threshold: Optional[float]=None
-    shop_url_1: Optional[HttpUrl | str | None]=None; shop_url_2: Optional[HttpUrl | str | None]=None; shop_url_3: Optional[HttpUrl | str | None]=None
+    name: Optional[str] = None
+    description: Optional[str] = None
+    quantity: Optional[float] = None
+    quantity_needed: Optional[float] = None # Added
+    unit: Optional[str] = None
+    location: Optional[str] = None
+    low_stock_threshold: Optional[float] = None
+    shop_url_1: Optional[HttpUrl | str | None] = None
+    shop_url_2: Optional[HttpUrl | str | None] = None
+    shop_url_3: Optional[HttpUrl | str | None] = None
+
 class InventoryItemRead(InventoryItemBase):
-    id: int; created_at: Optional[datetime]=None; updated_at: Optional[datetime]=None
-    shop_url_1: Optional[HttpUrl | str]=Field(None, exclude=True); shop_url_2: Optional[HttpUrl | str]=Field(None, exclude=True); shop_url_3: Optional[HttpUrl | str]=Field(None, exclude=True)
-    class Config(OrmConfig): pass
+    id: int
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+    shop_url_1: Optional[HttpUrl | str] = Field(None, exclude=True)
+    shop_url_2: Optional[HttpUrl | str] = Field(None, exclude=True)
+    shop_url_3: Optional[HttpUrl | str] = Field(None, exclude=True)
+    class Config(OrmConfig):
+        pass
+
 class InventoryItemReadWithURLs(InventoryItemRead):
-    shop_url_1: Optional[HttpUrl | str]=None; shop_url_2: Optional[HttpUrl | str]=None; shop_url_3: Optional[HttpUrl | str]=None
+    shop_url_1: Optional[HttpUrl | str] = None
+    shop_url_2: Optional[HttpUrl | str] = None
+    shop_url_3: Optional[HttpUrl | str] = None
+    # Inherits Config and other fields
+
+# Schema to update only needed quantity
+class InventoryItemUpdateNeededQty(BaseModel):
+    quantity_needed: float = Field(..., ge=0) # Must provide needed qty, must be >= 0
+
 
 # --- Drawing Schemas ---
 class DrawingBase(BaseModel):
-    description: Optional[str]=None; project_id: int
+    description: Optional[str]=None
+    project_id: int
+
 class DrawingCreate(DrawingBase):
-    filename: str; filepath: str; content_type: Optional[str]=None; size_bytes: Optional[int]=None; uploader_id: int
+    filename: str; filepath: str; content_type: Optional[str]=None
+    size_bytes: Optional[int]=None; uploader_id: int
+
 class DrawingRead(DrawingBase):
-    id: int; filename: str; content_type: Optional[str]=None; size_bytes: Optional[int]=None; uploaded_at: datetime; uploader_id: int
-    class Config(OrmConfig): pass
+    id: int; filename: str; content_type: Optional[str]=None
+    size_bytes: Optional[int]=None; uploaded_at: datetime; uploader_id: int
+    class Config(OrmConfig):
+        pass
 
 # --- TimeLog Schemas ---
 class TimeLogBase(BaseModel):
-    notes: Optional[str]=None; project_id: Optional[int]=None; task_id: Optional[int]=None
+    notes: Optional[str]=None
+    project_id: Optional[int]=None
+    task_id: Optional[int]=None
+
 class TimeLogCreate(BaseModel):
-    notes: Optional[str]=None; project_id: Optional[int]=None; task_id: Optional[int]=None
+    notes: Optional[str]=None
+    project_id: Optional[int]=None
+    task_id: Optional[int]=None
+
 class TimeLogRead(TimeLogBase):
     id: int; start_time: datetime; end_time: Optional[datetime]=None
     duration: Optional[timedelta]=None; user_id: int
-    class Config(OrmConfig): pass
-class TimeLogStatus(BaseModel):
-    is_clocked_in: bool; current_log: Optional[TimeLogRead]=None
+    class Config(OrmConfig):
+        pass
 
-# Optional: Update Forward Refs
-# TaskRead.model_rebuild()
-# TaskCommentRead.model_rebuild()
-# TaskPhotoRead.model_rebuild() # Added
+class TimeLogStatus(BaseModel):
+    is_clocked_in: bool
+    current_log: Optional[TimeLogRead]=None
