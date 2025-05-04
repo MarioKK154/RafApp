@@ -1,5 +1,5 @@
 # backend/app/routers/tasks.py
-# Final Verified Version: Includes Comment Endpoints
+# Uncondensed Version: No changes needed for start_date handling via schemas
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from typing import Annotated, List, Optional
@@ -21,13 +21,16 @@ TeamLeaderOrHigher = Annotated[models.User, Depends(security.require_role(["admi
 # --- Task CRUD Endpoints ---
 @router.post("/", response_model=schemas.TaskRead, status_code=status.HTTP_201_CREATED)
 async def create_new_task(
-    task: schemas.TaskCreate,
+    task: schemas.TaskCreate, # TaskCreate now includes optional start_date
     db: DbDependency,
     current_user: TeamLeaderOrHigher
 ):
+    """Creates a new task (Requires Team Leader, PM, or Admin role)."""
     db_project = crud.get_project(db, project_id=task.project_id)
-    if not db_project: raise HTTPException(status_code=404, detail="Project not found")
-    if task.assignee_id and not crud.get_user(db, task.assignee_id): raise HTTPException(status_code=404, detail="Assignee not found")
+    if not db_project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    if task.assignee_id and not crud.get_user(db, task.assignee_id):
+        raise HTTPException(status_code=404, detail="Assignee not found")
     return crud.create_task(db=db, task=task)
 
 @router.get("/", response_model=List[schemas.TaskRead])
@@ -38,6 +41,8 @@ async def read_all_tasks(
     skip: int = 0,
     limit: int = 100
 ):
+    """Retrieves a list of tasks, optionally filtered."""
+    # TaskRead now includes optional start_date
     return crud.get_tasks(db=db, project_id=project_id, assignee_id=assignee_id, skip=skip, limit=limit)
 
 @router.get("/{task_id}", response_model=schemas.TaskRead)
@@ -45,21 +50,28 @@ async def read_single_task(
     task_id: int,
     db: DbDependency
 ):
+    """Retrieves a single task by its ID."""
+    # TaskRead now includes optional start_date
     db_task = crud.get_task(db=db, task_id=task_id)
-    if not db_task: raise HTTPException(status_code=404, detail="Task not found")
+    if not db_task:
+        raise HTTPException(status_code=404, detail="Task not found")
     return db_task
 
 @router.put("/{task_id}", response_model=schemas.TaskRead)
 async def update_existing_task(
     task_id: int,
-    task_update: schemas.TaskUpdate,
+    task_update: schemas.TaskUpdate, # TaskUpdate now includes optional start_date
     db: DbDependency,
     current_user: TeamLeaderOrHigher
 ):
-    if task_update.assignee_id is not None and not crud.get_user(db, task_update.assignee_id):
+    """Updates an existing task (Requires Team Leader, PM, or Admin role)."""
+    if task_update.assignee_id is not None and task_update.assignee_id != '' and not crud.get_user(db, task_update.assignee_id):
          raise HTTPException(status_code=404, detail="Assignee user not found")
+    # TODO: Add check if project_id is being changed, ensure new project exists?
     updated_task = crud.update_task(db=db, task_id=task_id, task_update=task_update)
-    if not updated_task: raise HTTPException(status_code=404, detail="Task not found")
+    if not updated_task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    # TaskRead now includes optional start_date
     return updated_task
 
 @router.delete("/{task_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -68,8 +80,10 @@ async def delete_existing_task(
     db: DbDependency,
     current_user: TeamLeaderOrHigher
 ):
+    """Deletes an existing task (Requires Team Leader, PM, or Admin role)."""
     deleted_task = crud.delete_task(db=db, task_id=task_id)
-    if not deleted_task: raise HTTPException(status_code=404, detail="Task not found")
+    if not deleted_task:
+        raise HTTPException(status_code=404, detail="Task not found")
     return None
 
 # --- Task Assignment Endpoints ---
@@ -93,25 +107,14 @@ async def read_my_assigned_tasks(db: DbDependency, current_user: CurrentUserDepe
 
 # --- Task Comment Endpoints ---
 @router.post("/{task_id}/comments/", response_model=schemas.TaskCommentRead, status_code=status.HTTP_201_CREATED)
-async def create_comment_for_task(
-    task_id: int,
-    comment: schemas.TaskCommentCreate,
-    db: DbDependency,
-    current_user: CurrentUserDependency
-):
+async def create_comment_for_task(task_id: int, comment: schemas.TaskCommentCreate, db: DbDependency, current_user: CurrentUserDependency):
     db_task = crud.get_task(db, task_id=task_id)
     if not db_task: raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")
     new_comment = crud.create_task_comment(db=db, comment=comment, task_id=task_id, author_id=current_user.id)
     return new_comment
 
 @router.get("/{task_id}/comments/", response_model=List[schemas.TaskCommentRead])
-async def read_comments_for_task(
-    task_id: int,
-    db: DbDependency,
-    current_user: CurrentUserDependency,
-    skip: int = 0,
-    limit: int = 100
-):
+async def read_comments_for_task(task_id: int, db: DbDependency, current_user: CurrentUserDependency, skip: int = 0, limit: int = 100):
     db_task = crud.get_task(db, task_id=task_id)
     if not db_task: raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")
     comments = crud.get_comments_for_task(db=db, task_id=task_id, skip=skip, limit=limit)
