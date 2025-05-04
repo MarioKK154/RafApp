@@ -1,4 +1,5 @@
 // frontend/src/App.jsx
+// Uncondensed Version: Added Shopping List Route
 import React from 'react';
 import { Routes, Route, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
@@ -18,18 +19,60 @@ import InventoryCreatePage from './pages/InventoryCreatePage';
 import InventoryEditPage from './pages/InventoryEditPage';
 import TimeLogsPage from './pages/TimeLogsPage';
 import UserListPage from './pages/UserListPage';
-import UserCreatePage from './pages/UserCreatePage'; // Import User Create Page
+import UserCreatePage from './pages/UserCreatePage';
 import UserEditPage from './pages/UserEditPage';
+import ShoppingListPage from './pages/ShoppingListPage'; // Import Shopping List Page
 import NotFoundPage from './pages/NotFoundPage';
 
-// Navbar component (as before)
-function Navbar() { /* ... same navbar code as before ... */
+// Navbar component
+function Navbar() {
     const { isAuthenticated, user, logout } = useAuth();
     const navigate = useNavigate();
     const isAdmin = user && user.role === 'admin';
-    const handleLogout = () => { logout(); navigate('/login'); };
+    const isManager = user && user.role === 'project manager';
 
-    return ( <nav className="bg-white dark:bg-gray-800 shadow-md p-4 sticky top-0 z-50"> <div className="container mx-auto flex justify-between items-center"> <Link to="/" className="text-xl font-bold text-indigo-600 dark:text-indigo-300">RafApp</Link> <div className="flex items-center space-x-2 md:space-x-4"> {isAuthenticated && ( <> <Link to="/projects" className="...">Projects</Link> <Link to="/tasks" className="...">Tasks</Link> <Link to="/inventory" className="...">Inventory</Link> <Link to="/timelogs" className="...">Time Logs</Link> {isAdmin && ( <Link to="/users" className="text-sm md:text-base text-gray-700 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-300">Manage Users</Link> )} </> )} {isAuthenticated && user ? ( <> <span className="text-sm ... hidden md:inline">Hi, {user.full_name || user.email}</span> <button onClick={handleLogout} className="text-sm ...">Logout</button> </> ) : ( <> <Link to="/login" className="...">Login</Link> <Link to="/register" className="...">Register</Link> </> )} </div> </div> </nav> );
+    const handleLogout = () => {
+        logout();
+        navigate('/login');
+    };
+
+    return (
+        <nav className="bg-white dark:bg-gray-800 shadow-md p-4 sticky top-0 z-50">
+            <div className="container mx-auto flex justify-between items-center">
+                <Link to="/" className="text-xl font-bold text-indigo-600 dark:text-indigo-300">RafApp</Link>
+                <div className="flex items-center space-x-2 md:space-x-4">
+                    {isAuthenticated && (
+                        <>
+                            <Link to="/projects" className="text-sm md:text-base text-gray-700 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-300">Projects</Link>
+                            <Link to="/tasks" className="text-sm md:text-base text-gray-700 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-300">Tasks</Link>
+                            <Link to="/inventory" className="text-sm md:text-base text-gray-700 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-300">Inventory</Link>
+                            <Link to="/timelogs" className="text-sm md:text-base text-gray-700 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-300">Time Logs</Link>
+                            {/* Show Shopping List link only to Admin/PM */}
+                            {(isAdmin || isManager) && (
+                                <Link to="/shopping-list" className="text-sm md:text-base text-gray-700 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-300">Shopping List</Link>
+                            )}
+                            {isAdmin && (
+                                <Link to="/users" className="text-sm md:text-base text-gray-700 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-300">Manage Users</Link>
+                            )}
+                        </>
+                    )}
+                    {isAuthenticated && user ? (
+                        <>
+                            <span className="text-sm text-gray-500 dark:text-gray-400 hidden md:inline">Hi, {user.full_name || user.email}</span>
+                            <button onClick={handleLogout} className="text-sm md:text-base text-gray-700 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-300">
+                                Logout
+                            </button>
+                        </>
+                    ) : (
+                        <>
+                            <Link to="/login" className="text-sm md:text-base text-gray-700 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-300">Login</Link>
+                            <Link to="/register" className="text-sm md:text-base text-gray-700 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-300">Register</Link>
+                        </>
+                    )}
+                </div>
+            </div>
+        </nav>
+    );
 }
 
 
@@ -57,9 +100,11 @@ function App() {
                     <Route path="/timelogs" element={<TimeLogsPage />} />
                     {/* User Management Routes */}
                     <Route path="/users" element={<UserListPage />} />
-                    <Route path="/users/new" element={<UserCreatePage />} /> {/* Add User Create Route */}
+                    <Route path="/users/new" element={<UserCreatePage />} />
                     <Route path="/users/edit/:userId" element={<UserEditPage />} />
-
+                    {/* --- NEW Shopping List Route --- */}
+                    <Route path="/shopping-list" element={<ShoppingListPage />} />
+                    {/* ---------------------------- */}
                     <Route path="*" element={<NotFoundPage />} />
                 </Routes>
             </main>
