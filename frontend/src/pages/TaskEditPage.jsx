@@ -1,13 +1,24 @@
 // frontend/src/pages/TaskEditPage.jsx
-// Final Check Version 2
+// FINAL Check Version 4 - Correcting conditional return JSX
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import axiosInstance from '../api/axiosInstance';
 import { useAuth } from '../context/AuthContext';
-import TaskComments from '../components/TaskComments'; // Import the comments component
+import TaskComments from '../components/TaskComments';
+import TaskPhotos from '../components/TaskPhotos';
 
-// Helper function (as before)
-const formatDateForInput = (dateString) => { if (!dateString) return ''; try { return new Date(dateString).toISOString().split('T')[0]; } catch (e) { console.error("Error formatting date:", dateString, e); return ''; } };
+// Helper function
+const formatDateForInput = (dateString) => {
+    if (!dateString) return '';
+    try {
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return '';
+        return date.toISOString().split('T')[0];
+    } catch (e) {
+        console.error("Error formatting date:", dateString, e);
+        return '';
+    }
+};
 
 function TaskEditPage() {
   const { taskId } = useParams();
@@ -16,26 +27,16 @@ function TaskEditPage() {
   const [projects, setProjects] = useState([]);
   const [users, setUsers] = useState([]);
   const [formData, setFormData] = useState({ title: '', description: '', status: '', priority: '', due_date: '', project_id: '', assignee_id: '' });
-  const [isLoading, setIsLoading] = useState(true); // Loading task data
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [dataLoadingError, setDataLoadingError] = useState('');
 
   const canManageTasks = user && ['admin', 'project manager', 'team leader'].includes(user.role);
 
-  // Fetch task data AND project/user lists (as before)
+  // Fetch task data AND project/user lists
   useEffect(() => {
-    // Check authentication and necessary IDs first
-    if (!authIsLoading && !isAuthenticated) {
-      navigate('/login', { replace: true });
-      return; // Stop execution if not authenticated
-    }
-    if (!authIsLoading && isAuthenticated && !taskId) {
-       setError("Task ID is missing."); // Handle missing ID case
-       setIsLoading(false);
-       return;
-    }
-    // Proceed with fetching if authenticated and taskId is present
+    let isMounted = true; // Flag to prevent state update on unmounted component
     if (!authIsLoading && isAuthenticated && taskId) {
       setIsLoading(true); setDataLoadingError(''); setError('');
       Promise.all([
@@ -43,45 +44,81 @@ function TaskEditPage() {
         axiosInstance.get('/projects/'),
         axiosInstance.get('/users/')
       ]).then(([taskResponse, projectsResponse, usersResponse]) => {
-        const task = taskResponse.data; setProjects(projectsResponse.data); setUsers(usersResponse.data);
+        if (!isMounted) return; // Don't update state if component unmounted
+        const task = taskResponse.data;
+        setProjects(projectsResponse.data);
+        setUsers(usersResponse.data);
         setFormData({
           title: task.title ?? '', description: task.description ?? '', status: task.status ?? '',
           priority: task.priority ?? '', due_date: formatDateForInput(task.due_date),
           project_id: task.project_id ?? '', assignee_id: task.assignee_id ?? '',
         });
       }).catch(err => {
+        if (!isMounted) return;
         console.error("Error fetching data for task edit:", err);
         if (err?.response?.status === 404) { setError('Task not found.'); }
         else { setError('Failed to load required data.'); }
-        // Simplified data loading error check
+        // Check if project/user list loading failed specifically
         if (!projectsResponse || !usersResponse) { setDataLoadingError('Could not load projects or users list.');}
-      }).finally(() => { setIsLoading(false); });
+      }).finally(() => {
+         if (isMounted) setIsLoading(false);
+      });
+    } else if (!authIsLoading && !isAuthenticated) {
+        navigate('/login', { replace: true });
     }
+    // Cleanup function to set flag when component unmounts
+    return () => { isMounted = false; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [taskId, isAuthenticated, authIsLoading, navigate]); // Keep navigate in deps
+  }, [taskId, isAuthenticated, authIsLoading, navigate]); // Include all external variables used
 
 
-  // Handle input changes (as before)
-  const handleChange = (e) => { const { name, value, type, checked } = e.target; setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : (name === 'project_id' || name === 'assignee_id') && value !== '' ? parseInt(value, 10) : value })); };
+  // Handle input changes
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData(prevData => ({
+      ...prevData,
+      [name]: type === 'checkbox' ? checked : (name === 'project_id' || name === 'assignee_id') && value !== '' ? parseInt(value, 10) : value,
+    }));
+  };
 
-  // Handle form submission (as before)
-  const handleSubmit = async (e) => { e.preventDefault(); if (!formData.project_id) { setError('Please select a project.'); return; } if (!canManageTasks) { setError("No permission"); return; } setError(''); setIsSubmitting(true); const dataToSend = { title: formData.title, description: formData.description, status: formData.status, priority: formData.priority, due_date: formData.due_date || null, project_id: formData.project_id, assignee_id: formData.assignee_id === '' ? null : formData.assignee_id, }; try { await axiosInstance.put(`/tasks/${taskId}`, dataToSend); navigate('/tasks'); } catch (err) { console.error("Error updating task:", err); setError(err.response?.data?.detail || 'Failed to update task.'); setIsSubmitting(false); } };
+  // Handle form submission
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!formData.project_id) { setError('Please select a project.'); return; }
+    if (!canManageTasks) { setError("No permission"); return; }
+    setError(''); setIsSubmitting(true);
+    const dataToSend = {
+      title: formData.title, description: formData.description, status: formData.status,
+      priority: formData.priority, due_date: formData.due_date || null,
+      project_id: formData.project_id,
+      assignee_id: formData.assignee_id === '' ? null : formData.assignee_id,
+    };
+    try {
+      await axiosInstance.put(`/tasks/${taskId}`, dataToSend);
+      navigate('/tasks');
+    } catch (err) {
+      console.error("Error updating task:", err);
+      setError(err.response?.data?.detail || 'Failed to update task.');
+      setIsSubmitting(false);
+    }
+  };
 
   // --- Render Logic ---
 
   if (authIsLoading || isLoading) {
-    return ( // Correctly formatted return block
+    return ( // Loading state return
         <div className="container mx-auto p-6 text-center">
             <p className="text-xl text-gray-500 dark:text-gray-400">Loading task details...</p>
         </div>
-    ); // End return
+    ); // Semicolon is optional for JSX return
   }
 
+  // --- CORRECTED ERROR RETURN BLOCK ---
   if (error && error.includes('not found')) {
-     return ( // Correctly formatted return block
+     return ( // Not Found error return
          <div className="container mx-auto p-6 text-center text-red-500">
              {error}
-             {/* Correctly formatted Link */}
+             {/* Fully expanded Link tag */}
              <Link
                 to="/tasks"
                 className="text-blue-500 underline ml-2"
@@ -89,52 +126,48 @@ function TaskEditPage() {
                 Go Back to Tasks
              </Link>
         </div>
-     ); // End return
+     ); // Semicolon is optional
+  }
+  // --- END CORRECTION ---
+
+  if (!isAuthenticated) {
+      // Should be redirected by useEffect, but return empty fragment as fallback
+      return <></>;
   }
 
-  // Fallback/Guard if user somehow gets here without being authenticated
-  // or if admin check fails but no specific error set
-   if (!isAuthenticated || !canManageTasks && !error) {
-       return ( // Correctly formatted return block
-            <div className="container mx-auto p-6 text-center text-red-500">
-                Access Denied.
-                <Link to="/" className="text-blue-500 underline ml-2">Go Home</Link>
-            </div>
-       ); // End return
-   }
-
-
-  // Filter assignable users (as before)
+  // Filter assignable users
   const assignableUsers = users.filter(u => u.role === 'electrician' || u.role === 'team leader' || u.role === 'project manager');
 
   // --- Main return for authenticated user with data ---
-  return ( // Correctly formatted return block
+  return (
     <div className="container mx-auto p-4 md:p-6">
       <h1 className="text-2xl font-bold mb-6 text-gray-800 dark:text-white">Edit Task</h1>
 
-      {/* Display non-critical errors */}
+      {/* Display other errors */}
       {error && !error.includes('not found') && <p className="text-red-500 mb-4 bg-red-100 dark:bg-red-900 dark:text-red-300 p-3 rounded">{error}</p>}
       {dataLoadingError && <p className="text-red-500 mb-4 bg-red-100 dark:bg-red-900 dark:text-red-300 p-3 rounded">{dataLoadingError}</p>}
 
       <fieldset disabled={!canManageTasks || isSubmitting} className="disabled:opacity-70 mb-8">
           <form onSubmit={handleSubmit} className="space-y-4 max-w-lg bg-white dark:bg-gray-800 p-6 rounded shadow-md">
-             <legend className="sr-only">Edit Task Details</legend>
-             {/* Form Fields (ensure classNames are complete) */}
-             <div><label htmlFor="project_id" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Project *</label><select name="project_id" id="project_id" required value={formData.project_id} onChange={handleChange} disabled={projects.length === 0 || dataLoadingError} className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50">{projects.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select>{projects.length === 0 && !dataLoadingError && <p className="text-xs text-gray-500 mt-1">...</p>}</div>
-             <div><label htmlFor="title" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Task Title *</label><input type="text" name="title" id="title" required value={formData.title} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"/></div>
-             <div><label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Description</label><textarea name="description" id="description" rows="3" value={formData.description} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"></textarea></div>
-             <div><label htmlFor="status" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Status</label><select name="status" id="status" required value={formData.status} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"><option value="To Do">To Do</option><option value="In Progress">In Progress</option><option value="Done">Done</option><option value="Blocked">Blocked</option></select></div>
-             <div><label htmlFor="priority" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Priority</label><select name="priority" id="priority" required value={formData.priority} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"><option value="Low">Low</option><option value="Medium">Medium</option><option value="High">High</option></select></div>
-             <div><label htmlFor="due_date" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Due Date</label><input type="date" name="due_date" id="due_date" value={formData.due_date} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"/></div>
-             <div> <label htmlFor="assignee_id" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Assign To</label> <select name="assignee_id" id="assignee_id" value={formData.assignee_id} onChange={handleChange} disabled={users.length === 0 || dataLoadingError} className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50"> <option value="">-- Unassigned --</option> {assignableUsers.map(u => ( <option key={u.id} value={u.id}> {u.full_name || u.email} ({u.role}) </option> ))} </select> {users.length === 0 && !dataLoadingError && <p className="text-xs text-gray-500 mt-1">...</p>} </div>
-             {/* Buttons */}
-             <div className="flex justify-end space-x-3 pt-4"> <Link to="/tasks" className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-600 hover:bg-gray-50 dark:hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Cancel</Link> {canManageTasks && ( <button type="submit" disabled={isSubmitting || dataLoadingError} className={`px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${isSubmitting || dataLoadingError ? 'opacity-50 cursor-not-allowed' : ''}`}> {isSubmitting ? 'Saving...' : 'Save Changes'} </button> )} </div>
+            <legend className="sr-only">Edit Task Details</legend>
+            {/* Form fields */}
+            <div><label htmlFor="project_id" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Project *</label><select name="project_id" id="project_id" required value={formData.project_id} onChange={handleChange} disabled={projects.length === 0 || dataLoadingError} className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50">{projects.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select>{projects.length === 0 && !dataLoadingError && <p className="text-xs text-gray-500 mt-1">...</p>}</div>
+            <div><label htmlFor="title" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Task Title *</label><input type="text" name="title" id="title" required value={formData.title} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"/></div>
+            <div><label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Description</label><textarea name="description" id="description" rows="3" value={formData.description} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"></textarea></div>
+            <div><label htmlFor="status" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Status</label><select name="status" id="status" required value={formData.status} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"><option value="To Do">To Do</option><option value="In Progress">In Progress</option><option value="Done">Done</option><option value="Blocked">Blocked</option></select></div>
+            <div><label htmlFor="priority" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Priority</label><select name="priority" id="priority" required value={formData.priority} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"><option value="Low">Low</option><option value="Medium">Medium</option><option value="High">High</option></select></div>
+            <div><label htmlFor="due_date" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Due Date</label><input type="date" name="due_date" id="due_date" value={formData.due_date} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"/></div>
+            <div> <label htmlFor="assignee_id" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Assign To</label> <select name="assignee_id" id="assignee_id" value={formData.assignee_id} onChange={handleChange} disabled={users.length === 0 || dataLoadingError} className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50"> <option value="">-- Unassigned --</option> {assignableUsers.map(u => ( <option key={u.id} value={u.id}> {u.full_name || u.email} ({u.role}) </option> ))} </select> {users.length === 0 && !dataLoadingError && <p className="text-xs text-gray-500 mt-1">Could not load users...</p>} </div>
+            <div className="flex justify-end space-x-3 pt-4"> <Link to="/tasks" className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-600 hover:bg-gray-50 dark:hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Cancel</Link> {canManageTasks && ( <button type="submit" disabled={isSubmitting || dataLoadingError} className={`px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${isSubmitting || dataLoadingError ? 'opacity-50 cursor-not-allowed' : ''}`}> {isSubmitting ? 'Saving...' : 'Save Changes'} </button> )} </div>
           </form>
       </fieldset>
       {/* End Edit Task Form */}
 
       {/* Task Comments Section */}
       <TaskComments taskId={taskId} />
+
+      {/* Task Photos Section */}
+      <TaskPhotos taskId={taskId} />
 
     </div>
   ); // End main return

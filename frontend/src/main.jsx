@@ -1,16 +1,19 @@
 // frontend/src/main.jsx
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-// Import BrowserRouter
 import { BrowserRouter } from 'react-router-dom'
+// Import the AuthProvider
+import { AuthProvider } from './context/AuthContext';
 import App from './App.jsx'
-import './index.css' // Ensure Tailwind CSS/global styles are imported
+import './index.css'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    {/* Wrap the App component with BrowserRouter */}
     <BrowserRouter>
-      <App />
+      {/* Wrap App with AuthProvider */}
+      <AuthProvider>
+        <App />
+      </AuthProvider>
     </BrowserRouter>
   </React.StrictMode>,
 )

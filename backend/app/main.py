@@ -1,12 +1,12 @@
 # backend/app/main.py
-# Final Verified Version: Task Photos Added
+# Uncondensed Version: Shopping List Added
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 # Import routers
 from .routers import (
     auth, users, projects, tasks, inventory, drawings, timelogs, comments,
-    task_photos # Add task_photos router
+    task_photos, shopping_list # Add shopping_list
 )
 
 app = FastAPI(
@@ -32,12 +32,14 @@ app.add_middleware(
 app.include_router(auth.router, prefix="/auth", tags=["Authentication"])
 app.include_router(users.router, prefix="/users", tags=["Users"])
 app.include_router(projects.router, prefix="/projects", tags=["Projects"])
-app.include_router(tasks.router) # Prefix="/tasks" defined within tasks.py
+app.include_router(tasks.router) # Prefix defined in tasks.py
 app.include_router(inventory.router, prefix="/inventory", tags=["Inventory"])
 app.include_router(drawings.router, prefix="/drawings", tags=["Drawings"])
 app.include_router(timelogs.router, prefix="/timelogs", tags=["Time Logs"])
-app.include_router(comments.router) # Prefix="/comments" defined within comments.py
-app.include_router(task_photos.router) # Prefix="/task_photos" defined within task_photos.py
+app.include_router(comments.router) # Prefix defined in comments.py
+app.include_router(task_photos.router) # Prefix defined in task_photos.py
+# Use prefix defined in shopping_list.py by not specifying one here
+app.include_router(shopping_list.router)
 
 # Root Endpoint
 @app.get("/")

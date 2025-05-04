@@ -76,3 +76,5 @@ frontend/coverage
 
 # Backend
 /backend/uploads/
+# .gitignore (add this line)
+/backend/create_initial_admin.py
