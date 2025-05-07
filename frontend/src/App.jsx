@@ -1,12 +1,10 @@
 // frontend/src/App.jsx
-// Uncondensed Version: Using dedicated Navbar component
+// Uncondensed Version: Added Gantt Chart Route
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom'; // Removed Link, useNavigate from here as Navbar handles it
 
-// Import the Navbar component
-import Navbar from './components/Navbar';
-
-// Import page components
+// Import components
+import Navbar from './components/Navbar'; // Assuming Navbar is a separate component
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
@@ -24,24 +22,21 @@ import UserListPage from './pages/UserListPage';
 import UserCreatePage from './pages/UserCreatePage';
 import UserEditPage from './pages/UserEditPage';
 import ShoppingListPage from './pages/ShoppingListPage';
+import GanttChartPage from './pages/GanttChartPage'; // Import Gantt Chart Page
 import NotFoundPage from './pages/NotFoundPage';
-// TODO: Import GanttPage when created
+
 
 function App() {
-    // No need for auth logic here anymore, Navbar handles it
     return (
         <>
-            {/* Render the Navbar component */}
             <Navbar />
-
-            {/* Main content area where routes are rendered */}
-            <main className="pt-4"> {/* Optional padding below navbar */}
+            <main className="pt-4"> {/* Adjust padding as needed */}
                 <Routes>
                     {/* Public Routes */}
                     <Route path="/login" element={<LoginPage />} />
                     <Route path="/register" element={<RegisterPage />} />
 
-                    {/* Protected Routes (Protection logic primarily inside pages/context) */}
+                    {/* Protected Routes (Actual protection within components/AuthContext) */}
                     <Route path="/" element={<HomePage />} />
                     <Route path="/projects" element={<ProjectsPage />} />
                     <Route path="/projects/new" element={<ProjectCreatePage />} />
@@ -57,8 +52,9 @@ function App() {
                     <Route path="/users/new" element={<UserCreatePage />} />
                     <Route path="/users/edit/:userId" element={<UserEditPage />} />
                     <Route path="/shopping-list" element={<ShoppingListPage />} />
-                    {/* TODO: Add Gantt route */}
-
+                    {/* --- NEW Gantt Chart Route --- */}
+                    <Route path="/gantt" element={<GanttChartPage />} />
+                    {/* ---------------------------- */}
                     <Route path="*" element={<NotFoundPage />} />
                 </Routes>
             </main>
