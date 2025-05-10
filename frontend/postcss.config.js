@@ -1,9 +1,8 @@
 // frontend/postcss.config.js
+// Reverting to use @tailwindcss/postcss
 export default {
-    plugins: {
-      // Use the key matching the package name we just installed
-      '@tailwindcss/postcss': {},
-      // Keep autoprefixer as it's standard
-      'autoprefixer': {},
-    },
-  }
+  plugins: {
+    '@tailwindcss/postcss': {}, // Use this specific package key
+    'autoprefixer': {},
+  },
+}
