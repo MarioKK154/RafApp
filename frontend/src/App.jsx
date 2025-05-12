@@ -1,12 +1,8 @@
 // frontend/src/App.jsx
-// Uncondensed Version: Added react-toastify container
+// Uncondensed and Manually Checked
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
-
-// --- react-toastify Imports ---
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-// --- End Imports ---
+import { ToastContainer } from 'react-toastify'; // ToastContainer imported here
 
 // Import Components
 import Navbar from './components/Navbar';
@@ -32,19 +28,14 @@ import ShoppingListPage from './pages/ShoppingListPage';
 import GanttChartPage from './pages/GanttChartPage';
 import NotFoundPage from './pages/NotFoundPage';
 
-
 function App() {
     return (
         <>
-            {/* Navbar stays at the top */}
             <Navbar />
-
-            {/* --- Toast Container (Add Once) --- */}
-            {/* Place it preferably high in the component tree but inside main div/fragment */}
-            {/* Configure position, autoClose time (ms), etc. */}
+            {/* ToastContainer for displaying notifications */}
             <ToastContainer
                 position="top-right"
-                autoClose={4000}
+                autoClose={4000} // Toasts disappear after 4 seconds
                 hideProgressBar={false}
                 newestOnTop={false}
                 closeOnClick
@@ -52,19 +43,15 @@ function App() {
                 pauseOnFocusLoss
                 draggable
                 pauseOnHover
-                theme="colored"
-             />
-            {/* --- End Toast Container --- */}
-
-
-            {/* Main content area */}
-            <main className="pt-4">
+                theme="colored" // Options: "light", "dark", "colored"
+            />
+            <main className="pt-4"> {/* Padding top to prevent overlap with sticky navbar */}
                 <Routes>
                     {/* Public Routes */}
                     <Route path="/login" element={<LoginPage />} />
                     <Route path="/register" element={<RegisterPage />} />
 
-                    {/* Protected Routes */}
+                    {/* Authenticated Routes (actual protection inside components/AuthContext) */}
                     <Route path="/" element={<HomePage />} />
                     <Route path="/projects" element={<ProjectsPage />} />
                     <Route path="/projects/new" element={<ProjectCreatePage />} />
@@ -82,6 +69,7 @@ function App() {
                     <Route path="/shopping-list" element={<ShoppingListPage />} />
                     <Route path="/gantt" element={<GanttChartPage />} />
 
+                    {/* Catch-all for 404 Not Found */}
                     <Route path="*" element={<NotFoundPage />} />
                 </Routes>
             </main>

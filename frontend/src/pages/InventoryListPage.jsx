@@ -1,10 +1,11 @@
 // frontend/src/pages/InventoryListPage.jsx
-// FINAL FINAL Corrected Version - Expanded all classNames
+// ABSOLUTELY FINAL Corrected Version - ALL classNames expanded
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import axiosInstance from '../api/axiosInstance';
-import { toast } from 'react-toastify'; // Assuming toast is configured
+import Modal from '../components/Modal';
+import { toast } from 'react-toastify';
 
 function InventoryListPage() {
   const [items, setItems] = useState([]);
@@ -14,6 +15,8 @@ function InventoryListPage() {
   const navigate = useNavigate();
   const [editedNeededQuantities, setEditedNeededQuantities] = useState({});
   const [itemUpdateError, setItemUpdateError] = useState({});
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState(null);
 
   const canManageInventory = user && ['admin', 'project manager'].includes(user.role);
   const canUpdateNeededQty = user && ['admin', 'project manager', 'team leader'].includes(user.role);
@@ -51,37 +54,36 @@ function InventoryListPage() {
     fetchItems();
   }, [fetchItems]);
 
-  const handleDelete = async (itemId, itemName) => {
+  const handleDeleteClick = (item) => {
     if (!canManageInventory) {
-        toast.error("You don't have permission to delete items.");
+        toast.error("You don't have permission to delete inventory items.");
         return;
     }
-    if (!window.confirm(`Are you sure you want to delete "${itemName}"?`)) {
-      return;
-    }
+    setItemToDelete(item);
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDeleteItem = async () => {
+    if (!itemToDelete) return;
+    setError('');
     try {
-      setError('');
-      await axiosInstance.delete(`/inventory/${itemId}`);
-      toast.success(`Item "${itemName}" deleted successfully.`);
-      setItems(currentItems => currentItems.filter(item => item.id !== itemId));
+        await axiosInstance.delete(`/inventory/${itemToDelete.id}`);
+        toast.success(`Item "${itemToDelete.name}" deleted successfully.`);
+        fetchItems();
     } catch (err) {
-      console.error("Error deleting inventory item:", err);
-      const errorMsg = err.response?.data?.detail || 'Failed to delete item.';
-      setError(errorMsg);
-      toast.error(errorMsg);
+        console.error("Error deleting inventory item:", err);
+        const errorMsg = err.response?.data?.detail || 'Failed to delete item.';
+        setError(errorMsg); // Set list-level error
+        toast.error(errorMsg);
+    } finally {
+        setIsDeleteModalOpen(false);
+        setItemToDelete(null);
     }
   };
 
   const handleNeededQtyChange = (itemId, value) => {
-      setEditedNeededQuantities(prev => ({
-          ...prev,
-          [itemId]: value
-      }));
-      setItemUpdateError(prev => {
-          const newErrors = {...prev};
-          delete newErrors[itemId];
-          return newErrors;
-      });
+      setEditedNeededQuantities(prev => ({ ...prev, [itemId]: value }));
+      setItemUpdateError(prev => { const n = {...prev}; delete n[itemId]; return n; });
   };
 
   const handleUpdateNeededQty = async (itemId) => {
@@ -125,14 +127,18 @@ function InventoryListPage() {
      return (
         <div className="min-h-screen flex flex-col justify-center items-center text-center p-6">
             <p className="text-red-600 mb-4">{error || 'Please log in to view inventory.'}</p>
-            <Link to="/login" className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition duration-200">
+            <Link
+                to="/login"
+                className="px-4 py-2 bg-blue-600 text-white rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-200"
+            >
                 Go to Login
             </Link>
         </div>
      );
   }
 
-  if (error && !isLoading) { // Display general list error if it exists
+  // Display general list error if it exists
+  if (error && !isLoading) {
      return (
         <div className="container mx-auto p-6 text-center text-red-500">
             <p>{error}</p>
@@ -164,7 +170,7 @@ function InventoryListPage() {
                         <th scope="col" className="py-3 px-6">Name</th>
                         <th scope="col" className="py-3 px-6">In Stock</th>
                         <th scope="col" className="py-3 px-6">Needed</th>
-                        {canUpdateNeededQty && <th scope="col" className="py-3 px-6 min-w-[150px]">Update Needed Qty</th>}
+                        {canUpdateNeededQty && <th scope="col" className="py-3 px-6 min-w-[160px]">Update Needed Qty</th>} {/* Adjusted min-width */}
                         <th scope="col" className="py-3 px-6">Unit</th>
                         <th scope="col" className="py-3 px-6">Location</th>
                         <th scope="col" className="py-3 px-6">Description</th>
@@ -182,13 +188,13 @@ function InventoryListPage() {
                             <td className="py-4 px-6">{item.quantity_needed}</td>
                             {canUpdateNeededQty && (
                                 <td className="py-4 px-6">
-                                    <div className="flex items-start space-x-1">
+                                    <div className="flex items-start space-x-1"> {/* Changed to items-start */}
                                         <input
                                             type="number"
                                             step="any"
                                             value={editedNeededQuantities[item.id] ?? ''}
                                             onChange={(e) => handleNeededQtyChange(item.id, e.target.value)}
-                                            className={`w-20 px-2 py-1 border rounded text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${itemUpdateError[item.id] ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}`}
+                                            className={`w-20 px-2 py-1 border rounded text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${itemUpdateError[item.id] ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-gray-300 dark:border-gray-600 focus:ring-indigo-500 focus:border-indigo-500'}`}
                                             aria-label={`Needed quantity for ${item.name}`}
                                         />
                                         <button
@@ -216,7 +222,7 @@ function InventoryListPage() {
                             {canManageInventory && (
                                 <td className="py-4 px-6 flex space-x-2">
                                     <Link to={`/inventory/edit/${item.id}`} className="font-medium text-yellow-500 dark:text-yellow-400 hover:underline">Edit</Link>
-                                    <button onClick={() => handleDelete(item.id, item.name)} className="font-medium text-red-600 dark:text-red-500 hover:underline">Delete</button>
+                                    <button onClick={() => handleDeleteClick(item)} className="font-medium text-red-600 dark:text-red-500 hover:underline">Delete</button>
                                 </td>
                             )}
                         </tr>
@@ -225,6 +231,16 @@ function InventoryListPage() {
             </table>
         </div>
       )}
+       <Modal
+        isOpen={isDeleteModalOpen}
+        onClose={() => { setIsDeleteModalOpen(false); setItemToDelete(null); }}
+        onConfirm={confirmDeleteItem}
+        title="Confirm Item Deletion"
+      >
+        Are you sure you want to delete the inventory item
+        <strong className="font-semibold"> "{itemToDelete?.name}"</strong>?
+        This action cannot be undone.
+      </Modal>
     </div>
   );
 }

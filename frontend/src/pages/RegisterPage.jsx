@@ -1,62 +1,69 @@
 // frontend/src/pages/RegisterPage.jsx
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom'; // Import useNavigate
-import axios from 'axios'; // Import axios
+// Uncondensed and Refactored with Single Return
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import axiosInstance from '../api/axiosInstance'; // Changed to axiosInstance
+import { toast } from 'react-toastify';
+import { useAuth } from '../context/AuthContext'; // For redirect if logged in
 
 function RegisterPage() {
-  // State for form inputs
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  // State for handling messages (success or error)
-  const [message, setMessage] = useState('');
-  const [isError, setIsError] = useState(false);
-
-  // Hook for navigation
+  const [error, setError] = useState(''); // For form-specific errors
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
+  const { isAuthenticated, isLoading: authIsLoading } = useAuth();
 
-  // Handle form submission
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (!authIsLoading && isAuthenticated) {
+      navigate('/', { replace: true });
+    }
+  }, [isAuthenticated, authIsLoading, navigate]);
+
+
   const handleSubmit = async (event) => {
-    event.preventDefault(); // Prevent default page reload
-    setMessage(''); // Clear previous messages
-    setIsError(false);
+    event.preventDefault();
+    setError('');
+    setIsSubmitting(true);
 
-    // Prepare JSON data matching the backend's UserCreate schema
-    const registrationData = {
-      email: email,
-      password: password,
-      full_name: fullName,
-    };
+    // Basic password validation example
+    if (password.length < 8) {
+        setError('Password must be at least 8 characters long.');
+        toast.error('Password must be at least 8 characters long.');
+        setIsSubmitting(false);
+        return;
+    }
+
+    const registrationData = { email: email, password: password, full_name: fullName };
 
     try {
-      // Make POST request to the backend /auth/register endpoint
-      const response = await axios.post(
-        'http://localhost:8000/auth/register', // Your backend URL
-        registrationData
-        // No specific headers needed, axios defaults to application/json for objects
-      );
-
-      // Handle successful registration
-      console.log('Registration successful:', response.data);
-      setMessage('Registration successful! Redirecting to login...');
-      setIsError(false);
-
-      // Redirect to login page after a short delay
-      setTimeout(() => {
-        navigate('/login');
-      }, 2000); // 2-second delay
-
+      await axiosInstance.post('/auth/register', registrationData); // Changed to axiosInstance & relative path
+      toast.success('Registration successful! Please log in.');
+      navigate('/login');
     } catch (err) {
-      // Handle registration errors
       console.error('Registration error:', err);
-      setIsError(true);
-      if (err.response && err.response.data && err.response.data.detail) {
-        setMessage(err.response.data.detail); // Show error from backend (e.g., "Email already registered")
-      } else {
-        setMessage('Registration failed. Please try again.');
-      }
+      const errorMsg = err.response?.data?.detail || 'Registration failed. Please try again.';
+      setError(errorMsg); // Set local form error
+      toast.error(errorMsg);
+      setIsSubmitting(false); // Re-enable form on error
     }
   };
+
+  // --- Render Logic ---
+
+  if (authIsLoading) {
+    return (
+        <div className="min-h-screen flex justify-center items-center">
+            <p className="text-xl text-gray-500 dark:text-gray-400">Loading...</p>
+        </div>
+    );
+  }
+  // If already authenticated, redirect handled by useEffect, return null or placeholder
+  if (isAuthenticated) {
+      return null; // Or "Redirecting..."
+  }
 
   return (
     <div className="min-h-screen flex flex-col justify-center items-center p-6 bg-gray-100 dark:bg-gray-900">
@@ -64,99 +71,34 @@ function RegisterPage() {
         <h1 className="text-3xl font-bold text-center text-gray-900 dark:text-white">
           Create your RafApp Account
         </h1>
-
-        {/* Display success or error message */}
-        {message && (
-          <div
-            className={`p-3 text-sm rounded-md ${
-              isError
-                ? 'text-red-700 bg-red-100 dark:bg-red-900 dark:text-red-300'
-                : 'text-green-700 bg-green-100 dark:bg-green-900 dark:text-green-300'
-            }`}
-            role="alert"
-          >
-            {message}
+        {/* Display form-specific error message */}
+        {error && (
+          <div className="p-3 text-sm text-red-700 bg-red-100 dark:bg-red-900 dark:text-red-300 rounded-md" role="alert">
+            {error}
           </div>
         )}
-
-        {/* Registration Form */}
         <form className="space-y-6" onSubmit={handleSubmit}>
           <div>
-            <label
-              htmlFor="fullName"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-            >
-              Full Name
-            </label>
-            <input
-              id="fullName"
-              name="fullName"
-              type="text"
-              autoComplete="name"
-              required
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              placeholder="Your Name"
-            />
+            <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Full Name</label>
+            <input id="fullName" name="fullName" type="text" autoComplete="name" required value={fullName} onChange={(e) => setFullName(e.target.value)} disabled={isSubmitting} className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50" placeholder="Your Name"/>
           </div>
-
           <div>
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-            >
-              Email address
-            </label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              autoComplete="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              placeholder="you@example.com"
-            />
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Email address</label>
+            <input id="email" name="email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} disabled={isSubmitting} className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50" placeholder="you@example.com"/>
           </div>
-
           <div>
-            <label
-              htmlFor="password"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-            >
-              Password
-            </label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              autoComplete="new-password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              placeholder="Create a password"
-            />
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
+            <input id="password" name="password" type="password" autoComplete="new-password" required value={password} onChange={(e) => setPassword(e.target.value)} disabled={isSubmitting} className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50" placeholder="Min 8 characters"/>
           </div>
-
           <div>
-            <button
-              type="submit"
-              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800"
-            >
-              Create Account
+            <button type="submit" disabled={isSubmitting} className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800 disabled:opacity-50">
+              {isSubmitting ? 'Creating Account...' : 'Create Account'}
             </button>
           </div>
         </form>
-
         <p className="text-sm text-center text-gray-600 dark:text-gray-400">
           Already have an account?{' '}
-          <Link
-            to="/login"
-            className="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
-          >
+          <Link to="/login" className="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300">
             Sign in
           </Link>
         </p>
@@ -164,5 +106,4 @@ function RegisterPage() {
     </div>
   );
 }
-
 export default RegisterPage;

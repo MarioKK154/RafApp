@@ -1,162 +1,213 @@
 // frontend/src/pages/InventoryEditPage.jsx
-import React, { useState, useEffect } from 'react';
+// ABSOLUTELY FINAL Corrected Version - Strict Formatting, Expanded JSX
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import axiosInstance from '../api/axiosInstance';
 import { useAuth } from '../context/AuthContext';
+import { toast } from 'react-toastify';
+
+const formatDateForInput = (dateString) => {
+    if (!dateString) return '';
+    try {
+        const d = new Date(dateString);
+        return isNaN(d.getTime()) ? '' : d.toISOString().split('T')[0];
+    } catch (e) {
+        console.error("Error formatting date for input:", dateString, e);
+        return '';
+    }
+};
 
 function InventoryEditPage() {
-  const { itemId } = useParams(); // Get item ID from URL
+  const { itemId } = useParams();
   const navigate = useNavigate();
-  const { isAuthenticated, isLoading: authIsLoading } = useAuth();
+  const { user, isAuthenticated, isLoading: authIsLoading } = useAuth();
   const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    quantity: 0,
-    unit: '',
-    location: '',
-    low_stock_threshold: '',
+    name: '', description: '', quantity: 0, quantity_needed: 0, unit: '',
+    location: '', low_stock_threshold: '', shop_url_1: '', shop_url_2: '', shop_url_3: '',
   });
-  const [isLoading, setIsLoading] = useState(true); // Loading item data
+  const [isLoadingData, setIsLoadingData] = useState(true);
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Fetch item data
-  useEffect(() => {
+  const canManageInventory = user && ['admin', 'project manager'].includes(user.role);
+
+  const fetchItemData = useCallback(() => {
     if (!authIsLoading && isAuthenticated && itemId) {
-      setIsLoading(true);
+      if (!canManageInventory) { // Check permission before fetching
+        setError('You do not have permission to edit inventory items.');
+        setIsLoadingData(false);
+        return;
+      }
+      setIsLoadingData(true);
       setError('');
       axiosInstance.get(`/inventory/${itemId}`)
         .then(response => {
           const item = response.data;
           setFormData({
-            name: item.name || '',
-            description: item.description || '',
-            // Ensure numbers are numbers, handle nulls for optional fields
-            quantity: item.quantity ?? 0,
-            unit: item.unit || '',
-            location: item.location || '',
-            low_stock_threshold: item.low_stock_threshold ?? '', // Keep as string for input, convert on submit
+            name: item.name ?? '', description: item.description ?? '',
+            quantity: item.quantity ?? 0, quantity_needed: item.quantity_needed ?? 0,
+            unit: item.unit ?? '', location: item.location ?? '',
+            low_stock_threshold: item.low_stock_threshold ?? '',
+            shop_url_1: item.shop_url_1 ?? '', shop_url_2: item.shop_url_2 ?? '', shop_url_3: item.shop_url_3 ?? '',
           });
         })
         .catch(err => {
           console.error("Error fetching inventory item data:", err);
-          setError(err.response?.status === 404 ? 'Item not found.' : 'Failed to load item data.');
+          const errorMsg = err.response?.status === 404 ? 'Inventory item not found.' : 'Failed to load item data.';
+          setError(errorMsg);
+          toast.error(errorMsg);
         })
         .finally(() => {
-          setIsLoading(false);
+          setIsLoadingData(false);
         });
     } else if (!authIsLoading && !isAuthenticated) {
-      navigate('/login');
+      navigate('/login', { replace: true });
+    } else if (!authIsLoading && !itemId) {
+        setError("Item ID is missing.");
+        setIsLoadingData(false);
     }
-  }, [itemId, isAuthenticated, authIsLoading, navigate]);
+  }, [itemId, isAuthenticated, authIsLoading, canManageInventory, navigate]);
 
-  // Handle input changes
+  useEffect(() => {
+    fetchItemData();
+  }, [fetchItemData]);
+
   const handleChange = (e) => {
     const { name, value, type } = e.target;
     setFormData(prevData => ({
       ...prevData,
-      [name]: type === 'number' ? parseFloat(value) : value, // Use parseFloat for number inputs
+      [name]: type === 'number' ? (value === '' ? '' : parseFloat(value)) : value,
     }));
   };
 
-  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!canManageInventory) {
+        toast.error("You don't have permission to edit items.");
+        return;
+    }
     setError('');
     setIsSubmitting(true);
-
-    // Prepare data, converting threshold to float or null
     const dataToSend = {
-        ...formData,
-        quantity: parseFloat(formData.quantity) || 0, // Ensure number
-        low_stock_threshold: formData.low_stock_threshold ? parseFloat(formData.low_stock_threshold) : null,
+      name: formData.name, // Name is required by schema
+      description: formData.description || null,
+      quantity: parseFloat(formData.quantity) || 0,
+      quantity_needed: parseFloat(formData.quantity_needed) || 0,
+      unit: formData.unit || null,
+      location: formData.location || null,
+      low_stock_threshold: formData.low_stock_threshold === '' || formData.low_stock_threshold === null ? null : parseFloat(formData.low_stock_threshold),
+      shop_url_1: formData.shop_url_1 || null,
+      shop_url_2: formData.shop_url_2 || null,
+      shop_url_3: formData.shop_url_3 || null,
     };
 
     try {
-      await axiosInstance.put(`/inventory/${itemId}`, dataToSend);
-      navigate('/inventory'); // Navigate back to inventory list
+      const response = await axiosInstance.put(`/inventory/${itemId}`, dataToSend);
+      toast.success(`Item "${response.data.name}" updated successfully!`);
+      navigate('/inventory');
     } catch (err) {
-      console.error("Error updating inventory item:", err);
-      setError(err.response?.data?.detail || 'Failed to update item.');
+      console.error("Error updating item:", err);
+      const msg = err.response?.data?.detail || 'Failed to update item. Please check your inputs.';
+      setError(msg);
+      toast.error(msg);
       setIsSubmitting(false);
     }
   };
 
-  // Render Logic
-  if (authIsLoading || isLoading) return <p>Loading item details...</p>;
+  // --- Render Logic ---
+  if (authIsLoading || isLoadingData) {
+    return (
+        <div className="container mx-auto p-6 text-center">
+            <p className="text-xl text-gray-500 dark:text-gray-400">Loading item details...</p>
+        </div>
+    );
+  }
 
-  if (error && error.includes('not found')) {
-     return <div className="container mx-auto p-6 text-red-500">{error} <Link to="/inventory" className="text-blue-500 underline">Go Back</Link></div>;
+  if (!isAuthenticated) {
+    // This case should ideally be handled by redirection in useEffect
+    return (
+        <div className="container mx-auto p-6 text-center">
+            <p className="text-red-600 mb-4">Please log in to continue.</p>
+            <Link to="/login" className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Go to Login</Link>
+        </div>
+    );
+  }
+
+  if (!canManageInventory) {
+     return (
+        <div className="container mx-auto p-6 text-center text-red-500">
+            <p>{error || "Access Denied. You don't have permission to edit inventory items."}</p>
+            <Link to="/inventory" className="text-blue-500 underline ml-2">Back to Inventory</Link>
+        </div>
+     );
+  }
+
+  if (error && (error.includes('not found') || error.includes('Failed to load'))) {
+     return (
+         <div className="container mx-auto p-6 text-center text-red-500">
+             {error}
+             <Link to="/inventory" className="text-blue-500 underline ml-2">Back to Inventory</Link>
+        </div>
+     );
   }
 
   return (
     <div className="container mx-auto p-4 md:p-6">
-      <h1 className="text-2xl font-bold mb-6 text-gray-800 dark:text-white">Edit Inventory Item</h1>
+      <h1 className="text-2xl font-bold mb-6 text-gray-800 dark:text-white">Edit Inventory Item: {formData.name || "Loading..."}</h1>
 
-      {error && !error.includes('not found') && <p className="text-red-500 mb-4 bg-red-100 dark:bg-red-900 dark:text-red-300 p-3 rounded">{error}</p>}
+      {error && !error.toLowerCase().includes('not found') && (
+        <p className="text-red-500 mb-4 bg-red-100 dark:bg-red-900 dark:text-red-300 p-3 rounded">{error}</p>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-4 max-w-lg bg-white dark:bg-gray-800 p-6 rounded shadow-md">
         {/* Item Name */}
         <div>
           <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Item Name <span className="text-red-500">*</span></label>
-          <input
-            type="text" name="name" id="name" required
-            value={formData.name} onChange={handleChange}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-          />
+          <input type="text" name="name" id="name" required value={formData.name} onChange={handleChange} disabled={isSubmitting} className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-70"/>
         </div>
-
         {/* Description */}
         <div>
           <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Description</label>
-          <textarea
-            name="description" id="description" rows="2"
-            value={formData.description} onChange={handleChange}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-          ></textarea>
+          <textarea name="description" id="description" rows="2" value={formData.description} onChange={handleChange} disabled={isSubmitting} className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-70"></textarea>
         </div>
-
-         {/* Quantity */}
+        {/* Quantity */}
         <div>
-          <label htmlFor="quantity" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Quantity</label>
-          <input
-            type="number" name="quantity" id="quantity" step="any"
-            value={formData.quantity} onChange={handleChange}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-          />
+          <label htmlFor="quantity" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Quantity (In Stock)</label>
+          <input type="number" name="quantity" id="quantity" step="any" value={formData.quantity} onChange={handleChange} disabled={isSubmitting} className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-70"/>
         </div>
-
-         {/* Unit */}
+        {/* Quantity Needed */}
+        <div>
+          <label htmlFor="quantity_needed" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Quantity Needed</label>
+          <input type="number" name="quantity_needed" id="quantity_needed" step="any" value={formData.quantity_needed} onChange={handleChange} disabled={isSubmitting} className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-70"/>
+        </div>
+        {/* Unit */}
         <div>
           <label htmlFor="unit" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Unit</label>
-          <input
-            type="text" name="unit" id="unit"
-            value={formData.unit} onChange={handleChange}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-          />
+          <input type="text" name="unit" id="unit" value={formData.unit} onChange={handleChange} disabled={isSubmitting} className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-70"/>
         </div>
-
         {/* Location */}
         <div>
           <label htmlFor="location" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Location</label>
-          <input
-            type="text" name="location" id="location"
-            value={formData.location} onChange={handleChange}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-          />
+          <input type="text" name="location" id="location" value={formData.location} onChange={handleChange} disabled={isSubmitting} className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-70"/>
         </div>
-
         {/* Low Stock Threshold */}
         <div>
           <label htmlFor="low_stock_threshold" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Low Stock Threshold</label>
-          <input
-            type="number" name="low_stock_threshold" id="low_stock_threshold" step="any"
-            placeholder="Optional: Notify below this quantity"
-            value={formData.low_stock_threshold} onChange={handleChange}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-          />
+          <input type="number" name="low_stock_threshold" id="low_stock_threshold" step="any" value={formData.low_stock_threshold} onChange={handleChange} disabled={isSubmitting} className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-70" placeholder="Optional"/>
         </div>
-
+        {/* Shop URLs */}
+        <div>
+          <label htmlFor="shop_url_1" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Shop URL 1</label>
+          <input type="url" name="shop_url_1" id="shop_url_1" value={formData.shop_url_1} onChange={handleChange} disabled={isSubmitting} className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-70" placeholder="https://example.com/shop1"/>
+        </div>
+        <div>
+          <label htmlFor="shop_url_2" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Shop URL 2</label>
+          <input type="url" name="shop_url_2" id="shop_url_2" value={formData.shop_url_2} onChange={handleChange} disabled={isSubmitting} className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-70" placeholder="https://example.com/shop2"/>
+        </div>
+        <div>
+          <label htmlFor="shop_url_3" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Shop URL 3</label>
+          <input type="url" name="shop_url_3" id="shop_url_3" value={formData.shop_url_3} onChange={handleChange} disabled={isSubmitting} className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-70" placeholder="https://example.com/shop3"/>
+        </div>
 
         {/* Buttons */}
         <div className="flex justify-end space-x-3 pt-4">
