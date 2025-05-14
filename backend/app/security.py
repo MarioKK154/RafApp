@@ -94,5 +94,5 @@ def require_role(allowed_roles: List[str]):
 
 # Specific role dependencies (examples)
 require_admin = require_role(["admin"])
-require_manager = require_role(["admin", "manager"])
+require_manager = require_role(["admin", "project manager"])
 # require_employee = require_role(["admin", "manager", "employee"]) # Equivalent to get_current_active_user

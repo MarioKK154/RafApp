@@ -1,9 +1,9 @@
 // frontend/src/components/Navbar.jsx
-// Uncondensed and Manually Checked
+// Uncondensed Version: User greeting links to Account Settings
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import appLogo from '../assets/logo.png'; // Assuming your logo is here
+import appLogo from '../assets/logo.png'; // Assuming logo is in src/assets/
 
 function Navbar() {
     const { isAuthenticated, user, logout } = useAuth();
@@ -11,19 +11,17 @@ function Navbar() {
 
     const isAdmin = user && user.role === 'admin';
     const isManager = user && user.role === 'project manager';
-    // const isTeamLeader = user && user.role === 'team leader'; // For future use if needed
 
     const handleLogout = () => {
-        logout(); // Clears auth state and token
-        navigate('/login'); // Redirects to login page
+        logout();
+        navigate('/login');
     };
 
     return (
         <nav className="bg-white dark:bg-gray-800 shadow-md p-4 sticky top-0 z-50">
             <div className="container mx-auto flex justify-between items-center">
                 <Link to="/" className="flex items-center space-x-2" title="RafApp Home">
-                     <img src={appLogo} alt="RafApp Logo" className="h-7 w-auto" /> {/* Adjusted logo size */}
-                     {/* <span className="text-xl font-bold text-indigo-600 dark:text-indigo-300">RafApp</span> */}
+                     <img src={appLogo} alt="RafApp Logo" className="h-7 w-auto" />
                 </Link>
 
                 <div className="flex items-center space-x-2 md:space-x-3">
@@ -45,12 +43,18 @@ function Navbar() {
 
                     {isAuthenticated && user ? (
                         <>
-                            <span className="text-sm text-gray-500 dark:text-gray-400 hidden md:inline">
+                            {/* --- MODIFIED: User greeting is now a Link --- */}
+                            <Link
+                                to="/account-settings" // Link to the new page
+                                className="text-sm text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-300 hidden md:inline cursor-pointer"
+                                title="Account Settings"
+                            >
                                 Hi, {user.full_name || user.email}
-                            </span>
+                            </Link>
+                            {/* --- END MODIFICATION --- */}
                             <button
                                 onClick={handleLogout}
-                                className="text-sm md:text-base px-3 py-1 border border-gray-300 rounded-md shadow-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-600 hover:bg-gray-50 dark:hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                                className="text-sm md:text-base px-3 py-1 border border-gray-300 dark:border-gray-500 rounded-md shadow-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-600 hover:bg-gray-50 dark:hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                             >
                                 Logout
                             </button>
@@ -58,7 +62,7 @@ function Navbar() {
                     ) : (
                         <>
                             <Link to="/login" className="text-sm md:text-base text-gray-700 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-300">Login</Link>
-                            <Link to="/register" className="text-sm md:text-base text-gray-700 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-300">Register</Link>
+                            {/* Public registration link removed */}
                         </>
                     )}
                 </div>

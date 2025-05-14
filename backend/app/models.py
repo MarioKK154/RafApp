@@ -1,5 +1,5 @@
 # backend/app/models.py
-# Uncondensed Version: Added kennitala, phone_number, location to User
+# ABSOLUTELY FINAL Meticulously Checked Version - Corrected Comment Syntax
 from sqlalchemy import (
     Column, Integer, String, Boolean, DateTime, ForeignKey,
     Text, Float, Interval, Table
@@ -22,21 +22,19 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
     full_name = Column(String, index=True, nullable=True)
-    
-    # --- NEW User Fields ---
+    employee_id = Column(String, unique=True, index=True, nullable=True)
     kennitala = Column(String, unique=True, index=True, nullable=True)
     phone_number = Column(String, nullable=True)
     location = Column(String, nullable=True)
-    # --- End New User Fields ---
-    
     is_active = Column(Boolean, default=True)
     is_superuser = Column(Boolean, default=False)
-    role = Column(String, default="employee") # Roles: admin, project manager, team leader, electrician
+    role = Column(String, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
     # Relationships
-    projects_created = relationship("Project", back_populates="creator")
+    projects_created = relationship("Project", foreign_keys="[Project.creator_id]", back_populates="creator")
+    projects_managed = relationship("Project", foreign_keys="[Project.project_manager_id]", back_populates="project_manager")
     uploaded_drawings = relationship("Drawing", back_populates="uploader")
     time_logs = relationship("TimeLog", back_populates="user")
     assigned_projects = relationship(
@@ -59,11 +57,13 @@ class Project(Base):
     start_date = Column(DateTime(timezone=True), nullable=True)
     end_date = Column(DateTime(timezone=True), nullable=True)
     creator_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    project_manager_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
     # Relationships
-    creator = relationship("User", back_populates="projects_created")
+    creator = relationship("User", foreign_keys=[creator_id], back_populates="projects_created")
+    project_manager = relationship("User", foreign_keys=[project_manager_id], back_populates="projects_managed")
     tasks = relationship("Task", back_populates="project", cascade="all, delete-orphan")
     drawings = relationship("Drawing", back_populates="project", cascade="all, delete-orphan")
     members = relationship(
@@ -135,14 +135,14 @@ class TimeLog(Base):
     end_time = Column(DateTime(timezone=True), nullable=True)
     duration = Column(Interval, nullable=True)
     notes = Column(Text, nullable=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    project_id = Column(Integer, ForeignKey("projects.id"), nullable=True)
-    task_id = Column(Integer, ForeignKey("tasks.id"), nullable=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False) # Added ondelete for demo
+    project_id = Column(Integer, ForeignKey("projects.id", ondelete="SET NULL"), nullable=True) # Added ondelete for demo
+    task_id = Column(Integer, ForeignKey("tasks.id", ondelete="SET NULL"), nullable=True) # Added ondelete for demo
 
     # Relationships
     user = relationship("User", back_populates="time_logs")
-    project = relationship("Project") # No back_populates here if not navigating Project -> TimeLogs
-    task = relationship("Task")       # No back_populates here if not navigating Task -> TimeLogs
+    project = relationship("Project")
+    task = relationship("Task")
 
 class TaskComment(Base):
     __tablename__ = "task_comments"
@@ -151,7 +151,7 @@ class TaskComment(Base):
     content = Column(Text, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     task_id = Column(Integer, ForeignKey("tasks.id"), nullable=False)
-    author_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    author_id = Column(Integer, ForeignKey("users.id"), nullable=False) # Consider ondelete behavior
 
     # Relationships
     task = relationship("Task", back_populates="comments")
@@ -168,7 +168,7 @@ class TaskPhoto(Base):
     size_bytes = Column(Integer, nullable=True)
     uploaded_at = Column(DateTime(timezone=True), server_default=func.now())
     task_id = Column(Integer, ForeignKey("tasks.id"), nullable=False)
-    uploader_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    uploader_id = Column(Integer, ForeignKey("users.id"), nullable=False) # Consider ondelete behavior
 
     # Relationships
     task = relationship("Task", back_populates="photos")

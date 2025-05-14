@@ -1,28 +1,33 @@
 // frontend/src/pages/LoginPage.jsx
-// Uncondensed and Refactored with Single Return
+// Uncondensed and Refactored with Single Return, Toasts, and Debug Logs
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import axiosInstance from '../api/axiosInstance'; // Changed to axiosInstance
+import axiosInstance from '../api/axiosInstance';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
 
+console.log("LoginPage.jsx: Loaded");
+
 function LoginPage() {
+  console.log("LoginPage: Rendering component");
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState(''); // For form-specific errors
+  const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
   const { login, isAuthenticated, isLoading: authIsLoading } = useAuth();
 
-  // Redirect if already authenticated and auth check is done
   useEffect(() => {
+    console.log("LoginPage useEffect: authIsLoading=", authIsLoading, "isAuthenticated=", isAuthenticated);
     if (!authIsLoading && isAuthenticated) {
+      console.log("LoginPage useEffect: Authenticated, navigating to /");
       navigate('/', { replace: true });
     }
   }, [isAuthenticated, authIsLoading, navigate]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    console.log("LoginPage handleSubmit: Attempting login with email:", email);
     setError('');
     setIsSubmitting(true);
 
@@ -31,46 +36,47 @@ function LoginPage() {
     loginData.append('password', password);
 
     try {
-      const response = await axiosInstance.post( // Changed from global axios
-        '/auth/token', // Using relative path from axiosInstance baseURL
-        loginData,
-        { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
-      );
+      const response = await axiosInstance.post('/auth/token', loginData, {
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+      });
       const accessToken = response.data.access_token;
-      login(accessToken); // AuthContext handles setting token and fetching user
+      console.log("LoginPage handleSubmit: Token received:", accessToken ? "Yes" : "No");
+      login(accessToken); // Call context login
       toast.success('Login successful!');
-      navigate('/'); // Navigate after context handles login
+      // Navigation will be handled by AuthContext state change or can be done here if preferred
+      // navigate('/'); // Already navigating above based on isAuthenticated change via useEffect
     } catch (err) {
-      console.error('Login error:', err);
+      console.error('LoginPage handleSubmit: Login error:', err.response?.status, err.response?.data?.detail || err.message);
       const errorMsg = err.response?.data?.detail || 'Login failed. Please check credentials.';
-      setError(errorMsg); // Set local form error
+      setError(errorMsg);
       toast.error(errorMsg);
-      setIsSubmitting(false); // Re-enable form on error
+    } finally {
+        setIsSubmitting(false);
     }
   };
 
-  // --- Render Logic ---
-
   if (authIsLoading) {
+    console.log("LoginPage: Rendering 'Loading...' due to authIsLoading");
     return (
         <div className="min-h-screen flex justify-center items-center">
             <p className="text-xl text-gray-500 dark:text-gray-400">Loading...</p>
         </div>
     );
   }
-  // If already authenticated (and not loading), redirect handled by useEffect,
-  // but can return null or a message to prevent form flash.
+
+  // If already authenticated, useEffect will redirect. Return null to avoid flash of content.
   if (isAuthenticated) {
-      return null; // Or a "Redirecting..." message
+      console.log("LoginPage: Rendering null because already authenticated (should redirect soon)");
+      return null;
   }
 
+  console.log("LoginPage: Rendering login form");
   return (
     <div className="min-h-screen flex flex-col justify-center items-center p-6 bg-gray-100 dark:bg-gray-900">
       <div className="w-full max-w-md p-8 space-y-6 bg-white dark:bg-gray-800 rounded-lg shadow-md">
         <h1 className="text-3xl font-bold text-center text-gray-900 dark:text-white">
           Login to RafApp
         </h1>
-        {/* Display form-specific error message */}
         {error && (
           <div className="p-3 text-sm text-red-700 bg-red-100 dark:bg-red-900 dark:text-red-300 rounded-md" role="alert">
             {error}
@@ -107,15 +113,7 @@ function LoginPage() {
             </button>
           </div>
         </form>
-        <p className="text-sm text-center text-gray-600 dark:text-gray-400">
-          Don't have an account?{' '}
-          <Link
-            to="/register"
-            className="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
-          >
-            Register here
-          </Link>
-        </p>
+        {/* Public registration link removed */}
       </div>
     </div>
   );

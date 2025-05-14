@@ -1,16 +1,14 @@
 // frontend/src/App.jsx
-// Uncondensed and Manually Checked
+// Uncondensed Version: Added Account Settings Route
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
-import { ToastContainer } from 'react-toastify'; // ToastContainer imported here
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
-// Import Components
 import Navbar from './components/Navbar';
-
-// Import Page Components
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
+// import RegisterPage from './pages/RegisterPage'; // Removed
 import ProjectsPage from './pages/ProjectsPage';
 import ProjectCreatePage from './pages/ProjectCreatePage';
 import ProjectEditPage from './pages/ProjectEditPage';
@@ -26,32 +24,24 @@ import UserCreatePage from './pages/UserCreatePage';
 import UserEditPage from './pages/UserEditPage';
 import ShoppingListPage from './pages/ShoppingListPage';
 import GanttChartPage from './pages/GanttChartPage';
+import AccountSettingsPage from './pages/AccountSettingsPage'; // Import new page
 import NotFoundPage from './pages/NotFoundPage';
+
 
 function App() {
     return (
         <>
             <Navbar />
-            {/* ToastContainer for displaying notifications */}
             <ToastContainer
-                position="top-right"
-                autoClose={4000} // Toasts disappear after 4 seconds
-                hideProgressBar={false}
-                newestOnTop={false}
-                closeOnClick
-                rtl={false}
-                pauseOnFocusLoss
-                draggable
-                pauseOnHover
-                theme="colored" // Options: "light", "dark", "colored"
-            />
-            <main className="pt-4"> {/* Padding top to prevent overlap with sticky navbar */}
+                position="top-right" autoClose={4000} hideProgressBar={false}
+                newestOnTop={false} closeOnClick rtl={false}
+                pauseOnFocusLoss draggable pauseOnHover theme="colored"
+             />
+            <main className="pt-4">
                 <Routes>
-                    {/* Public Routes */}
                     <Route path="/login" element={<LoginPage />} />
-                    <Route path="/register" element={<RegisterPage />} />
+                    {/* <Route path="/register" element={<RegisterPage />} /> */}
 
-                    {/* Authenticated Routes (actual protection inside components/AuthContext) */}
                     <Route path="/" element={<HomePage />} />
                     <Route path="/projects" element={<ProjectsPage />} />
                     <Route path="/projects/new" element={<ProjectCreatePage />} />
@@ -68,8 +58,9 @@ function App() {
                     <Route path="/users/edit/:userId" element={<UserEditPage />} />
                     <Route path="/shopping-list" element={<ShoppingListPage />} />
                     <Route path="/gantt" element={<GanttChartPage />} />
-
-                    {/* Catch-all for 404 Not Found */}
+                    {/* --- NEW Account Settings Route --- */}
+                    <Route path="/account-settings" element={<AccountSettingsPage />} />
+                    {/* --------------------------------- */}
                     <Route path="*" element={<NotFoundPage />} />
                 </Routes>
             </main>

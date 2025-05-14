@@ -1,6 +1,6 @@
 // frontend/src/pages/ProjectCreatePage.jsx
 // Uncondensed and Refactored with Single Return & Toasts
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axiosInstance from '../api/axiosInstance';
 import { useAuth } from '../context/AuthContext';
@@ -8,7 +8,7 @@ import { toast } from 'react-toastify';
 
 function ProjectCreatePage() {
   const navigate = useNavigate();
-  const { user, isAuthenticated, isLoading: authIsLoading } = useAuth();
+  const { user: currentUser, isAuthenticated, isLoading: authIsLoading } = useAuth();
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -16,46 +16,77 @@ function ProjectCreatePage() {
     status: 'Planning', // Default status
     start_date: '',
     end_date: '',
+    project_manager_id: '', // Initialize as empty string for select
   });
-  const [error, setError] = useState(''); // For form-level validation errors
+  const [error, setError] = useState(''); // For form submission errors
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const canManageProjects = user && ['admin', 'project manager'].includes(user.role);
+  const [projectManagers, setProjectManagers] = useState([]);
+  const [pmLoadingError, setPmLoadingError] = useState('');
 
-  // Effect for redirecting if not authenticated or not permitted (after auth check)
+  const canManageProjects = currentUser && ['admin', 'project manager'].includes(currentUser.role);
+
+  // Fetch users with 'project manager' role
+  const fetchProjectManagers = useCallback(() => {
+    if (!authIsLoading && isAuthenticated && canManageProjects) {
+        setPmLoadingError('');
+        axiosInstance.get('/users/')
+            .then(response => {
+                const pms = response.data.filter(user => user.role === 'project manager');
+                setProjectManagers(pms);
+                if (pms.length === 0) {
+                    setPmLoadingError('No "Project Manager" role users found to assign. You can still create the project.');
+                    // Not using toast here as it's informational for an empty dropdown
+                }
+            })
+            .catch(err => {
+                console.error("Error fetching project managers:", err);
+                setPmLoadingError('Could not load project managers list.');
+                toast.error('Could not load project managers for selection.');
+            });
+    }
+  }, [isAuthenticated, authIsLoading, canManageProjects]); // Removed formData from deps
+
+  // Effect for initial data loading and permission checks
   useEffect(() => {
-    if (!authIsLoading) { // Only run after auth status is resolved
+    if (!authIsLoading) {
       if (!isAuthenticated) {
-        toast.error("You must be logged in to create a project.");
+        toast.error("You must be logged in to access this page.");
         navigate('/login', { replace: true });
       } else if (!canManageProjects) {
-        toast.error("You don't have permission to create projects.");
-        navigate('/', { replace: true }); // Redirect to home or a 'forbidden' page
+        toast.error("Access Denied: You do not have permission to create projects.");
+        navigate('/', { replace: true }); // Redirect to home or a suitable page
+      } else {
+        fetchProjectManagers(); // Fetch PMs if authorized
       }
     }
-  }, [isAuthenticated, authIsLoading, canManageProjects, navigate]);
+  }, [isAuthenticated, authIsLoading, canManageProjects, navigate, fetchProjectManagers]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prevData => ({
       ...prevData,
-      [name]: value, // Dates will be strings from input, backend handles parsing
+      [name]: value, // Dates and PM ID will be strings from form, backend handles parsing/conversion
     }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!canManageProjects) { // Double check permission
-        toast.error("You don't have permission to create projects.");
+    if (!canManageProjects) { // Final check
+        toast.error("You do not have permission to perform this action.");
         return;
     }
     setError(''); // Clear previous form errors
     setIsSubmitting(true);
 
     const dataToSend = {
-        ...formData,
-        start_date: formData.start_date || null, // Send null if empty
-        end_date: formData.end_date || null,   // Send null if empty
+        name: formData.name,
+        description: formData.description || null,
+        address: formData.address || null,
+        status: formData.status,
+        start_date: formData.start_date || null,
+        end_date: formData.end_date || null,
+        project_manager_id: formData.project_manager_id ? parseInt(formData.project_manager_id, 10) : null,
     };
 
     try {
@@ -64,32 +95,31 @@ function ProjectCreatePage() {
       navigate('/projects'); // Navigate to projects list on success
     } catch (err) {
       console.error("Error creating project:", err);
-      const errorMsg = err.response?.data?.detail || 'Failed to create project. Please check your input.';
+      const errorMsg = err.response?.data?.detail || 'Failed to create project. Please check your inputs.';
       setError(errorMsg); // Display error on form
       toast.error(errorMsg);
-      setIsSubmitting(false); // Re-enable form only on error
+    } finally {
+        setIsSubmitting(false);
     }
-    // setIsSubmitting(false) is not in a finally block because navigation happens on success
   };
 
   // --- Render Logic ---
 
-  // Show loading if auth state is still being determined
   if (authIsLoading) {
      return (
         <div className="container mx-auto p-6 text-center">
-             <p className="text-xl text-gray-500 dark:text-gray-400">Loading...</p>
+             <p className="text-xl text-gray-500 dark:text-gray-400">Loading authentication...</p>
         </div>
      );
   }
 
-  // If user is not authenticated or doesn't have permission,
-  // useEffect will redirect, but we can return null or a message here
-  // to prevent rendering the form prematurely or if redirect fails.
+  // If user is not authenticated or not permitted, useEffect handles redirection.
+  // This is a fallback or for the brief moment before redirect.
   if (!isAuthenticated || !canManageProjects) {
       return (
           <div className="container mx-auto p-6 text-center text-red-500">
-              <p>Access Denied. Redirecting...</p>
+              <p>{error || "Access Denied or not authenticated. Redirecting..."}</p>
+              <Link to="/" className="text-blue-500 underline ml-2">Go Home</Link>
           </div>
       );
   }
@@ -99,10 +129,14 @@ function ProjectCreatePage() {
     <div className="container mx-auto p-4 md:p-6">
       <h1 className="text-2xl font-bold mb-6 text-gray-800 dark:text-white">Create New Project</h1>
 
-      {/* Display form submission errors */}
       {error && (
         <div className="mb-4 p-3 text-sm text-red-700 bg-red-100 dark:bg-red-900 dark:text-red-300 rounded-md" role="alert">
             {error}
+        </div>
+      )}
+      {pmLoadingError && (
+         <div className="mb-4 p-3 text-sm text-orange-700 bg-orange-100 dark:bg-orange-900 dark:text-orange-300 rounded-md" role="alert">
+            {pmLoadingError}
         </div>
       )}
 
@@ -135,6 +169,29 @@ function ProjectCreatePage() {
             value={formData.address} onChange={handleChange} disabled={isSubmitting}
             className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-70"
           />
+        </div>
+        
+        {/* Project Manager Dropdown */}
+        <div>
+            <label htmlFor="project_manager_id" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Project Manager</label>
+            <select
+                name="project_manager_id"
+                id="project_manager_id"
+                value={formData.project_manager_id}
+                onChange={handleChange}
+                disabled={isSubmitting || projectManagers.length === 0}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-70"
+            >
+                <option value="">-- Assign PM (Optional) --</option>
+                {projectManagers.map(pm => (
+                    <option key={pm.id} value={pm.id.toString()}>
+                        {pm.full_name || pm.email}
+                    </option>
+                ))}
+            </select>
+            {projectManagers.length === 0 && !pmLoadingError &&
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">No "Project Manager" role users found to assign.</p>
+            }
         </div>
 
         {/* Status */}
@@ -171,10 +228,10 @@ function ProjectCreatePage() {
              className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-70"
            />
          </div>
-
+        
         {/* Buttons */}
         <div className="flex justify-end space-x-3 pt-4">
-           <Link to="/projects" className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-600 hover:bg-gray-50 dark:hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+           <Link to="/projects" className="px-4 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-600 hover:bg-gray-50 dark:hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
              Cancel
            </Link>
           <button

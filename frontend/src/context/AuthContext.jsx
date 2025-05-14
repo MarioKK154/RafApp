@@ -1,99 +1,116 @@
 // frontend/src/context/AuthContext.jsx
-import React, { createContext, useState, useContext, useEffect } from 'react';
-// Import the configured axios instance
-import axiosInstance from '../api/axiosInstance';
+// Uncondensed and Manually Checked - Latest Version with Debug Logs
+import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
+import axiosInstance from '../api/axiosInstance'; // Use our configured instance
+import { toast } from 'react-toastify'; // For logout toast
 
-// Create the context
 const AuthContext = createContext(null);
+console.log("AuthContext.jsx: Context created at module level");
 
-// Create the provider component
 export const AuthProvider = ({ children }) => {
-  const [token, setToken] = useState(localStorage.getItem('accessToken') || null);
+  console.log("AuthProvider: Component rendering or re-rendering");
+
+  // Initialize state from localStorage only once
+  const [token, setToken] = useState(() => {
+    const storedToken = localStorage.getItem('accessToken');
+    console.log("AuthProvider initial useState for token, from localStorage:", storedToken ? "Token found" : "No token");
+    return storedToken;
+  });
   const [user, setUser] = useState(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    const hasToken = !!localStorage.getItem('accessToken');
+    console.log("AuthProvider initial useState for isAuthenticated:", hasToken);
+    return hasToken;
+  });
+  // isLoading will be true until the initial user fetch attempt is complete
   const [isLoading, setIsLoading] = useState(true);
 
-  // Function to fetch user data using the token (via axiosInstance)
-  const fetchUser = async (currentToken) => {
-    console.log('AuthContext: fetchUser called with token:', currentToken);
-    // We still check currentToken here, because the interceptor only adds
-    // the header if a token exists in localStorage when the request is made.
-    // If fetchUser is called right after login before the token state might
-    // have fully propagated, checking here ensures we don't make the call needlessly.
-    // However, the interceptor is the primary mechanism for adding the header.
+
+  const fetchUser = useCallback(async (currentToken) => {
+    console.log('AuthContext: fetchUser CALLED with token:', currentToken ? "Exists" : "NULL");
     if (!currentToken) {
-        setIsAuthenticated(false);
+        console.log('AuthContext: fetchUser - no token provided, clearing auth state.');
+        setToken(null);
         setUser(null);
-        setIsLoading(false);
+        setIsAuthenticated(false);
+        setIsLoading(false); // Stop loading if no token
+        localStorage.removeItem('accessToken'); // Ensure it's cleared
         return;
     }
-    try {
-      // Use axiosInstance - the interceptor will add the token header
-      const response = await axiosInstance.get('/users/me'); // Path relative to baseURL
 
-      console.log('AuthContext: fetchUser success, setting user:', response.data);
+    // Don't reset isLoading to true here if it's part of an ongoing process
+    // The initial isLoading(true) should cover the first fetch.
+    // Subsequent calls might happen if token changes.
+
+    try {
+      console.log('AuthContext: fetchUser - attempting to GET /users/me');
+      const response = await axiosInstance.get('/users/me'); // Interceptor adds the currentToken implicitly
+      console.log('AuthContext: fetchUser - SUCCESS, user data:', response.data);
       setUser(response.data);
       setIsAuthenticated(true);
     } catch (error) {
-      console.error('AuthContext: fetchUser error:', error);
-      // The response interceptor might handle 401s globally,
-      // but we still need to clear local state here.
+      console.error('AuthContext: fetchUser - ERROR:', error.response?.status, error.response?.data?.detail || error.message);
+      // Clear auth state if fetching user fails (e.g., token invalid)
       setToken(null);
       setUser(null);
       setIsAuthenticated(false);
-      localStorage.removeItem('accessToken'); // Ensure localStorage is cleared on fetch error too
+      localStorage.removeItem('accessToken');
+      // Do not toast here; let components handle UI feedback if needed on load.
     } finally {
+      console.log('AuthContext: fetchUser - finally block, setting isLoading to false.');
       setIsLoading(false);
     }
-  };
+  }, []); // fetchUser itself has no dependencies on component state
 
-  // Effect to run on initial load to check existing token
+  // Effect to run on initial mount to check existing token or when token changes
   useEffect(() => {
-    const storedToken = localStorage.getItem('accessToken');
-    if (storedToken) {
-      console.log('AuthContext: useEffect found token in localStorage, calling fetchUser...');
-      // Set token state immediately, fetchUser will use it via localStorage or state trigger
-      setToken(storedToken);
-      fetchUser(storedToken);
+    console.log("AuthProvider: Initial useEffect for token check. Token from state:", token ? "Exists" : "NULL");
+    if (token) {
+      // If token exists (from localStorage initially, or set by login), fetch user
+      fetchUser(token);
     } else {
-      console.log('AuthContext: useEffect found no token in localStorage.');
+      // No token, so not authenticated, and no user to fetch. Stop loading.
+      console.log("AuthProvider: Initial useEffect - no token, ensuring isLoading is false.");
       setIsLoading(false);
+      setIsAuthenticated(false); // Ensure this is explicitly false
+      setUser(null); // Ensure user is null
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token, fetchUser]); // Re-run if token changes or fetchUser (callback ref) changes
+
+
+  const login = useCallback(async (newToken) => {
+    console.log('AuthContext: login function CALLED with newToken:', newToken ? "Exists" : "NULL");
+    if (newToken) {
+        localStorage.setItem('accessToken', newToken);
+        setIsLoading(true); // Indicate loading while we fetch the user
+        setToken(newToken); // This will trigger the useEffect above to call fetchUser
+    } else {
+        console.error("AuthContext: login function called with no token!");
+        // Handle case where login is called without a token (should not happen)
+        localStorage.removeItem('accessToken');
+        setToken(null);
+        setUser(null);
+        setIsAuthenticated(false);
+        setIsLoading(false);
+    }
+  }, []); // login itself doesn't depend on other stateful items from context
+
+  const logout = useCallback(() => {
+    console.log('AuthContext: logout function CALLED.');
+    localStorage.removeItem('accessToken');
+    setToken(null); // This will trigger useEffect, which will call fetchUser(null)
+    setUser(null);  // Also explicitly set user and isAuthenticated for immediate UI update
+    setIsAuthenticated(false);
+    // Do not navigate here; let components or Navbar handle navigation
+    toast.info("You have been logged out.");
   }, []);
 
-
-  // Login function
-  const login = (newToken) => {
-    console.log('AuthContext: login function called, setting token, calling fetchUser...');
-    localStorage.setItem('accessToken', newToken); // Set token for interceptor/persistence
-    setToken(newToken); // Update state
-    fetchUser(newToken); // Fetch user (interceptor will use the new token from localStorage)
-  };
-
-  // Logout function
-  const logout = () => {
-    console.log('AuthContext: logout function called.');
-    localStorage.removeItem('accessToken');
-    setToken(null);
-    setUser(null);
-    setIsAuthenticated(false);
-  };
-
-  // Value provided by the context
-  const value = {
-    token,
-    user,
-    isAuthenticated,
-    isLoading,
-    login,
-    logout,
-  };
+  const value = { token, user, isAuthenticated, isLoading, login, logout };
+  console.log("AuthProvider: Providing context value:", { token: !!value.token, user: !!value.user, isAuthenticated: value.isAuthenticated, isLoading: value.isLoading });
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
-// Custom hook to use the Auth context easily in other components
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
