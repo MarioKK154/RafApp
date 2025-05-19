@@ -17,7 +17,6 @@ project_members_table = Table(
 
 class User(Base):
     __tablename__ = "users"
-
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
@@ -31,24 +30,18 @@ class User(Base):
     role = Column(String, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-
     # Relationships
     projects_created = relationship("Project", foreign_keys="[Project.creator_id]", back_populates="creator")
     projects_managed = relationship("Project", foreign_keys="[Project.project_manager_id]", back_populates="project_manager")
     uploaded_drawings = relationship("Drawing", back_populates="uploader")
     time_logs = relationship("TimeLog", back_populates="user")
-    assigned_projects = relationship(
-        "Project",
-        secondary=project_members_table,
-        back_populates="members"
-    )
+    assigned_projects = relationship("Project", secondary=project_members_table, back_populates="members")
     assigned_tasks = relationship("Task", back_populates="assignee")
     task_comments = relationship("TaskComment", back_populates="author")
     uploaded_task_photos = relationship("TaskPhoto", back_populates="uploader")
 
 class Project(Base):
     __tablename__ = "projects"
-
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, index=True, nullable=False)
     description = Column(Text, nullable=True)
@@ -60,33 +53,29 @@ class Project(Base):
     project_manager_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-
     # Relationships
     creator = relationship("User", foreign_keys=[creator_id], back_populates="projects_created")
     project_manager = relationship("User", foreign_keys=[project_manager_id], back_populates="projects_managed")
     tasks = relationship("Task", back_populates="project", cascade="all, delete-orphan")
     drawings = relationship("Drawing", back_populates="project", cascade="all, delete-orphan")
-    members = relationship(
-        "User",
-        secondary=project_members_table,
-        back_populates="assigned_projects"
-    )
+    members = relationship("User", secondary=project_members_table, back_populates="assigned_projects")
 
 class Task(Base):
     __tablename__ = "tasks"
-
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, index=True, nullable=False)
     description = Column(Text, nullable=True)
-    status = Column(String, default="To Do")
+    status = Column(String, default="To Do") # Possible: To Do, In Progress, Done, Blocked, Commissioned
     priority = Column(String, default="Medium")
     start_date = Column(DateTime(timezone=True), nullable=True)
     due_date = Column(DateTime(timezone=True), nullable=True)
+    # --- NEW: Task Commissioning Field ---
+    is_commissioned = Column(Boolean, default=False, nullable=False)
+    # --- End New Field ---
     project_id = Column(Integer, ForeignKey("projects.id"), nullable=False)
     assignee_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-
     # Relationships
     project = relationship("Project", back_populates="tasks")
     assignee = relationship("User", back_populates="assigned_tasks")
@@ -109,6 +98,11 @@ class InventoryItem(Base):
     shop_url_3 = Column(String, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    local_image_path = Column(String, nullable=True)
+    # type = Column(String, nullable=True) # From your Excel: menu, category, subcategory, item
+    # full_category_path_is = Column(String, nullable=True)
+    # full_category_path_en = Column(String, nullable=True)
+    # We can add these type/category fields in a subsequent step if needed for organization
 
 class Drawing(Base):
     __tablename__ = "drawings"

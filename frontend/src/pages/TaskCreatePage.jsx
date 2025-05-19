@@ -5,6 +5,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import axiosInstance from '../api/axiosInstance';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 const ASSIGNABLE_ROLES = ['admin', 'project manager', 'team leader', 'electrician', 'employee'];
 
@@ -107,7 +108,7 @@ function TaskCreatePage() {
   };
 
   if (authIsLoading || prerequisitesLoading) {
-    return ( <div className="container mx-auto p-6 text-center"><p className="text-xl text-gray-500 dark:text-gray-400">Loading form...</p></div> );
+    return ( <div className="min-h-screen flex justify-center items-center"><LoadingSpinner text="Loading form prerequisites..." size="lg" /></div> );
   }
   if (!isAuthenticated) {
     return ( <div className="container mx-auto p-6 text-center text-red-500"><p>Redirecting to login...</p></div>);

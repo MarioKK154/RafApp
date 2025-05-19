@@ -5,6 +5,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import axiosInstance from '../api/axiosInstance';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 const formatDateForInput = (dateString) => {
     if (!dateString) return '';
@@ -116,11 +117,7 @@ function InventoryEditPage() {
 
   // --- Render Logic ---
   if (authIsLoading || isLoadingData) {
-    return (
-        <div className="container mx-auto p-6 text-center">
-            <p className="text-xl text-gray-500 dark:text-gray-400">Loading item details...</p>
-        </div>
-    );
+    return ( <div className="container mx-auto p-6 text-center"><LoadingSpinner text="Loading item details..." size="lg" /></div> );
   }
 
   if (!isAuthenticated) {

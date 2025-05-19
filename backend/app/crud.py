@@ -2,13 +2,14 @@
 # STRICTLY UNCONDENSED AND MANUALLY RE-VERIFIED AND RE-CONSTRUCTED
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import desc, asc, func as sqlfunc
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 from datetime import datetime, timezone
 
 from . import models, schemas
 from .security import get_password_hash, verify_password
 
 # --- User CRUD Operations ---
+
 
 def get_user(db: Session, user_id: int) -> Optional[models.User]:
     return db.query(models.User)\
@@ -20,14 +21,186 @@ def get_user_by_email(db: Session, email: str) -> Optional[models.User]:
              .options(joinedload(models.User.assigned_projects))\
              .filter(models.User.email == email).first()
 
-def get_users(db: Session, skip: int = 0, limit: int = 100) -> List[models.User]:
-    return db.query(models.User)\
-             .options(joinedload(models.User.assigned_projects))\
-             .order_by(models.User.id)\
-             .offset(skip)\
-             .limit(limit)\
-             .all()
+def get_users(
+    db: Session,
+    is_active: Optional[bool] = None, # New filter parameter
+    skip: int = 0,
+    limit: int = 100
+) -> List[models.User]:
+    query = db.query(models.User).options(joinedload(models.User.assigned_projects))
 
+    if is_active is not None: # Add filter if provided
+        query = query.filter(models.User.is_active == is_active)
+
+    return query.order_by(models.User.id).offset(skip).limit(limit).all()
+
+def get_user_by_employee_id(db: Session, employee_id: str) -> Optional[models.User]:
+    """Helper to find a user by employee_id."""
+    if not employee_id: # Don't query if employee_id is None or empty
+        return None
+    return db.query(models.User).filter(models.User.employee_id == employee_id).first()
+
+def bulk_create_users_from_csv(
+    db: Session,
+    users_data: List[schemas.UserImportCSVRow],
+    default_password: str,
+    default_role: str,
+    default_is_active: bool = True,
+    default_is_superuser: bool = False,
+    skip_employee_ids: Optional[List[str]] = None
+) -> dict[str, any]:
+    created_count = 0
+    skipped_count = 0
+    errors = []
+    created_users_emails = []
+
+    if skip_employee_ids is None:
+        skip_employee_ids = []
+
+    hashed_default_password = get_password_hash(default_password)
+
+    for index, user_row_data in enumerate(users_data):
+        row_num = index + 2 # Assuming CSV has a header row, data starts at row 2
+
+        # Check for existing user by email
+        existing_by_email = get_user_by_email(db, email=user_row_data.Email)
+        if existing_by_email:
+            errors.append(f"Row {row_num}: Email '{user_row_data.Email}' already exists. Skipped.")
+            skipped_count += 1
+            continue
+
+        # Check for existing user by Employee ID (if provided) and skip if in skip_employee_ids
+        if user_row_data.Employee_ID:
+            if user_row_data.Employee_ID in skip_employee_ids:
+                errors.append(f"Row {row_num}: Employee ID '{user_row_data.Employee_ID}' is in the explicit skip list. Skipped.")
+                skipped_count +=1
+                continue
+            existing_by_emp_id = get_user_by_employee_id(db, employee_id=user_row_data.Employee_ID)
+            if existing_by_emp_id:
+                errors.append(f"Row {row_num}: Employee ID '{user_row_data.Employee_ID}' already exists for user '{existing_by_emp_id.email}'. Skipped.")
+                skipped_count += 1
+                continue
+
+        # Check for existing user by Kennitala (if provided and unique constraint is on model)
+        if user_row_data.Kennitala:
+            existing_by_kennitala = db.query(models.User).filter(models.User.kennitala == user_row_data.Kennitala).first()
+            if existing_by_kennitala:
+                errors.append(f"Row {row_num}: Kennitala '{user_row_data.Kennitala}' already exists for user '{existing_by_kennitala.email}'. Skipped.")
+                skipped_count +=1
+                continue
+
+
+        try:
+            db_user = models.User(
+                email=user_row_data.Email,
+                hashed_password=hashed_default_password,
+                full_name=user_row_data.Name,
+                employee_id=user_row_data.Employee_ID,
+                kennitala=user_row_data.Kennitala,
+                phone_number=user_row_data.Phone,
+                location=user_row_data.Location,
+                role=default_role,
+                is_active=default_is_active,
+                is_superuser=default_is_superuser
+            )
+            db.add(db_user)
+            # We will do one commit at the end for efficiency, or commit per user
+            # For now, let's commit per user to get immediate feedback if one fails
+            # but for large imports, batch commits are better.
+            # To make this transactional, the commit should be outside the loop.
+            # However, if one user fails (e.g. duplicate Kennitala if it were unique and not checked above),
+            # the whole batch would roll back. Let's do per-user commit for now.
+            db.commit()
+            db.refresh(db_user)
+            created_count += 1
+            created_users_emails.append(db_user.email)
+        except Exception as e:
+            db.rollback() # Rollback this specific user if commit failed
+            errors.append(f"Row {row_num}: Error creating user '{user_row_data.Email}': {str(e)}. Skipped.")
+            skipped_count += 1
+
+    # If doing batch commit, commit here:
+    # try:
+    #     db.commit()
+    # except Exception as e:
+    #     db.rollback()
+    #     # Add a general error for batch commit failure
+    #     errors.append(f"Batch commit failed: {str(e)}")
+    #     # Reset counts if batch failed
+    #     created_count = 0 
+    #     created_users_emails = []
+    #     skipped_count = len(users_data)
+
+
+    return {
+        "created_count": created_count,
+        "skipped_count": skipped_count,
+        "errors": errors,
+        "created_users_emails": created_users_emails
+    }
+
+async def reassign_and_deactivate_other_users(db: Session, main_admin_user_to_keep: models.User) -> schemas.CleanSlateSummary: # Changed return type hint
+    users_to_process = db.query(models.User).filter(models.User.id != main_admin_user_to_keep.id).all()
+
+    processed_users_count = 0
+    projects_reassigned_creator_count = 0
+    projects_cleared_pm_count = 0
+    tasks_unassigned_count = 0
+
+    if not users_to_process:
+        return schemas.CleanSlateSummary(
+            users_deactivated=0,
+            projects_creator_reassigned=0,
+            projects_pm_cleared=0,
+            tasks_unassigned=0,
+            message="No other users found to process."
+        )
+
+    try:
+        for user_to_deactivate in users_to_process:
+            # 1. Reassign projects created by this user
+            projects_created_by_user = db.query(models.Project).filter(models.Project.creator_id == user_to_deactivate.id).all()
+            for project in projects_created_by_user:
+                project.creator_id = main_admin_user_to_keep.id
+                db.add(project)
+                projects_reassigned_creator_count += 1
+
+            # 2. Clear project_manager_id if this user was a PM
+            projects_managed_by_user = db.query(models.Project).filter(models.Project.project_manager_id == user_to_deactivate.id).all()
+            for project in projects_managed_by_user:
+                project.project_manager_id = None
+                db.add(project)
+                projects_cleared_pm_count += 1
+
+            # 3. Unassign tasks assigned to this user
+            tasks_assigned_to_user = db.query(models.Task).filter(models.Task.assignee_id == user_to_deactivate.id).all()
+            for task in tasks_assigned_to_user:
+                task.assignee_id = None
+                db.add(task)
+                tasks_unassigned_count += 1
+
+            # 4. Deactivate the user
+            user_to_deactivate.is_active = False
+            db.add(user_to_deactivate)
+            processed_users_count += 1
+
+        db.commit()
+
+    except Exception as e:
+        db.rollback()
+        print(f"ERROR during reassign_and_deactivate_other_users: {str(e)}")
+        # This custom exception will be caught by FastAPI's default 500 handler
+        # or a custom exception handler if you add one.
+        # For now, re-raising is fine, it will result in a 500.
+        raise e
+
+    return schemas.CleanSlateSummary(
+        users_deactivated=processed_users_count,
+        projects_creator_reassigned=projects_reassigned_creator_count,
+        projects_pm_cleared=projects_cleared_pm_count,
+        tasks_unassigned=tasks_unassigned_count,
+        message=f"{processed_users_count} user(s) processed." if processed_users_count > 0 else "No applicable users processed."
+    )
 # create_user (for public registration) was REMOVED.
 
 def update_user_by_admin(db: Session, user_to_update: models.User, user_data: schemas.UserUpdateAdmin) -> models.User:
@@ -68,6 +241,14 @@ def delete_user_by_admin(db: Session, user_id: int) -> Optional[models.User]:
 
 def update_user_password(db: Session, user: models.User, new_password: str) -> models.User:
     """Hashes and updates the password for the given user object."""
+    user.hashed_password = get_password_hash(new_password)
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
+
+def set_user_password_by_admin(db: Session, user: models.User, new_password: str) -> models.User:
+    """Hashes and updates the password for a user, typically by an admin."""
     user.hashed_password = get_password_hash(new_password)
     db.add(user)
     db.commit()
@@ -233,6 +414,7 @@ def get_tasks(
     db: Session,
     project_id: Optional[int] = None,
     assignee_id: Optional[int] = None,
+    status: Optional[str] = None,
     sort_by: Optional[str] = None,
     sort_dir: Optional[str] = 'asc',
     skip: int = 0,
@@ -243,6 +425,8 @@ def get_tasks(
         query = query.filter(models.Task.project_id == project_id)
     if assignee_id is not None:
         query = query.filter(models.Task.assignee_id == assignee_id)
+    if status is not None and status != "": # Add status filter
+        query = query.filter(models.Task.status == status)
 
     order_column = models.Task.id
     if sort_by == 'title': order_column = models.Task.title
@@ -286,6 +470,20 @@ def update_task(db: Session, task_id: int, task_update: schemas.TaskUpdate) -> O
     db.commit()
     db.refresh(db_task)
     return db_task
+
+def commission_task(db: Session, task_to_commission: models.Task) -> models.Task:
+    """Sets the task status to 'Commissioned' and is_commissioned to True."""
+    if task_to_commission.status != "Done":
+        # Or handle this with an HTTPException in the router
+        print(f"Task {task_to_commission.id} cannot be commissioned as it's not 'Done'. Current status: {task_to_commission.status}")
+        return task_to_commission # Or raise an error/return None
+
+    task_to_commission.is_commissioned = True
+    task_to_commission.status = "Commissioned" # Set new status
+    db.add(task_to_commission)
+    db.commit()
+    db.refresh(task_to_commission)
+    return task_to_commission
 
 def delete_task(db: Session, task_id: int) -> Optional[models.Task]:
     db_task = get_task(db, task_id)
@@ -346,8 +544,16 @@ def get_inventory_items(db: Session, skip: int = 0, limit: int = 100) -> List[mo
 
 def create_inventory_item(db: Session, item: schemas.InventoryItemCreate) -> models.InventoryItem:
      item_data = item.model_dump()
-     item_data['quantity_needed'] = float(item_data.get('quantity_needed') or 0.0)
+     # Ensure numeric fields are correctly typed if coming as strings or None
      item_data['quantity'] = float(item_data.get('quantity') or 0.0)
+     item_data['quantity_needed'] = float(item_data.get('quantity_needed') or 0.0)
+     if item_data.get('low_stock_threshold') is not None and item_data.get('low_stock_threshold') != '':
+         item_data['low_stock_threshold'] = float(item_data['low_stock_threshold'])
+     else:
+        item_data['low_stock_threshold'] = None
+
+     # local_image_path is already handled by model_dump() if present in schema
+
      db_item = models.InventoryItem(**item_data)
      db.add(db_item)
      db.commit()
@@ -358,23 +564,27 @@ def update_inventory_item(db: Session, item_id: int, item_update: schemas.Invent
     db_item = get_inventory_item(db, item_id)
     if not db_item:
         return None
-    update_data = item_update.model_dump(exclude_unset=True)
-    if 'quantity' in update_data and update_data['quantity'] is not None:
-        update_data['quantity'] = float(update_data['quantity'])
-    else:
-        update_data.pop('quantity', None)
-    if 'quantity_needed' in update_data and update_data['quantity_needed'] is not None:
-        update_data['quantity_needed'] = float(update_data['quantity_needed'])
-    else:
-        update_data.pop('quantity_needed', None)
-    if 'low_stock_threshold' in update_data and update_data['low_stock_threshold'] is not None:
-        update_data['low_stock_threshold'] = float(update_data['low_stock_threshold'])
-    elif 'low_stock_threshold' in update_data and update_data['low_stock_threshold'] is None:
-        pass
-    else:
-        update_data.pop('low_stock_threshold', None)
+
+    update_data = item_update.model_dump(exclude_unset=True) # Only update provided fields
+
+    # Handle numeric fields, allowing them to be set to None if applicable
+    for field in ['quantity', 'quantity_needed', 'low_stock_threshold']:
+        if field in update_data:
+            if update_data[field] is None:
+                setattr(db_item, field, None)
+            elif isinstance(update_data[field], (int, float, str)) and str(update_data[field]).strip() != '':
+                try:
+                    setattr(db_item, field, float(update_data[field]))
+                except ValueError:
+                    pass # Or handle error: cannot convert to float
+            # If it's already a number and not None, it will be set by the loop below
+
+    # Update other fields (including local_image_path)
     for key, value in update_data.items():
-        setattr(db_item, key, value)
+        # Avoid re-processing numeric fields if already handled above
+        if key not in ['quantity', 'quantity_needed', 'low_stock_threshold'] or getattr(db_item, key) != value :
+             setattr(db_item, key, value)
+
     db.add(db_item)
     db.commit()
     db.refresh(db_item)

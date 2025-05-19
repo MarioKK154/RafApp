@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom'; // useNavigate was not used here
 import { useAuth } from '../context/AuthContext';
 import axiosInstance from '../api/axiosInstance';
 import { toast } from 'react-toastify';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 function HomePage() {
   const { user, isAuthenticated, isLoading: authIsLoading } = useAuth();
@@ -116,8 +117,8 @@ function HomePage() {
   };
 
   // --- Render Logic ---
-  if (authIsLoading) {
-    return ( <div className="min-h-screen flex justify-center items-center"><p className="text-xl text-gray-500 dark:text-gray-400">Loading user data...</p></div> );
+  if (authIsLoading) { // For initial user data
+    return ( <div className="min-h-screen ..."><LoadingSpinner text="Loading user data..." size="lg" /></div> );
   }
 
   return (
@@ -132,7 +133,7 @@ function HomePage() {
           </p>
 
           {timeLogLoading ? (
-            <p className="text-sm text-gray-500 dark:text-gray-400">Loading clock status...</p>
+            <LoadingSpinner text="Loading clock status..." />
           ) : (
             <div className="p-4 border rounded-lg dark:border-gray-600 bg-white dark:bg-gray-700 shadow-lg">
               <h2 className="text-xl font-semibold mb-3 text-gray-800 dark:text-gray-100">Time Clock</h2>

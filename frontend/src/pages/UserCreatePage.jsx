@@ -5,6 +5,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import axiosInstance from '../api/axiosInstance';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 // Updated roles list - "employee" removed
 const ROLES_LIST = ['admin', 'project manager', 'team leader', 'electrician'];
@@ -73,7 +74,9 @@ function UserCreatePage() {
     }
   };
 
-  if (authIsLoading) { /* ... loading ... */ }
+  if (authIsLoading) {
+    return ( <div className="container mx-auto p-6 text-center"><LoadingSpinner text="Loading form..." size="lg" /></div> );
+  }
   if (!isAuthenticated || !isAdmin) { /* ... access denied or redirecting ... */ }
 
   return (

@@ -1,5 +1,5 @@
 // frontend/src/App.jsx
-// Uncondensed Version: Added Account Settings Route
+// Uncondensed Version: Added User Bulk Import Route
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
@@ -22,26 +22,21 @@ import TimeLogsPage from './pages/TimeLogsPage';
 import UserListPage from './pages/UserListPage';
 import UserCreatePage from './pages/UserCreatePage';
 import UserEditPage from './pages/UserEditPage';
+import UserBulkImportPage from './pages/UserBulkImportPage'; // NEW Import
 import ShoppingListPage from './pages/ShoppingListPage';
 import GanttChartPage from './pages/GanttChartPage';
-import AccountSettingsPage from './pages/AccountSettingsPage'; // Import new page
+import AccountSettingsPage from './pages/AccountSettingsPage';
 import NotFoundPage from './pages/NotFoundPage';
-
+import AdminToolsPage from './pages/AdminToolsPage';
 
 function App() {
     return (
         <>
             <Navbar />
-            <ToastContainer
-                position="top-right" autoClose={4000} hideProgressBar={false}
-                newestOnTop={false} closeOnClick rtl={false}
-                pauseOnFocusLoss draggable pauseOnHover theme="colored"
-             />
+            <ToastContainer position="top-right" autoClose={4000} /* ... other props ... */ />
             <main className="pt-4">
                 <Routes>
                     <Route path="/login" element={<LoginPage />} />
-                    {/* <Route path="/register" element={<RegisterPage />} /> */}
-
                     <Route path="/" element={<HomePage />} />
                     <Route path="/projects" element={<ProjectsPage />} />
                     <Route path="/projects/new" element={<ProjectCreatePage />} />
@@ -55,17 +50,16 @@ function App() {
                     <Route path="/timelogs" element={<TimeLogsPage />} />
                     <Route path="/users" element={<UserListPage />} />
                     <Route path="/users/new" element={<UserCreatePage />} />
+                    <Route path="/users/import" element={<UserBulkImportPage />} /> {/* NEW Route */}
                     <Route path="/users/edit/:userId" element={<UserEditPage />} />
+                    <Route path="/admin/tools" element={<AdminToolsPage />} />
                     <Route path="/shopping-list" element={<ShoppingListPage />} />
                     <Route path="/gantt" element={<GanttChartPage />} />
-                    {/* --- NEW Account Settings Route --- */}
                     <Route path="/account-settings" element={<AccountSettingsPage />} />
-                    {/* --------------------------------- */}
                     <Route path="*" element={<NotFoundPage />} />
                 </Routes>
             </main>
         </>
     );
 }
-
 export default App;

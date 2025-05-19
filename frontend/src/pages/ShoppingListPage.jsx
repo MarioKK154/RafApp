@@ -3,6 +3,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import axiosInstance from '../api/axiosInstance';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 function ShoppingListPage() {
   const [items, setItems] = useState([]);
@@ -47,11 +48,7 @@ function ShoppingListPage() {
   // --- Render Logic ---
 
   if (authIsLoading || isLoading) {
-    return (
-      <div className="min-h-screen flex justify-center items-center">
-        <p className="text-xl text-gray-500 dark:text-gray-400">Loading shopping list...</p>
-      </div>
-    );
+    return ( <div className="min-h-screen flex justify-center items-center"><LoadingSpinner text="Loading shopping list..." size="lg" /></div> );
   }
 
   // Handle permission error after loading

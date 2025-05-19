@@ -8,7 +8,6 @@ from .. import crud, models, schemas, security
 from ..database import get_db
 
 router = APIRouter(
-    prefix="/shopping-list",
     tags=["Shopping List"],
     # Require Admin or PM to view the shopping list
     dependencies=[Depends(security.require_manager)]

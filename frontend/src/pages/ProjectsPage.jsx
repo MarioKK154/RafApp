@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import axiosInstance from '../api/axiosInstance';
 import { toast } from 'react-toastify';
 import Modal from '../components/Modal';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 const PROJECT_STATUSES = ['All', 'Planning', 'In Progress', 'Completed', 'On Hold'];
 const SORTABLE_FIELDS = [
@@ -109,13 +110,13 @@ function ProjectsPage() {
   // --- Render Logic ---
   console.log("ProjectsPage: Rendering. AuthLoading:", authIsLoading, "ComponentLoading:", isLoading, "IsAuth:", isAuthenticated, "Error:", error, "Projects count:", projects.length); // DEBUG
 
-  if (authIsLoading || isLoading) {
-    return (
-        <div className="min-h-screen flex justify-center items-center">
-            <p className="text-xl text-gray-500 dark:text-gray-400">Loading projects...</p>
-        </div>
-    );
-  }
+  if (authIsLoading || isLoading) { // isLoading here refers to project list loading
+  return (
+      <div className="min-h-screen flex justify-center items-center">
+          <LoadingSpinner text="Loading projects..." size="lg" />
+      </div>
+  );
+}
 
   if (!isAuthenticated) {
      return (

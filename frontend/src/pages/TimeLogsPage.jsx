@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom'; // Link might be used later
 import { useAuth } from '../context/AuthContext';
 import axiosInstance from '../api/axiosInstance';
 import { toast } from 'react-toastify';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 // --- Helper function to format ISO 8601 Duration ---
 const formatIsoDuration = (isoDurationString) => {
@@ -103,11 +104,7 @@ function TimeLogsPage() {
 
   // --- Render Logic ---
   if (authIsLoading || isLoading) {
-    return (
-      <div className="min-h-screen flex justify-center items-center">
-        <p className="text-xl text-gray-500 dark:text-gray-400">Loading time logs...</p>
-      </div>
-    );
+    return ( <div className="min-h-screen flex justify-center items-center"><LoadingSpinner text="Loading time logs..." size="lg" /></div> );
   }
 
   if (!isAuthenticated) {

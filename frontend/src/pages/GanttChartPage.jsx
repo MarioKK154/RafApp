@@ -1,172 +1,171 @@
 // frontend/src/pages/GanttChartPage.jsx
-import React, { useState, useEffect, useMemo } from 'react';
+// Add/Verify these console.log statements
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Chart } from 'react-google-charts'; // Import the Chart component
+import { Chart } from 'react-google-charts';
 import { useAuth } from '../context/AuthContext';
 import axiosInstance from '../api/axiosInstance';
+import { toast } from 'react-toastify';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 function GanttChartPage() {
   const [tasks, setTasks] = useState([]);
-  const [projects, setProjects] = useState({}); // To map project_id to project name
-  const [isLoading, setIsLoading] = useState(true);
+  const [allProjects, setAllProjects] = useState([]);
+  const [selectedProjectId, setSelectedProjectId] = useState('');
+  const [isLoadingTasks, setIsLoadingTasks] = useState(true);
+  const [isLoadingProjects, setIsLoadingProjects] = useState(true);
   const [error, setError] = useState('');
   const { isAuthenticated, isLoading: authIsLoading } = useAuth();
   const navigate = useNavigate();
 
-  // Fetch tasks and projects
-  useEffect(() => {
+  console.log("GanttChartPage: Component rendering/re-rendering. AuthLoading:", authIsLoading, "IsAuth:", isAuthenticated);
+
+  const fetchAllProjects = useCallback(() => {
+    console.log("GanttChartPage: fetchAllProjects called");
     if (!authIsLoading && isAuthenticated) {
-      setIsLoading(true);
-      setError('');
-      Promise.all([
-        axiosInstance.get('/tasks/'), // Fetch all tasks
-        axiosInstance.get('/projects/') // Fetch all projects for naming
-      ])
-      .then(([tasksResponse, projectsResponse]) => {
-        setTasks(tasksResponse.data);
-        // Create a map of project IDs to names for easy lookup
-        const projectsMap = projectsResponse.data.reduce((acc, project) => {
-          acc[project.id] = project.name;
-          return acc;
-        }, {});
-        setProjects(projectsMap);
-      })
-      .catch(err => {
-        console.error("Error fetching data for Gantt chart:", err);
-        setError('Failed to load data for Gantt chart.');
-      })
-      .finally(() => {
-        setIsLoading(false);
-      });
+      setIsLoadingProjects(true);
+      axiosInstance.get('/projects/')
+        .then(response => {
+          console.log("GanttChartPage: Fetched projects:", response.data);
+          setAllProjects(response.data);
+        })
+        .catch(err => { console.error("Error fetching projects:", err); toast.error("Could not load projects."); setError('Could not load projects.'); })
+        .finally(() => { setIsLoadingProjects(false); });
     } else if (!authIsLoading && !isAuthenticated) {
-      navigate('/login', { replace: true });
-    } else if (!authIsLoading && !isAuthenticated && !isLoading) { // Added missing !isLoading condition
-        setIsLoading(false);
-        setError('You must be logged in to view the Gantt chart.');
+        setIsLoadingProjects(false);
     }
-  }, [isAuthenticated, authIsLoading, navigate]);
+  }, [isAuthenticated, authIsLoading]);
 
-  // Transform task data for Google Charts Gantt
+  const fetchTasksForGantt = useCallback(() => {
+    console.log("GanttChartPage: fetchTasksForGantt called. Selected Project ID:", selectedProjectId);
+    if (!authIsLoading && isAuthenticated) {
+      setIsLoadingTasks(true); setError('');
+      const params = {};
+      if (selectedProjectId) { params.project_id = selectedProjectId; }
+      console.log("GanttChartPage: Fetching tasks with params:", params);
+      axiosInstance.get('/tasks/', { params })
+        .then(response => {
+          console.log("GanttChartPage: Tasks fetched from API:", response.data);
+          setTasks(response.data);
+        })
+        .catch(err => { console.error("Error fetching tasks:", err); setError('Failed to load tasks.'); toast.error('Failed to load tasks.'); })
+        .finally(() => { setIsLoadingTasks(false); });
+    } else if (!authIsLoading && !isAuthenticated) {
+        setIsLoadingTasks(false); navigate('/login', { replace: true });
+    }
+  }, [isAuthenticated, authIsLoading, selectedProjectId, navigate]);
+
+  useEffect(() => {
+    console.log("GanttChartPage: useEffect for fetchAllProjects. AuthLoading:", authIsLoading, "IsAuth:", isAuthenticated);
+    if (!authIsLoading && isAuthenticated) { fetchAllProjects(); }
+    else if (!authIsLoading && !isAuthenticated) { setIsLoadingProjects(false); }
+  }, [fetchAllProjects, authIsLoading, isAuthenticated]);
+
+  useEffect(() => {
+    console.log("GanttChartPage: useEffect for fetchTasks. AuthLoading:", authIsLoading, "IsAuth:", isAuthenticated, "ProjectsLoading:", isLoadingProjects);
+    if (!authIsLoading && isAuthenticated && !isLoadingProjects) { fetchTasksForGantt(); }
+  }, [fetchTasksForGantt, isLoadingProjects, authIsLoading, isAuthenticated]);
+
   const chartData = useMemo(() => {
-    if (tasks.length === 0) {
-      return [
-        [ // Columns definition
-          { type: 'string', label: 'Task ID' },
-          { type: 'string', label: 'Task Name' },
-          { type: 'string', label: 'Resource' }, // Can be project name or assignee
-          { type: 'date', label: 'Start Date' },
-          { type: 'date', label: 'End Date' },
-          { type: 'number', label: 'Duration' }, // ms, or null if start/end provided
-          { type: 'number', label: 'Percent Complete' },
-          { type: 'string', label: 'Dependencies' }, // Task IDs this task depends on
-        ],
-        // No data row if tasks are empty
-      ];
-    }
-
-    const data = [
-      [
-        { type: 'string', label: 'Task ID' },
-        { type: 'string', label: 'Task Name' },
-        { type: 'string', label: 'Resource' },
-        { type: 'date', label: 'Start Date' },
-        { type: 'date', label: 'End Date' },
-        { type: 'number', label: 'Duration' },
-        { type: 'number', label: 'Percent Complete' },
-        { type: 'string', label: 'Dependencies' },
-      ],
+    console.log("GanttChartPage: useMemo for chartData. Raw tasks for chart processing:", tasks);
+    const columns = [
+      { type: 'string', label: 'Task ID' }, { type: 'string', label: 'Task Name' },
+      { type: 'string', label: 'Resource' }, { type: 'date', label: 'Start Date' },
+      { type: 'date', label: 'End Date' }, { type: 'number', label: 'Duration' },
+      { type: 'number', label: 'Percent Complete' }, { type: 'string', label: 'Dependencies' },
     ];
 
-    tasks.forEach(task => {
-      // Gantt chart requires valid start and end dates.
-      // If due_date is missing, we can't plot it as a bar with a defined end.
-      // If start_date is missing, we also can't plot it.
-      if (task.start_date && task.due_date) {
-        let percentComplete = 0;
-        if (task.status === 'Done') {
-          percentComplete = 100;
-        } else if (task.status === 'In Progress') {
-          percentComplete = 50; // Approximate
+    const rows = tasks
+      .filter(task => {
+        const hasDates = task.start_date && task.due_date;
+        if (!hasDates) {
+          console.log(`GanttPage: Task ID ${task.id} ('${task.title}') filtered out. Start: ${task.start_date}, Due: ${task.due_date}`);
         }
+        // Also check if dates are valid after new Date()
+        if (hasDates) {
+            const startDateValid = !isNaN(new Date(task.start_date).getTime());
+            const dueDateValid = !isNaN(new Date(task.due_date).getTime());
+            if(!startDateValid || !dueDateValid){
+                console.log(`GanttPage: Task ID ${task.id} ('${task.title}') has invalid date format. Start: ${task.start_date}, Due: ${task.due_date}`);
+                return false;
+            }
+        }
+        return hasDates;
+      })
+      .map(task => {
+        let percentComplete = 0;
+        if (task.status === 'Done' || task.status === 'Commissioned') percentComplete = 100;
+        else if (task.status === 'In Progress') percentComplete = 50;
+        const projectForTask = allProjects.find(p => p.id === task.project_id);
+        const resourceName = projectForTask ? projectForTask.name : (task.project_id ? `Project ${task.project_id}`: 'N/A');
+        return [ `task-${task.id}`, task.title, resourceName, new Date(task.start_date), new Date(task.due_date), null, percentComplete, null ];
+      });
+    
+    const finalChartData = [columns, ...rows];
+    console.log("GanttPage: Final chartData prepared:", JSON.stringify(finalChartData, null, 2));
+    console.log("GanttPage: Number of task rows for chart:", rows.length);
+    return finalChartData;
+  }, [tasks, allProjects]);
 
-        data.push([
-          `task-${task.id}`,                      // Task ID (must be unique string)
-          task.title,                           // Task Name
-          projects[task.project_id] || `Project ${task.project_id}`, // Resource (Project Name)
-          new Date(task.start_date),            // Start Date
-          new Date(task.due_date),              // End Date
-          null,                                 // Duration (null if start and end are provided)
-          percentComplete,                      // Percent Complete
-          null,                                 // Dependencies (null for no dependencies)
-        ]);
-      }
-    });
-    return data;
-  }, [tasks, projects]);
-
-  const chartOptions = {
-    height: tasks.length * 40 + 80, // Dynamically adjust height based on number of tasks
-    gantt: {
-      trackHeight: 30,
-      criticalPathEnabled: false, // Set to true to enable, requires dependency data
-      arrow: {
-        angle: 100,
-        width: 1,
-        color: 'grey',
-        radius: 0
-      },
-      // You can customize colors here
-      // barCornerRadius: 2,
-      // barHeight: 20,
-    },
-  };
+  const chartOptions = { /* ... as before ... */ };
 
   // --- Render Logic ---
-  if (authIsLoading || isLoading) {
-    return (
-      <div className="min-h-screen flex justify-center items-center">
-        <p className="text-xl text-gray-500 dark:text-gray-400">Loading Gantt chart data...</p>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-     return (
-        <div className="min-h-screen flex flex-col justify-center items-center text-center p-6">
-            <p className="text-red-600 mb-4">{error || 'Please log in to view the Gantt chart.'}</p>
-            <Link to="/login" className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Go to Login</Link>
-        </div>
-     );
-  }
-
-  if (error) {
-     return (
-        <div className="container mx-auto p-6 text-center text-red-500">
-            <p>{error}</p>
-        </div>
-     );
-  }
-
+  if (authIsLoading || isLoadingProjects) { /* ... */ }
+  if (!isAuthenticated) { /* ... */ }
+  // ... (rest of the component as in Response #115, including the Chart component) ...
+  // Ensure the condition for rendering the chart is chartData.length > 1 (meaning more than just headers)
+  // and !isLoadingTasks
   return (
     <div className="container mx-auto p-4 md:p-6">
-      <h1 className="text-2xl md:text-3xl font-bold mb-6 text-gray-800 dark:text-white">Project Gantt Chart</h1>
-      {chartData.length > 1 ? ( // Check if there's more than just the header row
-        <Chart
-          chartType="Gantt"
-          width="100%"
-          height={chartOptions.height} // Use dynamic height
-          data={chartData}
-          options={chartOptions.gantt} // Pass only gantt specific options
-          loader={<div>Loading Chart...</div>}
-        />
-      ) : (
-        <p className="text-gray-600 dark:text-gray-400">
-          No tasks with valid start and end dates to display in the Gantt chart.
-          Please ensure tasks have both start and due dates set.
-        </p>
-      )}
+        {/* Header and Project Selector from Response #115 */}
+        <div className="flex flex-wrap justify-between items-center mb-6 gap-4">
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white">Project Gantt Chart</h1>
+            <div className="min-w-[200px] md:min-w-[250px]">
+              <label htmlFor="projectGanttFilter" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Select Project to View:
+              </label>
+              <select
+                id="projectGanttFilter"
+                value={selectedProjectId}
+                onChange={(e) => setSelectedProjectId(e.target.value)}
+                disabled={isLoadingProjects || allProjects.length === 0}
+                className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-70"
+              >
+                <option value="">All My Projects' Tasks</option>
+                {allProjects.map(project => (
+                  <option key={project.id} value={project.id.toString()}>
+                    {project.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+        </div>
+
+        {error && (<p className="text-red-500 mb-4 bg-red-100 dark:bg-red-900 dark:text-red-300 p-3 rounded">{error}</p>)}
+
+        {isLoadingTasks ? (
+            <LoadingSpinner text="Loading tasks for chart..." />
+        ) : chartData.length > 1 && chartData[1]?.length > 0 ? ( // Ensure there's at least one data row
+            <div className="w-full overflow-x-auto">
+                <Chart
+                  chartType="Gantt"
+                  width="100%"
+                  height={chartOptions.height}
+                  data={chartData}
+                  options={chartOptions.gantt}
+                  loader={<LoadingSpinner text="Rendering chart..." />}
+                  chartPackages={['gantt']}
+                  chartEvents={[ { eventName: 'error', callback: ({ chartWrapper }) => { const err = chartWrapper.getChart().getLastError(); console.error("Google Chart Error:", err); toast.error(`Chart Error: ${err}`); }, }, ]}
+                />
+            </div>
+        ) : (
+            <p className="text-gray-600 dark:text-gray-400 py-8 text-center">
+              No tasks with valid start and end dates to display for the selected criteria, or an error occurred fetching data.
+              <br />
+              Please ensure tasks have both start and due dates set and are assigned to the selected project.
+            </p>
+        )}
     </div>
   );
 }
-
 export default GanttChartPage;

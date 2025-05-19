@@ -21,7 +21,6 @@ UPLOAD_DIR_BASE = os.path.join(
 )
 
 router = APIRouter(
-    prefix="/task_photos", # Use a distinct prefix
     tags=["Task Photos"],
     dependencies=[Depends(security.get_current_active_user)] # Must be logged in
 )

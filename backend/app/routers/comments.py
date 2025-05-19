@@ -8,7 +8,6 @@ from .. import crud, models, schemas, security
 from ..database import get_db
 
 router = APIRouter(
-    prefix="/comments", # Prefix for comment-specific actions like delete
     tags=["Comments"],
     dependencies=[Depends(security.get_current_active_user)]
 )

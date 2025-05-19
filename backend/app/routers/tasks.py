@@ -8,7 +8,6 @@ from .. import crud, models, schemas, security
 from ..database import get_db
 
 router = APIRouter(
-    prefix="/tasks",
     tags=["Tasks"],
     dependencies=[Depends(security.get_current_active_user)]
 )
@@ -17,7 +16,7 @@ router = APIRouter(
 DbDependency = Annotated[Session, Depends(get_db)]
 CurrentUserDependency = Annotated[models.User, Depends(security.get_current_active_user)]
 TeamLeaderOrHigher = Annotated[models.User, Depends(security.require_role(["admin", "project manager", "team leader"]))]
-
+ManagerOrAdminDependency = Annotated[models.User, Depends(security.require_manager)] # For commissioning
 # Define allowed sort fields and directions for Tasks
 AllowedTaskSortFields = Literal["title", "status", "priority", "start_date", "due_date", "created_at", "id"] # Added id
 AllowedSortDirections = Literal["asc", "desc"]
@@ -42,25 +41,19 @@ async def create_new_task(
 @router.get("/", response_model=List[schemas.TaskRead])
 async def read_all_tasks(
     db: DbDependency,
-    # Filters
     project_id: Optional[int] = Query(None, description="Filter tasks by project ID"),
     assignee_id: Optional[int] = Query(None, description="Filter tasks by assignee ID"),
-    # Sorting
+    status: Optional[schemas.TaskStatusLiteral] = Query(None, description="Filter tasks by status"), # NEW parameter for status
     sort_by: Optional[AllowedTaskSortFields] = Query('id', description="Field to sort tasks by"),
     sort_dir: Optional[AllowedSortDirections] = Query('asc', description="Sort direction (asc or desc)"),
-    # Pagination
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=200)
-    # current_user: CurrentUserDependency - Applied at router level
 ):
-    """
-    Retrieves a list of tasks, optionally filtered and sorted.
-    (Requires logged-in user)
-    """
     tasks = crud.get_tasks(
         db=db,
         project_id=project_id,
         assignee_id=assignee_id,
+        status=status, # Ensure status is passed here
         sort_by=sort_by,
         sort_dir=sort_dir,
         skip=skip,
@@ -184,3 +177,35 @@ async def read_comments_for_task(
     # TODO: Check if user is member of project?
     comments = crud.get_comments_for_task(db=db, task_id=task_id, skip=skip, limit=limit)
     return comments
+
+# --- NEW: Task Commissioning Endpoint ---
+@router.post("/{task_id}/commission", response_model=schemas.TaskRead)
+async def commission_task_endpoint(
+    task_id: int,
+    db: DbDependency,
+    current_user: ManagerOrAdminDependency # Requires PM or Admin
+):
+    """
+    Marks a task as commissioned. Task should ideally be in 'Done' status first.
+    Sets is_commissioned = True and status = "Commissioned".
+    """
+    db_task = crud.get_task(db, task_id=task_id)
+    if not db_task:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")
+
+    # Ensure the task is in "Done" state before commissioning
+    if db_task.status != "Done":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Task must be in 'Done' status to be commissioned. Current status: {db_task.status}"
+        )
+
+    # Check if already commissioned
+    if db_task.is_commissioned:
+         raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Task is already commissioned."
+        )
+
+    commissioned_task = crud.commission_task(db=db, task_to_commission=db_task)
+    return commissioned_task

@@ -5,6 +5,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import axiosInstance from '../api/axiosInstance';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 function ProjectCreatePage() {
   const navigate = useNavigate();
@@ -105,12 +106,8 @@ function ProjectCreatePage() {
 
   // --- Render Logic ---
 
-  if (authIsLoading) {
-     return (
-        <div className="container mx-auto p-6 text-center">
-             <p className="text-xl text-gray-500 dark:text-gray-400">Loading authentication...</p>
-        </div>
-     );
+  if (authIsLoading) { // Or if you have a specific prerequisitesLoading state
+   return ( <div className="container mx-auto p-6 text-center"><LoadingSpinner text="Loading form..." size="lg" /></div> );
   }
 
   // If user is not authenticated or not permitted, useEffect handles redirection.

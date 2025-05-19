@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import axiosInstance from '../api/axiosInstance';
 import Modal from '../components/Modal';
 import { toast } from 'react-toastify';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 function InventoryListPage() {
   const [items, setItems] = useState([]);
@@ -116,12 +117,8 @@ function InventoryListPage() {
   // --- Render Logic ---
 
   if (authIsLoading || isLoading) {
-    return (
-        <div className="min-h-screen flex justify-center items-center">
-            <p className="text-xl text-gray-500 dark:text-gray-400">Loading inventory...</p>
-        </div>
-    );
-  }
+    return ( <div className="min-h-screen flex justify-center items-center"><LoadingSpinner text="Loading inventory..." size="lg" /></div> );
+}
 
   if (!isAuthenticated) {
      return (
