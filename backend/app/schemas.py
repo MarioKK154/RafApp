@@ -1,5 +1,5 @@
 # backend/app/schemas.py
-# ABSOLUTELY FINAL METICULOUSLY CHECKED UNCONDENSED VERSION - Indentation Focus
+# ABSOLUTELY FINAL METICULOUSLY CHECKED UNCONDENSED VERSION
 from pydantic import BaseModel, EmailStr, Field, HttpUrl
 from typing import Optional, List, Literal
 from datetime import datetime, timedelta
@@ -8,17 +8,25 @@ from datetime import datetime, timedelta
 class OrmConfig:
     from_attributes = True
 
-# --- Forward declarations ---
+# --- Basic/Forward Declarations ---
+class TenantReadBasic(BaseModel):
+    id: int
+    name: str
+    logo_url: Optional[str] = None
+    background_image_url: Optional[str] = None
+
+    class Config(OrmConfig):
+        pass
+
 class ProjectReadBasic(BaseModel):
     id: int
     name: str
-    class Config: # Ensure this is the simple Pydantic v1/v2 way
-        from_attributes = True # Or orm_mode = True if using older Pydantic
+    class Config(OrmConfig):
+        pass
 
 class TaskReadBasic(BaseModel):
     id: int
     title: str
-
     class Config(OrmConfig):
         pass
 
@@ -26,7 +34,6 @@ class UserReadBasic(BaseModel):
     id: int
     email: EmailStr
     full_name: Optional[str] = None
-
     class Config(OrmConfig):
         pass
 
@@ -34,20 +41,19 @@ class TaskCommentReadBasic(BaseModel):
     id: int
     content: str
     created_at: datetime
+    task_id: int # Added task_id for context
     author_id: int
     author: Optional[UserReadBasic] = None
-
     class Config(OrmConfig):
         pass
 
-class TaskPhotoReadBasic(BaseModel):
+class TaskPhotoReadBasic(BaseModel): # For nesting in TaskRead if needed
     id: int
     filename: str
     description: Optional[str] = None
     uploaded_at: datetime
     uploader_id: int
     uploader: Optional[UserReadBasic] = None
-
     class Config(OrmConfig):
         pass
 
@@ -59,6 +65,27 @@ class Token(BaseModel):
 class TokenData(BaseModel):
     email: Optional[str] = None
 
+# --- Tenant Schemas ---
+class TenantBase(BaseModel):
+    name: str = Field(..., min_length=1)
+    logo_url: Optional[HttpUrl | str] = None
+    background_image_url: Optional[HttpUrl | str] = None
+
+class TenantCreate(TenantBase):
+    pass
+
+class TenantUpdate(BaseModel): # All fields optional for update
+    name: Optional[str] = Field(None, min_length=1)
+    logo_url: Optional[HttpUrl | str | None] = None # Allow explicitly setting to null
+    background_image_url: Optional[HttpUrl | str | None] = None
+
+class TenantRead(TenantBase):
+    id: int
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    class Config(OrmConfig):
+        pass
+
 # --- User Schemas ---
 class UserBase(BaseModel):
     email: EmailStr
@@ -68,32 +95,20 @@ class UserBase(BaseModel):
     phone_number: Optional[str] = None
     location: Optional[str] = None
 
-# UserCreate (for public registration) was REMOVED.
-
 class UserCreateAdmin(UserBase):
     password: str
-    role: str # Mandatory
+    role: str
+    tenant_id: int
     is_active: Optional[bool] = True
     is_superuser: Optional[bool] = False
-    # Other fields inherited from UserBase are optional
-
-class UserImportCSVRow(BaseModel):
-    Name: Optional[str] = None
-    Email: EmailStr
-    Employee_ID: Optional[str] = Field(None, alias='Employee ID')
-    Kennitala: Optional[str] = None
-    Phone: Optional[str] = None # Maps to phone_number
-    Location: Optional[str] = None
-
-    class Config(OrmConfig): # OrmConfig likely already has from_attributes=True
-        # allow_population_by_field_name = True # OLD way
-        populate_by_name = True # NEW Pydantic v2 way for alias 'Employee ID'
 
 class UserRead(UserBase):
     id: int
     is_active: bool
     is_superuser: bool
     role: str
+    tenant_id: int
+    tenant: Optional[TenantReadBasic] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
     assigned_projects: List[ProjectReadBasic] = []
@@ -110,6 +125,7 @@ class UserUpdateAdmin(BaseModel):
     is_active: Optional[bool] = None
     is_superuser: Optional[bool] = None
     role: Optional[str] = None
+    tenant_id: Optional[int] = None
 
 class UserChangePassword(BaseModel):
     current_password: str
@@ -117,6 +133,16 @@ class UserChangePassword(BaseModel):
 
 class UserSetPasswordByAdmin(BaseModel):
     new_password: str = Field(..., min_length=8)
+
+class UserImportCSVRow(BaseModel):
+    Name: Optional[str] = None
+    Email: EmailStr
+    Employee_ID: Optional[str] = Field(None, alias='Employee ID')
+    Kennitala: Optional[str] = None
+    Phone: Optional[str] = None
+    Location: Optional[str] = None
+    class Config(OrmConfig):
+        populate_by_name = True
 
 
 # --- Project Schemas ---
@@ -132,7 +158,7 @@ class ProjectBase(BaseModel):
 class ProjectCreate(ProjectBase):
     pass
 
-class ProjectUpdate(ProjectBase): # All fields optional for update
+class ProjectUpdate(ProjectBase):
     name: Optional[str] = None
     description: Optional[str] = None
     address: Optional[str] = None
@@ -144,10 +170,11 @@ class ProjectUpdate(ProjectBase): # All fields optional for update
 class ProjectRead(ProjectBase):
     id: int
     creator_id: int
+    tenant_id: int
+    tenant: Optional[TenantReadBasic] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
-    project_manager: Optional[UserReadBasic] = None # Nested PM info
-
+    project_manager: Optional[UserReadBasic] = None
     class Config(OrmConfig):
         pass
 
@@ -171,7 +198,7 @@ class TaskBase(BaseModel):
 class TaskCreate(TaskBase):
     pass
 
-class TaskUpdate(BaseModel): # All fields optional for update
+class TaskUpdate(BaseModel):
     title: Optional[str] = None
     description: Optional[str] = None
     status: Optional[TaskStatusLiteral] = None
@@ -180,19 +207,12 @@ class TaskUpdate(BaseModel): # All fields optional for update
     due_date: Optional[datetime] = None
     project_id: Optional[int] = None
     assignee_id: Optional[int] = None
-    # is_commissioned is handled by a separate endpoint, not direct update
 
 class TaskRead(TaskBase):
     id: int
-    is_commissioned: bool # Added this field
+    is_commissioned: bool
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
-    # Optional nested details can be added if needed for specific views
-    # project: Optional[ProjectReadBasic] = None
-    # assignee: Optional[UserReadBasic] = None
-    # comments: List[TaskCommentReadBasic] = []
-    # photos: List[TaskPhotoReadBasic] = []
-
     class Config(OrmConfig):
         pass
 
@@ -206,15 +226,16 @@ class TaskCommentBase(BaseModel):
 class TaskCommentCreate(TaskCommentBase):
     pass
 
-class TaskCommentRead(TaskCommentBase):
+class TaskCommentRead(TaskCommentBase): # This is the schema routers/tasks.py expects
     id: int
     created_at: datetime
     task_id: int
     author_id: int
-    author: Optional[UserReadBasic] = None
-
+    author: Optional[UserReadBasic] = None # Nested basic author info
     class Config(OrmConfig):
         pass
+
+# TaskCommentRead is defined in Basic/Forward Declarations
 
 # --- Task Photo Schemas ---
 class TaskPhotoBase(BaseModel):
@@ -228,45 +249,40 @@ class TaskPhotoCreate(TaskPhotoBase):
     uploader_id: int
     task_id: int
 
-class TaskPhotoRead(TaskPhotoBase):
+class TaskPhotoRead(TaskPhotoBase): # This is the schema routers/tasks.py might expect for photo lists
     id: int
     filename: str
-    description: Optional[str] = None
+    # description: Optional[str] = None # Inherited from TaskPhotoBase
     content_type: Optional[str] = None
     size_bytes: Optional[int] = None
     uploaded_at: datetime
     uploader_id: int
     task_id: int
-    uploader: Optional[UserReadBasic] = None
-
+    uploader: Optional[UserReadBasic] = None # Nested basic uploader info
     class Config(OrmConfig):
         pass
 
+# TaskPhotoRead is defined in Basic/Forward Declarations
+
 # --- Inventory Schemas ---
 class InventoryItemBase(BaseModel):
-    name: str # English name
-    # icelandic_name: Optional[str] = None # For later
+    name: str
     description: Optional[str] = None
     quantity: Optional[float] = 0.0
     quantity_needed: Optional[float] = 0.0
     unit: Optional[str] = None
-    location: Optional[str] = None # General location
+    location: Optional[str] = None
     low_stock_threshold: Optional[float] = None
-    shop_url_1: Optional[HttpUrl | str] = None # Webshop URL
+    shop_url_1: Optional[HttpUrl | str] = None
     shop_url_2: Optional[HttpUrl | str] = None
     shop_url_3: Optional[HttpUrl | str] = None
-    local_image_path: Optional[str] = None # NEW
-    # type: Optional[str] = None # For later
-    # full_category_path_is: Optional[str] = None # For later
-    # full_category_path_en: Optional[str] = None # For later
-
+    local_image_path: Optional[str] = None
 
 class InventoryItemCreate(InventoryItemBase):
-    pass # Inherits local_image_path
+    pass
 
-class InventoryItemUpdate(InventoryItemBase): # All fields optional for update
+class InventoryItemUpdate(InventoryItemBase):
     name: Optional[str] = None
-    # icelandic_name: Optional[str] = None
     description: Optional[str] = None
     quantity: Optional[float] = None
     quantity_needed: Optional[float] = None
@@ -276,27 +292,27 @@ class InventoryItemUpdate(InventoryItemBase): # All fields optional for update
     shop_url_1: Optional[HttpUrl | str | None] = None
     shop_url_2: Optional[HttpUrl | str | None] = None
     shop_url_3: Optional[HttpUrl | str | None] = None
-    local_image_path: Optional[str] = None # NEW, allow updating/setting to null
+    local_image_path: Optional[str] = None # Allow updating this
 
-class InventoryItemRead(InventoryItemBase):
+class InventoryItemRead(InventoryItemBase): # Corrected formatting
     id: int
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
-    # local_image_path is inherited
-    # Exclude shop URLs by default, specific schema to include them
     shop_url_1: Optional[HttpUrl | str] = Field(None, exclude=True)
     shop_url_2: Optional[HttpUrl | str] = Field(None, exclude=True)
     shop_url_3: Optional[HttpUrl | str] = Field(None, exclude=True)
+    # local_image_path is inherited from InventoryItemBase and will be included
 
     class Config(OrmConfig):
         pass
 
-class InventoryItemReadWithURLs(InventoryItemRead): # As before
+class InventoryItemReadWithURLs(InventoryItemRead):
     shop_url_1: Optional[HttpUrl | str] = None
     shop_url_2: Optional[HttpUrl | str] = None
     shop_url_3: Optional[HttpUrl | str] = None
+    # Inherits Config & local_image_path
 
-class InventoryItemUpdateNeededQty(BaseModel): # As before
+class InventoryItemUpdateNeededQty(BaseModel):
     quantity_needed: float = Field(..., ge=0)
 
 
@@ -339,7 +355,7 @@ class TimeLogRead(TimeLogBase):
     start_time: datetime
     end_time: Optional[datetime] = None
     duration: Optional[timedelta] = None
-    user_id: int
+    user_id: int # Consider UserReadBasic for user here
 
     class Config(OrmConfig):
         pass
@@ -348,21 +364,17 @@ class TimeLogStatus(BaseModel):
     is_clocked_in: bool
     current_log: Optional[TimeLogRead] = None
 
+# --- Schemas for Admin Tools ---
 class CleanSlateRequest(BaseModel):
     main_admin_email: EmailStr
-    # Optionally, add a confirmation field to prevent accidental calls
-    confirm_action: Literal["PERFORM CLEAN SLATE"] = "PERFORM CLEAN SLATE"
 
 class CleanSlateSummary(BaseModel):
     users_deactivated: int
-    projects_creator_reassigned: Optional[int] = 0 # Make optional if not always present
-    projects_pm_cleared: Optional[int] = 0
-    tasks_unassigned: Optional[int] = 0
-    message: Optional[str] = None # For "No other users found..."
+    projects_creator_reassigned: int = 0
+    projects_pm_cleared: int = 0
+    tasks_unassigned: int = 0
+    message: Optional[str] = None
 
 class CleanSlateResponse(BaseModel):
     message: str
     summary: CleanSlateSummary
-
-# Pydantic v2 generally handles forward references well when from_attributes=True is used.
-# Explicit model_rebuild calls are usually not needed unless complex circular dependencies occur.

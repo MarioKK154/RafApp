@@ -1,5 +1,5 @@
 // frontend/src/pages/InventoryCreatePage.jsx
-// ABSOLUTELY FINAL Meticulously Checked Version - Single Return Pattern
+// Uncondensed Version: Added local_image_path input
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axiosInstance from '../api/axiosInstance';
@@ -22,6 +22,7 @@ function InventoryCreatePage() {
     shop_url_1: '',
     shop_url_2: '',
     shop_url_3: '',
+    local_image_path: '',
   });
   const [error, setError] = useState(''); // For form submission errors
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -69,6 +70,7 @@ function InventoryCreatePage() {
       shop_url_1: formData.shop_url_1 || null,
       shop_url_2: formData.shop_url_2 || null,
       shop_url_3: formData.shop_url_3 || null,
+      local_image_path: formData.local_image_path || null,
     };
 
     try {
@@ -151,6 +153,21 @@ function InventoryCreatePage() {
         <div>
           <label htmlFor="low_stock_threshold" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Low Stock Threshold</label>
           <input type="number" name="low_stock_threshold" id="low_stock_threshold" step="any" placeholder="Optional" value={formData.low_stock_threshold} onChange={handleChange} disabled={isSubmitting} className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-70"/>
+        </div>
+        {/* --- NEW: Local Image Path Input --- */}
+        <div>
+          <label htmlFor="local_image_path" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Local Image Path (Optional)</label>
+          <input
+            type="text"
+            name="local_image_path"
+            id="local_image_path"
+            value={formData.local_image_path}
+            onChange={handleChange}
+            disabled={isSubmitting}
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-70"
+            placeholder="e.g., images/item_abc.jpg"
+          />
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Relative path from a designated static image folder on the server.</p>
         </div>
         {/* Shop URLs */}
         <div>

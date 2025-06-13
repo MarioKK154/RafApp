@@ -1,14 +1,16 @@
 // frontend/src/App.jsx
-// Uncondensed Version: Added User Bulk Import Route
+// Uncondensed Version: Added Tenant-Specific Dynamic Background
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
+import { useAuth } from './context/AuthContext'; // Import useAuth to access tenant info
+
+// Import Components & Pages
 import Navbar from './components/Navbar';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
-// import RegisterPage from './pages/RegisterPage'; // Removed
 import ProjectsPage from './pages/ProjectsPage';
 import ProjectCreatePage from './pages/ProjectCreatePage';
 import ProjectEditPage from './pages/ProjectEditPage';
@@ -22,18 +24,47 @@ import TimeLogsPage from './pages/TimeLogsPage';
 import UserListPage from './pages/UserListPage';
 import UserCreatePage from './pages/UserCreatePage';
 import UserEditPage from './pages/UserEditPage';
-import UserBulkImportPage from './pages/UserBulkImportPage'; // NEW Import
+import UserBulkImportPage from './pages/UserBulkImportPage';
+import TenantListPage from './pages/TenantListPage';
+import TenantCreatePage from './pages/TenantCreatePage';
+import TenantEditPage from './pages/TenantEditPage';
+import AdminToolsPage from './pages/AdminToolsPage';
 import ShoppingListPage from './pages/ShoppingListPage';
 import GanttChartPage from './pages/GanttChartPage';
 import AccountSettingsPage from './pages/AccountSettingsPage';
 import NotFoundPage from './pages/NotFoundPage';
-import AdminToolsPage from './pages/AdminToolsPage';
+
 
 function App() {
+    const { isAuthenticated, user } = useAuth(); // Get user from context
+
+    // Define the style for the background image
+    const backgroundStyle = isAuthenticated && user?.tenant?.background_image_url
+        ? {
+            backgroundImage: `url(${user.tenant.background_image_url})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundAttachment: 'fixed', // Keeps the background stationary on scroll
+            backgroundRepeat: 'no-repeat',
+        }
+        : {}; // Empty object if no background image
+
     return (
-        <>
+        // Apply the style to a main wrapper div
+        <div style={backgroundStyle} className="min-h-screen bg-gray-100 dark:bg-gray-800">
             <Navbar />
-            <ToastContainer position="top-right" autoClose={4000} /* ... other props ... */ />
+            <ToastContainer
+                position="top-right"
+                autoClose={4000}
+                hideProgressBar={false}
+                newestOnTop={false}
+                closeOnClick
+                rtl={false}
+                pauseOnFocusLoss
+                draggable
+                pauseOnHover
+                theme="colored"
+             />
             <main className="pt-4">
                 <Routes>
                     <Route path="/login" element={<LoginPage />} />
@@ -50,8 +81,11 @@ function App() {
                     <Route path="/timelogs" element={<TimeLogsPage />} />
                     <Route path="/users" element={<UserListPage />} />
                     <Route path="/users/new" element={<UserCreatePage />} />
-                    <Route path="/users/import" element={<UserBulkImportPage />} /> {/* NEW Route */}
+                    <Route path="/users/import" element={<UserBulkImportPage />} />
                     <Route path="/users/edit/:userId" element={<UserEditPage />} />
+                    <Route path="/tenants" element={<TenantListPage />} />
+                    <Route path="/tenants/new" element={<TenantCreatePage />} />
+                    <Route path="/tenants/edit/:tenantId" element={<TenantEditPage />} />
                     <Route path="/admin/tools" element={<AdminToolsPage />} />
                     <Route path="/shopping-list" element={<ShoppingListPage />} />
                     <Route path="/gantt" element={<GanttChartPage />} />
@@ -59,7 +93,8 @@ function App() {
                     <Route path="*" element={<NotFoundPage />} />
                 </Routes>
             </main>
-        </>
+        </div>
     );
 }
+
 export default App;

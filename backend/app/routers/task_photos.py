@@ -1,205 +1,172 @@
 # backend/app/routers/task_photos.py
-# Uncondensed Version
-import os
-import shutil
-import uuid # For unique filenames
-from fastapi import (
-    APIRouter, Depends, HTTPException, status, UploadFile, File, Form
-)
+# Uncondensed Version: Tenant Isolation Implemented
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from typing import Annotated, List, Optional
+import os
+import shutil
+import uuid
 
 from .. import crud, models, schemas, security
 from ..database import get_db
 
-# Define base directory for task photo uploads
-UPLOAD_DIR_BASE = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), # -> app/
-    "uploads",
-    "tasks"
-)
+# Define upload directory relative to the backend root
+BACKEND_DIR = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+UPLOAD_DIRECTORY_TASK_PHOTOS = os.path.join(BACKEND_DIR, "uploads", "task_photos")
+os.makedirs(UPLOAD_DIRECTORY_TASK_PHOTOS, exist_ok=True)
+
 
 router = APIRouter(
     tags=["Task Photos"],
-    dependencies=[Depends(security.get_current_active_user)] # Must be logged in
+    dependencies=[Depends(security.get_current_active_user)]
 )
 
 # Dependency type hints
 DbDependency = Annotated[Session, Depends(get_db)]
 CurrentUserDependency = Annotated[models.User, Depends(security.get_current_active_user)]
-# Roles allowed to delete photos (besides uploader)
-PhotoModeratorRoles = ["admin", "project manager", "team leader"]
+# Users who can upload/delete photos for tasks (typically project members or those with task edit rights)
+TaskContentContributorDependency = Annotated[models.User, Depends(security.require_role(["admin", "project manager", "team leader", "electrician"]))]
 
-# Helper to ensure task-specific upload dir exists
-def ensure_task_upload_dir(task_id: int):
-    task_upload_dir = os.path.join(UPLOAD_DIR_BASE, str(task_id))
-    # Create directory if it doesn't exist, handle potential race conditions if needed
-    os.makedirs(task_upload_dir, exist_ok=True)
-    print(f" Ensured task upload directory exists: {task_upload_dir}") # Log directory check/creation
-    return task_upload_dir
+
+# Helper function to get a task and verify tenant ownership via its project
+async def get_task_and_verify_tenant_from_photos_router(
+    task_id: int, db: DbDependency, current_user: CurrentUserDependency
+) -> models.Task:
+    db_task = crud.get_task(db, task_id=task_id) # crud.get_task should eager load project.tenant
+    if not db_task:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")
+    if not db_task.project or not db_task.project.tenant:
+        # This indicates a data integrity issue or incomplete loading in CRUD
+        db.refresh(db_task.project, attribute_names=['tenant'])
+        if not db_task.project or not db_task.project.tenant:
+              raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Task's project or tenant link is broken.")
+
+    if not current_user.is_superuser and db_task.project.tenant_id != current_user.tenant_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to access this task's photos")
+    return db_task
+
+# Helper function to get task photo and verify tenant ownership via its task/project
+async def get_photo_and_verify_tenant(
+    photo_id: int, db: DbDependency, current_user: CurrentUserDependency
+) -> models.TaskPhoto:
+    db_photo = crud.get_task_photo(db, photo_id=photo_id) # crud.get_task_photo should load task.project.tenant
+    if not db_photo:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Photo not found")
+    if not db_photo.task or not db_photo.task.project or not db_photo.task.project.tenant:
+         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Photo is not correctly associated with a task, project, or tenant.")
+
+    if not current_user.is_superuser and db_photo.task.project.tenant_id != current_user.tenant_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to access this photo")
+    return db_photo
+
 
 @router.post("/upload/{task_id}", response_model=schemas.TaskPhotoRead, status_code=status.HTTP_201_CREATED)
 async def upload_photo_for_task(
     task_id: int,
     db: DbDependency,
-    current_user: CurrentUserDependency,
+    current_user: TaskContentContributorDependency,
     description: Optional[str] = Form(None),
     file: UploadFile = File(...)
 ):
-    """Uploads a photo file for a specific task."""
-    db_task = crud.get_task(db, task_id=task_id)
-    if not db_task:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Task not found"
-        )
+    """
+    Uploads a photo for a specific task, ensuring the task belongs to the user's tenant.
+    """
+    db_task = await get_task_and_verify_tenant_from_photos_router(task_id, db, current_user) # Verifies tenant
 
-    # TODO: Add authorization check - can user upload photo to this task/project?
+    file_extension = os.path.splitext(file.filename)[1]
+    unique_filename = f"{uuid.uuid4()}{file_extension}"
+    file_location_on_disk = os.path.join(UPLOAD_DIRECTORY_TASK_PHOTOS, unique_filename)
+    db_filepath = unique_filename # Store relative path
 
-    # Ensure base and task directories exist
-    if not os.path.exists(os.path.dirname(UPLOAD_DIR_BASE)): # Ensure 'uploads' exists
-         os.makedirs(os.path.dirname(UPLOAD_DIR_BASE), exist_ok=True)
-    task_upload_dir = ensure_task_upload_dir(task_id)
-
-    # Basic check for image types using content_type (more robust checks are possible)
-    if not file.content_type or not file.content_type.startswith("image/"):
-         raise HTTPException(
-             status_code=status.HTTP_400_BAD_REQUEST,
-             detail=f"Invalid file type ({file.content_type}). Only images allowed."
-        )
-
-    file_location = "" # Define outside try for cleanup scope
     try:
-        original_filename = file.filename or "unknown_file"
-        # Sanitize or create unique filename
-        file_extension = os.path.splitext(original_filename)[1]
-        unique_filename = f"{uuid.uuid4()}{file_extension}"
-        file_location = os.path.join(task_upload_dir, unique_filename)
-        relative_filepath = os.path.join(str(task_id), unique_filename) # Relative to UPLOAD_DIR_BASE
-
-        # Save file chunk by chunk for potentially large files
-        with open(file_location, "wb") as file_object:
-            while chunk := await file.read(8192): # Read in chunks (e.g., 8KB)
-                file_object.write(chunk)
-
-        file_size = os.path.getsize(file_location)
-
-        # Create DB metadata
-        photo_metadata = schemas.TaskPhotoCreate(
-            filename=original_filename,
-            filepath=relative_filepath,
-            description=description,
-            content_type=file.content_type,
-            size_bytes=file_size,
-            task_id=task_id,
-            uploader_id=current_user.id
-        )
-        db_photo = crud.create_task_photo_metadata(db=db, photo_data=photo_metadata)
-        return db_photo
-
-    except HTTPException as http_exc:
-        # Re-raise known HTTP exceptions
-        raise http_exc
+        with open(file_location_on_disk, "wb+") as file_object:
+            shutil.copyfileobj(file.file, file_object)
     except Exception as e:
-        print(f"Error uploading task photo: {e}")
-        # Clean up partially saved file if error occurred
-        if file_location and os.path.exists(file_location):
-             os.remove(file_location)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Could not upload photo due to server error."
-        )
+        print(f"Error saving task photo file: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Could not save photo file.")
     finally:
-        # Ensure the UploadFile resource is closed
         await file.close()
+
+    photo_data = schemas.TaskPhotoCreate(
+        filename=file.filename,
+        filepath=db_filepath,
+        description=description,
+        content_type=file.content_type,
+        size_bytes=getattr(file, 'size', None),
+        task_id=db_task.id,
+        uploader_id=current_user.id
+    )
+    db_photo = crud.create_task_photo_metadata(db=db, photo_data=photo_data)
+    return db_photo
 
 
 @router.get("/task/{task_id}", response_model=List[schemas.TaskPhotoRead])
-async def list_photos_for_task(
+async def get_photos_for_task_endpoint(
     task_id: int,
     db: DbDependency,
-    skip: int = 0,
-    limit: int = 100
-    # current_user: CurrentUserDependency - Applied at router level
+    current_user: CurrentUserDependency
 ):
-    """Lists all photo metadata for a specific task."""
-    db_task = crud.get_task(db, task_id=task_id)
-    if not db_task:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")
-    # TODO: Authorization check
-
-    photos = crud.get_photos_for_task(db=db, task_id=task_id, skip=skip, limit=limit)
+    """
+    Lists all photos for a specific task, if the task belongs to the user's tenant.
+    """
+    await get_task_and_verify_tenant_from_photos_router(task_id, db, current_user) # Verifies tenant access
+    photos = crud.get_photos_for_task(db, task_id=task_id)
     return photos
 
 
-@router.get("/download/{photo_id}")
+@router.get("/download/{photo_id}", response_class=FileResponse)
 async def download_task_photo_file(
-    photo_id: int,
-    db: DbDependency
-    # current_user: CurrentUserDependency - Applied at router level
-):
-    """Downloads the actual task photo file."""
-    db_photo = crud.get_task_photo(db=db, photo_id=photo_id)
-    if not db_photo:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Photo metadata not found")
-
-    # TODO: Authorization check
-
-    file_path_on_disk = os.path.join(UPLOAD_DIR_BASE, db_photo.filepath)
-    if not os.path.exists(file_path_on_disk) or not os.path.isfile(file_path_on_disk):
-         print(f"Error: File not found at {file_path_on_disk} for photo ID {photo_id}")
-         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Photo file not found on server")
-
-    return FileResponse(
-        path=file_path_on_disk,
-        filename=db_photo.filename, # Suggests filename for download dialog
-        media_type=db_photo.content_type # Sets Content-Type header
-    )
-
-
-@router.delete("/{photo_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_task_photo(
     photo_id: int,
     db: DbDependency,
     current_user: CurrentUserDependency
 ):
-    """Deletes a task photo (metadata and file). Requires uploader or moderator role."""
-    db_photo = crud.get_task_photo(db=db, photo_id=photo_id)
-    if not db_photo:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Photo metadata not found")
+    """
+    Downloads a specific photo file, if it belongs to a task in the user's tenant.
+    """
+    db_photo = await get_photo_and_verify_tenant(photo_id, db, current_user)
+    
+    file_path_on_disk = os.path.join(UPLOAD_DIRECTORY_TASK_PHOTOS, db_photo.filepath)
+    if not os.path.exists(file_path_on_disk):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Photo file not found on server.")
+    
+    return FileResponse(
+        path=file_path_on_disk,
+        filename=db_photo.filename,
+        media_type=db_photo.content_type or 'application/octet-stream'
+    )
 
-    # Authorization Check
-    is_uploader = (db_photo.uploader_id == current_user.id)
-    is_moderator = (current_user.role in PhotoModeratorRoles)
 
-    if not is_uploader and not is_moderator:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to delete this photo")
+@router.delete("/{photo_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_task_photo_metadata_endpoint(
+    photo_id: int,
+    db: DbDependency,
+    current_user: TaskContentContributorDependency
+):
+    """
+    Deletes a photo and its metadata, if the photo belongs to a task in the user's tenant
+    and the user has permission (is uploader or moderator).
+    """
+    db_photo = await get_photo_and_verify_tenant(photo_id, db, current_user)
 
-    file_path_on_disk = os.path.join(UPLOAD_DIR_BASE, db_photo.filepath)
+    # Permission check: Uploader or PM/Admin/TL of the project
+    can_delete = current_user.is_superuser or \
+                 (current_user.id == db_photo.uploader_id) or \
+                 (current_user.role in ["admin", "project manager", "team leader"])
 
-    # Delete metadata first
-    deleted_meta = crud.delete_task_photo_metadata(db=db, photo_id=photo_id)
-    if deleted_meta is None:
-        # This case should ideally not be reached if get_task_photo succeeded
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Photo metadata not found during delete attempt")
+    if not can_delete:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to delete this photo.")
 
-    # Then delete file from disk
-    try:
-        if os.path.exists(file_path_on_disk) and os.path.isfile(file_path_on_disk):
-            os.remove(file_path_on_disk)
-            # Optional: Clean up empty task directory
-            try:
-                task_dir = os.path.dirname(file_path_on_disk)
-                if not os.listdir(task_dir):
-                    os.rmdir(task_dir)
-            except OSError as dir_err:
-                 print(f"Notice: Could not remove empty directory {task_dir}: {dir_err}")
-        else:
-            print(f"Warning: File not found for deleted photo metadata: {file_path_on_disk}")
-    except OSError as e:
-        # Log error but don't fail request if metadata was deleted
-        print(f"Error deleting file {file_path_on_disk}: {e}")
-        # Consider implications if file deletion fails but DB entry is gone
-
-    return None # Return No Content on successful deletion
+    file_path_on_disk = os.path.join(UPLOAD_DIRECTORY_TASK_PHOTOS, db_photo.filepath)
+    
+    deleted_photo_meta = crud.delete_task_photo_metadata(db=db, photo_id=db_photo.id)
+    if deleted_photo_meta:
+        try:
+            if os.path.exists(file_path_on_disk):
+                os.remove(file_path_on_disk)
+        except OSError as e:
+            print(f"Error deleting photo file {file_path_on_disk}: {e}")
+    else:
+         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Photo metadata not found.")
+    
+    return None
