@@ -434,9 +434,37 @@ def delete_comment(db: Session, comment_id: int) -> Optional[models.TaskComment]
 def get_inventory_item(db: Session, item_id: int) -> Optional[models.InventoryItem]:
      return db.query(models.InventoryItem).filter(models.InventoryItem.id == item_id).first()
 
-def get_inventory_items(db: Session, skip: int = 0, limit: int = 100) -> List[models.InventoryItem]:
-     return db.query(models.InventoryItem).order_by(models.InventoryItem.name).offset(skip).limit(limit).all()
+def get_inventory_items(
+    db: Session,
+    search: Optional[str] = None,   # NEW: For filtering by name/description
+    sort_by: Optional[str] = 'name', # NEW: For sorting
+    sort_dir: Optional[str] = 'asc', # NEW: For sorting
+    skip: int = 0,
+    limit: int = 100
+) -> List[models.InventoryItem]:
+    query = db.query(models.InventoryItem)
 
+    # Apply search filter if provided
+    if search:
+        search_term = f"%{search}%"
+        query = query.filter(models.InventoryItem.name.ilike(search_term)) # Case-insensitive search on name
+
+    # Apply sorting
+    order_column = models.InventoryItem.name # Default sort column
+    if sort_by == 'name':
+        order_column = models.InventoryItem.name
+    elif sort_by == 'quantity':
+        order_column = models.InventoryItem.quantity
+    elif sort_by == 'location':
+        order_column = models.InventoryItem.location
+    # Add more sortable columns as needed
+
+    if sort_dir == 'desc':
+        query = query.order_by(desc(order_column).nullslast())
+    else:
+        query = query.order_by(asc(order_column).nullsfirst())
+
+    return query.offset(skip).limit(limit).all()
 def create_inventory_item(db: Session, item: schemas.InventoryItemCreate) -> models.InventoryItem:
      item_data = item.model_dump()
      # Ensure numeric fields are correctly typed if coming as strings or None
@@ -575,26 +603,46 @@ def get_timelogs(
     db: Session,
     user_id: Optional[int] = None,
     project_id: Optional[int] = None,
-    tenant_id: Optional[int] = None, # For superuser/admin filtering
+    tenant_id: Optional[int] = None,
+    start_date: Optional[datetime] = None, # NEW: Date range filter start
+    end_date: Optional[datetime] = None,   # NEW: Date range filter end
+    sort_by: Optional[str] = 'start_time', # NEW: Sorting
+    sort_dir: Optional[str] = 'desc',      # NEW: Sorting
     skip: int = 0,
     limit: int = 100
 ) -> List[models.TimeLog]:
     query = db.query(models.TimeLog).options(
-        joinedload(models.TimeLog.user), # Eager load user for display
-        joinedload(models.TimeLog.project) # Eager load project for display
+        joinedload(models.TimeLog.user),
+        joinedload(models.TimeLog.project)
     )
+
+    # Apply filters
     if user_id is not None:
         query = query.filter(models.TimeLog.user_id == user_id)
     if project_id is not None:
         query = query.filter(models.TimeLog.project_id == project_id)
     if tenant_id is not None:
-        # Filter by joining with User table to get the tenant_id
         query = query.join(models.User).filter(models.User.tenant_id == tenant_id)
+    if start_date:
+        query = query.filter(models.TimeLog.start_time >= start_date)
+    if end_date:
+        # Add 1 day to end_date to make the range inclusive of the selected day
+        inclusive_end_date = end_date + timedelta(days=1)
+        query = query.filter(models.TimeLog.start_time < inclusive_end_date)
 
-    return query.order_by(desc(models.TimeLog.start_time))\
-                 .offset(skip)\
-                 .limit(limit)\
-                 .all()
+    # Apply sorting
+    order_column = models.TimeLog.start_time # Default
+    if sort_by == 'start_time': order_column = models.TimeLog.start_time
+    elif sort_by == 'end_time': order_column = models.TimeLog.end_time
+    elif sort_by == 'duration': order_column = models.TimeLog.duration
+    # Add more sortable columns as needed
+
+    if sort_dir == 'desc':
+        query = query.order_by(desc(order_column).nullslast())
+    else:
+        query = query.order_by(asc(order_column).nullsfirst())
+
+    return query.offset(skip).limit(limit).all()
 # --- END MISSING FUNCTION ---
 # --- Task Photo Metadata CRUD ---
 def get_task_photo(db: Session, photo_id: int) -> Optional[models.TaskPhoto]:

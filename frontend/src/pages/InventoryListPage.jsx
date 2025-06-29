@@ -1,7 +1,7 @@
 // frontend/src/pages/InventoryListPage.jsx
-// ABSOLUTELY FINAL Meticulously Checked Uncondensed Version
+// ABSOLUTELY FINAL Meticulously Checked Uncondensed Version - Search & Sort
 import React, { useState, useEffect, useCallback } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import axiosInstance from '../api/axiosInstance';
 import Modal from '../components/Modal';
@@ -10,167 +10,125 @@ import LoadingSpinner from '../components/LoadingSpinner';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
+const INVENTORY_SORTABLE_FIELDS = [
+    { label: 'Name', value: 'name'},
+    { label: 'Quantity', value: 'quantity'},
+    { label: 'Location', value: 'location'}
+];
+
 function InventoryListPage() {
   const [items, setItems] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const { user, isAuthenticated, isLoading: authIsLoading } = useAuth();
-  const navigate = useNavigate(); // Kept for potential future use or if auth fails
+
   const [editedNeededQuantities, setEditedNeededQuantities] = useState({});
-  const [itemUpdateError, setItemUpdateError] = useState({}); // For inline edit errors
+  const [itemUpdateError, setItemUpdateError] = useState({});
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
+
+  const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(searchTerm);
+  const [sortBy, setSortBy] = useState('name');
+  const [sortDir, setSortDir] = useState('asc');
 
   const canManageInventory = user && ['admin', 'project manager'].includes(user.role);
   const canUpdateNeededQty = user && ['admin', 'project manager', 'team leader'].includes(user.role);
   const canViewURLs = user && ['admin', 'project manager'].includes(user.role);
+  
+  useEffect(() => {
+    const handler = setTimeout(() => { setDebouncedSearchTerm(searchTerm); }, 500);
+    return () => { clearTimeout(handler); };
+  }, [searchTerm]);
 
   const fetchItems = useCallback(() => {
-    if (authIsLoading) { // Wait for auth check to complete
-        setIsLoading(true); // Keep loading if auth is still resolving
-        return;
-    }
-    if (!isAuthenticated) {
-        setIsLoading(false);
-        setError('You must be logged in to view inventory.');
-        // navigate('/login', {replace: true}); // Consider if auto-navigate is desired here
-        return;
-    }
-
+    if (authIsLoading || !isAuthenticated) { setIsLoading(false); setError(isAuthenticated ? '' : 'You must be logged in.'); return; }
+    
     setIsLoading(true);
     setError('');
-    setItemUpdateError({}); // Clear inline errors on list refresh
-    axiosInstance.get('/inventory/')
+    const params = { search: debouncedSearchTerm || null, sort_by: sortBy, sort_dir: sortDir };
+
+    axiosInstance.get('/inventory/', { params })
       .then(response => {
         setItems(response.data);
         const initialEdits = {};
-        response.data.forEach(item => {
-            initialEdits[item.id] = item.quantity_needed?.toString() ?? '0';
-        });
+        response.data.forEach(item => { initialEdits[item.id] = item.quantity_needed?.toString() ?? '0'; });
         setEditedNeededQuantities(initialEdits);
       })
-      .catch(err => {
-        console.error("Error fetching inventory items:", err);
-        setError('Failed to load inventory items.');
-        toast.error('Failed to load inventory items.');
-      })
-      .finally(() => {
-        setIsLoading(false);
-      });
-  }, [isAuthenticated, authIsLoading]); // Removed navigate as it's not strictly needed by fetchItems
+      .catch(err => { console.error("Error fetching items:", err); setError('Failed to load inventory.'); toast.error('Failed to load items.'); })
+      .finally(() => { setIsLoading(false); });
+  }, [isAuthenticated, authIsLoading, debouncedSearchTerm, sortBy, sortDir]);
 
-  useEffect(() => {
-    fetchItems();
-  }, [fetchItems]);
+  useEffect(() => { fetchItems(); }, [fetchItems]);
 
   const handleDeleteClick = (item) => {
-    if (!canManageInventory) {
-        toast.error("You don't have permission to delete inventory items.");
-        return;
-    }
+    if (!canManageInventory) { toast.error("No permission."); return; }
     setItemToDelete(item);
     setIsDeleteModalOpen(true);
   };
-
   const confirmDeleteItem = async () => {
     if (!itemToDelete) return;
+    try { await axiosInstance.delete(`/inventory/${itemToDelete.id}`); toast.success(`Item "${itemToDelete.name}" deleted.`); fetchItems(); }
+    catch (err) { console.error("Error deleting item:", err); toast.error(err.response?.data?.detail || 'Failed to delete.'); }
+    finally { setIsDeleteModalOpen(false); setItemToDelete(null); }
+  };
+  const handleNeededQtyChange = (itemId, value) => {
+    setEditedNeededQuantities(prev => ({ ...prev, [itemId]: value }));
+    setItemUpdateError(prev => { const n = {...prev}; delete n[itemId]; return n; });
+  };
+  const handleUpdateNeededQty = async (itemId) => {
+    const edVal = editedNeededQuantities[itemId];
+    const nQty = parseFloat(edVal);
+    const currItem = items.find(i => i.id === itemId);
+    if(isNaN(nQty) || nQty < 0){ setItemUpdateError(prev=>({...prev,[itemId]:"Invalid"})); return; }
+    setItemUpdateError(prev=>{const n={...prev}; delete n[itemId]; return n;});
     try {
-        await axiosInstance.delete(`/inventory/${itemToDelete.id}`);
-        toast.success(`Item "${itemToDelete.name}" deleted successfully.`);
-        fetchItems(); // Refetch items to update the list
-    } catch (err) {
-        console.error("Error deleting inventory item:", err);
-        toast.error(err.response?.data?.detail || 'Failed to delete item.');
-    } finally {
-        setIsDeleteModalOpen(false);
-        setItemToDelete(null);
+        await axiosInstance.put(`/inventory/${itemId}/needed`, {quantity_needed: nQty});
+        toast.success(`Needed qty for "${currItem?.name}" updated.`);
+        fetchItems();
+    } catch(err) {
+        console.error("Error updating needed:", err);
+        toast.error(err.response?.data?.detail || 'Save failed');
+        setItemUpdateError(prev=>({...prev,[itemId]:'Save failed'}));
     }
   };
 
-  const handleNeededQtyChange = (itemId, value) => {
-      setEditedNeededQuantities(prev => ({ ...prev, [itemId]: value }));
-      setItemUpdateError(prev => { const newErrors = {...prev}; delete newErrors[itemId]; return newErrors; });
-  };
-
-  const handleUpdateNeededQty = async (itemId) => {
-      const editedValue = editedNeededQuantities[itemId];
-      const newQty = parseFloat(editedValue);
-      const currentItem = items.find(item => item.id === itemId);
-
-      if (isNaN(newQty) || newQty < 0) {
-          setItemUpdateError(prev => ({...prev, [itemId]: "Invalid qty (>= 0)"}));
-          return;
-      }
-      setItemUpdateError(prev => { const newErrors = {...prev}; delete newErrors[itemId]; return newErrors; });
-
-      try {
-          const payload = { quantity_needed: newQty };
-          const response = await axiosInstance.put(`/inventory/${itemId}/needed`, payload);
-          toast.success(`Needed quantity updated for "${currentItem?.name || 'item'}"!`);
-          // Optimistically update local state or refetch
-          setItems(prevItems => prevItems.map(item =>
-              item.id === itemId ? { ...item, quantity_needed: response.data.quantity_needed } : item
-          ));
-          setEditedNeededQuantities(prev => ({...prev, [itemId]: response.data.quantity_needed.toString()}));
-      } catch (err) {
-          console.error(`Error updating needed qty for item ${itemId}:`, err);
-          const errorMsg = err.response?.data?.detail || 'Save failed';
-          setItemUpdateError(prev => ({...prev, [itemId]: errorMsg }));
-          toast.error(`Failed for "${currentItem?.name || 'item'}": ${errorMsg}`);
-      }
-  };
-
-  // --- Render Logic ---
-  if (authIsLoading || isLoading) {
-    return (
-        <div className="min-h-screen flex justify-center items-center">
-            <LoadingSpinner text="Loading inventory..." size="lg"/>
-        </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-     return (
-        <div className="min-h-screen flex flex-col justify-center items-center text-center p-6">
-            <p className="text-red-600 mb-4">{error || 'Please log in to view inventory.'}</p>
-            <Link
-                to="/login"
-                className="px-4 py-2 bg-blue-600 text-white rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-200"
-            >
-                Go to Login
-            </Link>
-        </div>
-     );
-  }
-
-  // If there was an error fetching the list and it's not just loading
-  if (error && !isLoading) {
-     return (
-        <div className="container mx-auto p-6 text-center text-red-500">
-            <p>{error}</p>
-            <button onClick={fetchItems} className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
-                Try Again
-            </button>
-        </div>
-     );
- }
+  if (authIsLoading) { return ( <div className="min-h-screen flex justify-center items-center"><LoadingSpinner text="Loading..." size="lg"/></div> ); }
+  if (!isAuthenticated) { return ( <div className="min-h-screen flex flex-col justify-center items-center text-center p-6"><p className="text-red-600 mb-4">Please log in.</p><Link to="/login" className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Go to Login</Link></div> ); }
 
   return (
     <div className="container mx-auto p-4 md:p-6">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-wrap justify-between items-center mb-6 gap-2">
         <h1 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white">Inventory</h1>
-        {canManageInventory && (
-            <Link
-                to="/inventory/new"
-                className="px-4 py-2 bg-indigo-600 text-white rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-200 text-sm md:text-base"
-            >
-                Add New Item
-            </Link>
-        )}
+        {canManageInventory && ( <Link to="/inventory/new" className="px-4 py-2 bg-indigo-600 text-white rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-200 text-sm md:text-base">Add New Item</Link> )}
       </div>
 
-      {items.length === 0 ? (
-        <p className="text-gray-600 dark:text-gray-400">No inventory items found. {canManageInventory ? 'Add one!' : ''}</p>
+      <div className="grid grid-cols-1 md:grid-cols-3 items-end gap-4 mb-6 p-4 bg-gray-100 dark:bg-gray-700 rounded-md">
+        <div className="md:col-span-1">
+          <label htmlFor="searchInventory" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Search by Name</label>
+          <input type="text" id="searchInventory" placeholder="e.g., Cable, Screwdriver..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"/>
+        </div>
+        <div>
+          <label htmlFor="sortBy" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Sort By</label>
+          <select id="sortBy" value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+            {INVENTORY_SORTABLE_FIELDS.map(field => (<option key={field.value} value={field.value}>{field.label}</option>))}
+          </select>
+        </div>
+        <div>
+          <label htmlFor="sortDir" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Direction</label>
+          <select id="sortDir" value={sortDir} onChange={(e) => setSortDir(e.target.value)} className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+            <option value="asc">Ascending</option>
+            <option value="desc">Descending</option>
+          </select>
+        </div>
+      </div>
+
+      {isLoading ? (
+        <LoadingSpinner text="Loading inventory items..." />
+      ) : error ? (
+        <div className="text-center py-10 text-red-500"><p>{error}</p></div>
+      ) : items.length === 0 ? (
+        <p className="text-gray-600 dark:text-gray-400">No inventory items found matching your criteria.</p>
       ) : (
         <div className="overflow-x-auto relative shadow-md sm:rounded-lg">
             <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
@@ -192,49 +150,20 @@ function InventoryListPage() {
                     {items.map(item => {
                         const imageUrl = item.local_image_path
                             ? `${API_BASE_URL}/static/${item.local_image_path}`
-                            : "https://via.placeholder.com/80x80.png?text=No+Image"; // Placeholder
-                        
-                        // Corrected console.log using template literals
-                        console.log(`Item: ${item.name}, DB Path: '${item.local_image_path}', Constructed URL: '${imageUrl}'`);
-
+                            : "https://via.placeholder.com/80x80.png?text=No+Image";
                         return (
                             <tr key={item.id} className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 align-top">
                                 <td className="p-2 text-center">
-                                    <img
-                                        src={imageUrl}
-                                        alt={item.name || 'Inventory item'}
-                                        className="h-14 w-14 object-cover rounded mx-auto shadow" // Adjusted size
-                                        onError={(e) => {
-                                            e.target.onerror = null; // Prevent infinite loop if placeholder also fails
-                                            e.target.src = 'https://via.placeholder.com/80x80.png?text=Error';
-                                            e.target.alt = 'Error loading image';
-                                        }}
-                                        loading="lazy"
-                                    />
+                                    <img src={imageUrl} alt={item.name || 'Inventory item'} className="h-14 w-14 object-cover rounded mx-auto shadow" onError={(e) => { e.target.onerror = null; e.target.src = 'https://via.placeholder.com/80x80.png?text=Error'; e.target.alt = 'Error loading image'; }} loading="lazy"/>
                                 </td>
-                                <th scope="row" className="py-4 px-6 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                                    {item.name}
-                                </th>
+                                <th scope="row" className="py-4 px-6 font-medium text-gray-900 whitespace-nowrap dark:text-white">{item.name}</th>
                                 <td className="py-4 px-6">{item.quantity}</td>
                                 <td className="py-4 px-6">{item.quantity_needed}</td>
                                 {canUpdateNeededQty && (
                                     <td className="py-4 px-6">
                                         <div className="flex items-start space-x-1">
-                                            <input
-                                                type="number"
-                                                step="any"
-                                                value={editedNeededQuantities[item.id] ?? ''}
-                                                onChange={(e) => handleNeededQtyChange(item.id, e.target.value)}
-                                                className={`w-20 px-2 py-1 border rounded text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${itemUpdateError[item.id] ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-gray-300 dark:border-gray-600 focus:ring-indigo-500 focus:border-indigo-500'}`}
-                                                aria-label={`Needed quantity for ${item.name}`}
-                                            />
-                                            <button
-                                                onClick={() => handleUpdateNeededQty(item.id)}
-                                                className="px-2 py-1 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-xs disabled:opacity-50"
-                                                disabled={editedNeededQuantities[item.id] === (item.quantity_needed?.toString() ?? '0')}
-                                            >
-                                                Save
-                                            </button>
+                                            <input type="number" step="any" value={editedNeededQuantities[item.id] ?? ''} onChange={(e) => handleNeededQtyChange(item.id, e.target.value)} className={`w-20 px-2 py-1 border rounded text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${itemUpdateError[item.id] ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-gray-300 dark:border-gray-600 focus:ring-indigo-500 focus:border-indigo-500'}`} aria-label={`Needed quantity for ${item.name}`}/>
+                                            <button onClick={() => handleUpdateNeededQty(item.id)} className="px-2 py-1 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-xs disabled:opacity-50" disabled={editedNeededQuantities[item.id] === (item.quantity_needed?.toString() ?? '0')}>Save</button>
                                         </div>
                                          {itemUpdateError[item.id] && <p className="text-xs text-red-500 mt-1">{itemUpdateError[item.id]}</p>}
                                     </td>
@@ -265,17 +194,11 @@ function InventoryListPage() {
             </table>
         </div>
       )}
-       <Modal
-        isOpen={isDeleteModalOpen}
-        onClose={() => { setIsDeleteModalOpen(false); setItemToDelete(null); }}
-        onConfirm={confirmDeleteItem}
-        title="Confirm Item Deletion"
-      >
-        Are you sure you want to delete the inventory item:
-        <strong className="font-semibold block mt-1"> "{itemToDelete?.name}"</strong>?
+      <Modal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} onConfirm={confirmDeleteItem} title="Confirm Item Deletion">
+         Are you sure you want to delete the inventory item:
+         <strong className="font-semibold block mt-1">"{itemToDelete?.name}"</strong>?
       </Modal>
     </div>
   );
 }
-
 export default InventoryListPage;

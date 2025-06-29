@@ -2,7 +2,8 @@
 # Uncondensed Version: Tenant Isolation Implemented
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
-from typing import Annotated, List, Optional
+from typing import Annotated, List, Optional, Literal
+from datetime import datetime
 
 from .. import crud, models, schemas, security
 from ..database import get_db
@@ -17,6 +18,9 @@ DbDependency = Annotated[Session, Depends(get_db)]
 CurrentUserDependency = Annotated[models.User, Depends(security.get_current_active_user)]
 # ManagerOrAdmin for viewing broader sets of logs
 ManagerOrAdminTenantDependency = Annotated[models.User, Depends(security.require_role(["admin", "project manager"]))]
+
+AllowedTimeLogSortFields = Literal["start_time", "end_time", "duration"]
+AllowedSortDirections = Literal["asc", "desc"]
 
 
 # Helper function to check project access within tenant (can be shared or defined locally)
@@ -100,42 +104,55 @@ async def read_all_timelogs_for_tenant(
     db: DbDependency,
     current_user: ManagerOrAdminTenantDependency, # Requires PM or Admin
     project_id: Optional[int] = Query(None, description="Filter logs by a specific project ID"),
-    user_id: Optional[int] = Query(None, description="Filter logs by a specific user ID"),
+    user_id: Optional[int] = Query(None, description="Filter logs by a specific user ID (Admin only)"),
+    start_date: Optional[datetime] = Query(None, description="Filter logs from this start date (inclusive)"),
+    end_date: Optional[datetime] = Query(None, description="Filter logs up to this end date (inclusive)"),
+    sort_by: Optional[AllowedTimeLogSortFields] = Query('start_time', description="Field to sort by"),
+    sort_dir: Optional[AllowedSortDirections] = Query('desc', description="Sort direction"),
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000)
 ):
     """
     Retrieves time logs based on filters.
-    - Admins can see all logs within their tenant, and can filter by any user or project in their tenant.
-    - PMs can see logs for projects they manage.
+    - Admins see all logs within their tenant, and can filter by any user or project.
+    - PMs can only see logs for projects they are assigned to manage.
     """
-    # If a project_id filter is provided, validate it first
-    if project_id:
-        project = await get_project_if_accessible(project_id=project_id, db=db, current_user=current_user)
-        # Further check if PM is actually the manager of this project
-        if current_user.role == 'project manager' and project.project_manager_id != current_user.id:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You can only view time logs for projects you manage.")
-        # If admin, access is granted by get_project_if_accessible
-    
-    # If a user_id filter is provided, ensure that user is in the current admin's tenant
-    if user_id and not current_user.is_superuser:
-        user_to_view = crud.get_user(db, user_id=user_id)
-        if not user_to_view or user_to_view.tenant_id != current_user.tenant_id:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found in your tenant.")
-    
-    # If no filters, Admins see all logs in their tenant. PMs must filter by a project they manage.
-    if current_user.role == 'project manager' and not project_id:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Project Managers must specify a project ID to view time logs.")
-    
-    # Get all logs for the tenant if user is admin and no filters are applied
-    # This requires modifying crud.get_timelogs to filter by tenant if project_id is not given
-    # For now, crud.get_timelogs filters on user_id or project_id if provided.
-    logs = crud.get_timelogs(db=db, user_id=user_id, project_id=project_id, skip=skip, limit=limit)
-    
-    # Post-filter to ensure tenant isolation if no filters were provided and user is not superuser
-    if not user_id and not project_id and not current_user.is_superuser:
-        logs = [log for log in logs if log.user.tenant_id == current_user.tenant_id]
+    effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
 
+    # PM-specific validation
+    if current_user.role == 'project manager':
+        if project_id:
+            project = crud.get_project(db, project_id=project_id, tenant_id=effective_tenant_id)
+            if not project or project.project_manager_id != current_user.id:
+                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You can only view time logs for projects you manage.")
+        elif user_id:
+             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Project Managers cannot filter by user, please filter by a project you manage.")
+        else: # PM must specify a project they manage
+            # An alternative is to list logs for ALL projects they manage
+            # For now, let's require they specify one project at a time.
+             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Project Managers must specify a project ID to view time logs.")
+
+    # Admin validation
+    if current_user.role == 'admin' and not current_user.is_superuser:
+        if user_id: # Ensure user being queried is in the admin's tenant
+            user_to_view = crud.get_user(db, user_id=user_id)
+            if not user_to_view or user_to_view.tenant_id != current_user.tenant_id:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found in your tenant.")
+        if project_id: # Ensure project being queried is in admin's tenant
+            project_to_view = crud.get_project(db, project_id=project_id, tenant_id=effective_tenant_id)
+            if not project_to_view:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found in your tenant.")
+        # If no filters, admin sees all logs in their tenant
+        if not project_id and not user_id:
+            # crud.get_timelogs will be called with the tenant_id
+            pass
+
+    logs = crud.get_timelogs(
+        db=db, user_id=user_id, project_id=project_id, tenant_id=effective_tenant_id,
+        start_date=start_date, end_date=end_date,
+        sort_by=sort_by, sort_dir=sort_dir,
+        skip=skip, limit=limit
+    )
     return logs
 
 

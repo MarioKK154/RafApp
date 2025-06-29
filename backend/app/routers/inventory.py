@@ -2,7 +2,7 @@
 # Corrected Version: Removed redundant prefix
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
-from typing import Annotated, List, Union
+from typing import Annotated, List, Union, Optional, Literal
 
 from .. import crud, models, schemas, security
 from ..database import get_db
@@ -19,6 +19,11 @@ CurrentUserDependency = Annotated[models.User, Depends(security.get_current_acti
 ManagerOrAdminDependency = Annotated[models.User, Depends(security.require_manager)]
 TeamLeaderOrHigher = Annotated[models.User, Depends(security.require_role(["admin", "project manager", "team leader"]))]
 
+# Define allowed sort fields and directions
+AllowedInventorySortFields = Literal["name", "quantity", "location"]
+AllowedSortDirections = Literal["asc", "desc"]
+
+
 # --- Endpoints ---
 
 # POST / (create) - Path relative to prefix in main.py is "/"
@@ -32,19 +37,20 @@ async def create_new_inventory_item(
     return crud.create_inventory_item(db=db, item=item)
 
 # GET / (list) - Path relative to prefix in main.py is "/"
-@router.get("/", response_model=List[Union[schemas.InventoryItemReadWithURLs, schemas.InventoryItemRead]])
+@router.get("/", response_model=List[schemas.InventoryItemRead])
 async def read_all_inventory_items(
     db: DbDependency,
-    current_user: CurrentUserDependency,
+    # current_user: CurrentUserDependency, # Already enforced at router level
+    search: Optional[str] = Query(None, description="Search term for item name"),
+    sort_by: Optional[AllowedInventorySortFields] = Query('name', description="Field to sort by"),
+    sort_dir: Optional[AllowedSortDirections] = Query('asc', description="Sort direction"),
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=200)
 ):
-    """Retrieves inventory items. Admins/PMs see URLs."""
-    items_db = crud.get_inventory_items(db=db, skip=skip, limit=limit)
-    if current_user.role in ["admin", "project manager"]:
-        return [schemas.InventoryItemReadWithURLs.model_validate(item) for item in items_db]
-    else:
-        return [schemas.InventoryItemRead.model_validate(item) for item in items_db]
+    items = crud.get_inventory_items(
+        db=db, search=search, sort_by=sort_by, sort_dir=sort_dir, skip=skip, limit=limit
+    )
+    return items
 
 # GET /{item_id} (get single) - Path relative to prefix in main.py is "/{item_id}"
 @router.get("/{item_id}", response_model=Union[schemas.InventoryItemReadWithURLs, schemas.InventoryItemRead])
