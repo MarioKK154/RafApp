@@ -1,11 +1,17 @@
 # backend/app/main.py
-# Uncondensed Version: Standardized Router Prefix Handling
+# Final, synchronized version with robust static file pathing.
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from starlette.staticfiles import StaticFiles # Import StaticFiles
-import os # For path joining
+from fastapi.staticfiles import StaticFiles # Use fastapi.staticfiles
+from pathlib import Path # Use modern pathlib for path handling
+
+# Import your models and engine
+from . import models
+from .database import engine
 
 # Import all your routers
+# --- CORRECTED IMPORTS: Ensure all routers are imported ---
 from .routers import (
     auth,
     users,
@@ -14,13 +20,17 @@ from .routers import (
     inventory,
     drawings,
     timelogs,
+    # The following were missing from my last suggestion but are needed by your app
     comments,
     task_photos,
     shopping_list,
     admin_tools,
     tenants
 )
-# Ensure any other routers are imported here
+# --- END CORRECTION ---
+
+# This creates database tables if they don't exist. Good for development.
+models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="RafApp API",
@@ -28,11 +38,10 @@ app = FastAPI(
     version="0.1.0"
 )
 
-# CORS Middleware (as before)
+# CORS Middleware
 origins = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
-    "http://localhost",
 ]
 app.add_middleware(
     CORSMiddleware,
@@ -42,33 +51,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# --- Mount Static Files Directory ---
-# Create the path to the 'static' directory relative to this main.py file
-# This assumes 'main.py' is in 'backend/app/' and 'static' is in 'backend/static/'
-# Adjust if your 'static' folder is elsewhere relative to 'main.py'
-# For example, if 'static' is directly inside 'backend/' alongside 'app/'
-# then use os.path.join(os.path.dirname(os.path.dirname(__file__)), "static")
+# --- CORRECTED STATIC FILE MOUNTING ---
+# Get the absolute path to the directory containing this main.py file (i.e., backend/app)
+BASE_DIR = Path(__file__).resolve().parent
+# Mount the 'static' directory which is inside the 'app' directory
+app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
+# --- END CORRECTION ---
 
-# Assuming 'static' folder is at the same level as the 'app' folder (i.e., in 'backend/static')
-# The following path assumes 'main.py' is in 'backend/app/'
-# So, one '..' gets to 'backend/', then join with 'static'
-static_files_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "static")
 
-# Check if the directory exists (optional, for debugging)
-if not os.path.isdir(static_files_path):
-    print(f"Warning: Static files directory not found at {static_files_path}. Please create it or check path.")
-    # You might want to create it if it doesn't exist for convenience in dev
-    # os.makedirs(static_files_path, exist_ok=True)
-
-app.mount("/static", StaticFiles(directory=static_files_path), name="static")
-# Now, files in backend/static/inventory_images/some_image.jpg
-# will be accessible at http://localhost:8000/static/inventory_images/some_image.jpg
-
-# Include Routers - Define prefixes HERE
+# Include Routers - Define prefixes here
 app.include_router(auth.router, prefix="/auth", tags=["Authentication"])
 app.include_router(users.router, prefix="/users", tags=["Users"])
 app.include_router(projects.router, prefix="/projects", tags=["Projects"])
-app.include_router(tasks.router, prefix="/tasks", tags=["Tasks"]) # Add prefix if not in tasks.py
+app.include_router(tasks.router, prefix="/tasks", tags=["Tasks"])
 app.include_router(inventory.router, prefix="/inventory", tags=["Inventory"])
 app.include_router(drawings.router, prefix="/drawings", tags=["Drawings"])
 app.include_router(timelogs.router, prefix="/timelogs", tags=["Time Logs"])
@@ -80,5 +75,5 @@ app.include_router(tenants.router)
 
 
 @app.get("/")
-async def read_root(): # Added async for consistency
+async def read_root():
     return {"message": "Welcome to RafApp API - Check /docs for endpoints"}

@@ -1,11 +1,11 @@
 # backend/app/crud.py
 # Uncondensed Version: Multi-Tenancy updates (Tenant CRUD, User/Project tenant linking)
-from sqlalchemy.orm import Session, joinedload, selectinload
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import desc, asc, func as sqlfunc
 from typing import Optional, List, Dict, Any
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta # Added timedelta import
 from . import models, schemas
-from .security import get_password_hash, verify_password # Ensure verify_password is imported
+from .security import get_password_hash, verify_password
 
 # --- Tenant CRUD Operations (NEW) ---
 
@@ -109,6 +109,15 @@ def create_user_by_admin(db: Session, user_data: schemas.UserCreateAdmin) -> mod
         is_superuser=user_data.is_superuser if user_data.is_superuser is not None else False,
     )
     db.add(db_user); db.commit(); db.refresh(db_user)
+    return db_user
+    
+def update_user_profile_picture_path(db: Session, user_id: int, path: str) -> Optional[models.User]:
+    """Updates the profile picture path for a specific user."""
+    db_user = db.query(models.User).filter(models.User.id == user_id).first()
+    if db_user:
+        db_user.profile_picture_path = path
+        db.commit()
+        db.refresh(db_user)
     return db_user
 
 def delete_user_by_admin(db: Session, user_id: int) -> Optional[models.User]:

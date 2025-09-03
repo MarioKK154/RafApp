@@ -1,15 +1,15 @@
 // frontend/src/App.jsx
-// Uncondensed Version: Added Tenant-Specific Dynamic Background
+// Final, synchronized version with all correct routes.
+
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-import { useAuth } from './context/AuthContext'; // Import useAuth to access tenant info
+import { AuthProvider, useAuth } from './context/AuthContext';
 
-// Import Components & Pages
+// Import Components & All Pages from your project
 import Navbar from './components/Navbar';
-import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import ProjectsPage from './pages/ProjectsPage';
 import ProjectCreatePage from './pages/ProjectCreatePage';
@@ -34,66 +34,62 @@ import GanttChartPage from './pages/GanttChartPage';
 import AccountSettingsPage from './pages/AccountSettingsPage';
 import NotFoundPage from './pages/NotFoundPage';
 
+const ProtectedRoute = ({ children }) => {
+    const { isAuthenticated, isLoading } = useAuth();
+    if (isLoading) {
+        return <div className="flex justify-center items-center h-screen">Loading...</div>;
+    }
+    return isAuthenticated ? children : <Navigate to="/login" replace />;
+};
 
 function App() {
-    const { isAuthenticated, user } = useAuth(); // Get user from context
-
-    // Define the style for the background image
-    const backgroundStyle = isAuthenticated && user?.tenant?.background_image_url
-        ? {
-            backgroundImage: `url(${user.tenant.background_image_url})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            backgroundAttachment: 'fixed', // Keeps the background stationary on scroll
-            backgroundRepeat: 'no-repeat',
-        }
-        : {}; // Empty object if no background image
-
     return (
-        // Apply the style to a main wrapper div
-        <div style={backgroundStyle} className="min-h-screen bg-gray-100 dark:bg-gray-800">
-            <Navbar />
-            <ToastContainer
-                position="top-right"
-                autoClose={4000}
-                hideProgressBar={false}
-                newestOnTop={false}
-                closeOnClick
-                rtl={false}
-                pauseOnFocusLoss
-                draggable
-                pauseOnHover
-                theme="colored"
-             />
-            <main className="pt-4">
-                <Routes>
-                    <Route path="/login" element={<LoginPage />} />
-                    <Route path="/" element={<HomePage />} />
-                    <Route path="/projects" element={<ProjectsPage />} />
-                    <Route path="/projects/new" element={<ProjectCreatePage />} />
-                    <Route path="/projects/edit/:projectId" element={<ProjectEditPage />} />
-                    <Route path="/tasks" element={<TasksListPage />} />
-                    <Route path="/tasks/new" element={<TaskCreatePage />} />
-                    <Route path="/tasks/edit/:taskId" element={<TaskEditPage />} />
-                    <Route path="/inventory" element={<InventoryListPage />} />
-                    <Route path="/inventory/new" element={<InventoryCreatePage />} />
-                    <Route path="/inventory/edit/:itemId" element={<InventoryEditPage />} />
-                    <Route path="/timelogs" element={<TimeLogsPage />} />
-                    <Route path="/users" element={<UserListPage />} />
-                    <Route path="/users/new" element={<UserCreatePage />} />
-                    <Route path="/users/import" element={<UserBulkImportPage />} />
-                    <Route path="/users/edit/:userId" element={<UserEditPage />} />
-                    <Route path="/tenants" element={<TenantListPage />} />
-                    <Route path="/tenants/new" element={<TenantCreatePage />} />
-                    <Route path="/tenants/edit/:tenantId" element={<TenantEditPage />} />
-                    <Route path="/admin/tools" element={<AdminToolsPage />} />
-                    <Route path="/shopping-list" element={<ShoppingListPage />} />
-                    <Route path="/gantt" element={<GanttChartPage />} />
-                    <Route path="/account-settings" element={<AccountSettingsPage />} />
-                    <Route path="*" element={<NotFoundPage />} />
-                </Routes>
-            </main>
-        </div>
+        <AuthProvider>
+            <div className="flex flex-col min-h-screen bg-gray-100 dark:bg-gray-900">
+                <Navbar />
+                <main className="flex-grow">
+                    <Routes>
+                        <Route path="/login" element={<LoginPage />} />
+                        <Route path="/" element={<ProtectedRoute><ProjectsPage /></ProtectedRoute>} />
+                        
+                        {/* Project Routes */}
+                        <Route path="/projects" element={<ProtectedRoute><ProjectsPage /></ProtectedRoute>} />
+                        <Route path="/projects/new" element={<ProtectedRoute><ProjectCreatePage /></ProtectedRoute>} />
+                        <Route path="/projects/edit/:projectId" element={<ProtectedRoute><ProjectEditPage /></ProtectedRoute>} />
+                        
+                        {/* Task Routes */}
+                        <Route path="/tasks" element={<ProtectedRoute><TasksListPage /></ProtectedRoute>} />
+                        <Route path="/tasks/new" element={<ProtectedRoute><TaskCreatePage /></ProtectedRoute>} />
+                        <Route path="/tasks/:taskId" element={<ProtectedRoute><TaskEditPage /></ProtectedRoute>} />
+                        
+                        {/* Other Routes from your project */}
+                        <Route path="/inventory" element={<ProtectedRoute><InventoryListPage /></ProtectedRoute>} />
+                        <Route path="/inventory/new" element={<ProtectedRoute><InventoryCreatePage /></ProtectedRoute>} />
+                        <Route path="/inventory/edit/:itemId" element={<ProtectedRoute><InventoryEditPage /></ProtectedRoute>} />
+                        <Route path="/timelogs" element={<ProtectedRoute><TimeLogsPage /></ProtectedRoute>} />
+                        <Route path="/users" element={<ProtectedRoute><UserListPage /></ProtectedRoute>} />
+                        <Route path="/users/new" element={<ProtectedRoute><UserCreatePage /></ProtectedRoute>} />
+                        <Route path="/users/import" element={<ProtectedRoute><UserBulkImportPage /></ProtectedRoute>} />
+                        <Route path="/users/edit/:userId" element={<ProtectedRoute><UserEditPage /></ProtectedRoute>} />
+                        <Route path="/tenants" element={<ProtectedRoute><TenantListPage /></ProtectedRoute>} />
+                        <Route path="/tenants/new" element={<ProtectedRoute><TenantCreatePage /></ProtectedRoute>} />
+                        <Route path="/tenants/edit/:tenantId" element={<ProtectedRoute><TenantEditPage /></ProtectedRoute>} />
+                        <Route path="/admin/tools" element={<ProtectedRoute><AdminToolsPage /></ProtectedRoute>} />
+                        <Route path="/shopping-list" element={<ProtectedRoute><ShoppingListPage /></ProtectedRoute>} />
+                        <Route path="/gantt" element={<ProtectedRoute><GanttChartPage /></ProtectedRoute>} />
+                        <Route path="/account-settings" element={<ProtectedRoute><AccountSettingsPage /></ProtectedRoute>} />
+                        
+                        <Route path="*" element={<NotFoundPage />} />
+                    </Routes>
+                </main>
+                <ToastContainer
+                    position="bottom-right"
+                    autoClose={5000}
+                    hideProgressBar={false}
+                    theme="colored"
+                />
+            </div>
+        </AuthProvider>
     );
 }
 

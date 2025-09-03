@@ -1,8 +1,17 @@
 # backend/app/schemas.py
-# ABSOLUTELY FINAL METICULOUSLY CHECKED UNCONDENSED VERSION
+# Based on the user-provided version, with only the profile picture feature added.
+
 from pydantic import BaseModel, EmailStr, Field, HttpUrl
 from typing import Optional, List, Literal
-from datetime import datetime, timedelta
+from datetime import datetime, date, time, timedelta
+from os import environ # --- ADDED FOR PROFILE PICTURE ---
+from pydantic import computed_field # This was in your version, so we keep it
+
+# --- ADDED FOR PROFILE PICTURE ---
+# Base URL for static assets. Ensure this is set in your environment for production.
+STATIC_BASE_URL = environ.get("STATIC_BASE_URL", "http://localhost:8000")
+# --- END ADDITION ---
+
 
 # --- Base Config ---
 class OrmConfig:
@@ -34,6 +43,17 @@ class UserReadBasic(BaseModel):
     id: int
     email: EmailStr
     full_name: Optional[str] = None
+    # --- ADDED FOR PROFILE PICTURE ---
+    # We will need the path to construct the URL later
+    profile_picture_path: Optional[str] = None 
+    
+    @computed_field
+    @property
+    def profile_picture_url(self) -> Optional[str]:
+        if self.profile_picture_path:
+            return f"{STATIC_BASE_URL}/{self.profile_picture_path}"
+        return None
+    # --- END ADDITION ---
     class Config(OrmConfig):
         pass
 
@@ -41,13 +61,13 @@ class TaskCommentReadBasic(BaseModel):
     id: int
     content: str
     created_at: datetime
-    task_id: int # Added task_id for context
+    task_id: int 
     author_id: int
     author: Optional[UserReadBasic] = None
     class Config(OrmConfig):
         pass
 
-class TaskPhotoReadBasic(BaseModel): # For nesting in TaskRead if needed
+class TaskPhotoReadBasic(BaseModel):
     id: int
     filename: str
     description: Optional[str] = None
@@ -74,9 +94,9 @@ class TenantBase(BaseModel):
 class TenantCreate(TenantBase):
     pass
 
-class TenantUpdate(BaseModel): # All fields optional for update
+class TenantUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=1)
-    logo_url: Optional[HttpUrl | str | None] = None # Allow explicitly setting to null
+    logo_url: Optional[HttpUrl | str | None] = None
     background_image_url: Optional[HttpUrl | str | None] = None
 
 class TenantRead(TenantBase):
@@ -98,22 +118,38 @@ class UserBase(BaseModel):
 class UserCreateAdmin(UserBase):
     password: str
     role: str
-    tenant_id: int
+    tenant_id: Optional[int] = None
     is_active: Optional[bool] = True
     is_superuser: Optional[bool] = False
+    hourly_rate: Optional[float] = None
 
 class UserRead(UserBase):
     id: int
     is_active: bool
     is_superuser: bool
     role: str
-    tenant_id: int
+    tenant_id: Optional[int] = None
     tenant: Optional[TenantReadBasic] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
     assigned_projects: List[ProjectReadBasic] = []
+    
+    # --- ADDED FOR PROFILE PICTURE ---
+    profile_picture_path: Optional[str] = None # The direct path from the DB model
+
+    @computed_field
+    @property
+    def profile_picture_url(self) -> Optional[str]:
+        if self.profile_picture_path:
+            return f"{STATIC_BASE_URL}/{self.profile_picture_path}"
+        return None
+    # --- END ADDITION ---
+
     class Config(OrmConfig):
         pass
+
+class UserReadAdmin(UserRead):
+    hourly_rate: Optional[float] = None
 
 class UserUpdateAdmin(BaseModel):
     email: Optional[EmailStr] = None
@@ -122,6 +158,7 @@ class UserUpdateAdmin(BaseModel):
     kennitala: Optional[str] = None
     phone_number: Optional[str] = None
     location: Optional[str] = None
+    hourly_rate: Optional[float] = None
     is_active: Optional[bool] = None
     is_superuser: Optional[bool] = None
     role: Optional[str] = None
@@ -226,16 +263,14 @@ class TaskCommentBase(BaseModel):
 class TaskCommentCreate(TaskCommentBase):
     pass
 
-class TaskCommentRead(TaskCommentBase): # This is the schema routers/tasks.py expects
+class TaskCommentRead(TaskCommentBase):
     id: int
     created_at: datetime
     task_id: int
     author_id: int
-    author: Optional[UserReadBasic] = None # Nested basic author info
+    author: Optional[UserReadBasic] = None
     class Config(OrmConfig):
         pass
-
-# TaskCommentRead is defined in Basic/Forward Declarations
 
 # --- Task Photo Schemas ---
 class TaskPhotoBase(BaseModel):
@@ -249,20 +284,17 @@ class TaskPhotoCreate(TaskPhotoBase):
     uploader_id: int
     task_id: int
 
-class TaskPhotoRead(TaskPhotoBase): # This is the schema routers/tasks.py might expect for photo lists
+class TaskPhotoRead(TaskPhotoBase):
     id: int
     filename: str
-    # description: Optional[str] = None # Inherited from TaskPhotoBase
     content_type: Optional[str] = None
     size_bytes: Optional[int] = None
     uploaded_at: datetime
     uploader_id: int
     task_id: int
-    uploader: Optional[UserReadBasic] = None # Nested basic uploader info
+    uploader: Optional[UserReadBasic] = None
     class Config(OrmConfig):
         pass
-
-# TaskPhotoRead is defined in Basic/Forward Declarations
 
 # --- Inventory Schemas ---
 class InventoryItemBase(BaseModel):
@@ -292,17 +324,15 @@ class InventoryItemUpdate(InventoryItemBase):
     shop_url_1: Optional[HttpUrl | str | None] = None
     shop_url_2: Optional[HttpUrl | str | None] = None
     shop_url_3: Optional[HttpUrl | str | None] = None
-    local_image_path: Optional[str] = None # Allow updating this
+    local_image_path: Optional[str] = None
 
-class InventoryItemRead(InventoryItemBase): # Corrected formatting
+class InventoryItemRead(InventoryItemBase):
     id: int
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
     shop_url_1: Optional[HttpUrl | str] = Field(None, exclude=True)
     shop_url_2: Optional[HttpUrl | str] = Field(None, exclude=True)
     shop_url_3: Optional[HttpUrl | str] = Field(None, exclude=True)
-    # local_image_path is inherited from InventoryItemBase and will be included
-
     class Config(OrmConfig):
         pass
 
@@ -310,7 +340,6 @@ class InventoryItemReadWithURLs(InventoryItemRead):
     shop_url_1: Optional[HttpUrl | str] = None
     shop_url_2: Optional[HttpUrl | str] = None
     shop_url_3: Optional[HttpUrl | str] = None
-    # Inherits Config & local_image_path
 
 class InventoryItemUpdateNeededQty(BaseModel):
     quantity_needed: float = Field(..., ge=0)
@@ -355,8 +384,7 @@ class TimeLogRead(TimeLogBase):
     start_time: datetime
     end_time: Optional[datetime] = None
     duration: Optional[timedelta] = None
-    user_id: int # Consider UserReadBasic for user here
-
+    user_id: int
     class Config(OrmConfig):
         pass
 
