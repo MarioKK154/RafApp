@@ -10,10 +10,11 @@ import uuid
 
 from .. import crud, models, schemas, security
 from ..database import get_db
+from pathlib import Path
 
-BACKEND_DIR = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-UPLOAD_DIRECTORY_DRAWINGS = os.path.join(BACKEND_DIR, "uploads", "project_drawings")
-os.makedirs(UPLOAD_DIRECTORY_DRAWINGS, exist_ok=True)
+APP_DIR = Path(__file__).resolve().parent
+UPLOAD_DIRECTORY_DRAWINGS = APP_DIR / "static" / "project_drawings"
+UPLOAD_DIRECTORY_DRAWINGS.mkdir(parents=True, exist_ok=True)
 
 router = APIRouter(
     tags=["Project Drawings"],

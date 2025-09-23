@@ -10,12 +10,12 @@ import uuid
 
 from .. import crud, models, schemas, security
 from ..database import get_db
+from pathlib import Path
 
 # Define upload directory relative to the backend root
-BACKEND_DIR = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-UPLOAD_DIRECTORY_TASK_PHOTOS = os.path.join(BACKEND_DIR, "uploads", "task_photos")
-os.makedirs(UPLOAD_DIRECTORY_TASK_PHOTOS, exist_ok=True)
-
+APP_DIR = Path(__file__).resolve().parent
+UPLOAD_DIRECTORY_TASK_PHOTOS = APP_DIR / "static" / "task_photos"
+UPLOAD_DIRECTORY_TASK_PHOTOS.mkdir(parents=True, exist_ok=True)
 
 router = APIRouter(
     tags=["Task Photos"],

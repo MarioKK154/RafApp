@@ -25,7 +25,8 @@ from .routers import (
     task_photos,
     shopping_list,
     admin_tools,
-    tenants
+    tenants,
+    tools
 )
 # --- END CORRECTION ---
 
@@ -72,6 +73,7 @@ app.include_router(task_photos.router, prefix="/task_photos", tags=["Task Photos
 app.include_router(shopping_list.router, prefix="/shopping-list", tags=["Shopping List"]) # Add prefix
 app.include_router(admin_tools.router, prefix="/admin-tools", tags=["Admin Tools"])
 app.include_router(tenants.router)
+app.include_router(tools.router)
 
 
 @app.get("/")

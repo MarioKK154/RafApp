@@ -2,11 +2,11 @@
 # Final version based on the user-provided file with corrections.
 
 from sqlalchemy import (Boolean, Column, ForeignKey, Integer, String, DateTime,
-                        Text, Enum as SQLAlchemyEnum, Float, Interval, Table)
+                        Text, Enum as SQLAlchemyEnum, Float, Interval, Table, Date)
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from sqlalchemy.sql import func
 import enum
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime # <--- ADDED THE MISSING IMPORT
 
 from .database import Base
@@ -33,6 +33,19 @@ class TaskStatus(enum.Enum):
     Commissioned = "Commissioned"
     Cancelled = "Cancelled"
 
+class ToolStatus(enum.Enum):
+    Available = "Available"
+    In_Use = "In Use"
+    In_Repair = "In Repair"
+    Retired = "Retired"
+
+# --- NEW: Tool Log Action Enum ---
+class ToolLogAction(enum.Enum):
+    Checked_Out = "Checked Out"
+    Checked_In = "Checked In"
+    Maintenance = "Maintenance"
+    Created = "Created"
+
 class Tenant(Base):
     __tablename__ = "tenants"
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -44,11 +57,19 @@ class Tenant(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     users: Mapped[list["User"]] = relationship(back_populates="tenant")
     projects: Mapped[list["Project"]] = relationship(back_populates="tenant")
+    tools: Mapped[list["Tool"]] = relationship(back_populates="tenant")
 
 project_members_table = Table(
     "project_members", Base.metadata,
     Column("project_id", Integer, ForeignKey("projects.id", ondelete="CASCADE"), primary_key=True),
     Column("user_id", Integer, ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+)
+
+task_dependencies_table = Table(
+    'task_dependencies',
+    Base.metadata,
+    Column('task_id', Integer, ForeignKey('tasks.id'), primary_key=True),
+    Column('predecessor_id', Integer, ForeignKey('tasks.id'), primary_key=True)
 )
 
 class User(Base):
@@ -69,7 +90,7 @@ class User(Base):
     tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True) 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-
+    tools_checked_out: Mapped[list["Tool"]] = relationship(back_populates="current_user")
     tenant = relationship("Tenant", back_populates="users")
     projects_created = relationship("Project", foreign_keys="[Project.creator_id]", back_populates="creator")
     projects_managed = relationship("Project", foreign_keys="[Project.project_manager_id]", back_populates="project_manager")
@@ -79,7 +100,8 @@ class User(Base):
     assigned_tasks = relationship("Task", back_populates="assignee")
     task_comments = relationship("TaskComment", back_populates="author", cascade="all, delete-orphan")
     uploaded_task_photos = relationship("TaskPhoto", back_populates="uploader", cascade="all, delete-orphan")
-
+    tool_logs: Mapped[list["ToolLog"]] = relationship(back_populates="user")
+    
 class Project(Base):
     __tablename__ = "projects"
     id = Column(Integer, primary_key=True, index=True)
@@ -121,6 +143,20 @@ class Task(Base):
     assignee = relationship("User", back_populates="assigned_tasks")
     comments = relationship("TaskComment", back_populates="task", cascade="all, delete-orphan")
     photos = relationship("TaskPhoto", back_populates="task", cascade="all, delete-orphan")
+    successors = relationship(
+        "Task",
+        secondary=task_dependencies_table,
+        primaryjoin=(id == task_dependencies_table.c.predecessor_id),
+        secondaryjoin=(id == task_dependencies_table.c.task_id),
+        back_populates="predecessors"
+    )
+    predecessors = relationship(
+        "Task",
+        secondary=task_dependencies_table,
+        primaryjoin=(id == task_dependencies_table.c.task_id),
+        secondaryjoin=(id == task_dependencies_table.c.predecessor_id),
+        back_populates="successors"
+    )
 
 class InventoryItem(Base):
     __tablename__ = "inventory_items"
@@ -194,3 +230,41 @@ class TaskPhoto(Base):
     
     task = relationship("Task", back_populates="photos")
     uploader = relationship("User", back_populates="uploaded_task_photos")
+
+# --- NEW: Tool Model ---
+class Tool(Base):
+    __tablename__ = "tools"
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    name: Mapped[str] = mapped_column(String, index=True, nullable=False)
+    brand: Mapped[Optional[str]] = mapped_column(String)
+    model: Mapped[Optional[str]] = mapped_column(String)
+    description: Mapped[Optional[str]] = mapped_column(Text)
+    serial_number: Mapped[Optional[str]] = mapped_column(String, unique=True)
+    status: Mapped[ToolStatus] = mapped_column(SQLAlchemyEnum(ToolStatus), default=ToolStatus.Available, nullable=False)
+    purchase_date: Mapped[Optional[Date]] = mapped_column(Date)
+    last_service_date: Mapped[Optional[Date]] = mapped_column(Date)
+    image_path: Mapped[Optional[str]] = mapped_column(String)
+
+    # Foreign Keys
+    current_user_id: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id"))
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id"), nullable=False)
+
+    # Relationships
+    current_user: Mapped[Optional["User"]] = relationship(back_populates="tools_checked_out")
+    tenant: Mapped["Tenant"] = relationship(back_populates="tools")
+    history_logs: Mapped[list["ToolLog"]] = relationship(back_populates="tool", cascade="all, delete-orphan")
+
+# --- END NEW MODEL ---
+
+class ToolLog(Base):
+    __tablename__ = "tool_logs"
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    action: Mapped[ToolLogAction] = mapped_column(SQLAlchemyEnum(ToolLogAction), nullable=False)
+    notes: Mapped[Optional[str]] = mapped_column(Text)
+
+    tool_id: Mapped[int] = mapped_column(ForeignKey("tools.id"), nullable=False)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+
+    tool: Mapped["Tool"] = relationship(back_populates="history_logs")
+    user: Mapped["User"] = relationship(back_populates="tool_logs")

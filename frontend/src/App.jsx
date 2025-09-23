@@ -33,6 +33,10 @@ import ShoppingListPage from './pages/ShoppingListPage';
 import GanttChartPage from './pages/GanttChartPage';
 import AccountSettingsPage from './pages/AccountSettingsPage';
 import NotFoundPage from './pages/NotFoundPage';
+import ToolInventoryPage from './pages/ToolInventoryPage'; // <-- ADD IMPORT
+import ToolCreatePage from './pages/ToolCreatePage';     // <-- ADD IMPORT
+import ToolEditPage from './pages/ToolEditPage';   
+import ToolDetailsPage from './pages/ToolDetailsPage';      // <-- ADD IMPORT
 
 const ProtectedRoute = ({ children }) => {
     const { isAuthenticated, isLoading } = useAuth();
@@ -78,7 +82,10 @@ function App() {
                         <Route path="/shopping-list" element={<ProtectedRoute><ShoppingListPage /></ProtectedRoute>} />
                         <Route path="/gantt" element={<ProtectedRoute><GanttChartPage /></ProtectedRoute>} />
                         <Route path="/account-settings" element={<ProtectedRoute><AccountSettingsPage /></ProtectedRoute>} />
-                        
+                        <Route path="/tools" element={<ProtectedRoute><ToolInventoryPage /></ProtectedRoute>} />
+                        <Route path="/tools/new" element={<ProtectedRoute><ToolCreatePage /></ProtectedRoute>} />
+                        <Route path="/tools/edit/:toolId" element={<ProtectedRoute><ToolEditPage /></ProtectedRoute>} />
+                        <Route path="/tools/:toolId" element={<ProtectedRoute><ToolDetailsPage /></ProtectedRoute>} />
                         <Route path="*" element={<NotFoundPage />} />
                     </Routes>
                 </main>

@@ -439,6 +439,31 @@ def delete_comment(db: Session, comment_id: int) -> Optional[models.TaskComment]
         db.commit()
     return db_comment
 
+# --- NEW: Task Dependency CRUD ---
+
+def add_task_dependency(db: Session, task: models.Task, predecessor: models.Task) -> models.Task:
+    """Adds a predecessor dependency to a task."""
+    # Check for circular dependency: if the new predecessor already depends on the current task
+    if task in predecessor.successors:
+        return None # Or raise an exception indicating a circular dependency
+    
+    # Check if the dependency already exists
+    if predecessor not in task.predecessors:
+        task.predecessors.append(predecessor)
+        db.commit()
+        db.refresh(task)
+    return task
+
+def remove_task_dependency(db: Session, task: models.Task, predecessor: models.Task) -> models.Task:
+    """Removes a predecessor dependency from a task."""
+    if predecessor in task.predecessors:
+        task.predecessors.remove(predecessor)
+        db.commit()
+        db.refresh(task)
+    return task
+
+# --- END NEW ---
+
 # --- Inventory CRUD ---
 def get_inventory_item(db: Session, item_id: int) -> Optional[models.InventoryItem]:
      return db.query(models.InventoryItem).filter(models.InventoryItem.id == item_id).first()
@@ -673,3 +698,64 @@ def delete_task_photo_metadata(db: Session, photo_id: int) -> Optional[models.Ta
         db.delete(db_photo)
         db.commit()
     return db_photo
+
+# --- NEW: Tool CRUD Operations ---
+
+def create_tool(db: Session, tool: schemas.ToolCreate, tenant_id: int) -> models.Tool:
+    """Creates a new tool for a specific tenant."""
+    db_tool = models.Tool(**tool.model_dump(), tenant_id=tenant_id)
+    db.add(db_tool)
+    db.commit()
+    db.refresh(db_tool)
+    return db_tool
+
+def get_tool(db: Session, tool_id: int, tenant_id: int) -> Optional[models.Tool]:
+    """Gets a single tool by ID, scoped to a tenant."""
+    return db.query(models.Tool).filter(models.Tool.id == tool_id, models.Tool.tenant_id == tenant_id).first()
+
+def get_tools(db: Session, tenant_id: int, skip: int, limit: int) -> List[models.Tool]:
+    """Gets a list of all tools for a tenant."""
+    return db.query(models.Tool).filter(models.Tool.tenant_id == tenant_id).order_by(models.Tool.name).offset(skip).limit(limit).all()
+
+def update_tool(db: Session, db_tool: models.Tool, tool_update: schemas.ToolUpdate) -> models.Tool:
+    """Updates a tool's details."""
+    update_data = tool_update.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(db_tool, key, value)
+    db.add(db_tool)
+    db.commit()
+    db.refresh(db_tool)
+    return db_tool
+
+def delete_tool(db: Session, db_tool: models.Tool) -> models.Tool:
+    """Deletes a tool."""
+    db.delete(db_tool)
+    db.commit()
+    return db_tool
+
+def update_tool_image_path(db: Session, db_tool: models.Tool, image_path: str) -> models.Tool:
+    """Updates the image_path for a specific tool."""
+    db_tool.image_path = image_path
+    db.add(db_tool)
+    db.commit()
+    db.refresh(db_tool)
+    return db_tool
+
+def checkout_tool(db: Session, db_tool: models.Tool, user_id: int) -> models.Tool:
+    """Assigns a tool to a user."""
+    db_tool.current_user_id = user_id
+    db_tool.status = models.ToolStatus.In_Use
+    db.add(db_tool)
+    db.commit()
+    db.refresh(db_tool)
+    return db_tool
+
+def checkin_tool(db: Session, db_tool: models.Tool) -> models.Tool:
+    """Returns a tool to the inventory."""
+    db_tool.current_user_id = None
+    db_tool.status = models.ToolStatus.Available
+    db.add(db_tool)
+    db.commit()
+    db.refresh(db_tool)
+    return db_tool
+# --- END NEW ---

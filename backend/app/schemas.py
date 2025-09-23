@@ -6,7 +6,7 @@ from typing import Optional, List, Literal
 from datetime import datetime, date, time, timedelta
 from os import environ # --- ADDED FOR PROFILE PICTURE ---
 from pydantic import computed_field # This was in your version, so we keep it
-
+from .models import UserRole, ProjectStatus, TaskStatus, ToolStatus, ToolLogAction
 # --- ADDED FOR PROFILE PICTURE ---
 # Base URL for static assets. Ensure this is set in your environment for production.
 STATIC_BASE_URL = environ.get("STATIC_BASE_URL", "http://localhost:8000")
@@ -250,11 +250,20 @@ class TaskRead(TaskBase):
     is_commissioned: bool
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
+    @computed_field
+    @property
+    def predecessor_ids(self) -> List[int]:
+        if hasattr(self, 'predecessors'):
+            return [p.id for p in self.predecessors]
+        return []
     class Config(OrmConfig):
         pass
 
 class TaskAssignUser(BaseModel):
     user_id: int
+
+class TaskDependencyCreate(BaseModel):
+    predecessor_id: int
 
 # --- Task Comment Schemas ---
 class TaskCommentBase(BaseModel):
@@ -406,3 +415,55 @@ class CleanSlateSummary(BaseModel):
 class CleanSlateResponse(BaseModel):
     message: str
     summary: CleanSlateSummary
+
+# --- NEW: Tool Schemas ---
+class ToolLogRead(BaseModel):
+    id: int
+    timestamp: datetime
+    action: ToolLogAction
+    notes: Optional[str] = None
+    user: UserReadBasic # Nest basic user info for the log entry
+
+    class Config(OrmConfig):
+        pass
+        
+class ToolBase(BaseModel):
+    name: str
+    brand: Optional[str] = None
+    model: Optional[str] = None
+    description: Optional[str] = None
+    serial_number: Optional[str] = None
+    status: ToolStatus = ToolStatus.Available
+    purchase_date: Optional[date] = None
+    last_service_date: Optional[date] = None
+    image_path: Optional[str] = None # This will be set by the server on upload
+
+class ToolCreate(ToolBase):
+    pass
+
+class ToolUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    serial_number: Optional[str] = None
+    status: Optional[ToolStatus] = None
+    purchase_date: Optional[date] = None
+    last_service_date: Optional[date] = None
+
+class ToolRead(ToolBase):
+    id: int
+    tenant_id: int
+    current_user_id: Optional[int] = None
+    current_user: Optional[UserReadBasic] = None
+    history_logs: List[ToolLogRead] = []
+
+    @computed_field
+    @property
+    def image_url(self) -> Optional[str]:
+        if self.image_path:
+            return f"{STATIC_BASE_URL}/{self.image_path}"
+        return None
+
+    class Config(OrmConfig):
+        pass
+# --- END NEW SCHEMAS ---
+

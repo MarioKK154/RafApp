@@ -249,3 +249,49 @@ async def read_comments_for_task(
 
 # Note: DELETE /comments/{comment_id} is in routers/comments.py and will also need tenant check
 # Note: Task Photo endpoints are in routers/task_photos.py and will need tenant check via task_id
+
+# --- NEW: Task Dependency Endpoints ---
+
+@router.post("/{task_id}/dependencies", response_model=schemas.TaskRead, status_code=status.HTTP_201_CREATED)
+async def add_dependency_to_task(
+    task_id: int,
+    dependency: schemas.TaskDependencyCreate,
+    db: DbDependency,
+    current_user: TeamLeaderOrHigherTenantDependency
+):
+    """
+    Adds a predecessor dependency to a task.
+    A task can only depend on another task within the same project.
+    """
+    task = await get_task_and_verify_tenant(task_id, db, current_user)
+    predecessor_task = await get_task_and_verify_tenant(dependency.predecessor_id, db, current_user)
+
+    # Validation checks
+    if task.id == predecessor_task.id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="A task cannot depend on itself.")
+    
+    if task.project_id != predecessor_task.project_id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Tasks must be in the same project to have dependencies.")
+
+    updated_task = crud.add_task_dependency(db=db, task=task, predecessor=predecessor_task)
+    if updated_task is None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Circular dependency detected.")
+        
+    return updated_task
+
+
+@router.delete("/{task_id}/dependencies/{predecessor_id}", response_model=schemas.TaskRead)
+async def remove_dependency_from_task(
+    task_id: int,
+    predecessor_id: int,
+    db: DbDependency,
+    current_user: TeamLeaderOrHigherTenantDependency
+):
+    """Removes a predecessor dependency from a task."""
+    task = await get_task_and_verify_tenant(task_id, db, current_user)
+    predecessor_task = await get_task_and_verify_tenant(predecessor_id, db, current_user)
+
+    updated_task = crud.remove_task_dependency(db=db, task=task, predecessor=predecessor_task)
+    return updated_task
+
+# --- END NEW ---
