@@ -37,6 +37,13 @@ import ToolInventoryPage from './pages/ToolInventoryPage'; // <-- ADD IMPORT
 import ToolCreatePage from './pages/ToolCreatePage';     // <-- ADD IMPORT
 import ToolEditPage from './pages/ToolEditPage';   
 import ToolDetailsPage from './pages/ToolDetailsPage';      // <-- ADD IMPORT
+import CarFleetPage from './pages/CarFleetPage';       // NEW
+import CarDetailsPage from './pages/CarDetailsPage';   // NEW
+import CarCreatePage from './pages/CarCreatePage';     // NEW
+import CarEditPage from './pages/CarEditPage';         // NEW
+import ShopListPage from './pages/ShopListPage';         // NEW
+import ShopCreatePage from './pages/ShopCreatePage';   // NEW
+import ShopEditPage from './pages/ShopEditPage';       // NEW
 
 const ProtectedRoute = ({ children }) => {
     const { isAuthenticated, isLoading } = useAuth();
@@ -86,6 +93,15 @@ function App() {
                         <Route path="/tools/new" element={<ProtectedRoute><ToolCreatePage /></ProtectedRoute>} />
                         <Route path="/tools/edit/:toolId" element={<ProtectedRoute><ToolEditPage /></ProtectedRoute>} />
                         <Route path="/tools/:toolId" element={<ProtectedRoute><ToolDetailsPage /></ProtectedRoute>} />
+                        <Route path="/cars" element={<ProtectedRoute><CarFleetPage /></ProtectedRoute>} />
+                        <Route path="/cars/new" element={<ProtectedRoute><CarCreatePage /></ProtectedRoute>} />
+                        <Route path="/cars/edit/:carId" element={<ProtectedRoute><CarEditPage /></ProtectedRoute>} />
+                        <Route path="/cars/:carId" element={<ProtectedRoute><CarDetailsPage /></ProtectedRoute>} />
+                        <Route path="/shops" element={<ProtectedRoute><ShopListPage /></ProtectedRoute>} />
+                        <Route path="/shops/new" element={<ProtectedRoute><ShopCreatePage /></ProtectedRoute>} />
+                        <Route path="/shops/edit/:shopId" element={<ProtectedRoute><ShopEditPage /></ProtectedRoute>} />
+
+
                         <Route path="*" element={<NotFoundPage />} />
                     </Routes>
                 </main>

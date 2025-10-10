@@ -759,3 +759,194 @@ def checkin_tool(db: Session, db_tool: models.Tool) -> models.Tool:
     db.refresh(db_tool)
     return db_tool
 # --- END NEW ---
+
+# --- NEW: Car Fleet CRUD Operations ---
+
+# Car CRUD
+def create_car(db: Session, car: schemas.CarCreate, tenant_id: int) -> models.Car:
+    db_car = models.Car(**car.model_dump(), tenant_id=tenant_id)
+    db.add(db_car)
+    db.commit()
+    db.refresh(db_car)
+    return db_car
+
+def get_car(db: Session, car_id: int, tenant_id: int) -> Optional[models.Car]:
+    return db.query(models.Car).options(
+        joinedload(models.Car.current_user),
+        joinedload(models.Car.history_logs).joinedload(models.CarLog.user),
+        joinedload(models.Car.tyre_sets)
+    ).filter(models.Car.id == car_id, models.Car.tenant_id == tenant_id).first()
+
+def get_cars(db: Session, tenant_id: int, skip: int, limit: int) -> List[models.Car]:
+    return db.query(models.Car).options(joinedload(models.Car.current_user)).filter(models.Car.tenant_id == tenant_id).order_by(models.Car.make, models.Car.model).offset(skip).limit(limit).all()
+
+def update_car(db: Session, db_car: models.Car, car_update: schemas.CarUpdate) -> models.Car:
+    update_data = car_update.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(db_car, key, value)
+    db.add(db_car)
+    db.commit()
+    db.refresh(db_car)
+    return db_car
+
+def delete_car(db: Session, db_car: models.Car) -> models.Car:
+    db.delete(db_car)
+    db.commit()
+    return db_car
+
+def update_car_image_path(db: Session, db_car: models.Car, image_path: str) -> models.Car:
+    db_car.image_path = image_path
+    db.add(db_car)
+    db.commit()
+    db.refresh(db_car)
+    return db_car
+
+# CarLog CRUD
+def create_car_log(db: Session, car_id: int, user_id: int, action: models.CarLogAction, odometer_reading: Optional[int] = None, notes: Optional[str] = None):
+    db_log = models.CarLog(
+        car_id=car_id,
+        user_id=user_id,
+        action=action,
+        odometer_reading=odometer_reading,
+        notes=notes
+    )
+    db.add(db_log)
+    db.commit()
+    db.refresh(db_log)
+    return db_log
+
+# TyreSet CRUD
+def create_tyre_set(db: Session, tyre_set: schemas.TyreSetCreate, car_id: int) -> models.TyreSet:
+    db_tyre_set = models.TyreSet(**tyre_set.model_dump(), car_id=car_id)
+    db.add(db_tyre_set)
+    db.commit()
+    db.refresh(db_tyre_set)
+    return db_tyre_set
+
+def get_tyre_set(db: Session, tyre_id: int) -> Optional[models.TyreSet]:
+    return db.query(models.TyreSet).filter(models.TyreSet.id == tyre_id).first()
+
+def delete_tyre_set(db: Session, db_tyre_set: models.TyreSet) -> models.TyreSet:
+    db.delete(db_tyre_set)
+    db.commit()
+    return db_tyre_set
+
+# Check-in / Check-out Logic
+def checkout_car(db: Session, db_car: models.Car, user_id: int, details: schemas.CarCheckout) -> models.Car:
+    db_car.current_user_id = user_id
+    db_car.status = models.CarStatus.Checked_Out
+    create_car_log(
+        db, car_id=db_car.id, user_id=user_id, action=models.CarLogAction.Checked_Out,
+        odometer_reading=details.odometer_reading, notes=details.notes
+    )
+    db.add(db_car)
+    db.commit()
+    db.refresh(db_car)
+    return db_car
+
+def checkin_car(db: Session, db_car: models.Car, user_id: int, details: schemas.CarCheckout) -> models.Car:
+    db_car.current_user_id = None
+    db_car.status = models.CarStatus.Available
+    create_car_log(
+        db, car_id=db_car.id, user_id=user_id, action=models.CarLogAction.Checked_In,
+        odometer_reading=details.odometer_reading, notes=details.notes
+    )
+    db.add(db_car)
+    db.commit()
+    db.refresh(db_car)
+    return db_car
+
+def create_shop(db: Session, shop: schemas.ShopCreate, tenant_id: int) -> models.Shop:
+    """Creates a new shop for a specific tenant."""
+    db_shop = models.Shop(**shop.model_dump(), tenant_id=tenant_id)
+    db.add(db_shop)
+    db.commit()
+    db.refresh(db_shop)
+    return db_shop
+
+def get_shop(db: Session, shop_id: int, tenant_id: int) -> Optional[models.Shop]:
+    """Gets a single shop by ID, scoped to a tenant."""
+    return db.query(models.Shop).filter(models.Shop.id == shop_id, models.Shop.tenant_id == tenant_id).first()
+
+def get_shops(db: Session, tenant_id: int, skip: int, limit: int) -> List[models.Shop]:
+    """Gets a list of all shops for a tenant."""
+    return db.query(models.Shop).filter(models.Shop.tenant_id == tenant_id).order_by(models.Shop.name).offset(skip).limit(limit).all()
+
+def update_shop(db: Session, db_shop: models.Shop, shop_update: schemas.ShopUpdate) -> models.Shop:
+    """Updates a shop's details."""
+    update_data = shop_update.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(db_shop, key, value)
+    db.add(db_shop)
+    db.commit()
+    db.refresh(db_shop)
+    return db_shop
+
+def delete_shop(db: Session, db_shop: models.Shop) -> models.Shop:
+    """Deletes a shop."""
+    db.delete(db_shop)
+    db.commit()
+    return db_shop
+
+# --- NEW: Bill of Quantities (BoQ) CRUD Operations ---
+
+def get_boq_by_project_id(db: Session, project_id: int) -> Optional[models.BoQ]:
+    """Retrieves the BoQ for a given project, including its items and their inventory details."""
+    return db.query(models.BoQ).options(
+        joinedload(models.BoQ.items).joinedload(models.BoQItem.inventory_item)
+    ).filter(models.BoQ.project_id == project_id).first()
+
+def get_or_create_boq_for_project(db: Session, project_id: int, project_name: str) -> models.BoQ:
+    """Gets the BoQ for a project, creating one if it doesn't exist."""
+    db_boq = get_boq_by_project_id(db, project_id=project_id)
+    if not db_boq:
+        db_boq = models.BoQ(project_id=project_id, name=f"BoQ for {project_name}")
+        db.add(db_boq)
+        db.commit()
+        db.refresh(db_boq)
+    return db_boq
+
+def get_boq_item(db: Session, boq_item_id: int) -> Optional[models.BoQItem]:
+    """Retrieves a single BoQ item by its ID."""
+    return db.query(models.BoQItem).filter(models.BoQItem.id == boq_item_id).first()
+
+def add_item_to_boq(db: Session, boq: models.BoQ, item_data: schemas.BoQItemCreate) -> models.BoQ:
+    """Adds an inventory item to a BoQ. If it already exists, it updates the quantity."""
+    existing_item = db.query(models.BoQItem).filter(
+        models.BoQItem.boq_id == boq.id,
+        models.BoQItem.inventory_item_id == item_data.inventory_item_id
+    ).first()
+    
+    if existing_item:
+        # Item already in BoQ, update quantity
+        existing_item.quantity_required = item_data.quantity_required
+        db.add(existing_item)
+    else:
+        # New item for this BoQ
+        db_boq_item = models.BoQItem(
+            boq_id=boq.id,
+            inventory_item_id=item_data.inventory_item_id,
+            quantity_required=item_data.quantity_required
+        )
+        db.add(db_boq_item)
+    
+    db.commit()
+    db.refresh(boq)
+    # Eagerly load items again after commit
+    db_boq_reloaded = get_boq_by_project_id(db, project_id=boq.project_id)
+    return db_boq_reloaded
+
+def update_boq_item(db: Session, db_boq_item: models.BoQItem, item_update: schemas.BoQItemUpdate) -> models.BoQItem:
+    """Updates the quantity of a BoQ item."""
+    db_boq_item.quantity_required = item_update.quantity_required
+    db.add(db_boq_item)
+    db.commit()
+    db.refresh(db_boq_item)
+    return db_boq_item
+
+def remove_item_from_boq(db: Session, db_boq_item: models.BoQItem):
+    """Removes an item from a BoQ."""
+    db.delete(db_boq_item)
+    db.commit()
+
+# --- END NEW ---

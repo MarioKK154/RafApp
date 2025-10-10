@@ -46,6 +46,24 @@ class ToolLogAction(enum.Enum):
     Maintenance = "Maintenance"
     Created = "Created"
 
+class CarStatus(enum.Enum):
+    Available = "Available"
+    Checked_Out = "Checked Out"
+    In_Service = "In Service"
+    Needs_Service = "Needs Service"
+    Retired = "Retired"
+
+class CarLogAction(enum.Enum):
+    Checked_Out = "Checked Out"
+    Checked_In = "Checked In"
+    Maintenance = "Maintenance"
+    Created = "Created"
+
+# --- NEW: TyreType Enum ---
+class TyreType(enum.Enum):
+    Summer = "Summer"
+    Winter = "Winter"
+
 class Tenant(Base):
     __tablename__ = "tenants"
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -58,6 +76,8 @@ class Tenant(Base):
     users: Mapped[list["User"]] = relationship(back_populates="tenant")
     projects: Mapped[list["Project"]] = relationship(back_populates="tenant")
     tools: Mapped[list["Tool"]] = relationship(back_populates="tenant")
+    cars: Mapped[list["Car"]] = relationship(back_populates="tenant")
+    shops: Mapped[list["Shop"]] = relationship(back_populates="tenant")
 
 project_members_table = Table(
     "project_members", Base.metadata,
@@ -101,6 +121,8 @@ class User(Base):
     task_comments = relationship("TaskComment", back_populates="author", cascade="all, delete-orphan")
     uploaded_task_photos = relationship("TaskPhoto", back_populates="uploader", cascade="all, delete-orphan")
     tool_logs: Mapped[list["ToolLog"]] = relationship(back_populates="user")
+    car_checked_out: Mapped[Optional["Car"]] = relationship(back_populates="current_user")
+    car_logs: Mapped[list["CarLog"]] = relationship(back_populates="user")
     
 class Project(Base):
     __tablename__ = "projects"
@@ -123,6 +145,7 @@ class Project(Base):
     tasks = relationship("Task", back_populates="project", cascade="all, delete-orphan")
     drawings = relationship("Drawing", back_populates="project", cascade="all, delete-orphan")
     members = relationship("User", secondary=project_members_table, back_populates="assigned_projects")
+    boq: Mapped[Optional["BoQ"]] = relationship(back_populates="project", cascade="all, delete-orphan")
 
 class Task(Base):
     __tablename__ = "tasks"
@@ -174,6 +197,7 @@ class InventoryItem(Base):
     local_image_path = Column(String, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    boq_items: Mapped[List["BoQItem"]] = relationship(back_populates="inventory_item")
 
 class Drawing(Base):
     __tablename__ = "drawings"
@@ -268,3 +292,97 @@ class ToolLog(Base):
 
     tool: Mapped["Tool"] = relationship(back_populates="history_logs")
     user: Mapped["User"] = relationship(back_populates="tool_logs")
+
+class Car(Base):
+    __tablename__ = "cars"
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    make: Mapped[str] = mapped_column(String, nullable=False)
+    model: Mapped[str] = mapped_column(String, nullable=False)
+    year: Mapped[Optional[int]] = mapped_column(Integer) # Year manufactured
+    purchase_date: Mapped[Optional[Date]] = mapped_column(Date) # Year bought
+    license_plate: Mapped[str] = mapped_column(String, unique=True, index=True, nullable=False)
+    status: Mapped[CarStatus] = mapped_column(SQLAlchemyEnum(CarStatus), default=CarStatus.Available)
+    
+    last_oil_change_km: Mapped[Optional[int]] = mapped_column(Integer)
+    next_oil_change_due_km: Mapped[Optional[int]] = mapped_column(Integer)
+    
+    service_needed: Mapped[bool] = mapped_column(Boolean, default=False)
+    service_notes: Mapped[Optional[str]] = mapped_column(Text)
+    
+    image_path: Mapped[Optional[str]] = mapped_column(String)
+    vin: Mapped[Optional[str]] = mapped_column(String, unique=True)
+
+    # Foreign Keys
+    current_user_id: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id"))
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id"), nullable=False)
+
+    # Relationships
+    current_user: Mapped[Optional["User"]] = relationship(back_populates="car_checked_out")
+    tenant: Mapped["Tenant"] = relationship(back_populates="cars")
+    history_logs: Mapped[list["CarLog"]] = relationship(back_populates="car", cascade="all, delete-orphan")
+    tyre_sets: Mapped[list["TyreSet"]] = relationship(back_populates="car", cascade="all, delete-orphan")
+
+# --- NEW: TyreSet Model ---
+class TyreSet(Base):
+    __tablename__ = "tyre_sets"
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    type: Mapped[TyreType] = mapped_column(SQLAlchemyEnum(TyreType), nullable=False)
+    purchase_date: Mapped[Optional[Date]] = mapped_column(Date)
+    brand: Mapped[Optional[str]] = mapped_column(String)
+    notes: Mapped[Optional[str]] = mapped_column(Text)
+    is_on_car: Mapped[bool] = mapped_column(Boolean, default=False)
+
+    car_id: Mapped[int] = mapped_column(ForeignKey("cars.id"), nullable=False)
+    car: Mapped["Car"] = relationship(back_populates="tyre_sets")
+
+# --- CarLog Model (previously defined, remains correct) ---
+class CarLog(Base):
+    __tablename__ = "car_logs"
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    action: Mapped[CarLogAction] = mapped_column(SQLAlchemyEnum(CarLogAction), nullable=False)
+    odometer_reading: Mapped[Optional[int]] = mapped_column(Integer)
+    notes: Mapped[Optional[str]] = mapped_column(Text)
+
+    car_id: Mapped[int] = mapped_column(ForeignKey("cars.id"), nullable=False)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+
+    car: Mapped["Car"] = relationship(back_populates="history_logs")
+    user: Mapped["User"] = relationship(back_populates="car_logs")
+
+class Shop(Base):
+    __tablename__ = "shops"
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    name: Mapped[str] = mapped_column(String, index=True, nullable=False)
+    address: Mapped[Optional[str]] = mapped_column(String)
+    contact_person: Mapped[Optional[str]] = mapped_column(String)
+    phone_number: Mapped[Optional[str]] = mapped_column(String)
+    email: Mapped[Optional[str]] = mapped_column(String)
+    website: Mapped[Optional[str]] = mapped_column(String)
+    notes: Mapped[Optional[str]] = mapped_column(Text)
+
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id"), nullable=False)
+    tenant: Mapped["Tenant"] = relationship(back_populates="shops")
+
+# --- NEW: BoQ Model ---
+class BoQ(Base):
+    __tablename__ = "boqs"
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    name: Mapped[str] = mapped_column(String, default="Main Bill of Quantities")
+    
+    project_id: Mapped[int] = mapped_column(ForeignKey("projects.id"), unique=True, nullable=False)
+    
+    project: Mapped["Project"] = relationship(back_populates="boq")
+    items: Mapped[List["BoQItem"]] = relationship(back_populates="boq", cascade="all, delete-orphan")
+
+# --- NEW: BoQItem Model ---
+class BoQItem(Base):
+    __tablename__ = "boq_items"
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    quantity_required: Mapped[float] = mapped_column(Float, nullable=False)
+    
+    boq_id: Mapped[int] = mapped_column(ForeignKey("boqs.id"), nullable=False)
+    inventory_item_id: Mapped[int] = mapped_column(ForeignKey("inventory_items.id"), nullable=False)
+    
+    boq: Mapped["BoQ"] = relationship(back_populates="items")
+    inventory_item: Mapped["InventoryItem"] = relationship(back_populates="boq_items")

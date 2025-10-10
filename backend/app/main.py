@@ -26,7 +26,10 @@ from .routers import (
     shopping_list,
     admin_tools,
     tenants,
-    tools
+    tools,
+    cars,
+    shops,
+    boq
 )
 # --- END CORRECTION ---
 
@@ -74,6 +77,9 @@ app.include_router(shopping_list.router, prefix="/shopping-list", tags=["Shoppin
 app.include_router(admin_tools.router, prefix="/admin-tools", tags=["Admin Tools"])
 app.include_router(tenants.router)
 app.include_router(tools.router)
+app.include_router(cars.router)
+app.include_router(shops.router)
+app.include_router(boq.router)
 
 
 @app.get("/")

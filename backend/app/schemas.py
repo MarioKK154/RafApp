@@ -6,7 +6,7 @@ from typing import Optional, List, Literal
 from datetime import datetime, date, time, timedelta
 from os import environ # --- ADDED FOR PROFILE PICTURE ---
 from pydantic import computed_field # This was in your version, so we keep it
-from .models import UserRole, ProjectStatus, TaskStatus, ToolStatus, ToolLogAction
+from .models import UserRole, ProjectStatus, TaskStatus, ToolStatus, ToolLogAction, CarStatus, CarLogAction, TyreType
 # --- ADDED FOR PROFILE PICTURE ---
 # Base URL for static assets. Ensure this is set in your environment for production.
 STATIC_BASE_URL = environ.get("STATIC_BASE_URL", "http://localhost:8000")
@@ -467,3 +467,154 @@ class ToolRead(ToolBase):
         pass
 # --- END NEW SCHEMAS ---
 
+class TyreSetBase(BaseModel):
+    type: TyreType
+    purchase_date: Optional[date] = None
+    brand: Optional[str] = None
+    notes: Optional[str] = None
+    is_on_car: bool = False
+
+class TyreSetCreate(TyreSetBase):
+    pass
+
+class TyreSetRead(TyreSetBase):
+    id: int
+    class Config(OrmConfig):
+        pass
+
+class CarLogRead(BaseModel):
+    id: int
+    timestamp: datetime
+    action: CarLogAction
+    odometer_reading: Optional[int] = None
+    notes: Optional[str] = None
+    user: UserReadBasic
+    class Config(OrmConfig):
+        pass
+
+class CarBase(BaseModel):
+    make: str
+    model: str
+    year: Optional[int] = None
+    purchase_date: Optional[date] = None
+    license_plate: str
+    status: CarStatus = CarStatus.Available
+    last_oil_change_km: Optional[int] = None
+    next_oil_change_due_km: Optional[int] = None
+    service_needed: bool = False
+    service_notes: Optional[str] = None
+    image_path: Optional[str] = None
+    vin: Optional[str] = None
+
+class CarCreate(CarBase):
+    pass
+
+class CarUpdate(BaseModel):
+    make: Optional[str] = None
+    model: Optional[str] = None
+    year: Optional[int] = None
+    purchase_date: Optional[date] = None
+    license_plate: Optional[str] = None
+    status: Optional[CarStatus] = None
+    last_oil_change_km: Optional[int] = None
+    next_oil_change_due_km: Optional[int] = None
+    service_needed: Optional[bool] = None
+    service_notes: Optional[str] = None
+    vin: Optional[str] = None
+
+class CarRead(CarBase):
+    id: int
+    tenant_id: int
+    current_user_id: Optional[int] = None
+    current_user: Optional[UserReadBasic] = None
+    history_logs: List[CarLogRead] = []
+    tyre_sets: List[TyreSetRead] = []
+
+    @computed_field
+    @property
+    def image_url(self) -> Optional[str]:
+        if self.image_path:
+            return f"{STATIC_BASE_URL}/{self.image_path}"
+        return None
+    
+    class Config(OrmConfig):
+        pass
+
+class CarCheckout(BaseModel):
+    odometer_reading: Optional[int] = None
+    notes: Optional[str] = None
+
+class CarServiceStatusUpdate(BaseModel):
+    service_needed: bool
+    service_notes: Optional[str] = None
+
+class ShopBase(BaseModel):
+    name: str
+    address: Optional[str] = None
+    contact_person: Optional[str] = None
+    phone_number: Optional[str] = None
+    email: Optional[EmailStr] = None
+    website: Optional[HttpUrl | str] = None
+    notes: Optional[str] = None
+
+class ShopCreate(ShopBase):
+    pass
+
+class ShopUpdate(BaseModel):
+    name: Optional[str] = None
+    address: Optional[str] = None
+    contact_person: Optional[str] = None
+    phone_number: Optional[str] = None
+    email: Optional[EmailStr] = None
+    website: Optional[HttpUrl | str] = None
+    notes: Optional[str] = None
+
+class ShopRead(ShopBase):
+    id: int
+    tenant_id: int
+
+    class Config(OrmConfig):
+        pass
+
+# --- NEW: BoQ Schemas ---
+
+# A basic schema for inventory items when nested inside a BoQ item
+class InventoryItemReadForBoQ(BaseModel):
+    id: int
+    name: str
+    unit: Optional[str] = None
+    quantity: float # Current quantity in stock
+
+    class Config(OrmConfig):
+        pass
+
+class BoQItemBase(BaseModel):
+    inventory_item_id: int
+    quantity_required: float = Field(..., gt=0)
+
+class BoQItemCreate(BoQItemBase):
+    pass
+
+class BoQItemUpdate(BaseModel):
+    quantity_required: float = Field(..., gt=0)
+
+class BoQItemRead(BoQItemBase):
+    id: int
+    inventory_item: InventoryItemReadForBoQ
+
+    class Config(OrmConfig):
+        pass
+
+class BoQBase(BaseModel):
+    name: Optional[str] = "Main Bill of Quantities"
+
+class BoQCreate(BoQBase):
+    pass
+
+class BoQRead(BoQBase):
+    id: int
+    project_id: int
+    items: List[BoQItemRead] = []
+
+    class Config(OrmConfig):
+        pass

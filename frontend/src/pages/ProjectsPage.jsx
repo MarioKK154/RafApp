@@ -1,7 +1,8 @@
 // frontend/src/pages/ProjectsPage.jsx
-// Uncondensed Version: Added links to project names to filter tasks
+// Final version with corrected "Edit" button link.
+
 import React, { useState, useEffect, useCallback } from 'react';
-import { Link, useNavigate } from 'react-router-dom'; // Import Link
+import { Link, useNavigate } from 'react-router-dom';
 import axiosInstance from '../api/axiosInstance';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
@@ -19,7 +20,6 @@ const ProjectsPage = () => {
     const [projectToDelete, setProjectToDelete] = useState(null);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
-    // --- NEW: State for sorting
     const [sortBy, setSortBy] = useState('name');
     const [sortDir, setSortDir] = useState('asc');
 
@@ -42,7 +42,7 @@ const ProjectsPage = () => {
         .finally(() => {
             setIsLoading(false);
         });
-    }, [sortBy, sortDir]); // Re-fetch when sorting changes
+    }, [sortBy, sortDir]);
 
     useEffect(() => {
         fetchProjects();
@@ -64,7 +64,6 @@ const ProjectsPage = () => {
                 })
                 .catch(err => {
                     toast.error(`Error deleting project: ${err.response?.data?.detail || 'Server error'}`);
-                    console.error("Deletion error:", err);
                     setIsDeleteModalOpen(false);
                 });
         }
@@ -87,7 +86,7 @@ const ProjectsPage = () => {
                 {canManageProjects && (
                     <button
                         onClick={() => navigate('/projects/new')}
-                        className="flex items-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out"
+                        className="flex items-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md"
                     >
                         <PlusIcon className="h-5 w-5 mr-2" />
                         Create Project
@@ -95,15 +94,14 @@ const ProjectsPage = () => {
                 )}
             </div>
             
-            {/* Sorting Controls */}
             <div className="flex justify-end items-center gap-4 mb-4">
-                <label htmlFor="sort_by" className="text-sm font-medium text-gray-700 dark:text-gray-300">Sort By:</label>
-                <select id="sort_by" value={sortBy} onChange={e => setSortBy(e.target.value)} className="rounded-md border-gray-300 dark:border-gray-600 shadow-sm dark:bg-gray-700 dark:text-white">
+                <label htmlFor="sort_by" className="text-sm font-medium">Sort By:</label>
+                <select id="sort_by" value={sortBy} onChange={e => setSortBy(e.target.value)} className="rounded-md border-gray-300 shadow-sm">
                     <option value="name">Name</option>
                     <option value="status">Status</option>
                     <option value="start_date">Start Date</option>
                 </select>
-                <select value={sortDir} onChange={e => setSortDir(e.target.value)} className="rounded-md border-gray-300 dark:border-gray-600 shadow-sm dark:bg-gray-700 dark:text-white">
+                <select value={sortDir} onChange={e => setSortDir(e.target.value)} className="rounded-md border-gray-300 shadow-sm">
                     <option value="asc">Ascending</option>
                     <option value="desc">Descending</option>
                 </select>
@@ -124,18 +122,17 @@ const ProjectsPage = () => {
                         {projects.map(project => (
                             <tr key={project.id} className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
                                 <td className="py-4 px-6 font-medium text-gray-900 dark:text-white whitespace-nowrap">
-                                    {/* --- THIS IS THE CHANGE --- */}
-                                    <Link to={`/tasks?project_id=${project.id}`} className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 hover:underline">
+                                    <Link to={`/tasks?project_id=${project.id}`} className="text-blue-600 hover:underline">
                                         {project.name}
                                     </Link>
-                                    {/* --- END CHANGE --- */}
                                 </td>
                                 <td className="py-4 px-6">{project.status}</td>
                                 <td className="py-4 px-6">{project.start_date ? new Date(project.start_date).toLocaleDateString() : 'N/A'}</td>
                                 <td className="py-4 px-6">{project.project_manager?.full_name || 'Not Assigned'}</td>
                                 {canManageProjects && (
                                     <td className="py-4 px-6 flex items-center space-x-3">
-                                        <button onClick={() => navigate(`/projects/${project.id}`)} className="font-medium text-blue-600 dark:text-blue-500 hover:underline">Edit</button>
+                                        {/* --- THIS IS THE FIX --- */}
+                                        <button onClick={() => navigate(`/projects/edit/${project.id}`)} className="font-medium text-blue-600 dark:text-blue-500 hover:underline">Edit</button>
                                         <button onClick={() => handleDeleteClick(project)} className="font-medium text-red-600 dark:text-red-500 hover:underline">Delete</button>
                                     </td>
                                 )}
