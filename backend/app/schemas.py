@@ -1,50 +1,36 @@
 # backend/app/schemas.py
-# Based on the user-provided version, with only the profile picture feature added.
-
-from pydantic import BaseModel, EmailStr, Field, HttpUrl
+from pydantic import BaseModel, EmailStr, Field, HttpUrl, ConfigDict
 from typing import Optional, List, Literal
-from datetime import datetime, date, time, timedelta
-from os import environ # --- ADDED FOR PROFILE PICTURE ---
-from pydantic import computed_field # This was in your version, so we keep it
-from .models import UserRole, ProjectStatus, TaskStatus, ToolStatus, ToolLogAction, CarStatus, CarLogAction, TyreType
-# --- ADDED FOR PROFILE PICTURE ---
-# Base URL for static assets. Ensure this is set in your environment for production.
+from datetime import datetime, date, timedelta
+from os import environ
+from pydantic import computed_field
+
+from .models import (UserRole, ProjectStatus, TaskStatus, ToolStatus, 
+                     ToolLogAction, CarStatus, CarLogAction, TyreType)
+
 STATIC_BASE_URL = environ.get("STATIC_BASE_URL", "http://localhost:8000")
-# --- END ADDITION ---
 
-
-# --- Base Config ---
-class OrmConfig:
-    from_attributes = True
-
-# --- Basic/Forward Declarations ---
 class TenantReadBasic(BaseModel):
     id: int
     name: str
     logo_url: Optional[str] = None
     background_image_url: Optional[str] = None
-
-    class Config(OrmConfig):
-        pass
+    model_config = ConfigDict(from_attributes=True)
 
 class ProjectReadBasic(BaseModel):
     id: int
     name: str
-    class Config(OrmConfig):
-        pass
+    model_config = ConfigDict(from_attributes=True)
 
 class TaskReadBasic(BaseModel):
     id: int
     title: str
-    class Config(OrmConfig):
-        pass
+    model_config = ConfigDict(from_attributes=True)
 
 class UserReadBasic(BaseModel):
     id: int
     email: EmailStr
     full_name: Optional[str] = None
-    # --- ADDED FOR PROFILE PICTURE ---
-    # We will need the path to construct the URL later
     profile_picture_path: Optional[str] = None 
     
     @computed_field
@@ -53,9 +39,7 @@ class UserReadBasic(BaseModel):
         if self.profile_picture_path:
             return f"{STATIC_BASE_URL}/{self.profile_picture_path}"
         return None
-    # --- END ADDITION ---
-    class Config(OrmConfig):
-        pass
+    model_config = ConfigDict(from_attributes=True)
 
 class TaskCommentReadBasic(BaseModel):
     id: int
@@ -64,8 +48,7 @@ class TaskCommentReadBasic(BaseModel):
     task_id: int 
     author_id: int
     author: Optional[UserReadBasic] = None
-    class Config(OrmConfig):
-        pass
+    model_config = ConfigDict(from_attributes=True)
 
 class TaskPhotoReadBasic(BaseModel):
     id: int
@@ -74,10 +57,8 @@ class TaskPhotoReadBasic(BaseModel):
     uploaded_at: datetime
     uploader_id: int
     uploader: Optional[UserReadBasic] = None
-    class Config(OrmConfig):
-        pass
+    model_config = ConfigDict(from_attributes=True)
 
-# --- Token Schemas ---
 class Token(BaseModel):
     access_token: str
     token_type: str
@@ -85,7 +66,6 @@ class Token(BaseModel):
 class TokenData(BaseModel):
     email: Optional[str] = None
 
-# --- Tenant Schemas ---
 class TenantBase(BaseModel):
     name: str = Field(..., min_length=1)
     logo_url: Optional[HttpUrl | str] = None
@@ -103,10 +83,8 @@ class TenantRead(TenantBase):
     id: int
     created_at: datetime
     updated_at: Optional[datetime] = None
-    class Config(OrmConfig):
-        pass
+    model_config = ConfigDict(from_attributes=True)
 
-# --- User Schemas ---
 class UserBase(BaseModel):
     email: EmailStr
     full_name: Optional[str] = None
@@ -133,20 +111,14 @@ class UserRead(UserBase):
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
     assigned_projects: List[ProjectReadBasic] = []
-    
-    # --- ADDED FOR PROFILE PICTURE ---
-    profile_picture_path: Optional[str] = None # The direct path from the DB model
-
+    profile_picture_path: Optional[str] = None
     @computed_field
     @property
     def profile_picture_url(self) -> Optional[str]:
         if self.profile_picture_path:
             return f"{STATIC_BASE_URL}/{self.profile_picture_path}"
         return None
-    # --- END ADDITION ---
-
-    class Config(OrmConfig):
-        pass
+    model_config = ConfigDict(from_attributes=True)
 
 class UserReadAdmin(UserRead):
     hourly_rate: Optional[float] = None
@@ -178,11 +150,8 @@ class UserImportCSVRow(BaseModel):
     Kennitala: Optional[str] = None
     Phone: Optional[str] = None
     Location: Optional[str] = None
-    class Config(OrmConfig):
-        populate_by_name = True
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
-
-# --- Project Schemas ---
 class ProjectBase(BaseModel):
     name: str
     description: Optional[str] = None
@@ -191,6 +160,7 @@ class ProjectBase(BaseModel):
     start_date: Optional[datetime] = None
     end_date: Optional[datetime] = None
     project_manager_id: Optional[int] = None
+    budget: Optional[float] = Field(None, ge=0)
 
 class ProjectCreate(ProjectBase):
     pass
@@ -203,6 +173,7 @@ class ProjectUpdate(ProjectBase):
     start_date: Optional[datetime] = None
     end_date: Optional[datetime] = None
     project_manager_id: Optional[int] = None
+    budget: Optional[float] = Field(None, ge=0)
 
 class ProjectRead(ProjectBase):
     id: int
@@ -212,13 +183,11 @@ class ProjectRead(ProjectBase):
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
     project_manager: Optional[UserReadBasic] = None
-    class Config(OrmConfig):
-        pass
+    model_config = ConfigDict(from_attributes=True)
 
 class ProjectAssignMember(BaseModel):
     user_id: int
 
-# --- Task Schemas ---
 TaskStatusLiteral = Literal["To Do", "In Progress", "Done", "Blocked", "Commissioned"]
 TaskPriorityLiteral = Literal["Low", "Medium", "High"]
 
@@ -256,8 +225,7 @@ class TaskRead(TaskBase):
         if hasattr(self, 'predecessors'):
             return [p.id for p in self.predecessors]
         return []
-    class Config(OrmConfig):
-        pass
+    model_config = ConfigDict(from_attributes=True)
 
 class TaskAssignUser(BaseModel):
     user_id: int
@@ -265,7 +233,6 @@ class TaskAssignUser(BaseModel):
 class TaskDependencyCreate(BaseModel):
     predecessor_id: int
 
-# --- Task Comment Schemas ---
 class TaskCommentBase(BaseModel):
     content: str = Field(..., min_length=1)
 
@@ -278,10 +245,8 @@ class TaskCommentRead(TaskCommentBase):
     task_id: int
     author_id: int
     author: Optional[UserReadBasic] = None
-    class Config(OrmConfig):
-        pass
+    model_config = ConfigDict(from_attributes=True)
 
-# --- Task Photo Schemas ---
 class TaskPhotoBase(BaseModel):
     description: Optional[str] = None
 
@@ -302,10 +267,8 @@ class TaskPhotoRead(TaskPhotoBase):
     uploader_id: int
     task_id: int
     uploader: Optional[UserReadBasic] = None
-    class Config(OrmConfig):
-        pass
+    model_config = ConfigDict(from_attributes=True)
 
-# --- Inventory Schemas ---
 class InventoryItemBase(BaseModel):
     name: str
     description: Optional[str] = None
@@ -324,16 +287,11 @@ class InventoryItemCreate(InventoryItemBase):
 
 class InventoryItemUpdate(InventoryItemBase):
     name: Optional[str] = None
-    description: Optional[str] = None
     quantity: Optional[float] = None
     quantity_needed: Optional[float] = None
-    unit: Optional[str] = None
-    location: Optional[str] = None
-    low_stock_threshold: Optional[float] = None
     shop_url_1: Optional[HttpUrl | str | None] = None
     shop_url_2: Optional[HttpUrl | str | None] = None
     shop_url_3: Optional[HttpUrl | str | None] = None
-    local_image_path: Optional[str] = None
 
 class InventoryItemRead(InventoryItemBase):
     id: int
@@ -342,8 +300,7 @@ class InventoryItemRead(InventoryItemBase):
     shop_url_1: Optional[HttpUrl | str] = Field(None, exclude=True)
     shop_url_2: Optional[HttpUrl | str] = Field(None, exclude=True)
     shop_url_3: Optional[HttpUrl | str] = Field(None, exclude=True)
-    class Config(OrmConfig):
-        pass
+    model_config = ConfigDict(from_attributes=True)
 
 class InventoryItemReadWithURLs(InventoryItemRead):
     shop_url_1: Optional[HttpUrl | str] = None
@@ -353,8 +310,6 @@ class InventoryItemReadWithURLs(InventoryItemRead):
 class InventoryItemUpdateNeededQty(BaseModel):
     quantity_needed: float = Field(..., ge=0)
 
-
-# --- Drawing Schemas ---
 class DrawingBase(BaseModel):
     description: Optional[str] = None
     project_id: int
@@ -373,11 +328,8 @@ class DrawingRead(DrawingBase):
     size_bytes: Optional[int] = None
     uploaded_at: datetime
     uploader_id: int
+    model_config = ConfigDict(from_attributes=True)
 
-    class Config(OrmConfig):
-        pass
-
-# --- TimeLog Schemas ---
 class TimeLogBase(BaseModel):
     notes: Optional[str] = None
     project_id: Optional[int] = None
@@ -394,14 +346,12 @@ class TimeLogRead(TimeLogBase):
     end_time: Optional[datetime] = None
     duration: Optional[timedelta] = None
     user_id: int
-    class Config(OrmConfig):
-        pass
+    model_config = ConfigDict(from_attributes=True)
 
 class TimeLogStatus(BaseModel):
     is_clocked_in: bool
     current_log: Optional[TimeLogRead] = None
 
-# --- Schemas for Admin Tools ---
 class CleanSlateRequest(BaseModel):
     main_admin_email: EmailStr
 
@@ -416,17 +366,14 @@ class CleanSlateResponse(BaseModel):
     message: str
     summary: CleanSlateSummary
 
-# --- NEW: Tool Schemas ---
 class ToolLogRead(BaseModel):
     id: int
     timestamp: datetime
     action: ToolLogAction
     notes: Optional[str] = None
-    user: UserReadBasic # Nest basic user info for the log entry
+    user: UserReadBasic
+    model_config = ConfigDict(from_attributes=True)
 
-    class Config(OrmConfig):
-        pass
-        
 class ToolBase(BaseModel):
     name: str
     brand: Optional[str] = None
@@ -436,13 +383,15 @@ class ToolBase(BaseModel):
     status: ToolStatus = ToolStatus.Available
     purchase_date: Optional[date] = None
     last_service_date: Optional[date] = None
-    image_path: Optional[str] = None # This will be set by the server on upload
+    image_path: Optional[str] = None
 
 class ToolCreate(ToolBase):
     pass
 
 class ToolUpdate(BaseModel):
     name: Optional[str] = None
+    brand: Optional[str] = None
+    model: Optional[str] = None
     description: Optional[str] = None
     serial_number: Optional[str] = None
     status: Optional[ToolStatus] = None
@@ -455,17 +404,13 @@ class ToolRead(ToolBase):
     current_user_id: Optional[int] = None
     current_user: Optional[UserReadBasic] = None
     history_logs: List[ToolLogRead] = []
-
     @computed_field
     @property
     def image_url(self) -> Optional[str]:
         if self.image_path:
             return f"{STATIC_BASE_URL}/{self.image_path}"
         return None
-
-    class Config(OrmConfig):
-        pass
-# --- END NEW SCHEMAS ---
+    model_config = ConfigDict(from_attributes=True)
 
 class TyreSetBase(BaseModel):
     type: TyreType
@@ -479,8 +424,7 @@ class TyreSetCreate(TyreSetBase):
 
 class TyreSetRead(TyreSetBase):
     id: int
-    class Config(OrmConfig):
-        pass
+    model_config = ConfigDict(from_attributes=True)
 
 class CarLogRead(BaseModel):
     id: int
@@ -489,8 +433,7 @@ class CarLogRead(BaseModel):
     odometer_reading: Optional[int] = None
     notes: Optional[str] = None
     user: UserReadBasic
-    class Config(OrmConfig):
-        pass
+    model_config = ConfigDict(from_attributes=True)
 
 class CarBase(BaseModel):
     make: str
@@ -522,6 +465,10 @@ class CarUpdate(BaseModel):
     service_notes: Optional[str] = None
     vin: Optional[str] = None
 
+class CarServiceStatusUpdate(BaseModel):
+    service_needed: bool
+    service_notes: Optional[str] = None
+
 class CarRead(CarBase):
     id: int
     tenant_id: int
@@ -529,24 +476,17 @@ class CarRead(CarBase):
     current_user: Optional[UserReadBasic] = None
     history_logs: List[CarLogRead] = []
     tyre_sets: List[TyreSetRead] = []
-
     @computed_field
     @property
     def image_url(self) -> Optional[str]:
         if self.image_path:
             return f"{STATIC_BASE_URL}/{self.image_path}"
         return None
-    
-    class Config(OrmConfig):
-        pass
+    model_config = ConfigDict(from_attributes=True)
 
 class CarCheckout(BaseModel):
     odometer_reading: Optional[int] = None
     notes: Optional[str] = None
-
-class CarServiceStatusUpdate(BaseModel):
-    service_needed: bool
-    service_notes: Optional[str] = None
 
 class ShopBase(BaseModel):
     name: str
@@ -572,21 +512,14 @@ class ShopUpdate(BaseModel):
 class ShopRead(ShopBase):
     id: int
     tenant_id: int
+    model_config = ConfigDict(from_attributes=True)
 
-    class Config(OrmConfig):
-        pass
-
-# --- NEW: BoQ Schemas ---
-
-# A basic schema for inventory items when nested inside a BoQ item
 class InventoryItemReadForBoQ(BaseModel):
     id: int
     name: str
     unit: Optional[str] = None
-    quantity: float # Current quantity in stock
-
-    class Config(OrmConfig):
-        pass
+    quantity: float
+    model_config = ConfigDict(from_attributes=True)
 
 class BoQItemBase(BaseModel):
     inventory_item_id: int
@@ -601,9 +534,7 @@ class BoQItemUpdate(BaseModel):
 class BoQItemRead(BoQItemBase):
     id: int
     inventory_item: InventoryItemReadForBoQ
-
-    class Config(OrmConfig):
-        pass
+    model_config = ConfigDict(from_attributes=True)
 
 class BoQBase(BaseModel):
     name: Optional[str] = "Main Bill of Quantities"
@@ -615,6 +546,19 @@ class BoQRead(BoQBase):
     id: int
     project_id: int
     items: List[BoQItemRead] = []
+    model_config = ConfigDict(from_attributes=True)
 
-    class Config(OrmConfig):
-        pass
+class ReportTimeLogEntry(BaseModel):
+    user_name: str
+    duration_hours: float
+    hourly_rate: Optional[float] = None
+    cost: float
+
+class ReportProjectSummary(BaseModel):
+    project_id: int
+    project_name: str
+    budget: Optional[float] = None
+    total_hours: float
+    calculated_cost: float
+    variance: Optional[float] = None
+    detailed_logs: List[ReportTimeLogEntry]

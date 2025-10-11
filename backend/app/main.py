@@ -29,7 +29,8 @@ from .routers import (
     tools,
     cars,
     shops,
-    boq
+    boq,
+    reports
 )
 # --- END CORRECTION ---
 
@@ -80,7 +81,7 @@ app.include_router(tools.router)
 app.include_router(cars.router)
 app.include_router(shops.router)
 app.include_router(boq.router)
-
+app.include_router(reports.router)
 
 @app.get("/")
 async def read_root():

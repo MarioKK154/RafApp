@@ -1,6 +1,4 @@
 // frontend/src/components/Navbar.jsx
-// Final Version: "Users" tab is visible to all authenticated users.
-
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -11,9 +9,8 @@ function Navbar() {
     const { isAuthenticated, user: currentUser, logout } = useAuth();
     const navigate = useNavigate();
 
-    const isAdmin = currentUser?.role === 'admin';
+    const isAdmin = currentUser?.role === 'admin' || currentUser?.is_superuser;
     const isManager = currentUser?.role === 'project manager';
-    const isSuperuser = currentUser?.is_superuser;
 
     const handleLogout = () => {
         logout();
@@ -51,13 +48,15 @@ function Navbar() {
                             <Link to="/shops" className="text-sm md:text-base text-gray-700 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-300">Shops</Link>
                             <Link to="/timelogs" className="text-sm md:text-base text-gray-700 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-300">Time Logs</Link>
                             <Link to="/gantt" className="text-sm md:text-base text-gray-700 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-300">Gantt Chart</Link>
-                            
                             <Link to="/users" className="text-sm md:text-base text-gray-700 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-300">Users</Link>
                             
                             {(isAdmin || isManager) && (
-                                <Link to="/shopping-list" className="text-sm md:text-base text-gray-700 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-300">Shopping List</Link>
+                                <>
+                                    <Link to="/shopping-list" className="text-sm md:text-base text-gray-700 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-300">Shopping List</Link>
+                                    <Link to="/reports" className="text-sm md:text-base text-gray-700 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-300">Reports</Link>
+                                </>
                             )}
-                            {isSuperuser && (
+                            {currentUser?.is_superuser && (
                                 <>
                                     <Link to="/tenants" className="text-sm md:text-base text-green-600 dark:text-green-400 hover:text-green-500 font-semibold">
                                         Manage Tenants

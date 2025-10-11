@@ -131,6 +131,7 @@ class Project(Base):
     description = Column(Text, nullable=True)
     address = Column(String, nullable=True)
     status = Column(String, default="Planning")
+    budget: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     start_date = Column(DateTime(timezone=True), nullable=True)
     end_date = Column(DateTime(timezone=True), nullable=True)
     creator_id = Column(Integer, ForeignKey("users.id"), nullable=False)

@@ -949,4 +949,48 @@ def remove_item_from_boq(db: Session, db_boq_item: models.BoQItem):
     db.delete(db_boq_item)
     db.commit()
 
+# --- NEW: Reporting CRUD Operations ---
+
+def get_project_cost_summary(db: Session, project: models.Project) -> Dict[str, Any]:
+    """Calculates the total hours and cost for a given project."""
+    
+    # Eagerly load the user for each time log to get their hourly rate
+    time_logs = db.query(models.TimeLog).options(
+        joinedload(models.TimeLog.user)
+    ).filter(models.TimeLog.project_id == project.id).all()
+    
+    total_hours = 0.0
+    calculated_cost = 0.0
+    detailed_logs = []
+
+    for log in time_logs:
+        if log.duration and log.user and log.user.hourly_rate is not None:
+            # Duration is a timedelta object, get total seconds
+            duration_hours = log.duration.total_seconds() / 3600.0
+            cost = duration_hours * log.user.hourly_rate
+            
+            total_hours += duration_hours
+            calculated_cost += cost
+            
+            detailed_logs.append({
+                "user_name": log.user.full_name or log.user.email,
+                "duration_hours": round(duration_hours, 2),
+                "hourly_rate": log.user.hourly_rate,
+                "cost": round(cost, 2)
+            })
+
+    variance = None
+    if project.budget is not None:
+        variance = project.budget - calculated_cost
+
+    return {
+        "project_id": project.id,
+        "project_name": project.name,
+        "budget": project.budget,
+        "total_hours": round(total_hours, 2),
+        "calculated_cost": round(calculated_cost, 2),
+        "variance": round(variance, 2) if variance is not None else None,
+        "detailed_logs": detailed_logs
+    }
+
 # --- END NEW ---

@@ -1,6 +1,4 @@
 // frontend/src/App.jsx
-// Final, synchronized version with all correct routes.
-
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
@@ -11,6 +9,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 // Import Components & All Pages from your project
 import Navbar from './components/Navbar';
 import LoginPage from './pages/LoginPage';
+import HomePage from './pages/HomePage';
 import ProjectsPage from './pages/ProjectsPage';
 import ProjectCreatePage from './pages/ProjectCreatePage';
 import ProjectEditPage from './pages/ProjectEditPage';
@@ -20,6 +19,17 @@ import TaskEditPage from './pages/TaskEditPage';
 import InventoryListPage from './pages/InventoryListPage';
 import InventoryCreatePage from './pages/InventoryCreatePage';
 import InventoryEditPage from './pages/InventoryEditPage';
+import ToolInventoryPage from './pages/ToolInventoryPage';
+import ToolCreatePage from './pages/ToolCreatePage';
+import ToolEditPage from './pages/ToolEditPage';
+import ToolDetailsPage from './pages/ToolDetailsPage';
+import CarFleetPage from './pages/CarFleetPage';
+import CarDetailsPage from './pages/CarDetailsPage';
+import CarCreatePage from './pages/CarCreatePage';
+import CarEditPage from './pages/CarEditPage';
+import ShopListPage from './pages/ShopListPage';
+import ShopCreatePage from './pages/ShopCreatePage';
+import ShopEditPage from './pages/ShopEditPage';
 import TimeLogsPage from './pages/TimeLogsPage';
 import UserListPage from './pages/UserListPage';
 import UserCreatePage from './pages/UserCreatePage';
@@ -31,19 +41,9 @@ import TenantEditPage from './pages/TenantEditPage';
 import AdminToolsPage from './pages/AdminToolsPage';
 import ShoppingListPage from './pages/ShoppingListPage';
 import GanttChartPage from './pages/GanttChartPage';
+import ReportsPage from './pages/ReportsPage';
 import AccountSettingsPage from './pages/AccountSettingsPage';
 import NotFoundPage from './pages/NotFoundPage';
-import ToolInventoryPage from './pages/ToolInventoryPage'; // <-- ADD IMPORT
-import ToolCreatePage from './pages/ToolCreatePage';     // <-- ADD IMPORT
-import ToolEditPage from './pages/ToolEditPage';   
-import ToolDetailsPage from './pages/ToolDetailsPage';      // <-- ADD IMPORT
-import CarFleetPage from './pages/CarFleetPage';       // NEW
-import CarDetailsPage from './pages/CarDetailsPage';   // NEW
-import CarCreatePage from './pages/CarCreatePage';     // NEW
-import CarEditPage from './pages/CarEditPage';         // NEW
-import ShopListPage from './pages/ShopListPage';         // NEW
-import ShopCreatePage from './pages/ShopCreatePage';   // NEW
-import ShopEditPage from './pages/ShopEditPage';       // NEW
 
 const ProtectedRoute = ({ children }) => {
     const { isAuthenticated, isLoading } = useAuth();
@@ -61,7 +61,7 @@ function App() {
                 <main className="flex-grow">
                     <Routes>
                         <Route path="/login" element={<LoginPage />} />
-                        <Route path="/" element={<ProtectedRoute><ProjectsPage /></ProtectedRoute>} />
+                        <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
                         
                         {/* Project Routes */}
                         <Route path="/projects" element={<ProtectedRoute><ProjectsPage /></ProtectedRoute>} />
@@ -73,35 +73,49 @@ function App() {
                         <Route path="/tasks/new" element={<ProtectedRoute><TaskCreatePage /></ProtectedRoute>} />
                         <Route path="/tasks/:taskId" element={<ProtectedRoute><TaskEditPage /></ProtectedRoute>} />
                         
-                        {/* Other Routes from your project */}
+                        {/* Inventory Routes */}
                         <Route path="/inventory" element={<ProtectedRoute><InventoryListPage /></ProtectedRoute>} />
                         <Route path="/inventory/new" element={<ProtectedRoute><InventoryCreatePage /></ProtectedRoute>} />
                         <Route path="/inventory/edit/:itemId" element={<ProtectedRoute><InventoryEditPage /></ProtectedRoute>} />
-                        <Route path="/timelogs" element={<ProtectedRoute><TimeLogsPage /></ProtectedRoute>} />
-                        <Route path="/users" element={<ProtectedRoute><UserListPage /></ProtectedRoute>} />
-                        <Route path="/users/new" element={<ProtectedRoute><UserCreatePage /></ProtectedRoute>} />
-                        <Route path="/users/import" element={<ProtectedRoute><UserBulkImportPage /></ProtectedRoute>} />
-                        <Route path="/users/edit/:userId" element={<ProtectedRoute><UserEditPage /></ProtectedRoute>} />
-                        <Route path="/tenants" element={<ProtectedRoute><TenantListPage /></ProtectedRoute>} />
-                        <Route path="/tenants/new" element={<ProtectedRoute><TenantCreatePage /></ProtectedRoute>} />
-                        <Route path="/tenants/edit/:tenantId" element={<ProtectedRoute><TenantEditPage /></ProtectedRoute>} />
-                        <Route path="/admin/tools" element={<ProtectedRoute><AdminToolsPage /></ProtectedRoute>} />
-                        <Route path="/shopping-list" element={<ProtectedRoute><ShoppingListPage /></ProtectedRoute>} />
-                        <Route path="/gantt" element={<ProtectedRoute><GanttChartPage /></ProtectedRoute>} />
-                        <Route path="/account-settings" element={<ProtectedRoute><AccountSettingsPage /></ProtectedRoute>} />
+
+                        {/* Tool Inventory Routes */}
                         <Route path="/tools" element={<ProtectedRoute><ToolInventoryPage /></ProtectedRoute>} />
                         <Route path="/tools/new" element={<ProtectedRoute><ToolCreatePage /></ProtectedRoute>} />
                         <Route path="/tools/edit/:toolId" element={<ProtectedRoute><ToolEditPage /></ProtectedRoute>} />
                         <Route path="/tools/:toolId" element={<ProtectedRoute><ToolDetailsPage /></ProtectedRoute>} />
+
+                        {/* Car Fleet Routes */}
                         <Route path="/cars" element={<ProtectedRoute><CarFleetPage /></ProtectedRoute>} />
                         <Route path="/cars/new" element={<ProtectedRoute><CarCreatePage /></ProtectedRoute>} />
                         <Route path="/cars/edit/:carId" element={<ProtectedRoute><CarEditPage /></ProtectedRoute>} />
                         <Route path="/cars/:carId" element={<ProtectedRoute><CarDetailsPage /></ProtectedRoute>} />
+
+                        {/* Shop Routes */}
                         <Route path="/shops" element={<ProtectedRoute><ShopListPage /></ProtectedRoute>} />
                         <Route path="/shops/new" element={<ProtectedRoute><ShopCreatePage /></ProtectedRoute>} />
                         <Route path="/shops/edit/:shopId" element={<ProtectedRoute><ShopEditPage /></ProtectedRoute>} />
-
-
+                        
+                        {/* Time Log Route */}
+                        <Route path="/timelogs" element={<ProtectedRoute><TimeLogsPage /></ProtectedRoute>} />
+                        
+                        {/* User Management Routes */}
+                        <Route path="/users" element={<ProtectedRoute><UserListPage /></ProtectedRoute>} />
+                        <Route path="/users/new" element={<ProtectedRoute><UserCreatePage /></ProtectedRoute>} />
+                        <Route path="/users/import" element={<ProtectedRoute><UserBulkImportPage /></ProtectedRoute>} />
+                        <Route path="/users/edit/:userId" element={<ProtectedRoute><UserEditPage /></ProtectedRoute>} />
+                        
+                        {/* Superuser / Tenant Management Routes */}
+                        <Route path="/tenants" element={<ProtectedRoute><TenantListPage /></ProtectedRoute>} />
+                        <Route path="/tenants/new" element={<ProtectedRoute><TenantCreatePage /></ProtectedRoute>} />
+                        <Route path="/tenants/edit/:tenantId" element={<ProtectedRoute><TenantEditPage /></ProtectedRoute>} />
+                        <Route path="/admin/tools" element={<ProtectedRoute><AdminToolsPage /></ProtectedRoute>} />
+                        
+                        {/* Other Feature Routes */}
+                        <Route path="/shopping-list" element={<ProtectedRoute><ShoppingListPage /></ProtectedRoute>} />
+                        <Route path="/gantt" element={<ProtectedRoute><GanttChartPage /></ProtectedRoute>} />
+                        <Route path="/reports" element={<ProtectedRoute><ReportsPage /></ProtectedRoute>} />
+                        <Route path="/account-settings" element={<ProtectedRoute><AccountSettingsPage /></ProtectedRoute>} />
+                        
                         <Route path="*" element={<NotFoundPage />} />
                     </Routes>
                 </main>
