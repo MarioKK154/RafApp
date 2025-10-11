@@ -101,14 +101,23 @@ def update_user_by_admin(db: Session, user_to_update: models.User, user_data: sc
 def create_user_by_admin(db: Session, user_data: schemas.UserCreateAdmin) -> models.User:
     hashed_password = get_password_hash(user_data.password)
     db_user = models.User(
-        email=user_data.email, hashed_password=hashed_password, full_name=user_data.full_name,
-        employee_id=user_data.employee_id, kennitala=user_data.kennitala,
-        phone_number=user_data.phone_number, location=user_data.location,
-        role=user_data.role, tenant_id=user_data.tenant_id,
+        email=user_data.email, 
+        hashed_password=hashed_password, 
+        full_name=user_data.full_name,
+        employee_id=user_data.employee_id, 
+        kennitala=user_data.kennitala,
+        phone_number=user_data.phone_number, 
+        location=user_data.location,
+        role=user_data.role, 
+        tenant_id=user_data.tenant_id,
         is_active=user_data.is_active if user_data.is_active is not None else True,
         is_superuser=user_data.is_superuser if user_data.is_superuser is not None else False,
+        # --- THIS IS THE FIX ---
+        hourly_rate=user_data.hourly_rate
     )
-    db.add(db_user); db.commit(); db.refresh(db_user)
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
     return db_user
     
 def update_user_profile_picture_path(db: Session, user_id: int, path: str) -> Optional[models.User]:
@@ -709,13 +718,31 @@ def create_tool(db: Session, tool: schemas.ToolCreate, tenant_id: int) -> models
     db.refresh(db_tool)
     return db_tool
 
+# --- NEW FUNCTION ---
+def create_tool_log(db: Session, tool_id: int, user_id: int, action: models.ToolLogAction, notes: Optional[str] = None):
+    """Creates a history log entry for a tool."""
+    db_log = models.ToolLog(
+        tool_id=tool_id,
+        user_id=user_id,
+        action=action,
+        notes=notes
+    )
+    db.add(db_log)
+    db.commit()
+    db.refresh(db_log)
+    return db_log
+# --- END NEW FUNCTION ---
+
 def get_tool(db: Session, tool_id: int, tenant_id: int) -> Optional[models.Tool]:
     """Gets a single tool by ID, scoped to a tenant."""
-    return db.query(models.Tool).filter(models.Tool.id == tool_id, models.Tool.tenant_id == tenant_id).first()
+    return db.query(models.Tool).options(
+        joinedload(models.Tool.current_user),
+        joinedload(models.Tool.history_logs).joinedload(models.ToolLog.user)
+    ).filter(models.Tool.id == tool_id, models.Tool.tenant_id == tenant_id).first()
 
 def get_tools(db: Session, tenant_id: int, skip: int, limit: int) -> List[models.Tool]:
     """Gets a list of all tools for a tenant."""
-    return db.query(models.Tool).filter(models.Tool.tenant_id == tenant_id).order_by(models.Tool.name).offset(skip).limit(limit).all()
+    return db.query(models.Tool).options(joinedload(models.Tool.current_user)).filter(models.Tool.tenant_id == tenant_id).order_by(models.Tool.name).offset(skip).limit(limit).all()
 
 def update_tool(db: Session, db_tool: models.Tool, tool_update: schemas.ToolUpdate) -> models.Tool:
     """Updates a tool's details."""
@@ -742,23 +769,25 @@ def update_tool_image_path(db: Session, db_tool: models.Tool, image_path: str) -
     return db_tool
 
 def checkout_tool(db: Session, db_tool: models.Tool, user_id: int) -> models.Tool:
-    """Assigns a tool to a user."""
+    """Assigns a tool to a user and creates a log."""
     db_tool.current_user_id = user_id
     db_tool.status = models.ToolStatus.In_Use
+    create_tool_log(db, tool_id=db_tool.id, user_id=user_id, action=models.ToolLogAction.Checked_Out)
     db.add(db_tool)
     db.commit()
     db.refresh(db_tool)
     return db_tool
 
 def checkin_tool(db: Session, db_tool: models.Tool) -> models.Tool:
-    """Returns a tool to the inventory."""
+    """Returns a tool to the inventory and creates a log."""
+    user_id = db_tool.current_user_id # Get user ID before clearing it
     db_tool.current_user_id = None
     db_tool.status = models.ToolStatus.Available
+    create_tool_log(db, tool_id=db_tool.id, user_id=user_id, action=models.ToolLogAction.Checked_In)
     db.add(db_tool)
     db.commit()
     db.refresh(db_tool)
     return db_tool
-# --- END NEW ---
 
 # --- NEW: Car Fleet CRUD Operations ---
 

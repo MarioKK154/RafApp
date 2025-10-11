@@ -1,6 +1,4 @@
 # backend/app/routers/cars.py
-# New router for the Car Fleet module.
-
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from sqlalchemy.orm import Session
 from typing import Annotated, List
@@ -17,13 +15,11 @@ router = APIRouter(
     dependencies=[Depends(security.get_current_active_user)]
 )
 
-# Dependency type hints
 DbDependency = Annotated[Session, Depends(get_db)]
 CurrentUserDependency = Annotated[models.User, Depends(security.get_current_active_user)]
 ManagerOrAdminDependency = Annotated[models.User, Depends(security.require_role(["admin", "project manager"]))]
 
-# Define file upload path
-APP_DIR = Path(__file__).resolve().parent
+APP_DIR = Path(__file__).resolve().parent.parent # Adjusted path
 UPLOAD_DIR = APP_DIR / "static" / "car_images"
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -60,11 +56,9 @@ def update_car_service_status(
     car_id: int, 
     service_update: schemas.CarServiceStatusUpdate, 
     db: DbDependency, 
-    current_user: CurrentUserDependency # Any authenticated user can call this
+    current_user: CurrentUserDependency
 ):
-    """Updates the service status and notes for a car."""
     db_car = get_car_for_user(car_id, db, current_user)
-    # Use the main update_car crud, but create a specific schema for this limited update
     limited_update_schema = schemas.CarUpdate(
         service_needed=service_update.service_needed,
         service_notes=service_update.service_notes
@@ -108,7 +102,7 @@ def checkin_car_from_user(car_id: int, details: schemas.CarCheckout, db: DbDepen
 
 @router.post("/{car_id}/tyres", response_model=schemas.TyreSetRead, status_code=status.HTTP_201_CREATED)
 def add_tyre_set_to_car(car_id: int, tyre_set: schemas.TyreSetCreate, db: DbDependency, current_user: ManagerOrAdminDependency):
-    get_car_for_user(car_id, db, current_user) # Just to verify permission
+    get_car_for_user(car_id, db, current_user)
     return crud.create_tyre_set(db, tyre_set=tyre_set, car_id=car_id)
 
 @router.delete("/tyres/{tyre_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -116,6 +110,6 @@ def delete_tyre_set_from_car(tyre_id: int, db: DbDependency, current_user: Manag
     db_tyre_set = crud.get_tyre_set(db, tyre_id=tyre_id)
     if not db_tyre_set:
         raise HTTPException(status_code=404, detail="Tyre set not found.")
-    get_car_for_user(db_tyre_set.car_id, db, current_user) # Verify permission on the parent car
+    get_car_for_user(db_tyre_set.car_id, db, current_user)
     crud.delete_tyre_set(db, db_tyre_set=db_tyre_set)
     return None

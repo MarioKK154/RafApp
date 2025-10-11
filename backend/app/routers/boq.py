@@ -1,6 +1,4 @@
 # backend/app/routers/boq.py
-# New router for the Bill of Quantities module.
-
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import Annotated
@@ -24,10 +22,6 @@ def get_project_boq(
     db: DbDependency,
     current_user: CurrentUserDependency
 ):
-    """
-    Retrieves the Bill of Quantities for a specific project.
-    If a BoQ does not exist for the project, it will be created automatically.
-    """
     project = crud.get_project(db, project_id=project_id, tenant_id=current_user.tenant_id)
     if not project:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found in your tenant.")
@@ -42,7 +36,6 @@ def add_boq_item(
     db: DbDependency,
     current_user: ManagerOrAdminDependency
 ):
-    """Adds an inventory item to a project's BoQ. Updates quantity if item already exists."""
     project = crud.get_project(db, project_id=project_id, tenant_id=current_user.tenant_id)
     if not project:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found.")
@@ -62,12 +55,10 @@ def update_boq_item_quantity(
     db: DbDependency,
     current_user: ManagerOrAdminDependency
 ):
-    """Updates the required quantity for a specific item in a BoQ."""
     db_item = crud.get_boq_item(db, boq_item_id=boq_item_id)
     if not db_item:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="BoQ item not found.")
     
-    # Verify user has access to the project this item belongs to
     project = crud.get_project(db, project_id=db_item.boq.project_id, tenant_id=current_user.tenant_id)
     if not project:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to modify this BoQ item.")
@@ -80,7 +71,6 @@ def remove_boq_item(
     db: DbDependency,
     current_user: ManagerOrAdminDependency
 ):
-    """Removes an item from a BoQ."""
     db_item = crud.get_boq_item(db, boq_item_id=boq_item_id)
     if not db_item:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="BoQ item not found.")
