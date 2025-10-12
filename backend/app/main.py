@@ -1,15 +1,17 @@
 # backend/app/main.py
-# Reverted to a stable version without any rate-limiting code.
+# Reverted to a stable state, only handles limiter exceptions.
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
+from slowapi.errors import RateLimitExceeded
+from slowapi import _rate_limit_exceeded_handler
 
+from .limiter import limiter
 from . import models
 from .database import engine
 
-# Import all your routers
 from .routers import (
     auth, users, projects, tasks, tenants,
     inventory, tools, cars, shops, boq, drawings, 
@@ -24,6 +26,10 @@ app = FastAPI(
     description="API for the Electrical Project Management App",
     version="0.1.0"
 )
+
+# This connects the limiter to the app and tells it how to respond when a limit is exceeded.
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # CORS Middleware
 origins = [

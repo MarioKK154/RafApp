@@ -1,10 +1,11 @@
 # backend/app/routers/tasks.py
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Request
 from sqlalchemy.orm import Session
 from typing import Annotated, List, Optional, Literal
 
 from .. import crud, models, schemas, security
 from ..database import get_db
+from ..limiter import limiter
 
 router = APIRouter(
     prefix="/tasks",
@@ -31,11 +32,8 @@ async def get_task_and_verify_tenant(task_id: int, db: DbDependency, current_use
     return db_task
 
 @router.post("/", response_model=schemas.TaskRead, status_code=status.HTTP_201_CREATED)
-async def create_new_task(
-    task_data: schemas.TaskCreate,
-    db: DbDependency,
-    current_user: TeamLeaderOrHigherTenantDependency
-):
+@limiter.limit("100/minute")
+async def create_new_task(request: Request, task_data: schemas.TaskCreate, db: DbDependency, current_user: TeamLeaderOrHigherTenantDependency):
     project = crud.get_project(db, project_id=task_data.project_id, tenant_id=current_user.tenant_id)
     if not project:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found or not accessible in your tenant.")
@@ -43,7 +41,9 @@ async def create_new_task(
     return crud.create_task(db=db, task=task_data, project_tenant_id=project.tenant_id)
 
 @router.get("/", response_model=List[schemas.TaskRead])
+@limiter.limit("100/minute")
 async def read_all_tasks(
+    request: Request,
     db: DbDependency,
     current_user: CurrentUserDependency,
     project_id: Optional[int] = Query(None),
@@ -58,7 +58,7 @@ async def read_all_tasks(
     if project_id and not current_user.is_superuser:
         project = crud.get_project(db, project_id=project_id, tenant_id=current_user.tenant_id)
         if not project:
-            return [] # Return empty list if project not accessible
+            return []
     
     tasks = crud.get_tasks(db=db, project_id=effective_project_id, assignee_id=assignee_id, status=status, sort_by=sort_by, sort_dir=sort_dir, skip=skip, limit=limit)
     
@@ -68,11 +68,14 @@ async def read_all_tasks(
     return tasks
 
 @router.get("/{task_id}", response_model=schemas.TaskRead)
-async def read_single_task(task_id: int, db: DbDependency, current_user: CurrentUserDependency):
+@limiter.limit("100/minute")
+async def read_single_task(request: Request, task_id: int, db: DbDependency, current_user: CurrentUserDependency):
     return await get_task_and_verify_tenant(task_id=task_id, db=db, current_user=current_user)
 
 @router.put("/{task_id}", response_model=schemas.TaskRead)
+@limiter.limit("100/minute")
 async def update_existing_task(
+    request: Request,
     task_id: int,
     task_update_data: schemas.TaskUpdate,
     db: DbDependency,
@@ -82,20 +85,24 @@ async def update_existing_task(
     return crud.update_task(db=db, task_id=task_id, task_update=task_update_data, project_tenant_id=db_task.project.tenant_id)
 
 @router.delete("/{task_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_existing_task(task_id: int, db: DbDependency, current_user: TeamLeaderOrHigherTenantDependency):
+@limiter.limit("100/minute")
+async def delete_existing_task(request: Request, task_id: int, db: DbDependency, current_user: TeamLeaderOrHigherTenantDependency):
     db_task = await get_task_and_verify_tenant(task_id=task_id, db=db, current_user=current_user)
     crud.delete_task(db=db, task_id=db_task.id)
     return None
 
 @router.post("/{task_id}/commission", response_model=schemas.TaskRead)
-async def commission_task_endpoint(task_id: int, db: DbDependency, current_user: ManagerOrAdminTenantDependency):
+@limiter.limit("100/minute")
+async def commission_task_endpoint(request: Request, task_id: int, db: DbDependency, current_user: ManagerOrAdminTenantDependency):
     db_task = await get_task_and_verify_tenant(task_id=task_id, db=db, current_user=current_user)
     if db_task.status != "Done":
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Task must be 'Done'.")
     return crud.commission_task(db=db, task_to_commission=db_task)
 
 @router.post("/{task_id}/dependencies", response_model=schemas.TaskRead, status_code=status.HTTP_201_CREATED)
+@limiter.limit("100/minute")
 async def add_dependency_to_task(
+    request: Request,
     task_id: int,
     dependency: schemas.TaskDependencyCreate,
     db: DbDependency,
@@ -113,7 +120,9 @@ async def add_dependency_to_task(
     return updated_task
 
 @router.delete("/{task_id}/dependencies/{predecessor_id}", response_model=schemas.TaskRead)
+@limiter.limit("100/minute")
 async def remove_dependency_from_task(
+    request: Request,
     task_id: int,
     predecessor_id: int,
     db: DbDependency,

@@ -1,10 +1,11 @@
 # backend/app/routers/boq.py
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
 from typing import Annotated
 
 from .. import crud, models, schemas, security
 from ..database import get_db
+from ..limiter import limiter
 
 router = APIRouter(
     prefix="/boq",
@@ -17,7 +18,9 @@ CurrentUserDependency = Annotated[models.User, Depends(security.get_current_acti
 ManagerOrAdminDependency = Annotated[models.User, Depends(security.require_role(["admin", "project manager"]))]
 
 @router.get("/project/{project_id}", response_model=schemas.BoQRead)
+@limiter.limit("100/minute")
 def get_project_boq(
+    request: Request,
     project_id: int,
     db: DbDependency,
     current_user: CurrentUserDependency
@@ -30,7 +33,9 @@ def get_project_boq(
     return boq
 
 @router.post("/project/{project_id}/items", response_model=schemas.BoQRead)
+@limiter.limit("100/minute")
 def add_boq_item(
+    request: Request,
     project_id: int,
     item: schemas.BoQItemCreate,
     db: DbDependency,
@@ -49,7 +54,9 @@ def add_boq_item(
     return updated_boq
 
 @router.put("/items/{boq_item_id}", response_model=schemas.BoQItemRead)
+@limiter.limit("100/minute")
 def update_boq_item_quantity(
+    request: Request,
     boq_item_id: int,
     item_update: schemas.BoQItemUpdate,
     db: DbDependency,
@@ -66,7 +73,9 @@ def update_boq_item_quantity(
     return crud.update_boq_item(db, db_boq_item=db_item, item_update=item_update)
 
 @router.delete("/items/{boq_item_id}", status_code=status.HTTP_204_NO_CONTENT)
+@limiter.limit("100/minute")
 def remove_boq_item(
+    request: Request,
     boq_item_id: int,
     db: DbDependency,
     current_user: ManagerOrAdminDependency

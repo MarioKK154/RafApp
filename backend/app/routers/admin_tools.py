@@ -1,10 +1,11 @@
 # backend/app/routers/admin_tools.py
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
-from typing import Annotated, Dict, Any
+from typing import Annotated
 
 from .. import crud, models, schemas, security
 from ..database import get_db
+from ..limiter import limiter
 
 router = APIRouter(
     prefix="/admin-tools",
@@ -17,7 +18,9 @@ SuperUserDependency = Annotated[models.User, Depends(security.require_superuser)
 
 
 @router.post("/perform-clean-slate", response_model=schemas.CleanSlateResponse)
+@limiter.limit("10/minute")
 async def perform_clean_slate_operation(
+    request: Request,
     request_data: schemas.CleanSlateRequest,
     db: DbDependency,
     current_super_user: SuperUserDependency
@@ -44,7 +47,6 @@ async def perform_clean_slate_operation(
             summary=summary_details
         )
     except Exception as e:
-        print(f"Error during clean slate operation endpoint: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"An unexpected error occurred during the clean slate operation: {str(e)}"

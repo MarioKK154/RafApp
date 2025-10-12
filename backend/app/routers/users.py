@@ -1,5 +1,5 @@
 # backend/app/routers/users.py
-from fastapi import APIRouter, Depends, HTTPException, status, Query, File, UploadFile
+from fastapi import APIRouter, Depends, HTTPException, status, Query, File, UploadFile, Request
 from sqlalchemy.orm import Session
 from typing import Annotated, List, Optional, Dict, Any, Union
 import csv
@@ -10,10 +10,11 @@ from pathlib import Path
 
 from .. import crud, models, schemas, security
 from ..database import get_db
+from ..limiter import limiter
 
 router = APIRouter(
     prefix="/users",
-    tags=["Users"],
+    tags=["Users"]
 )
 
 DbDependency = Annotated[Session, Depends(get_db)]
@@ -24,11 +25,13 @@ UPLOAD_DIR = APP_DIR / "static" / "profile_pics"
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 @router.get("/me", response_model=schemas.UserRead)
-async def read_users_me(current_user: CurrentUserDependency):
+@limiter.limit("100/minute")
+async def read_users_me(request: Request, current_user: CurrentUserDependency):
     return current_user
 
 @router.post("/me/profile-picture", response_model=schemas.UserReadAdmin)
-async def upload_profile_picture(db: DbDependency, current_user: CurrentUserDependency, file: UploadFile = File(...)):
+@limiter.limit("10/minute")
+async def upload_profile_picture(request: Request, db: DbDependency, current_user: CurrentUserDependency, file: UploadFile = File(...)):
     if file.content_type not in ["image/jpeg", "image/png", "image/gif"]:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid file type.")
     
@@ -50,14 +53,17 @@ async def upload_profile_picture(db: DbDependency, current_user: CurrentUserDepe
     return updated_user
 
 @router.post("/me/change-password", status_code=status.HTTP_204_NO_CONTENT)
-async def change_current_user_password(password_data: schemas.UserChangePassword, db: DbDependency, current_user: CurrentUserDependency):
+@limiter.limit("10/minute")
+async def change_current_user_password(request: Request, password_data: schemas.UserChangePassword, db: DbDependency, current_user: CurrentUserDependency):
     if not security.verify_password(password_data.current_password, current_user.hashed_password):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Incorrect current password")
     crud.update_user_password(db=db, user=current_user, new_password=password_data.new_password)
     return None
 
 @router.get("/", response_model=List[Union[schemas.UserReadAdmin, schemas.UserRead]])
+@limiter.limit("100/minute")
 async def read_users(
+    request: Request,
     db: DbDependency,
     current_user_requesting: CurrentUserDependency,
     filter_tenant_id: Optional[int] = Query(None),
@@ -75,7 +81,8 @@ async def read_users(
     return crud.get_users(db=db, tenant_id=target_tenant_id, is_active=is_active, skip=skip, limit=limit)
 
 @router.post("/", response_model=schemas.UserReadAdmin, status_code=status.HTTP_201_CREATED)
-async def create_new_user_by_admin(user_create_data: schemas.UserCreateAdmin, db: DbDependency, current_admin: CurrentUserDependency):
+@limiter.limit("100/minute")
+async def create_new_user_by_admin(request: Request, user_create_data: schemas.UserCreateAdmin, db: DbDependency, current_admin: CurrentUserDependency):
     if not current_admin.is_superuser and current_admin.role != 'admin':
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions.")
     if not current_admin.is_superuser:
@@ -95,7 +102,8 @@ async def create_new_user_by_admin(user_create_data: schemas.UserCreateAdmin, db
     return crud.create_user_by_admin(db=db, user_data=user_create_data)
 
 @router.get("/{user_id_to_view}", response_model=Union[schemas.UserReadAdmin, schemas.UserRead])
-async def read_single_user(user_id_to_view: int, db: DbDependency, current_user_requesting: CurrentUserDependency):
+@limiter.limit("100/minute")
+async def read_single_user(request: Request, user_id_to_view: int, db: DbDependency, current_user_requesting: CurrentUserDependency):
     db_user = crud.get_user(db, user_id=user_id_to_view)
     if db_user is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
@@ -104,7 +112,8 @@ async def read_single_user(user_id_to_view: int, db: DbDependency, current_user_
     return db_user
 
 @router.put("/{user_id_to_update}", response_model=schemas.UserReadAdmin)
-async def update_user_details_by_admin(user_id_to_update: int, user_update_data: schemas.UserUpdateAdmin, db: DbDependency, current_admin: CurrentUserDependency):
+@limiter.limit("100/minute")
+async def update_user_details_by_admin(request: Request, user_id_to_update: int, user_update_data: schemas.UserUpdateAdmin, db: DbDependency, current_admin: CurrentUserDependency):
     if not current_admin.is_superuser and current_admin.role != 'admin':
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions.")
     db_user_to_update = crud.get_user(db, user_id=user_id_to_update)
@@ -117,7 +126,8 @@ async def update_user_details_by_admin(user_id_to_update: int, user_update_data:
     return crud.update_user_by_admin(db=db, user_to_update=db_user_to_update, user_data=user_update_data)
 
 @router.post("/{user_id_to_update}/set-password", status_code=status.HTTP_204_NO_CONTENT)
-async def set_user_password_by_admin_endpoint(user_id_to_update: int, password_data: schemas.UserSetPasswordByAdmin, db: DbDependency, current_admin: CurrentUserDependency):
+@limiter.limit("10/minute")
+async def set_user_password_by_admin_endpoint(request: Request, user_id_to_update: int, password_data: schemas.UserSetPasswordByAdmin, db: DbDependency, current_admin: CurrentUserDependency):
     if not current_admin.is_superuser and current_admin.role != 'admin':
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions.")
     user_to_update = crud.get_user(db, user_id=user_id_to_update)
@@ -129,7 +139,8 @@ async def set_user_password_by_admin_endpoint(user_id_to_update: int, password_d
     return None
 
 @router.delete("/{user_id_to_delete}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_user_by_admin_endpoint(user_id_to_delete: int, db: DbDependency, current_admin: CurrentUserDependency):
+@limiter.limit("100/minute")
+async def delete_user_by_admin_endpoint(request: Request, user_id_to_delete: int, db: DbDependency, current_admin: CurrentUserDependency):
     if not current_admin.is_superuser and current_admin.role != 'admin':
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions.")
     user_to_delete = crud.get_user(db, user_id=user_id_to_delete)
@@ -143,7 +154,8 @@ async def delete_user_by_admin_endpoint(user_id_to_delete: int, db: DbDependency
     return None
 
 @router.post("/import-csv", response_model=Dict[str, Any])
-async def import_users_from_csv(db: DbDependency, current_admin: CurrentUserDependency, file: UploadFile = File(...)):
+@limiter.limit("5/minute")
+async def import_users_from_csv(request: Request, db: DbDependency, current_admin: CurrentUserDependency, file: UploadFile = File(...)):
     if not current_admin.is_superuser and current_admin.role != 'admin':
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions.")
     target_tenant_id = current_admin.tenant_id

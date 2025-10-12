@@ -1,10 +1,11 @@
 # backend/app/routers/shopping_list.py
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 from typing import Annotated, List
 
 from .. import crud, models, schemas, security
 from ..database import get_db
+from ..limiter import limiter
 
 router = APIRouter(
     prefix="/shopping-list",
@@ -16,7 +17,9 @@ DbDependency = Annotated[Session, Depends(get_db)]
 ManagerOrAdminTenantDependency = Annotated[models.User, Depends(security.require_role(["admin", "project manager"]))]
 
 @router.get("/", response_model=List[schemas.InventoryItemReadWithURLs])
+@limiter.limit("100/minute")
 async def read_shopping_list(
+    request: Request,
     db: DbDependency,
     current_user: ManagerOrAdminTenantDependency
 ):

@@ -1,5 +1,5 @@
 # backend/app/routers/drawings.py
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form, Request
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from typing import Annotated, List, Optional
@@ -10,6 +10,7 @@ from pathlib import Path
 
 from .. import crud, models, schemas, security
 from ..database import get_db
+from ..limiter import limiter
 
 router = APIRouter(
     prefix="/drawings",
@@ -36,11 +37,13 @@ async def get_drawing_from_tenant(drawing_id: int, db: DbDependency, current_use
     db_drawing = crud.get_drawing(db, drawing_id=drawing_id)
     if not db_drawing:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Drawing not found")
-    await get_project_from_tenant(db_drawing.project_id, db, current_user) # Re-use project check for tenant verification
+    await get_project_from_tenant(db_drawing.project_id, db, current_user)
     return db_drawing
 
 @router.post("/upload/{project_id}", response_model=schemas.DrawingRead, status_code=status.HTTP_201_CREATED)
+@limiter.limit("10/minute")
 async def upload_drawing_for_project(
+    request: Request,
     project_id: int,
     db: DbDependency,
     current_user: ProjectContentManagerDependency,
@@ -68,7 +71,9 @@ async def upload_drawing_for_project(
     return db_drawing
 
 @router.get("/project/{project_id}", response_model=List[schemas.DrawingRead])
+@limiter.limit("100/minute")
 async def get_drawings_for_project_endpoint(
+    request: Request,
     project_id: int,
     db: DbDependency,
     current_user: CurrentUserDependency
@@ -77,7 +82,9 @@ async def get_drawings_for_project_endpoint(
     return crud.get_drawings_for_project(db, project_id=project_id)
 
 @router.get("/download/{drawing_id}", response_class=FileResponse)
+@limiter.limit("30/minute")
 async def download_drawing_file(
+    request: Request,
     drawing_id: int,
     db: DbDependency,
     current_user: CurrentUserDependency
@@ -88,7 +95,9 @@ async def download_drawing_file(
     return FileResponse(path=db_drawing.filepath, filename=db_drawing.filename, media_type=db_drawing.content_type)
 
 @router.delete("/{drawing_id}", status_code=status.HTTP_204_NO_CONTENT)
+@limiter.limit("100/minute")
 async def delete_drawing_metadata_endpoint(
+    request: Request,
     drawing_id: int,
     db: DbDependency,
     current_user: ProjectContentManagerDependency

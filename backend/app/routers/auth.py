@@ -1,11 +1,12 @@
 # backend/app/routers/auth.py
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from typing import Annotated
 
 from .. import crud, models, schemas, security
 from ..database import get_db
+from ..limiter import limiter
 
 router = APIRouter(
     prefix="/auth",
@@ -16,7 +17,9 @@ DbDependency = Annotated[Session, Depends(get_db)]
 FormDependency = Annotated[OAuth2PasswordRequestForm, Depends()]
 
 @router.post("/token", response_model=schemas.Token)
+@limiter.limit("20/minute")
 async def login_for_access_token(
+    request: Request,
     form_data: FormDependency,
     db: DbDependency
 ):

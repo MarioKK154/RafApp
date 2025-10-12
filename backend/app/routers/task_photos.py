@@ -1,5 +1,5 @@
 # backend/app/routers/task_photos.py
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form, Request
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from typing import Annotated, List, Optional
@@ -10,6 +10,7 @@ from pathlib import Path
 
 from .. import crud, models, schemas, security
 from ..database import get_db
+from ..limiter import limiter
 
 router = APIRouter(
     prefix="/task_photos",
@@ -48,7 +49,9 @@ async def get_photo_and_verify_tenant(
     return db_photo
 
 @router.post("/upload/{task_id}", response_model=schemas.TaskPhotoRead, status_code=status.HTTP_201_CREATED)
+@limiter.limit("10/minute")
 async def upload_photo_for_task(
+    request: Request,
     task_id: int,
     db: DbDependency,
     current_user: TaskContentContributorDependency,
@@ -76,7 +79,9 @@ async def upload_photo_for_task(
     return db_photo
 
 @router.get("/task/{task_id}", response_model=List[schemas.TaskPhotoRead])
+@limiter.limit("100/minute")
 async def get_photos_for_task_endpoint(
+    request: Request,
     task_id: int,
     db: DbDependency,
     current_user: CurrentUserDependency
@@ -85,7 +90,9 @@ async def get_photos_for_task_endpoint(
     return crud.get_photos_for_task(db, task_id=task_id)
 
 @router.get("/download/{photo_id}", response_class=FileResponse)
+@limiter.limit("30/minute")
 async def download_task_photo_file(
+    request: Request,
     photo_id: int,
     db: DbDependency,
     current_user: CurrentUserDependency
@@ -96,7 +103,9 @@ async def download_task_photo_file(
     return FileResponse(path=db_photo.filepath, filename=db_photo.filename, media_type=db_photo.content_type)
 
 @router.delete("/{photo_id}", status_code=status.HTTP_204_NO_CONTENT)
+@limiter.limit("100/minute")
 async def delete_task_photo_metadata_endpoint(
+    request: Request,
     photo_id: int,
     db: DbDependency,
     current_user: TaskContentContributorDependency

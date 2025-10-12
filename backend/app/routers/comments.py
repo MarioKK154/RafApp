@@ -1,10 +1,11 @@
 # backend/app/routers/comments.py
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
 from typing import Annotated
 
 from .. import crud, models, schemas, security
 from ..database import get_db
+from ..limiter import limiter
 
 router = APIRouter(
     prefix="/comments",
@@ -32,7 +33,9 @@ async def get_comment_and_verify_tenant(
 
 
 @router.delete("/{comment_id}", status_code=status.HTTP_204_NO_CONTENT)
+@limiter.limit("100/minute")
 async def delete_task_comment(
+    request: Request,
     comment_id: int,
     db: DbDependency,
     current_user: CurrentUserDependency

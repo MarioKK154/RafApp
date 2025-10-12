@@ -1,10 +1,11 @@
 # backend/app/routers/projects.py
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Request
 from sqlalchemy.orm import Session
 from typing import Annotated, List, Optional, Literal
 
 from .. import crud, models, schemas, security
 from ..database import get_db
+from ..limiter import limiter
 
 router = APIRouter(
     prefix="/projects",
@@ -20,9 +21,11 @@ AllowedProjectSortFields = Literal["name", "status", "start_date", "end_date", "
 AllowedSortDirections = Literal["asc", "desc"]
 
 @router.post("/", response_model=schemas.ProjectRead, status_code=status.HTTP_201_CREATED)
+@limiter.limit("100/minute")
 async def create_new_project(
-    project_data: schemas.ProjectCreate,
-    db: DbDependency,
+    request: Request, 
+    project_data: schemas.ProjectCreate, 
+    db: DbDependency, 
     current_user: ManagerOrAdminOfTenantDependency
 ):
     if project_data.project_manager_id:
@@ -36,7 +39,9 @@ async def create_new_project(
     return new_project
 
 @router.get("/", response_model=List[schemas.ProjectRead])
+@limiter.limit("100/minute")
 async def read_all_projects_for_tenant(
+    request: Request,
     db: DbDependency,
     current_user: CurrentUserDependency,
     status_filter: Optional[str] = Query(None, alias="status"),
@@ -50,9 +55,11 @@ async def read_all_projects_for_tenant(
     return projects
 
 @router.get("/{project_id}", response_model=schemas.ProjectRead)
+@limiter.limit("100/minute")
 async def read_single_project_for_tenant(
-    project_id: int,
-    db: DbDependency,
+    request: Request, 
+    project_id: int, 
+    db: DbDependency, 
     current_user: CurrentUserDependency
 ):
     effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
@@ -62,29 +69,36 @@ async def read_single_project_for_tenant(
     return db_project
 
 @router.put("/{project_id}", response_model=schemas.ProjectRead)
+@limiter.limit("100/minute")
 async def update_existing_project_for_tenant(
+    request: Request,
     project_id: int,
     project_update_data: schemas.ProjectUpdate,
     db: DbDependency,
     current_user: ManagerOrAdminOfTenantDependency
 ):
     effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
+    # First, verify the project exists in the tenant
+    project_to_update = crud.get_project(db, project_id=project_id, tenant_id=effective_tenant_id)
+    if not project_to_update:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found.")
+
     if project_update_data.project_manager_id is not None:
         pm_user = crud.get_user(db, user_id=project_update_data.project_manager_id)
-        if not pm_user or pm_user.tenant_id != effective_tenant_id:
+        if not pm_user or pm_user.tenant_id != project_to_update.tenant_id:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Selected Project Manager is invalid or not in the project's tenant.")
         if pm_user.role != 'project manager':
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"User ID {pm_user.id} is not a Project Manager.")
     
-    updated_project = crud.update_project(db=db, project_id=project_id, project_update=project_update_data, tenant_id=effective_tenant_id)
-    if updated_project is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found.")
+    updated_project = crud.update_project(db=db, project_id=project_id, project_update=project_update_data, tenant_id=project_to_update.tenant_id)
     return updated_project
 
 @router.delete("/{project_id}", status_code=status.HTTP_204_NO_CONTENT)
+@limiter.limit("100/minute")
 async def delete_existing_project_for_tenant(
-    project_id: int,
-    db: DbDependency,
+    request: Request, 
+    project_id: int, 
+    db: DbDependency, 
     current_user: ManagerOrAdminOfTenantDependency
 ):
     effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
@@ -94,9 +108,11 @@ async def delete_existing_project_for_tenant(
     return None
 
 @router.get("/{project_id}/members", response_model=List[schemas.UserReadBasic])
+@limiter.limit("100/minute")
 async def get_project_member_list_for_tenant(
-    project_id: int,
-    db: DbDependency,
+    request: Request, 
+    project_id: int, 
+    db: DbDependency, 
     current_user: CurrentUserDependency
 ):
     effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
@@ -106,7 +122,9 @@ async def get_project_member_list_for_tenant(
     return crud.get_project_members(db=db, project_id=project_id, tenant_id=effective_tenant_id)
 
 @router.post("/{project_id}/members", status_code=status.HTTP_204_NO_CONTENT)
+@limiter.limit("100/minute")
 async def assign_member_to_project_for_tenant(
+    request: Request,
     project_id: int,
     assignment: schemas.ProjectAssignMember,
     db: DbDependency,
@@ -128,7 +146,9 @@ async def assign_member_to_project_for_tenant(
     return None
 
 @router.delete("/{project_id}/members/{user_id_to_remove}", status_code=status.HTTP_204_NO_CONTENT)
+@limiter.limit("100/minute")
 async def remove_member_from_project_for_tenant(
+    request: Request,
     project_id: int,
     user_id_to_remove: int,
     db: DbDependency,
