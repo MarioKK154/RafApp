@@ -1023,3 +1023,47 @@ def get_project_cost_summary(db: Session, project: models.Project) -> Dict[str, 
     }
 
 # --- END NEW ---
+
+# --- NEW: Dashboard CRUD Operation ---
+
+def get_dashboard_data(db: Session, user: models.User) -> Dict[str, Any]:
+    """Gathers all necessary data for a user's dashboard."""
+    
+    # 1. Get user's open tasks (not Done or Commissioned)
+    my_open_tasks = db.query(models.Task).filter(
+        models.Task.assignee_id == user.id,
+        models.Task.status.notin_(['Done', 'Commissioned', 'Cancelled'])
+    ).order_by(models.Task.due_date.asc().nulls_last()).all()
+
+    # 2. Get user's checked-out tools
+    my_checked_out_tools = db.query(models.Tool).filter(
+        models.Tool.current_user_id == user.id,
+        models.Tool.status == models.ToolStatus.In_Use
+    ).all()
+
+    # 3. Get user's checked-out car
+    my_checked_out_car = db.query(models.Car).filter(
+        models.Car.current_user_id == user.id,
+        models.Car.status == models.CarStatus.Checked_Out
+    ).first()
+
+    # 4. Get managed projects for Admins and PMs
+    managed_projects = None
+    if user.is_superuser or user.role == 'admin':
+        # Superusers and Admins see all projects in their tenant (or all if superuser)
+        tenant_id = None if user.is_superuser else user.tenant_id
+        managed_projects = get_projects(db, tenant_id=tenant_id, limit=100) # Re-use existing function
+    elif user.role == 'project manager':
+        # Project Managers see projects they are assigned to
+        managed_projects = db.query(models.Project).filter(
+            models.Project.project_manager_id == user.id
+        ).all()
+
+    return {
+        "my_open_tasks": my_open_tasks,
+        "my_checked_out_tools": my_checked_out_tools,
+        "my_checked_out_car": my_checked_out_car,
+        "managed_projects": managed_projects,
+    }
+
+# --- END NEW ---

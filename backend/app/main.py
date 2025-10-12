@@ -1,7 +1,7 @@
 # backend/app/main.py
-# Reverted to a stable state, only handles limiter exceptions.
+# Final version with the 'dashboard' router and corrected root endpoint.
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
@@ -12,11 +12,13 @@ from .limiter import limiter
 from . import models
 from .database import engine
 
+# Import all your routers
 from .routers import (
     auth, users, projects, tasks, tenants,
     inventory, tools, cars, shops, boq, drawings, 
     timelogs, admin_tools, comments, task_photos, 
-    shopping_list, reports
+    shopping_list, reports,
+    dashboard 
 )
 
 models.Base.metadata.create_all(bind=engine)
@@ -27,15 +29,11 @@ app = FastAPI(
     version="0.1.0"
 )
 
-# This connects the limiter to the app and tells it how to respond when a limit is exceeded.
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # CORS Middleware
-origins = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-]
+origins = ["http://localhost:5173", "http://127.0.0.1:5173"]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -49,6 +47,7 @@ app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 
 # Include all routers
 app.include_router(auth.router)
+app.include_router(dashboard.router)
 app.include_router(tenants.router)
 app.include_router(users.router)
 app.include_router(projects.router)
@@ -66,6 +65,10 @@ app.include_router(task_photos.router)
 app.include_router(shopping_list.router)
 app.include_router(admin_tools.router)
 
+
+# --- THIS IS THE FIX ---
+# The decorator should be attached to 'app', not 'router'.
 @app.get("/")
-def read_root():
+@limiter.limit("5/minute")
+def read_root(request: Request):
     return {"message": "Welcome to the Raf-App API"}

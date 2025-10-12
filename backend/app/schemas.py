@@ -562,3 +562,18 @@ class ReportProjectSummary(BaseModel):
     calculated_cost: float
     variance: Optional[float] = None
     detailed_logs: List[ReportTimeLogEntry]
+
+class ToolReadBasic(ToolBase):
+    id: int
+    model_config = ConfigDict(from_attributes=True)
+
+class CarReadBasic(CarBase):
+    id: int
+    model_config = ConfigDict(from_attributes=True)
+
+class DashboardData(BaseModel):
+    """The main response model for the user dashboard."""
+    my_open_tasks: List[TaskRead]
+    my_checked_out_tools: List[ToolReadBasic]
+    my_checked_out_car: Optional[CarReadBasic] = None
+    managed_projects: Optional[List[ProjectRead]] = None # For Admins/PMs
