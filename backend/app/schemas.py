@@ -6,7 +6,7 @@ from os import environ
 from pydantic import computed_field
 
 from .models import (UserRole, ProjectStatus, TaskStatus, ToolStatus, 
-                     ToolLogAction, CarStatus, CarLogAction, TyreType)
+                     ToolLogAction, CarStatus, CarLogAction, TyreType, OfferStatus, OfferLineItemType)
 
 STATIC_BASE_URL = environ.get("STATIC_BASE_URL", "http://localhost:8000")
 
@@ -595,3 +595,76 @@ class ShoppingListItem(BaseModel):
     quantity_in_stock: float
     quantity_to_order: float
     unit: Optional[str] = None
+
+# --- NEW: Offer Schemas ---
+
+class OfferLineItemBase(BaseModel):
+    item_type: OfferLineItemType
+    description: str
+    quantity: float = Field(..., gt=0)
+    unit_price: float = Field(..., ge=0)
+    inventory_item_id: Optional[int] = None # Required if item_type is Material
+
+class OfferLineItemCreate(OfferLineItemBase):
+    # Add validation later if needed (e.g., ensure inventory_item_id exists if Material)
+    pass
+
+class OfferLineItemUpdate(BaseModel):
+    description: Optional[str] = None
+    quantity: Optional[float] = Field(None, gt=0)
+    unit_price: Optional[float] = Field(None, ge=0)
+    inventory_item_id: Optional[int] = None # Allow changing material link
+
+class OfferLineItemRead(OfferLineItemBase):
+    id: int
+    total_price: float
+    # Optionally include basic inventory item info if it's a material
+    inventory_item: Optional[InventoryItemRead] = None # Use existing basic read schema
+    model_config = ConfigDict(from_attributes=True)
+
+class OfferBase(BaseModel):
+    title: Optional[str] = "Work Offer"
+    status: Optional[OfferStatus] = OfferStatus.Draft
+    client_name: Optional[str] = None
+    client_address: Optional[str] = None
+    client_email: Optional[EmailStr] = None
+    expiry_date: Optional[date] = None
+
+class OfferCreate(OfferBase):
+    project_id: int
+
+class OfferUpdate(OfferBase):
+    title: Optional[str] = None
+    status: Optional[OfferStatus] = None
+    # Add other fields as needed
+
+class OfferRead(OfferBase):
+    id: int
+    offer_number: str
+    project_id: int
+    tenant_id: int
+    created_by_user_id: int
+    issue_date: datetime
+    total_amount: Optional[float] = None
+    line_items: List[OfferLineItemRead] = []
+    creator: Optional[UserReadBasic] = None
+    model_config = ConfigDict(from_attributes=True)
+
+# --- NEW: User License Schemas ---
+
+class UserLicenseBase(BaseModel):
+    description: str = Field(..., min_length=1)
+    issue_date: Optional[date] = None
+    expiry_date: Optional[date] = None
+
+class UserLicenseCreate(UserLicenseBase):
+    # File path and filename will be set by the server
+    pass
+
+class UserLicenseRead(UserLicenseBase):
+    id: int
+    user_id: int
+    filename: str
+    # We won't expose the direct file_path, use a download link instead
+
+    model_config = ConfigDict(from_attributes=True)

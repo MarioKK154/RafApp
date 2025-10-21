@@ -1079,4 +1079,169 @@ def get_dashboard_data(db: Session, user: models.User) -> Dict[str, Any]:
         "managed_projects": managed_projects,
     }
 
+# --- NEW: Offer CRUD Operations ---
+
+def get_next_offer_number(db: Session, tenant_id: int) -> str:
+    """Generates the next sequential offer number for a tenant (e.g., OFFER-2025-001)."""
+    current_year = datetime.now().year
+    prefix = f"OFFER-{current_year}-"
+    
+    # Find the highest existing number for the current year and tenant
+    last_offer = db.query(models.Offer).filter(
+        models.Offer.tenant_id == tenant_id,
+        models.Offer.offer_number.like(f"{prefix}%")
+    ).order_by(models.Offer.offer_number.desc()).first()
+
+    next_num = 1
+    if last_offer and last_offer.offer_number.startswith(prefix):
+        try:
+            last_num_str = last_offer.offer_number.split('-')[-1]
+            next_num = int(last_num_str) + 1
+        except (IndexError, ValueError):
+            pass # Keep next_num as 1 if parsing fails
+
+    return f"{prefix}{next_num:03d}" # Pad with zeros (e.g., 001, 002)
+
+def calculate_offer_total(db: Session, offer_id: int) -> float:
+    """Calculates the sum of all line item total prices for an offer."""
+    total = db.query(func.sum(models.OfferLineItem.total_price)).filter(
+        models.OfferLineItem.offer_id == offer_id
+    ).scalar()
+    return total or 0.0
+
+def create_offer(db: Session, offer_data: schemas.OfferCreate, user: models.User) -> models.Offer:
+    """Creates a new offer for a project."""
+    offer_number = get_next_offer_number(db, tenant_id=user.tenant_id)
+    db_offer = models.Offer(
+        **offer_data.model_dump(exclude={"project_id"}), # Exclude project_id as it's a direct arg
+        offer_number=offer_number,
+        project_id=offer_data.project_id,
+        tenant_id=user.tenant_id,
+        created_by_user_id=user.id,
+        total_amount=0.0 # Initial total
+    )
+    db.add(db_offer)
+    db.commit()
+    db.refresh(db_offer)
+    return db_offer
+
+def get_offer(db: Session, offer_id: int, tenant_id: Optional[int]) -> Optional[models.Offer]:
+    """Gets a single offer by ID, including line items and creator info."""
+    query = db.query(models.Offer).options(
+        joinedload(models.Offer.line_items).joinedload(models.OfferLineItem.inventory_item),
+        joinedload(models.Offer.creator)
+    ).filter(models.Offer.id == offer_id)
+    if tenant_id is not None:
+        query = query.filter(models.Offer.tenant_id == tenant_id)
+    return query.first()
+
+def get_offers_for_project(db: Session, project_id: int) -> List[models.Offer]:
+    """Gets all offers associated with a specific project."""
+    return db.query(models.Offer).filter(models.Offer.project_id == project_id).order_by(models.Offer.issue_date.desc()).all()
+
+def update_offer(db: Session, db_offer: models.Offer, offer_update: schemas.OfferUpdate) -> models.Offer:
+    """Updates the details of an offer (excluding line items)."""
+    update_data = offer_update.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(db_offer, key, value)
+    db.add(db_offer)
+    db.commit()
+    db.refresh(db_offer)
+    return db_offer
+
+def delete_offer(db: Session, db_offer: models.Offer):
+    """Deletes an offer and its associated line items."""
+    db.delete(db_offer)
+    db.commit()
+
+# --- Offer Line Item CRUD ---
+
+def add_line_item_to_offer(db: Session, offer: models.Offer, item_data: schemas.OfferLineItemCreate) -> models.OfferLineItem:
+    """Adds a new line item to an offer and updates the offer total."""
+    total_price = item_data.quantity * item_data.unit_price
+    db_item = models.OfferLineItem(
+        **item_data.model_dump(),
+        offer_id=offer.id,
+        total_price=total_price
+    )
+    db.add(db_item)
+    db.flush() # Assign an ID to db_item
+    
+    # Update offer total
+    offer.total_amount = calculate_offer_total(db, offer_id=offer.id)
+    db.add(offer)
+    
+    db.commit()
+    db.refresh(db_item)
+    return db_item
+
+def get_offer_line_item(db: Session, line_item_id: int) -> Optional[models.OfferLineItem]:
+    """Gets a single offer line item by its ID."""
+    return db.query(models.OfferLineItem).filter(models.OfferLineItem.id == line_item_id).first()
+
+def update_offer_line_item(db: Session, db_item: models.OfferLineItem, item_update: schemas.OfferLineItemUpdate) -> models.OfferLineItem:
+    """Updates a line item and recalculates offer total."""
+    update_data = item_update.model_dump(exclude_unset=True)
+    needs_recalculation = False
+    
+    for key, value in update_data.items():
+        setattr(db_item, key, value)
+        if key in ['quantity', 'unit_price']:
+            needs_recalculation = True
+
+    if needs_recalculation:
+        db_item.total_price = db_item.quantity * db_item.unit_price
+        
+    db.add(db_item)
+    db.flush() # Apply changes before recalculating total
+    
+    # Update offer total
+    offer = db_item.offer # Assumes relationship is loaded or accessible
+    offer.total_amount = calculate_offer_total(db, offer_id=offer.id)
+    db.add(offer)
+    
+    db.commit()
+    db.refresh(db_item)
+    return db_item
+
+def remove_line_item_from_offer(db: Session, db_item: models.OfferLineItem):
+    """Removes a line item from an offer and updates the offer total."""
+    offer = db_item.offer
+    db.delete(db_item)
+    db.flush() # Apply deletion before recalculating
+    
+    # Update offer total
+    offer.total_amount = calculate_offer_total(db, offer_id=offer.id)
+    db.add(offer)
+    
+    db.commit()
+
+# --- NEW: User License CRUD Operations ---
+
+def create_user_license(db: Session, license_data: schemas.UserLicenseCreate, user_id: int, file_path: str, filename: str) -> models.UserLicense:
+    """Creates a new license record for a user."""
+    db_license = models.UserLicense(
+        **license_data.model_dump(),
+        user_id=user_id,
+        file_path=file_path,
+        filename=filename
+    )
+    db.add(db_license)
+    db.commit()
+    db.refresh(db_license)
+    return db_license
+
+def get_licenses_for_user(db: Session, user_id: int) -> List[models.UserLicense]:
+    """Gets all license records for a specific user."""
+    return db.query(models.UserLicense).filter(models.UserLicense.user_id == user_id).order_by(models.UserLicense.issue_date.desc()).all()
+
+def get_user_license(db: Session, license_id: int) -> Optional[models.UserLicense]:
+    """Gets a single license record by its ID."""
+    return db.query(models.UserLicense).filter(models.UserLicense.id == license_id).first()
+
+def delete_user_license(db: Session, db_license: models.UserLicense):
+    """Deletes a license record."""
+    db.delete(db_license)
+    db.commit()
+
 # --- END NEW ---

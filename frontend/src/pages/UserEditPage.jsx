@@ -5,6 +5,7 @@ import axiosInstance from '../api/axiosInstance';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
 import LoadingSpinner from '../components/LoadingSpinner';
+import UserLicenses from '../components/UserLicenses';
 
 const ROLES_LIST = ['admin', 'project manager', 'team leader', 'electrician'];
 
@@ -320,6 +321,7 @@ function UserEditPage() {
                             )}
                         </div>
                     )}
+                {userId && <UserLicenses userId={userId} />}
                 </div>
             </div>
         </div>

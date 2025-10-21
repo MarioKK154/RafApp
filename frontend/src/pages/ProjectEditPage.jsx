@@ -7,8 +7,10 @@ import ProjectDrawings from '../components/ProjectDrawings';
 import ProjectMembers from '../components/ProjectMembers';
 import ProjectBoQ from '../components/ProjectBoQ';
 import ProjectInventory from '../components/ProjectInventory'; // --- NEW IMPORT ---
+import ProjectOffers from '../components/ProjectOffers';
 import { toast } from 'react-toastify';
 import LoadingSpinner from '../components/LoadingSpinner';
+
 
 const formatDateForInput = (dateString) => {
     if (!dateString) return '';
@@ -159,6 +161,7 @@ function ProjectEditPage() {
             {projectId && (
                 <>
                     {/* --- NEW COMPONENT ADDED HERE --- */}
+                    <ProjectOffers projectId={projectId} />
                     <ProjectInventory projectId={projectId} />
                     <ProjectBoQ projectId={projectId} />
                     <ProjectDrawings projectId={projectId} />

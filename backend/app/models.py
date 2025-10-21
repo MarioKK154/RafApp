@@ -7,7 +7,7 @@ from sqlalchemy.orm import relationship, Mapped, mapped_column
 from sqlalchemy.sql import func
 import enum
 from typing import Optional, List
-from datetime import datetime # <--- ADDED THE MISSING IMPORT
+from datetime import datetime, date # <--- ADDED THE MISSING IMPORT
 
 from .database import Base
 
@@ -64,6 +64,18 @@ class TyreType(enum.Enum):
     Summer = "Summer"
     Winter = "Winter"
 
+# --- NEW: Offer Status Enum ---
+class OfferStatus(enum.Enum):
+    Draft = "Draft"
+    Sent = "Sent"
+    Accepted = "Accepted"
+    Rejected = "Rejected"
+
+# --- NEW: Offer Line Item Type Enum ---
+class OfferLineItemType(enum.Enum):
+    Material = "Material"
+    Labor = "Labor"
+
 class Tenant(Base):
     __tablename__ = "tenants"
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -78,6 +90,7 @@ class Tenant(Base):
     tools: Mapped[list["Tool"]] = relationship(back_populates="tenant")
     cars: Mapped[list["Car"]] = relationship(back_populates="tenant")
     shops: Mapped[list["Shop"]] = relationship(back_populates="tenant")
+    offers: Mapped[list["Offer"]] = relationship(back_populates="tenant")
 
 project_members_table = Table(
     "project_members", Base.metadata,
@@ -123,6 +136,20 @@ class User(Base):
     tool_logs: Mapped[list["ToolLog"]] = relationship(back_populates="user")
     car_checked_out: Mapped[Optional["Car"]] = relationship(back_populates="current_user")
     car_logs: Mapped[list["CarLog"]] = relationship(back_populates="user")
+    licenses: Mapped[list["UserLicense"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+    
+# --- NEW: UserLicense Model ---
+class UserLicense(Base):
+    __tablename__ = "user_licenses"
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    description: Mapped[str] = mapped_column(String, nullable=False)
+    issue_date: Mapped[Optional[date]] = mapped_column(Date)
+    expiry_date: Mapped[Optional[date]] = mapped_column(Date)
+    file_path: Mapped[str] = mapped_column(String, nullable=False) # Relative path to the file in static folder
+    filename: Mapped[str] = mapped_column(String, nullable=False) # Original filename for download
+
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    user: Mapped["User"] = relationship(back_populates="licenses")
     
 class Project(Base):
     __tablename__ = "projects"
@@ -148,6 +175,7 @@ class Project(Base):
     members = relationship("User", secondary=project_members_table, back_populates="assigned_projects")
     boq: Mapped[Optional["BoQ"]] = relationship(back_populates="project", cascade="all, delete-orphan")
     project_inventory: Mapped[List["ProjectInventoryItem"]] = relationship(back_populates="project", cascade="all, delete-orphan")
+    offers: Mapped[list["Offer"]] = relationship(back_populates="project", cascade="all, delete-orphan")
 
 class Task(Base):
     __tablename__ = "tasks"
@@ -199,6 +227,46 @@ class InventoryItem(Base):
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     project_allocations: Mapped[List["ProjectInventoryItem"]] = relationship(back_populates="inventory_item")
     boq_items: Mapped[List["BoQItem"]] = relationship(back_populates="inventory_item")
+    offer_line_items: Mapped[list["OfferLineItem"]] = relationship(back_populates="inventory_item")
+
+# --- NEW: Offer Model ---
+class Offer(Base):
+    __tablename__ = "offers"
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    offer_number: Mapped[str] = mapped_column(String, unique=True, index=True) # E.g., OFFER-2025-001
+    title: Mapped[str] = mapped_column(String, default="Work Offer")
+    status: Mapped[OfferStatus] = mapped_column(SQLAlchemyEnum(OfferStatus), default=OfferStatus.Draft)
+    client_name: Mapped[Optional[str]] = mapped_column(String)
+    client_address: Mapped[Optional[str]] = mapped_column(String)
+    client_email: Mapped[Optional[str]] = mapped_column(String)
+    issue_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    expiry_date: Mapped[Optional[Date]] = mapped_column(Date)
+    total_amount: Mapped[Optional[float]] = mapped_column(Float) # Calculated field
+
+    project_id: Mapped[int] = mapped_column(ForeignKey("projects.id"), nullable=False)
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id"), nullable=False)
+    created_by_user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+
+    project: Mapped["Project"] = relationship(back_populates="offers")
+    tenant: Mapped["Tenant"] = relationship(back_populates="offers")
+    creator: Mapped["User"] = relationship()
+    line_items: Mapped[list["OfferLineItem"]] = relationship(back_populates="offer", cascade="all, delete-orphan")
+
+# --- NEW: OfferLineItem Model ---
+class OfferLineItem(Base):
+    __tablename__ = "offer_line_items"
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    item_type: Mapped[OfferLineItemType] = mapped_column(SQLAlchemyEnum(OfferLineItemType), nullable=False)
+    description: Mapped[str] = mapped_column(Text, nullable=False) # E.g., "Install socket" or "2.5mm Cable"
+    quantity: Mapped[float] = mapped_column(Float, nullable=False)
+    unit_price: Mapped[float] = mapped_column(Float, nullable=False) # Price per unit/hour
+    total_price: Mapped[float] = mapped_column(Float, nullable=False) # Calculated: quantity * unit_price
+
+    offer_id: Mapped[int] = mapped_column(ForeignKey("offers.id"), nullable=False)
+    inventory_item_id: Mapped[Optional[int]] = mapped_column(ForeignKey("inventory_items.id")) # Null if Labor
+
+    offer: Mapped["Offer"] = relationship(back_populates="line_items")
+    inventory_item: Mapped[Optional["InventoryItem"]] = relationship(back_populates="offer_line_items") # Null if Labor
 
 class ProjectInventoryItem(Base):
     __tablename__ = "project_inventory_items"

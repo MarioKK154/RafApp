@@ -22,7 +22,6 @@ import GlobalInventoryPage from './pages/GlobalInventoryPage';
 import InventoryCatalogPage from './pages/InventoryCatalogPage';
 import InventoryCatalogCreatePage from './pages/InventoryCatalogCreatePage';
 import InventoryCatalogEditPage from './pages/InventoryCatalogEditPage';
-
 import ToolInventoryPage from './pages/ToolInventoryPage';
 import ToolCreatePage from './pages/ToolCreatePage';
 import ToolEditPage from './pages/ToolEditPage';
@@ -46,6 +45,7 @@ import AdminToolsPage from './pages/AdminToolsPage';
 import ShoppingListPage from './pages/ShoppingListPage';
 import GanttChartPage from './pages/GanttChartPage';
 import ReportsPage from './pages/ReportsPage';
+import OfferPage from './pages/OfferPage';
 import AccountSettingsPage from './pages/AccountSettingsPage';
 import NotFoundPage from './pages/NotFoundPage';
 
@@ -110,6 +110,7 @@ function App() {
                         <Route path="/shopping-list" element={<ProtectedRoute><ShoppingListPage /></ProtectedRoute>} />
                         <Route path="/gantt" element={<ProtectedRoute><GanttChartPage /></ProtectedRoute>} />
                         <Route path="/reports" element={<ProtectedRoute><ReportsPage /></ProtectedRoute>} />
+                        <Route path="/offers/:offerId" element={<ProtectedRoute><OfferPage /></ProtectedRoute>} />
                         <Route path="/account-settings" element={<ProtectedRoute><AccountSettingsPage /></ProtectedRoute>} />
                         
                         <Route path="*" element={<NotFoundPage />} />

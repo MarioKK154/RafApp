@@ -18,7 +18,7 @@ from .routers import (
     inventory, tools, cars, shops, boq, drawings, 
     timelogs, admin_tools, comments, task_photos, 
     shopping_list, reports,
-    dashboard, project_inventory
+    dashboard, project_inventory, offers
 )
 
 models.Base.metadata.create_all(bind=engine)
@@ -58,6 +58,7 @@ app.include_router(tools.router)
 app.include_router(cars.router)
 app.include_router(shops.router)
 app.include_router(boq.router)
+app.include_router(offers.router)
 app.include_router(reports.router)
 app.include_router(drawings.router)
 app.include_router(timelogs.router)
