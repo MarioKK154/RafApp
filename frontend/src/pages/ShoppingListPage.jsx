@@ -1,151 +1,134 @@
 // frontend/src/pages/ShoppingListPage.jsx
-import React, { useState, useEffect, useMemo } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import axiosInstance from '../api/axiosInstance';
+import { toast } from 'react-toastify';
 import LoadingSpinner from '../components/LoadingSpinner';
 
 function ShoppingListPage() {
-  const [items, setItems] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState('');
-  const { user, isAuthenticated, isLoading: authIsLoading } = useAuth();
-  const navigate = useNavigate();
+    const [shoppingList, setShoppingList] = useState([]);
+    const [projects, setProjects] = useState([]);
+    const [selectedProjectId, setSelectedProjectId] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+    const [isProjectsLoading, setIsProjectsLoading] = useState(true);
+    const [error, setError] = useState('');
+    const { user } = useAuth();
 
-  // Determine if user can view the shopping list (Admin/PM)
-  const canViewShoppingList = useMemo(() => {
-      return user && ['admin', 'project manager'].includes(user.role);
-  }, [user]); // Memoize the role check
+    const canViewPage = user && ['admin', 'project manager'].includes(user.role);
+    const isAdmin = user && user.role === 'admin';
 
+    // Fetch projects for the dropdown
+    useEffect(() => {
+        if (canViewPage) {
+            axiosInstance.get('/projects/')
+                .then(response => {
+                    // Admins see all projects, PMs only see theirs
+                    const relevantProjects = isAdmin
+                        ? response.data
+                        : response.data.filter(p => p.project_manager_id === user.id);
+                    setProjects(relevantProjects);
+                    if (relevantProjects.length === 1) {
+                         // If only one project, auto-select it
+                         setSelectedProjectId(relevantProjects[0].id.toString());
+                    }
+                })
+                .catch(() => toast.error("Could not load projects for selection."))
+                .finally(() => setIsProjectsLoading(false));
+        } else {
+            setIsProjectsLoading(false);
+        }
+    }, [canViewPage, isAdmin, user?.id]);
 
-  // Fetch shopping list items
-  useEffect(() => {
-    // Only fetch if auth check is done and user has permission
-    if (!authIsLoading && isAuthenticated && canViewShoppingList) {
-      setIsLoading(true);
-      setError('');
-      axiosInstance.get('/shopping-list/')
-        .then(response => {
-          setItems(response.data);
-        })
-        .catch(err => {
-          console.error("Error fetching shopping list:", err);
-          setError('Failed to load shopping list.');
-        })
-        .finally(() => {
-          setIsLoading(false);
-        });
-    } else if (!authIsLoading && !isAuthenticated) {
-      // Redirect to login if not authenticated
-      navigate('/login', { replace: true });
-    } else if (!authIsLoading && !canViewShoppingList) {
-      // If logged in but not authorized, set error
-      setIsLoading(false);
-      setError('You do not have permission to view the shopping list.');
+    // Fetch shopping list when a project is selected
+    const fetchShoppingList = useCallback((projectId) => {
+        if (!projectId) {
+            setShoppingList([]);
+            setError('');
+            return;
+        }
+        setIsLoading(true);
+        setError('');
+        axiosInstance.get(`/shopping-list/project/${projectId}`)
+            .then(response => setShoppingList(response.data))
+            .catch(() => {
+                setError(`Failed to load shopping list for project ID ${projectId}.`);
+                toast.error(`Failed to load shopping list.`);
+            })
+            .finally(() => setIsLoading(false));
+    }, []);
+
+    // Effect to trigger fetch when selectedProjectId changes
+    useEffect(() => {
+        fetchShoppingList(selectedProjectId);
+    }, [selectedProjectId, fetchShoppingList]);
+
+    if (isProjectsLoading) {
+        return <LoadingSpinner text="Loading projects..." />;
     }
-  }, [isAuthenticated, authIsLoading, canViewShoppingList, navigate]); // Add navigate to dependency array
 
-  // --- Render Logic ---
+    if (!canViewPage) {
+        return <div className="text-center p-8 text-red-500">You do not have permission to view shopping lists.</div>;
+    }
 
-  if (authIsLoading || isLoading) {
-    return ( <div className="min-h-screen flex justify-center items-center"><LoadingSpinner text="Loading shopping list..." size="lg" /></div> );
-  }
+    return (
+        <div className="container mx-auto p-4 md:p-6">
+            <h1 className="text-2xl md:text-3xl font-bold mb-6">Project Shopping List</h1>
 
-  // Handle permission error after loading
-  if (!canViewShoppingList) {
-     return (
-        <div className="min-h-screen flex flex-col justify-center items-center text-center p-6">
-            <p className="text-red-600 mb-4">{error || 'Access Denied.'}</p>
-            <Link
-                to="/"
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition duration-200"
-             >
-                 Go Home
-             </Link>
-        </div>
-     );
-  }
+            <div className="max-w-md mb-8">
+                <label htmlFor="project-select-shopping" className="block text-sm font-medium mb-1">
+                    Select Project
+                </label>
+                <select
+                    id="project-select-shopping"
+                    value={selectedProjectId}
+                    onChange={(e) => setSelectedProjectId(e.target.value)}
+                    className="block w-full rounded-md shadow-sm"
+                    disabled={projects.length === 0}
+                >
+                    <option value="">-- Choose a Project --</option>
+                    {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                </select>
+                {projects.length === 0 && !isProjectsLoading && (
+                    <p className="text-sm text-gray-500 mt-1">
+                        {isAdmin ? "No projects found." : "No projects assigned to you."}
+                    </p>
+                )}
+            </div>
 
-  // Handle other fetch errors
-  if (error) {
-     return (
-        <div className="container mx-auto p-6 text-center text-red-500">
-            <p>{error}</p>
-            {/* Optionally add a retry button */}
-        </div>
-     );
-  }
+            {isLoading && <LoadingSpinner text="Generating shopping list..." />}
+            {error && <p className="text-red-500 text-center">{error}</p>}
 
-
-  return (
-    <div className="container mx-auto p-4 md:p-6">
-      <h1 className="text-2xl md:text-3xl font-bold mb-6 text-gray-800 dark:text-white">Shopping List</h1>
-      <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
-        Showing items where Quantity Needed is greater than Quantity In Stock.
-      </p>
-
-      {items.length === 0 ? (
-        <p className="text-gray-600 dark:text-gray-400">The shopping list is currently empty.</p>
-      ) : (
-        <div className="overflow-x-auto relative shadow-md sm:rounded-lg">
-            <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-                <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-                    <tr>
-                        <th scope="col" className="py-3 px-6">Item Name</th>
-                        <th scope="col" className="py-3 px-6">In Stock</th>
-                        <th scope="col" className="py-3 px-6">Needed</th>
-                        <th scope="col" className="py-3 px-6">To Order</th>
-                        <th scope="col" className="py-3 px-6">Unit</th>
-                        <th scope="col" className="py-3 px-6">Location</th>
-                        {/* URLs only shown to Admin/PM (backend already handles this, but good check) */}
-                        {canViewShoppingList && <th scope="col" className="py-3 px-6">Shop URLs</th> }
-                        {/* Maybe link to edit item? */}
-                        <th scope="col" className="py-3 px-6">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {items.map(item => {
-                        const amountToOrder = Math.max(0, (item.quantity_needed || 0) - (item.quantity || 0));
-                        return (
-                            <tr key={item.id} className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
-                                <th scope="row" className="py-4 px-6 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                                    {item.name}
-                                </th>
-                                <td className="py-4 px-6">{item.quantity}</td>
-                                <td className="py-4 px-6">{item.quantity_needed}</td>
-                                <td className="py-4 px-6 font-bold text-orange-600 dark:text-orange-400">
-                                    {amountToOrder.toFixed(2)} {/* Format decimals */}
-                                </td>
-                                <td className="py-4 px-6">{item.unit || '-'}</td>
-                                <td className="py-4 px-6">{item.location || '-'}</td>
-                                {/* Conditionally render URL cell - backend sends URLs only to Admin/PM */}
-                                {canViewShoppingList && (
-                                    <td className="py-4 px-6 text-xs">
-                                        {item.shop_url_1 && <div><a href={item.shop_url_1} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">Link 1</a></div>}
-                                        {item.shop_url_2 && <div><a href={item.shop_url_2} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">Link 2</a></div>}
-                                        {item.shop_url_3 && <div><a href={item.shop_url_3} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">Link 3</a></div>}
-                                        {!item.shop_url_1 && !item.shop_url_2 && !item.shop_url_3 && '-'}
-                                    </td>
-                                )}
-                                {/* Add link to edit the full inventory item */}
-                                 <td className="py-4 px-6">
-                                     <Link
-                                         to={`/inventory/edit/${item.id}`}
-                                         className="font-medium text-blue-600 dark:text-blue-500 hover:underline"
-                                      >
-                                         View/Edit Item
-                                      </Link>
-                                      {/* TODO: Add button/logic for TLs to adjust quantity_needed here? */}
-                                 </td>
+            {!isLoading && selectedProjectId && (
+                <div className="overflow-x-auto relative shadow-md sm:rounded-lg">
+                    <table className="w-full text-sm text-left">
+                        <thead className="text-xs uppercase bg-gray-50 dark:bg-gray-700">
+                            <tr>
+                                <th className="py-3 px-6">Material</th>
+                                <th className="py-3 px-6 text-right">Required (BoQ)</th>
+                                <th className="py-3 px-6 text-right">In Project Stock</th>
+                                <th className="py-3 px-6 text-right font-semibold">Need to Order</th>
+                                <th className="py-3 px-6">Unit</th>
                             </tr>
-                        );
-                    })}
-                </tbody>
-            </table>
+                        </thead>
+                        <tbody>
+                            {shoppingList.map(item => (
+                                <tr key={item.inventory_item.id} className="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
+                                    <td className="py-4 px-6 font-medium">{item.inventory_item.name}</td>
+                                    <td className="py-4 px-6 text-right">{item.quantity_required}</td>
+                                    <td className="py-4 px-6 text-right">{item.quantity_in_stock}</td>
+                                    <td className="py-4 px-6 text-right font-bold text-orange-600 dark:text-orange-400">
+                                        {item.quantity_to_order.toFixed(2)} {/* Ensure consistent decimal display */}
+                                    </td>
+                                    <td className="py-4 px-6">{item.unit || 'pcs'}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                    {shoppingList.length === 0 && <p className="p-4 text-center">Nothing needs to be ordered for this project based on its BoQ and current stock.</p>}
+                </div>
+            )}
         </div>
-      )}
-    </div>
-  );
+    );
 }
 
 export default ShoppingListPage;

@@ -11,6 +11,7 @@ function Navbar() {
 
     const isAdmin = currentUser?.role === 'admin' || currentUser?.is_superuser;
     const isManager = currentUser?.role === 'project manager';
+    const isSuperuser = currentUser?.is_superuser;
 
     const handleLogout = () => {
         logout();
@@ -42,7 +43,10 @@ function Navbar() {
                         <>
                             <Link to="/projects" className="text-sm md:text-base text-gray-700 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-300">Projects</Link>
                             <Link to="/tasks" className="text-sm md:text-base text-gray-700 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-300">Tasks</Link>
-                            <Link to="/inventory" className="text-sm md:text-base text-gray-700 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-300">Inventory</Link>
+                            
+                            {/* --- MODIFIED LINK --- */}
+                            <Link to="/inventory" className="text-sm md:text-base text-gray-700 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-300">Global Inventory</Link>
+                            
                             <Link to="/tools" className="text-sm md:text-base text-gray-700 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-300">Tool Inventory</Link>
                             <Link to="/cars" className="text-sm md:text-base text-gray-700 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-300">Car Fleet</Link>
                             <Link to="/shops" className="text-sm md:text-base text-gray-700 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-300">Shops</Link>
@@ -56,7 +60,7 @@ function Navbar() {
                                     <Link to="/reports" className="text-sm md:text-base text-gray-700 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-300">Reports</Link>
                                 </>
                             )}
-                            {currentUser?.is_superuser && (
+                            {isSuperuser && (
                                 <>
                                     <Link to="/tenants" className="text-sm md:text-base text-green-600 dark:text-green-400 hover:text-green-500 font-semibold">
                                         Manage Tenants

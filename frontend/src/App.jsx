@@ -16,9 +16,13 @@ import ProjectEditPage from './pages/ProjectEditPage';
 import TasksListPage from './pages/TasksListPage';
 import TaskCreatePage from './pages/TaskCreatePage';
 import TaskEditPage from './pages/TaskEditPage';
-import InventoryListPage from './pages/InventoryListPage';
-import InventoryCreatePage from './pages/InventoryCreatePage';
-import InventoryEditPage from './pages/InventoryEditPage';
+
+// --- RENAMED AND NEW INVENTORY PAGES ---
+import GlobalInventoryPage from './pages/GlobalInventoryPage';
+import InventoryCatalogPage from './pages/InventoryCatalogPage';
+import InventoryCatalogCreatePage from './pages/InventoryCatalogCreatePage';
+import InventoryCatalogEditPage from './pages/InventoryCatalogEditPage';
+
 import ToolInventoryPage from './pages/ToolInventoryPage';
 import ToolCreatePage from './pages/ToolCreatePage';
 import ToolEditPage from './pages/ToolEditPage';
@@ -63,54 +67,46 @@ function App() {
                         <Route path="/login" element={<LoginPage />} />
                         <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
                         
-                        {/* Project Routes */}
                         <Route path="/projects" element={<ProtectedRoute><ProjectsPage /></ProtectedRoute>} />
                         <Route path="/projects/new" element={<ProtectedRoute><ProjectCreatePage /></ProtectedRoute>} />
                         <Route path="/projects/edit/:projectId" element={<ProtectedRoute><ProjectEditPage /></ProtectedRoute>} />
                         
-                        {/* Task Routes */}
                         <Route path="/tasks" element={<ProtectedRoute><TasksListPage /></ProtectedRoute>} />
                         <Route path="/tasks/new" element={<ProtectedRoute><TaskCreatePage /></ProtectedRoute>} />
                         <Route path="/tasks/:taskId" element={<ProtectedRoute><TaskEditPage /></ProtectedRoute>} />
                         
-                        {/* Inventory Routes */}
-                        <Route path="/inventory" element={<ProtectedRoute><InventoryListPage /></ProtectedRoute>} />
-                        <Route path="/inventory/new" element={<ProtectedRoute><InventoryCreatePage /></ProtectedRoute>} />
-                        <Route path="/inventory/edit/:itemId" element={<ProtectedRoute><InventoryEditPage /></ProtectedRoute>} />
+                        {/* --- NEW INVENTORY ROUTES --- */}
+                        <Route path="/inventory" element={<ProtectedRoute><GlobalInventoryPage /></ProtectedRoute>} />
+                        <Route path="/inventory/catalog" element={<ProtectedRoute><InventoryCatalogPage /></ProtectedRoute>} />
+                        <Route path="/inventory/catalog/new" element={<ProtectedRoute><InventoryCatalogCreatePage /></ProtectedRoute>} />
+                        <Route path="/inventory/catalog/edit/:itemId" element={<ProtectedRoute><InventoryCatalogEditPage /></ProtectedRoute>} />
 
-                        {/* Tool Inventory Routes */}
                         <Route path="/tools" element={<ProtectedRoute><ToolInventoryPage /></ProtectedRoute>} />
                         <Route path="/tools/new" element={<ProtectedRoute><ToolCreatePage /></ProtectedRoute>} />
                         <Route path="/tools/edit/:toolId" element={<ProtectedRoute><ToolEditPage /></ProtectedRoute>} />
                         <Route path="/tools/:toolId" element={<ProtectedRoute><ToolDetailsPage /></ProtectedRoute>} />
 
-                        {/* Car Fleet Routes */}
                         <Route path="/cars" element={<ProtectedRoute><CarFleetPage /></ProtectedRoute>} />
                         <Route path="/cars/new" element={<ProtectedRoute><CarCreatePage /></ProtectedRoute>} />
                         <Route path="/cars/edit/:carId" element={<ProtectedRoute><CarEditPage /></ProtectedRoute>} />
                         <Route path="/cars/:carId" element={<ProtectedRoute><CarDetailsPage /></ProtectedRoute>} />
 
-                        {/* Shop Routes */}
                         <Route path="/shops" element={<ProtectedRoute><ShopListPage /></ProtectedRoute>} />
                         <Route path="/shops/new" element={<ProtectedRoute><ShopCreatePage /></ProtectedRoute>} />
                         <Route path="/shops/edit/:shopId" element={<ProtectedRoute><ShopEditPage /></ProtectedRoute>} />
                         
-                        {/* Time Log Route */}
                         <Route path="/timelogs" element={<ProtectedRoute><TimeLogsPage /></ProtectedRoute>} />
                         
-                        {/* User Management Routes */}
                         <Route path="/users" element={<ProtectedRoute><UserListPage /></ProtectedRoute>} />
                         <Route path="/users/new" element={<ProtectedRoute><UserCreatePage /></ProtectedRoute>} />
                         <Route path="/users/import" element={<ProtectedRoute><UserBulkImportPage /></ProtectedRoute>} />
                         <Route path="/users/edit/:userId" element={<ProtectedRoute><UserEditPage /></ProtectedRoute>} />
                         
-                        {/* Superuser / Tenant Management Routes */}
                         <Route path="/tenants" element={<ProtectedRoute><TenantListPage /></ProtectedRoute>} />
                         <Route path="/tenants/new" element={<ProtectedRoute><TenantCreatePage /></ProtectedRoute>} />
                         <Route path="/tenants/edit/:tenantId" element={<ProtectedRoute><TenantEditPage /></ProtectedRoute>} />
                         <Route path="/admin/tools" element={<ProtectedRoute><AdminToolsPage /></ProtectedRoute>} />
                         
-                        {/* Other Feature Routes */}
                         <Route path="/shopping-list" element={<ProtectedRoute><ShoppingListPage /></ProtectedRoute>} />
                         <Route path="/gantt" element={<ProtectedRoute><GanttChartPage /></ProtectedRoute>} />
                         <Route path="/reports" element={<ProtectedRoute><ReportsPage /></ProtectedRoute>} />

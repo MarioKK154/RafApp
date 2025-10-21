@@ -272,10 +272,8 @@ class TaskPhotoRead(TaskPhotoBase):
 class InventoryItemBase(BaseModel):
     name: str
     description: Optional[str] = None
-    quantity: Optional[float] = 0.0
-    quantity_needed: Optional[float] = 0.0
+    # quantity, quantity_needed, and location are REMOVED
     unit: Optional[str] = None
-    location: Optional[str] = None
     low_stock_threshold: Optional[float] = None
     shop_url_1: Optional[HttpUrl | str] = None
     shop_url_2: Optional[HttpUrl | str] = None
@@ -287,21 +285,31 @@ class InventoryItemCreate(InventoryItemBase):
 
 class InventoryItemUpdate(InventoryItemBase):
     name: Optional[str] = None
-    quantity: Optional[float] = None
-    quantity_needed: Optional[float] = None
-    shop_url_1: Optional[HttpUrl | str | None] = None
-    shop_url_2: Optional[HttpUrl | str | None] = None
-    shop_url_3: Optional[HttpUrl | str | None] = None
 
 class InventoryItemRead(InventoryItemBase):
     id: int
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
-    shop_url_1: Optional[HttpUrl | str] = Field(None, exclude=True)
-    shop_url_2: Optional[HttpUrl | str] = Field(None, exclude=True)
-    shop_url_3: Optional[HttpUrl | str] = Field(None, exclude=True)
     model_config = ConfigDict(from_attributes=True)
 
+# --- NEW: ProjectInventoryItem Schemas ---
+
+class ProjectInventoryItemBase(BaseModel):
+    quantity: float = Field(..., ge=0)
+    location: Optional[str] = None
+
+class ProjectInventoryItemCreate(ProjectInventoryItemBase):
+    inventory_item_id: int
+    project_id: int
+
+class ProjectInventoryItemUpdate(ProjectInventoryItemBase):
+    pass
+
+class ProjectInventoryItemRead(ProjectInventoryItemBase):
+    id: int
+    project_id: int
+    inventory_item: InventoryItemRead # Nested inventory item details
+
+    model_config = ConfigDict(from_attributes=True)
+    
 class InventoryItemReadWithURLs(InventoryItemRead):
     shop_url_1: Optional[HttpUrl | str] = None
     shop_url_2: Optional[HttpUrl | str] = None
@@ -577,3 +585,13 @@ class DashboardData(BaseModel):
     my_checked_out_tools: List[ToolReadBasic]
     my_checked_out_car: Optional[CarReadBasic] = None
     managed_projects: Optional[List[ProjectRead]] = None # For Admins/PMs
+
+# --- NEW: Shopping List Schemas ---
+
+class ShoppingListItem(BaseModel):
+    """Represents a single item on a project's shopping list."""
+    inventory_item: InventoryItemRead
+    quantity_required: float
+    quantity_in_stock: float
+    quantity_to_order: float
+    unit: Optional[str] = None

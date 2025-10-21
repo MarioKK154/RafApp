@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import ProjectDrawings from '../components/ProjectDrawings';
 import ProjectMembers from '../components/ProjectMembers';
 import ProjectBoQ from '../components/ProjectBoQ';
+import ProjectInventory from '../components/ProjectInventory'; // --- NEW IMPORT ---
 import { toast } from 'react-toastify';
 import LoadingSpinner from '../components/LoadingSpinner';
 
@@ -157,6 +158,8 @@ function ProjectEditPage() {
 
             {projectId && (
                 <>
+                    {/* --- NEW COMPONENT ADDED HERE --- */}
+                    <ProjectInventory projectId={projectId} />
                     <ProjectBoQ projectId={projectId} />
                     <ProjectDrawings projectId={projectId} />
                     <ProjectMembers projectId={projectId} />

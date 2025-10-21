@@ -147,6 +147,7 @@ class Project(Base):
     drawings = relationship("Drawing", back_populates="project", cascade="all, delete-orphan")
     members = relationship("User", secondary=project_members_table, back_populates="assigned_projects")
     boq: Mapped[Optional["BoQ"]] = relationship(back_populates="project", cascade="all, delete-orphan")
+    project_inventory: Mapped[List["ProjectInventoryItem"]] = relationship(back_populates="project", cascade="all, delete-orphan")
 
 class Task(Base):
     __tablename__ = "tasks"
@@ -187,10 +188,8 @@ class InventoryItem(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, index=True, nullable=False)
     description = Column(Text, nullable=True)
-    quantity = Column(Float, default=0.0, nullable=False)
-    quantity_needed = Column(Float, default=0.0, nullable=False)
+    # quantity, quantity_needed, and location are REMOVED from here
     unit = Column(String, nullable=True)
-    location = Column(String, nullable=True)
     low_stock_threshold = Column(Float, nullable=True)
     shop_url_1 = Column(String, nullable=True)
     shop_url_2 = Column(String, nullable=True)
@@ -198,7 +197,20 @@ class InventoryItem(Base):
     local_image_path = Column(String, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    project_allocations: Mapped[List["ProjectInventoryItem"]] = relationship(back_populates="inventory_item")
     boq_items: Mapped[List["BoQItem"]] = relationship(back_populates="inventory_item")
+
+class ProjectInventoryItem(Base):
+    __tablename__ = "project_inventory_items"
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    quantity: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
+    location: Mapped[Optional[str]] = mapped_column(String)
+    
+    project_id: Mapped[int] = mapped_column(ForeignKey("projects.id"), nullable=False)
+    inventory_item_id: Mapped[int] = mapped_column(ForeignKey("inventory_items.id"), nullable=False)
+    
+    project: Mapped["Project"] = relationship(back_populates="project_inventory")
+    inventory_item: Mapped["InventoryItem"] = relationship(back_populates="project_allocations")
 
 class Drawing(Base):
     __tablename__ = "drawings"

@@ -1,7 +1,7 @@
 # backend/app/crud.py
 # Uncondensed Version: Multi-Tenancy updates (Tenant CRUD, User/Project tenant linking)
 from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import desc, asc, func as sqlfunc
+from sqlalchemy import desc, asc, func
 from typing import Optional, List, Dict, Any
 from datetime import datetime, timezone, timedelta # Added timedelta import
 from . import models, schemas
@@ -473,115 +473,128 @@ def remove_task_dependency(db: Session, task: models.Task, predecessor: models.T
 
 # --- END NEW ---
 
-# --- Inventory CRUD ---
+# --- MODIFIED: Inventory Catalog CRUD ---
 def get_inventory_item(db: Session, item_id: int) -> Optional[models.InventoryItem]:
-     return db.query(models.InventoryItem).filter(models.InventoryItem.id == item_id).first()
+    return db.query(models.InventoryItem).filter(models.InventoryItem.id == item_id).first()
 
-def get_inventory_items(
-    db: Session,
-    search: Optional[str] = None,   # NEW: For filtering by name/description
-    sort_by: Optional[str] = 'name', # NEW: For sorting
-    sort_dir: Optional[str] = 'asc', # NEW: For sorting
-    skip: int = 0,
-    limit: int = 100
-) -> List[models.InventoryItem]:
-    query = db.query(models.InventoryItem)
+def get_inventory_items(db: Session, skip: int, limit: int) -> List[models.InventoryItem]:
+    return db.query(models.InventoryItem).order_by(models.InventoryItem.name).offset(skip).limit(limit).all()
 
-    # Apply search filter if provided
-    if search:
-        search_term = f"%{search}%"
-        query = query.filter(models.InventoryItem.name.ilike(search_term)) # Case-insensitive search on name
-
-    # Apply sorting
-    order_column = models.InventoryItem.name # Default sort column
-    if sort_by == 'name':
-        order_column = models.InventoryItem.name
-    elif sort_by == 'quantity':
-        order_column = models.InventoryItem.quantity
-    elif sort_by == 'location':
-        order_column = models.InventoryItem.location
-    # Add more sortable columns as needed
-
-    if sort_dir == 'desc':
-        query = query.order_by(desc(order_column).nullslast())
-    else:
-        query = query.order_by(asc(order_column).nullsfirst())
-
-    return query.offset(skip).limit(limit).all()
 def create_inventory_item(db: Session, item: schemas.InventoryItemCreate) -> models.InventoryItem:
-     item_data = item.model_dump()
-     # Ensure numeric fields are correctly typed if coming as strings or None
-     item_data['quantity'] = float(item_data.get('quantity') or 0.0)
-     item_data['quantity_needed'] = float(item_data.get('quantity_needed') or 0.0)
-     if item_data.get('low_stock_threshold') is not None and item_data.get('low_stock_threshold') != '':
-         item_data['low_stock_threshold'] = float(item_data['low_stock_threshold'])
-     else:
-        item_data['low_stock_threshold'] = None
+    db_item = models.InventoryItem(**item.model_dump())
+    db.add(db_item)
+    db.commit()
+    db.refresh(db_item)
+    return db_item
 
-     # local_image_path is already handled by model_dump() if present in schema
-
-     db_item = models.InventoryItem(**item_data)
-     db.add(db_item)
-     db.commit()
-     db.refresh(db_item)
-     return db_item
-
-def update_inventory_item(db: Session, item_id: int, item_update: schemas.InventoryItemUpdate) -> Optional[models.InventoryItem]:
-    db_item = get_inventory_item(db, item_id=item_id)
-    if not db_item:
-        return None
-
-    update_data = item_update.model_dump(exclude_unset=True) # Only fields present in request
-
-    # Iterate through all fields that were actually sent in the request payload
+def update_inventory_item(db: Session, db_item: models.InventoryItem, item_update: schemas.InventoryItemUpdate) -> models.InventoryItem:
+    update_data = item_update.model_dump(exclude_unset=True)
     for key, value in update_data.items():
-        # Handle numeric types specifically, allowing them to be set to None
-        if key in ['quantity', 'quantity_needed', 'low_stock_threshold']:
-            if value is None:
-                setattr(db_item, key, None)
-            elif isinstance(value, (int, float, str)) and str(value).strip() != '':
-                try:
-                    setattr(db_item, key, float(value))
-                except ValueError:
-                    # Optionally raise an error or log if conversion fails for numerics
-                    print(f"Warning: Could not convert value '{value}' for field '{key}' to float.")
-                    pass 
-            # If it's already a number and not None, Pydantic would have passed it.
-        else:
-            # For other fields (like strings, including local_image_path), set them directly.
-            # If an empty string from frontend means "clear this field", send `null`.
-            # Our frontend already sends `formData.local_image_path || null`.
-            setattr(db_item, key, value)
-
+        setattr(db_item, key, value)
     db.add(db_item)
     db.commit()
     db.refresh(db_item)
     return db_item
 
-def update_inventory_item_needed_quantity(db: Session, item_id: int, quantity_needed: float) -> Optional[models.InventoryItem]:
-    db_item = get_inventory_item(db, item_id)
-    if not db_item:
-        return None
-    db_item.quantity_needed = max(0.0, quantity_needed)
-    db.add(db_item)
-    db.commit()
-    db.refresh(db_item)
-    return db_item
-
-def delete_inventory_item(db: Session, item_id: int) -> Optional[models.InventoryItem]:
-    db_item = get_inventory_item(db, item_id)
-    if not db_item:
-        return None
+def delete_inventory_item(db: Session, db_item: models.InventoryItem) -> models.InventoryItem:
     db.delete(db_item)
     db.commit()
     return db_item
 
+# --- NEW: Project-Specific Inventory CRUD ---
+def get_project_inventory_for_project(db: Session, project_id: int) -> List[models.ProjectInventoryItem]:
+    return db.query(models.ProjectInventoryItem).options(
+        joinedload(models.ProjectInventoryItem.inventory_item)
+    ).filter(models.ProjectInventoryItem.project_id == project_id).all()
+
+def add_or_update_item_in_project_inventory(db: Session, item_data: schemas.ProjectInventoryItemCreate) -> models.ProjectInventoryItem:
+    existing_item = db.query(models.ProjectInventoryItem).filter(
+        models.ProjectInventoryItem.project_id == item_data.project_id,
+        models.ProjectInventoryItem.inventory_item_id == item_data.inventory_item_id
+    ).first()
+
+    if existing_item:
+        existing_item.quantity += item_data.quantity
+        db_item = existing_item
+    else:
+        db_item = models.ProjectInventoryItem(**item_data.model_dump())
+        db.add(db_item)
+    
+    db.commit()
+    db.refresh(db_item)
+    return db_item
+
+def remove_item_from_project_inventory(db: Session, project_inventory_item_id: int) -> Optional[models.ProjectInventoryItem]:
+    db_item = db.query(models.ProjectInventoryItem).filter(models.ProjectInventoryItem.id == project_inventory_item_id).first()
+    if db_item:
+        db.delete(db_item)
+        db.commit()
+    return db_item
+
+# --- NEW: Global Inventory Summary Function ---
+def get_global_inventory_summary(db: Session) -> List[Dict[str, Any]]:
+    """Calculates the total quantity of each inventory item across all projects."""
+    summary = db.query(
+        models.InventoryItem,
+        func.sum(models.ProjectInventoryItem.quantity).label('total_quantity')
+    ).join(
+        models.ProjectInventoryItem, 
+        models.InventoryItem.id == models.ProjectInventoryItem.inventory_item_id
+    ).group_by(
+        models.InventoryItem.id
+    ).all()
+    
+    results = []
+    for item, total_quantity in summary:
+        results.append({
+            "inventory_item": item,
+            "total_quantity": total_quantity
+        })
+    return results
+
 # --- Shopping List Function ---
-def get_shopping_list_items(db: Session) -> List[models.InventoryItem]:
-    return db.query(models.InventoryItem)\
-             .filter(models.InventoryItem.quantity_needed > models.InventoryItem.quantity)\
-             .order_by(models.InventoryItem.name)\
-             .all()
+def get_shopping_list_for_project(db: Session, project_id: int) -> List[Dict[str, Any]]:
+    """
+    Generates a shopping list for a specific project by comparing
+    the Bill of Quantities (BoQ) with the Project's specific inventory.
+    """
+    
+    # 1. Get all required items from the project's BoQ
+    boq = db.query(models.BoQ).options(
+        joinedload(models.BoQ.items).joinedload(models.BoQItem.inventory_item)
+    ).filter(models.BoQ.project_id == project_id).first()
+
+    # 2. Get all items in the project's on-site inventory
+    project_inventory = db.query(models.ProjectInventoryItem).filter(
+        models.ProjectInventoryItem.project_id == project_id
+    ).all()
+    
+    # Create a simple lookup map for in-stock quantities
+    stock_map = {item.inventory_item_id: item.quantity for item in project_inventory}
+
+    shopping_list = []
+    
+    if not boq:
+        # If there's no BoQ, the shopping list is empty
+        return shopping_list
+
+    # 3. Calculate the shortfall
+    for boq_item in boq.items:
+        quantity_in_stock = stock_map.get(boq_item.inventory_item_id, 0.0)
+        quantity_required = boq_item.quantity_required
+        
+        shortfall = quantity_required - quantity_in_stock
+        
+        if shortfall > 0:
+            shopping_list.append({
+                "inventory_item": boq_item.inventory_item,
+                "quantity_required": quantity_required,
+                "quantity_in_stock": quantity_in_stock,
+                "quantity_to_order": shortfall,
+                "unit": boq_item.inventory_item.unit
+            })
+            
+    return shopping_list
 
 # --- Drawing Metadata CRUD ---
 def get_drawing(db: Session, drawing_id: int) -> Optional[models.Drawing]:

@@ -131,3 +131,30 @@ async def remove_dependency_from_task(
     task = await get_task_and_verify_tenant(task_id, db, current_user)
     predecessor_task = await get_task_and_verify_tenant(predecessor_id, db, current_user)
     return crud.remove_task_dependency(db=db, task=task, predecessor=predecessor_task)
+
+@router.post("/{task_id}/comments/", response_model=schemas.TaskCommentRead, status_code=status.HTTP_201_CREATED)
+@limiter.limit("100/minute")
+async def create_comment_for_task(
+    request: Request,
+    task_id: int,
+    comment: schemas.TaskCommentCreate,
+    db: DbDependency,
+    current_user: CurrentUserDependency 
+):
+    db_task = await get_task_and_verify_tenant(task_id=task_id, db=db, current_user=current_user)
+    new_comment = crud.create_task_comment(db=db, comment=comment, task_id=db_task.id, author_id=current_user.id)
+    return new_comment
+
+@router.get("/{task_id}/comments/", response_model=List[schemas.TaskCommentRead])
+@limiter.limit("100/minute")
+async def read_comments_for_task(
+    request: Request,
+    task_id: int,
+    db: DbDependency,
+    current_user: CurrentUserDependency,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=1000)
+):
+    db_task = await get_task_and_verify_tenant(task_id=task_id, db=db, current_user=current_user)
+    comments = crud.get_comments_for_task(db=db, task_id=db_task.id, skip=skip, limit=limit)
+    return comments
