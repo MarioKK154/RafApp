@@ -30,7 +30,7 @@ function Navbar() {
         <nav className="bg-white dark:bg-gray-800 shadow-md p-4 sticky top-0 z-50">
             <div className="container mx-auto flex justify-between items-center">
                 <Link to="/" className="flex items-center space-x-2" title={`${tenantName} Home`}>
-                    <img 
+                    <img
                         src={logoToDisplay}
                         alt={`${tenantName} Logo`}
                         className="h-16 w-auto object-contain"
@@ -43,20 +43,21 @@ function Navbar() {
                         <>
                             <Link to="/projects" className="text-sm md:text-base text-gray-700 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-300">Projects</Link>
                             <Link to="/tasks" className="text-sm md:text-base text-gray-700 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-300">Tasks</Link>
-                            
-                            {/* --- MODIFIED LINK --- */}
                             <Link to="/inventory" className="text-sm md:text-base text-gray-700 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-300">Global Inventory</Link>
-                            
                             <Link to="/tools" className="text-sm md:text-base text-gray-700 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-300">Tool Inventory</Link>
                             <Link to="/cars" className="text-sm md:text-base text-gray-700 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-300">Car Fleet</Link>
                             <Link to="/shops" className="text-sm md:text-base text-gray-700 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-300">Shops</Link>
                             <Link to="/timelogs" className="text-sm md:text-base text-gray-700 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-300">Time Logs</Link>
                             <Link to="/gantt" className="text-sm md:text-base text-gray-700 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-300">Gantt Chart</Link>
+                            <Link to="/calendar" className="text-sm md:text-base text-gray-700 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-300">Calendar</Link>
                             <Link to="/users" className="text-sm md:text-base text-gray-700 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-300">Users</Link>
-                            
+                            <Link to="/laws" className="text-sm md:text-base text-gray-700 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-300">Laws</Link>
+                            <Link to="/tutorials" className="text-sm md:text-base text-gray-700 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-300">Tutorials</Link>
+
                             {(isAdmin || isManager) && (
                                 <>
                                     <Link to="/shopping-list" className="text-sm md:text-base text-gray-700 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-300">Shopping List</Link>
+                                    <Link to="/labor-catalog" className="text-sm md:text-base text-gray-700 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-300">Labor Catalog</Link>
                                     <Link to="/reports" className="text-sm md:text-base text-gray-700 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-300">Reports</Link>
                                 </>
                             )}
@@ -81,8 +82,8 @@ function Navbar() {
                                 title="Account Settings"
                             >
                                 {currentUser?.profile_picture_url ? (
-                                    <img 
-                                        src={currentUser.profile_picture_url} 
+                                    <img
+                                        src={currentUser.profile_picture_url}
                                         alt="Profile"
                                         className="h-8 w-8 rounded-full object-cover border-2 border-gray-300 dark:border-gray-500"
                                         onError={(e) => { e.target.onerror = null; e.target.src = '/default-avatar.png'; }}

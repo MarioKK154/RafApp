@@ -6,7 +6,7 @@ from os import environ
 from pydantic import computed_field
 
 from .models import (UserRole, ProjectStatus, TaskStatus, ToolStatus, 
-                     ToolLogAction, CarStatus, CarLogAction, TyreType, OfferStatus, OfferLineItemType)
+                     ToolLogAction, CarStatus, CarLogAction, TyreType, OfferStatus, OfferLineItemType, DrawingStatus)
 
 STATIC_BASE_URL = environ.get("STATIC_BASE_URL", "http://localhost:8000")
 
@@ -321,13 +321,28 @@ class InventoryItemUpdateNeededQty(BaseModel):
 class DrawingBase(BaseModel):
     description: Optional[str] = None
     project_id: int
+    revision: Optional[str] = None
+    discipline: Optional[str] = None
+    status: Optional[DrawingStatus] = DrawingStatus.Draft
+    drawing_date: Optional[date] = None
+    author: Optional[str] = None
 
 class DrawingCreate(DrawingBase):
+    # Fields set during file upload by the server
     filename: str
     filepath: str
     content_type: Optional[str] = None
     size_bytes: Optional[int] = None
     uploader_id: int
+
+class DrawingUpdate(BaseModel):
+    # Schema for updating metadata after upload
+    description: Optional[str] = None
+    revision: Optional[str] = None
+    discipline: Optional[str] = None
+    status: Optional[DrawingStatus] = None
+    drawing_date: Optional[date] = None
+    author: Optional[str] = None
 
 class DrawingRead(DrawingBase):
     id: int
@@ -667,4 +682,52 @@ class UserLicenseRead(UserLicenseBase):
     filename: str
     # We won't expose the direct file_path, use a download link instead
 
+    model_config = ConfigDict(from_attributes=True)
+
+class EventBase(BaseModel):
+    title: str = Field(..., min_length=1)
+    description: Optional[str] = None
+    start_time: datetime
+    end_time: datetime
+    location: Optional[str] = None
+    project_id: Optional[int] = None
+
+class EventCreate(EventBase):
+    attendee_ids: List[int] = [] # List of user IDs to invite
+
+class EventUpdate(BaseModel):
+    title: Optional[str] = Field(None, min_length=1)
+    description: Optional[str] = None
+    start_time: Optional[datetime] = None
+    end_time: Optional[datetime] = None
+    location: Optional[str] = None
+    project_id: Optional[int] = None
+    attendee_ids: Optional[List[int]] = None # Allow updating attendees
+
+class EventRead(EventBase):
+    id: int
+    creator_id: int
+    tenant_id: int
+    creator: Optional[UserReadBasic] = None
+    attendees: List[UserReadBasic] = []
+    model_config = ConfigDict(from_attributes=True)
+
+# --- NEW: Labor Catalog Schemas ---
+
+class LaborCatalogItemBase(BaseModel):
+    description: str = Field(..., min_length=1)
+    default_unit_price: float = Field(..., ge=0)
+    unit: Optional[str] = "hour"
+
+class LaborCatalogItemCreate(LaborCatalogItemBase):
+    pass
+
+class LaborCatalogItemUpdate(BaseModel):
+    description: Optional[str] = Field(None, min_length=1)
+    default_unit_price: Optional[float] = Field(None, ge=0)
+    unit: Optional[str] = None
+
+class LaborCatalogItemRead(LaborCatalogItemBase):
+    id: int
+    tenant_id: int
     model_config = ConfigDict(from_attributes=True)

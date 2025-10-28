@@ -597,6 +597,20 @@ def get_shopping_list_for_project(db: Session, project_id: int) -> List[Dict[str
     return shopping_list
 
 # --- Drawing Metadata CRUD ---
+
+# --- NEW: Drawing Metadata Update ---
+
+def update_drawing_metadata(db: Session, db_drawing: models.Drawing, drawing_update: schemas.DrawingUpdate) -> models.Drawing:
+    """Updates the metadata fields of an existing drawing."""
+    update_data = drawing_update.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        if hasattr(db_drawing, key):
+            setattr(db_drawing, key, value)
+    db.add(db_drawing)
+    db.commit()
+    db.refresh(db_drawing)
+    return db_drawing
+    
 def get_drawing(db: Session, drawing_id: int) -> Optional[models.Drawing]:
      return db.query(models.Drawing).filter(models.Drawing.id == drawing_id).first()
 
@@ -653,6 +667,15 @@ def update_timelog_entry(db: Session, timelog_id: int) -> Optional[models.TimeLo
     db.commit()
     db.refresh(db_timelog)
     return db_timelog
+
+def get_active_timelogs_for_project(db: Session, project_id: int) -> List[models.TimeLog]:
+    """Retrieves all currently open time logs for a specific project."""
+    return db.query(models.TimeLog).options(
+        joinedload(models.TimeLog.user) # Include user info
+    ).filter(
+        models.TimeLog.project_id == project_id,
+        models.TimeLog.end_time == None # Filter for logs that haven't ended
+    ).order_by(models.TimeLog.start_time.asc()).all()
 
 # --- THIS FUNCTION WAS MISSING ---
 def get_timelogs(
@@ -1242,6 +1265,122 @@ def get_user_license(db: Session, license_id: int) -> Optional[models.UserLicens
 def delete_user_license(db: Session, db_license: models.UserLicense):
     """Deletes a license record."""
     db.delete(db_license)
+    db.commit()
+
+# --- NEW: Event CRUD Operations ---
+
+def create_event(db: Session, event_data: schemas.EventCreate, user: models.User) -> models.Event:
+    """Creates a new event and assigns attendees."""
+    attendee_ids = event_data.attendee_ids
+    # Ensure creator is always an attendee
+    if user.id not in attendee_ids:
+        attendee_ids.append(user.id)
+        
+    attendees = db.query(models.User).filter(
+        models.User.id.in_(attendee_ids),
+        models.User.tenant_id == user.tenant_id # Ensure attendees are in the same tenant
+    ).all()
+    
+    db_event = models.Event(
+        title=event_data.title,
+        description=event_data.description,
+        start_time=event_data.start_time,
+        end_time=event_data.end_time,
+        location=event_data.location,
+        project_id=event_data.project_id,
+        creator_id=user.id,
+        tenant_id=user.tenant_id,
+        attendees=attendees
+    )
+    db.add(db_event)
+    db.commit()
+    db.refresh(db_event)
+    return db_event
+
+def get_event(db: Session, event_id: int, tenant_id: Optional[int]) -> Optional[models.Event]:
+    """Gets a single event by ID, including attendees and creator."""
+    query = db.query(models.Event).options(
+        joinedload(models.Event.attendees),
+        joinedload(models.Event.creator)
+    ).filter(models.Event.id == event_id)
+    if tenant_id is not None:
+        query = query.filter(models.Event.tenant_id == tenant_id)
+    return query.first()
+
+def get_events_for_tenant(db: Session, tenant_id: int, start: datetime, end: datetime) -> List[models.Event]:
+    """Gets events within a date range for a specific tenant."""
+    return db.query(models.Event).options(joinedload(models.Event.attendees)).filter(
+        models.Event.tenant_id == tenant_id,
+        models.Event.start_time < end, # Event starts before the range ends
+        models.Event.end_time > start   # Event ends after the range starts
+    ).order_by(models.Event.start_time).all()
+
+def update_event(db: Session, db_event: models.Event, event_update: schemas.EventUpdate, tenant_id: int) -> models.Event:
+    """Updates an event's details and attendees."""
+    update_data = event_update.model_dump(exclude_unset=True, exclude={'attendee_ids'})
+    
+    for key, value in update_data.items():
+        setattr(db_event, key, value)
+        
+    if event_update.attendee_ids is not None:
+        # Ensure creator remains an attendee if they created it
+        attendee_ids = set(event_update.attendee_ids)
+        if db_event.creator_id == event_update.creator_id: # Assuming creator_id is part of update or check db_event
+             attendee_ids.add(db_event.creator_id)
+             
+        # Fetch valid attendees from the database within the correct tenant
+        attendees = db.query(models.User).filter(
+            models.User.id.in_(list(attendee_ids)),
+            models.User.tenant_id == tenant_id
+        ).all()
+        db_event.attendees = attendees # Replace attendees
+
+    db.add(db_event)
+    db.commit()
+    db.refresh(db_event)
+    return db_event
+
+def delete_event(db: Session, db_event: models.Event):
+    """Deletes an event."""
+    db.delete(db_event)
+    db.commit()
+
+# --- NEW: Labor Catalog CRUD Operations ---
+
+def create_labor_catalog_item(db: Session, item_data: schemas.LaborCatalogItemCreate, tenant_id: int) -> models.LaborCatalogItem:
+    """Creates a new labor item in the catalog for a specific tenant."""
+    db_item = models.LaborCatalogItem(**item_data.model_dump(), tenant_id=tenant_id)
+    db.add(db_item)
+    db.commit()
+    db.refresh(db_item)
+    return db_item
+
+def get_labor_catalog_item(db: Session, item_id: int, tenant_id: int) -> Optional[models.LaborCatalogItem]:
+    """Gets a single labor catalog item by ID, scoped to a tenant."""
+    return db.query(models.LaborCatalogItem).filter(
+        models.LaborCatalogItem.id == item_id,
+        models.LaborCatalogItem.tenant_id == tenant_id
+    ).first()
+
+def get_labor_catalog_items(db: Session, tenant_id: int, skip: int, limit: int) -> List[models.LaborCatalogItem]:
+    """Gets a list of all labor catalog items for a tenant."""
+    return db.query(models.LaborCatalogItem).filter(
+        models.LaborCatalogItem.tenant_id == tenant_id
+    ).order_by(models.LaborCatalogItem.description).offset(skip).limit(limit).all()
+
+def update_labor_catalog_item(db: Session, db_item: models.LaborCatalogItem, item_update: schemas.LaborCatalogItemUpdate) -> models.LaborCatalogItem:
+    """Updates a labor catalog item's details."""
+    update_data = item_update.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(db_item, key, value)
+    db.add(db_item)
+    db.commit()
+    db.refresh(db_item)
+    return db_item
+
+def delete_labor_catalog_item(db: Session, db_item: models.LaborCatalogItem):
+    """Deletes a labor catalog item."""
+    db.delete(db_item)
     db.commit()
 
 # --- END NEW ---

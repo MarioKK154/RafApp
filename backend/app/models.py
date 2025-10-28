@@ -76,6 +76,13 @@ class OfferLineItemType(enum.Enum):
     Material = "Material"
     Labor = "Labor"
 
+class DrawingStatus(enum.Enum):
+    Draft = "Draft"
+    For_Approval = "For Approval"
+    Approved = "Approved"
+    As_Built = "As-Built"
+    Archived = "Archived"
+
 class Tenant(Base):
     __tablename__ = "tenants"
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -91,6 +98,7 @@ class Tenant(Base):
     cars: Mapped[list["Car"]] = relationship(back_populates="tenant")
     shops: Mapped[list["Shop"]] = relationship(back_populates="tenant")
     offers: Mapped[list["Offer"]] = relationship(back_populates="tenant")
+    labor_catalog_items: Mapped[list["LaborCatalogItem"]] = relationship(back_populates="tenant", cascade="all, delete-orphan")
 
 project_members_table = Table(
     "project_members", Base.metadata,
@@ -103,6 +111,13 @@ task_dependencies_table = Table(
     Base.metadata,
     Column('task_id', Integer, ForeignKey('tasks.id'), primary_key=True),
     Column('predecessor_id', Integer, ForeignKey('tasks.id'), primary_key=True)
+)
+
+event_attendees_table = Table(
+    "event_attendees",
+    Base.metadata,
+    Column("event_id", Integer, ForeignKey("events.id", ondelete="CASCADE"), primary_key=True),
+    Column("user_id", Integer, ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
 )
 
 class User(Base):
@@ -137,6 +152,7 @@ class User(Base):
     car_checked_out: Mapped[Optional["Car"]] = relationship(back_populates="current_user")
     car_logs: Mapped[list["CarLog"]] = relationship(back_populates="user")
     licenses: Mapped[list["UserLicense"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+    events_attending = relationship("Event", secondary=event_attendees_table, back_populates="attendees")
     
 # --- NEW: UserLicense Model ---
 class UserLicense(Base):
@@ -150,6 +166,24 @@ class UserLicense(Base):
 
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
     user: Mapped["User"] = relationship(back_populates="licenses")
+
+class Event(Base):
+    __tablename__ = "events"
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    title: Mapped[str] = mapped_column(String, nullable=False)
+    description: Mapped[Optional[str]] = mapped_column(Text)
+    start_time: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    end_time: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    location: Mapped[Optional[str]] = mapped_column(String) # E.g., meeting room, project site address
+
+    creator_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id"), nullable=False)
+    project_id: Mapped[Optional[int]] = mapped_column(ForeignKey("projects.id")) # Optional link to a project
+
+    creator: Mapped["User"] = relationship()
+    tenant: Mapped["Tenant"] = relationship()
+    project: Mapped[Optional["Project"]] = relationship()
+    attendees = relationship("User", secondary=event_attendees_table, back_populates="events_attending")
     
 class Project(Base):
     __tablename__ = "projects"
@@ -268,6 +302,16 @@ class OfferLineItem(Base):
     offer: Mapped["Offer"] = relationship(back_populates="line_items")
     inventory_item: Mapped[Optional["InventoryItem"]] = relationship(back_populates="offer_line_items") # Null if Labor
 
+class LaborCatalogItem(Base):
+    __tablename__ = "labor_catalog_items"
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    description: Mapped[str] = mapped_column(String, nullable=False, index=True) # E.g., "Install double socket", "Run 10m conduit"
+    default_unit_price: Mapped[float] = mapped_column(Float, nullable=False) # Default price per unit/hour
+    unit: Mapped[str] = mapped_column(String, default="hour") # Default unit, e.g., 'hour', 'item', 'meter'
+
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id"), nullable=False)
+    tenant: Mapped["Tenant"] = relationship(back_populates="labor_catalog_items")
+    
 class ProjectInventoryItem(Base):
     __tablename__ = "project_inventory_items"
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
@@ -291,6 +335,11 @@ class Drawing(Base):
     uploaded_at = Column(DateTime(timezone=True), server_default=func.now())
     project_id = Column(Integer, ForeignKey("projects.id", ondelete="CASCADE"), nullable=False)
     uploader_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    revision: Mapped[Optional[str]] = mapped_column(String) # e.g., "A", "B", "1.1"
+    discipline: Mapped[Optional[str]] = mapped_column(String) # e.g., "Electrical", "Lighting"
+    status: Mapped[Optional[DrawingStatus]] = mapped_column(SQLAlchemyEnum(DrawingStatus), default=DrawingStatus.Draft)
+    drawing_date: Mapped[Optional[date]] = mapped_column(Date)
+    author: Mapped[Optional[str]] = mapped_column(String) # Drawn By
     
     project = relationship("Project", back_populates="drawings")
     uploader = relationship("User", back_populates="uploaded_drawings")

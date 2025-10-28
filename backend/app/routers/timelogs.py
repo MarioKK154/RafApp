@@ -75,3 +75,21 @@ async def read_all_timelogs_for_tenant(
 ):
     effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
     return crud.get_timelogs(db=db, user_id=user_id, project_id=project_id, tenant_id=effective_tenant_id, start_date=start_date, end_date=end_date, sort_by=sort_by, sort_dir=sort_dir, skip=skip, limit=limit)
+
+@router.get("/project/{project_id}/active", response_model=List[schemas.TimeLogRead])
+@limiter.limit("100/minute")
+async def read_active_timelogs_for_project(
+    request: Request,
+    project_id: int,
+    db: DbDependency,
+    current_user: ManagerOrAdminTenantDependency # Only managers/admins can see this
+):
+    """Gets a list of users currently clocked in to a specific project."""
+    # Verify the project exists and is accessible
+    project = await get_project_if_accessible(project_id=project_id, db=db, current_user=current_user)
+    if not project:
+        # get_project_if_accessible raises HTTPException, but check just in case
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found.")
+        
+    active_logs = crud.get_active_timelogs_for_project(db=db, project_id=project_id)
+    return active_logs

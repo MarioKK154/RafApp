@@ -16,8 +16,6 @@ import ProjectEditPage from './pages/ProjectEditPage';
 import TasksListPage from './pages/TasksListPage';
 import TaskCreatePage from './pages/TaskCreatePage';
 import TaskEditPage from './pages/TaskEditPage';
-
-// --- RENAMED AND NEW INVENTORY PAGES ---
 import GlobalInventoryPage from './pages/GlobalInventoryPage';
 import InventoryCatalogPage from './pages/InventoryCatalogPage';
 import InventoryCatalogCreatePage from './pages/InventoryCatalogCreatePage';
@@ -44,10 +42,16 @@ import TenantEditPage from './pages/TenantEditPage';
 import AdminToolsPage from './pages/AdminToolsPage';
 import ShoppingListPage from './pages/ShoppingListPage';
 import GanttChartPage from './pages/GanttChartPage';
+import CalendarPage from './pages/CalendarPage'; // Import CalendarPage
 import ReportsPage from './pages/ReportsPage';
-import OfferPage from './pages/OfferPage';
 import AccountSettingsPage from './pages/AccountSettingsPage';
 import NotFoundPage from './pages/NotFoundPage';
+import LaborCatalogListPage from './pages/LaborCatalogListPage';
+import LaborCatalogCreatePage from './pages/LaborCatalogCreatePage';
+import LaborCatalogEditPage from './pages/LaborCatalogEditPage';
+import OfferPage from './pages/OfferPage'; // Import OfferPage
+import LawsPage from './pages/LawsPage';
+import TutorialsPage from './pages/TutorialsPage';
 
 const ProtectedRoute = ({ children }) => {
     const { isAuthenticated, isLoading } = useAuth();
@@ -66,16 +70,15 @@ function App() {
                     <Routes>
                         <Route path="/login" element={<LoginPage />} />
                         <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
-                        
+
                         <Route path="/projects" element={<ProtectedRoute><ProjectsPage /></ProtectedRoute>} />
                         <Route path="/projects/new" element={<ProtectedRoute><ProjectCreatePage /></ProtectedRoute>} />
                         <Route path="/projects/edit/:projectId" element={<ProtectedRoute><ProjectEditPage /></ProtectedRoute>} />
-                        
+
                         <Route path="/tasks" element={<ProtectedRoute><TasksListPage /></ProtectedRoute>} />
                         <Route path="/tasks/new" element={<ProtectedRoute><TaskCreatePage /></ProtectedRoute>} />
                         <Route path="/tasks/:taskId" element={<ProtectedRoute><TaskEditPage /></ProtectedRoute>} />
-                        
-                        {/* --- NEW INVENTORY ROUTES --- */}
+
                         <Route path="/inventory" element={<ProtectedRoute><GlobalInventoryPage /></ProtectedRoute>} />
                         <Route path="/inventory/catalog" element={<ProtectedRoute><InventoryCatalogPage /></ProtectedRoute>} />
                         <Route path="/inventory/catalog/new" element={<ProtectedRoute><InventoryCatalogCreatePage /></ProtectedRoute>} />
@@ -94,25 +97,31 @@ function App() {
                         <Route path="/shops" element={<ProtectedRoute><ShopListPage /></ProtectedRoute>} />
                         <Route path="/shops/new" element={<ProtectedRoute><ShopCreatePage /></ProtectedRoute>} />
                         <Route path="/shops/edit/:shopId" element={<ProtectedRoute><ShopEditPage /></ProtectedRoute>} />
-                        
+
                         <Route path="/timelogs" element={<ProtectedRoute><TimeLogsPage /></ProtectedRoute>} />
-                        
+
                         <Route path="/users" element={<ProtectedRoute><UserListPage /></ProtectedRoute>} />
                         <Route path="/users/new" element={<ProtectedRoute><UserCreatePage /></ProtectedRoute>} />
                         <Route path="/users/import" element={<ProtectedRoute><UserBulkImportPage /></ProtectedRoute>} />
                         <Route path="/users/edit/:userId" element={<ProtectedRoute><UserEditPage /></ProtectedRoute>} />
-                        
+
                         <Route path="/tenants" element={<ProtectedRoute><TenantListPage /></ProtectedRoute>} />
                         <Route path="/tenants/new" element={<ProtectedRoute><TenantCreatePage /></ProtectedRoute>} />
                         <Route path="/tenants/edit/:tenantId" element={<ProtectedRoute><TenantEditPage /></ProtectedRoute>} />
                         <Route path="/admin/tools" element={<ProtectedRoute><AdminToolsPage /></ProtectedRoute>} />
-                        
+
                         <Route path="/shopping-list" element={<ProtectedRoute><ShoppingListPage /></ProtectedRoute>} />
                         <Route path="/gantt" element={<ProtectedRoute><GanttChartPage /></ProtectedRoute>} />
+                        <Route path="/calendar" element={<ProtectedRoute><CalendarPage /></ProtectedRoute>} /> {/* Added Calendar Route */}
                         <Route path="/reports" element={<ProtectedRoute><ReportsPage /></ProtectedRoute>} />
-                        <Route path="/offers/:offerId" element={<ProtectedRoute><OfferPage /></ProtectedRoute>} />
                         <Route path="/account-settings" element={<ProtectedRoute><AccountSettingsPage /></ProtectedRoute>} />
-                        
+                        <Route path="/labor-catalog" element={<ProtectedRoute><LaborCatalogListPage /></ProtectedRoute>} />
+                        <Route path="/labor-catalog/new" element={<ProtectedRoute><LaborCatalogCreatePage /></ProtectedRoute>} />
+                        <Route path="/labor-catalog/edit/:itemId" element={<ProtectedRoute><LaborCatalogEditPage /></ProtectedRoute>} />
+                        <Route path="/offers/:offerId" element={<ProtectedRoute><OfferPage /></ProtectedRoute>} /> {/* Added Offer Route */}
+                        <Route path="/laws" element={<ProtectedRoute><LawsPage /></ProtectedRoute>} />
+                        <Route path="/tutorials" element={<ProtectedRoute><TutorialsPage /></ProtectedRoute>} />
+
                         <Route path="*" element={<NotFoundPage />} />
                     </Routes>
                 </main>
