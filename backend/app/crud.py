@@ -199,25 +199,35 @@ def get_project(db: Session, project_id: int, tenant_id: int) -> Optional[models
 
 def get_projects(
     db: Session,
-    tenant_id: int, # Require tenant_id
+    tenant_id: Optional[int],
     status: Optional[str] = None,
-    sort_by: Optional[str] = None,
-    sort_dir: Optional[str] = 'asc',
+    search: Optional[str] = None, # <-- Add search parameter
+    sort_by: str = 'name',
+    sort_dir: str = 'asc',
     skip: int = 0,
     limit: int = 100
 ) -> List[models.Project]:
     query = db.query(models.Project).options(
-        joinedload(models.Project.project_manager).options(joinedload(models.User.tenant)),
-        joinedload(models.Project.tenant)
-    ).filter(models.Project.tenant_id == tenant_id) # Filter by tenant
+        joinedload(models.Project.project_manager),
+        joinedload(models.Project.tenant) # Eager load tenant if needed elsewhere
+    )
+    if tenant_id is not None:
+        query = query.filter(models.Project.tenant_id == tenant_id)
     if status:
         query = query.filter(models.Project.status == status)
-    # ... (sorting logic as before) ...
-    order_column = models.Project.name;
-    if sort_by == 'name': order_column = models.Project.name
-    # ... (rest of sort options)
-    if sort_dir == 'desc': query = query.order_by(desc(order_column).nullslast())
-    else: query = query.order_by(asc(order_column).nullsfirst())
+    # --- NEW SEARCH LOGIC ---
+    if search:
+        search_term = f"%{search}%"
+        query = query.filter(models.Project.name.ilike(search_term)) # Case-insensitive search
+    # --- END NEW SEARCH LOGIC ---
+
+    # Sorting logic (remains the same)
+    sort_column = getattr(models.Project, sort_by, models.Project.name)
+    if sort_dir == 'desc':
+        query = query.order_by(desc(sort_column))
+    else:
+        query = query.order_by(asc(sort_column))
+
     return query.offset(skip).limit(limit).all()
 
 def create_project(
@@ -332,22 +342,38 @@ def get_task(db: Session, task_id: int # Potentially add tenant_id via project l
 
 def get_tasks(
     db: Session,
-    project_id: Optional[int] = None, # Project ID already scopes to tenant
-    assignee_id: Optional[int] = None, # Assignee should ideally be in same tenant
-    status: Optional[str] = None, # Added from Response #115
-    sort_by: Optional[str] = None,
-    sort_dir: Optional[str] = 'asc',
+    project_id: Optional[int] = None,
+    assignee_id: Optional[int] = None,
+    status: Optional[str] = None,
+    search: Optional[str] = None, # <-- Add search parameter
+    sort_by: str = 'id',
+    sort_dir: str = 'asc',
     skip: int = 0,
     limit: int = 100
 ) -> List[models.Task]:
-    query = db.query(models.Task)
-    if project_id is not None: query = query.filter(models.Task.project_id == project_id)
-    if assignee_id is not None: query = query.filter(models.Task.assignee_id == assignee_id)
-    if status is not None and status != "": query = query.filter(models.Task.status == status)
-    order_column = models.Task.id
-    if sort_by == 'title': order_column = models.Task.title # ... (rest of sort logic)
-    if sort_dir == 'desc': query = query.order_by(desc(order_column).nullslast())
-    else: query = query.order_by(asc(order_column).nullsfirst())
+    query = db.query(models.Task).options(
+        joinedload(models.Task.project),
+        joinedload(models.Task.assignee)
+    )
+    if project_id is not None:
+        query = query.filter(models.Task.project_id == project_id)
+    if assignee_id is not None:
+        query = query.filter(models.Task.assignee_id == assignee_id)
+    if status:
+        query = query.filter(models.Task.status == status)
+    # --- NEW SEARCH LOGIC ---
+    if search:
+        search_term = f"%{search}%"
+        query = query.filter(models.Task.title.ilike(search_term)) # Case-insensitive search by title
+    # --- END NEW SEARCH LOGIC ---
+
+    # Sorting logic
+    sort_column = getattr(models.Task, sort_by, models.Task.id)
+    if sort_dir == 'desc':
+        query = query.order_by(desc(sort_column))
+    else:
+        query = query.order_by(asc(sort_column))
+
     return query.offset(skip).limit(limit).all()
 
 def create_task(db: Session, task: schemas.TaskCreate, project_tenant_id: int) -> models.Task:
@@ -633,95 +659,102 @@ def delete_drawing_metadata(db: Session, drawing_id: int) -> Optional[models.Dra
     return db_drawing
 
 # --- TimeLog CRUD ---
-def get_open_timelog_for_user(db: Session, user_id: int) -> Optional[models.TimeLog]:
-     return db.query(models.TimeLog).filter(
-         models.TimeLog.user_id == user_id,
-         models.TimeLog.end_time == None
-     ).order_by(desc(models.TimeLog.start_time)).first()
-
 def create_timelog_entry(db: Session, timelog_data: schemas.TimeLogCreate, user_id: int) -> models.TimeLog:
-     db_timelog = models.TimeLog(
-         **timelog_data.model_dump(),
-         user_id=user_id,
-         start_time=datetime.now(timezone.utc)
-     )
-     db.add(db_timelog)
-     db.commit()
-     db.refresh(db_timelog)
-     return db_timelog
-
-def update_timelog_entry(db: Session, timelog_id: int) -> Optional[models.TimeLog]:
-    db_timelog = db.query(models.TimeLog).filter(models.TimeLog.id == timelog_id).first()
-    if not db_timelog or db_timelog.end_time is not None:
-        return None
-    end_time = datetime.now(timezone.utc)
-    start_time = db_timelog.start_time
-    duration = None
-    if start_time:
-        if start_time.tzinfo is None and end_time.tzinfo is not None: start_time = start_time.replace(tzinfo=timezone.utc)
-        elif start_time.tzinfo is not None and end_time.tzinfo is None: end_time = end_time.replace(tzinfo=start_time.tzinfo)
-        duration = end_time - start_time
-    db_timelog.end_time = end_time
-    db_timelog.duration = duration
+    db_timelog = models.TimeLog(
+        **timelog_data.model_dump(),
+        user_id=user_id,
+        start_time=datetime.now(timezone.utc)
+    )
     db.add(db_timelog)
     db.commit()
     db.refresh(db_timelog)
     return db_timelog
 
-def get_active_timelogs_for_project(db: Session, project_id: int) -> List[models.TimeLog]:
-    """Retrieves all currently open time logs for a specific project."""
-    return db.query(models.TimeLog).options(
-        joinedload(models.TimeLog.user) # Include user info
-    ).filter(
-        models.TimeLog.project_id == project_id,
-        models.TimeLog.end_time == None # Filter for logs that haven't ended
-    ).order_by(models.TimeLog.start_time.asc()).all()
+def update_timelog_entry(db: Session, timelog_id: int) -> models.TimeLog:
+    db_timelog = db.query(models.TimeLog).get(timelog_id)
+    if db_timelog and not db_timelog.end_time:
+        db_timelog.end_time = datetime.now(timezone.utc)
+        db_timelog.duration = db_timelog.end_time - db_timelog.start_time
+        db.commit()
+        db.refresh(db_timelog)
+    return db_timelog
 
-# --- THIS FUNCTION WAS MISSING ---
+def get_open_timelog_for_user(db: Session, user_id: int) -> Optional[models.TimeLog]:
+    return db.query(models.TimeLog).options(
+        joinedload(models.TimeLog.project)
+    ).filter(
+        models.TimeLog.user_id == user_id,
+        models.TimeLog.end_time == None
+    ).first()
+
 def get_timelogs(
     db: Session,
     user_id: Optional[int] = None,
     project_id: Optional[int] = None,
     tenant_id: Optional[int] = None,
-    start_date: Optional[datetime] = None, # NEW: Date range filter start
-    end_date: Optional[datetime] = None,   # NEW: Date range filter end
-    sort_by: Optional[str] = 'start_time', # NEW: Sorting
-    sort_dir: Optional[str] = 'desc',      # NEW: Sorting
+    start_date: Optional[datetime] = None,
+    end_date: Optional[datetime] = None,
+    search: Optional[str] = None,
+    sort_by: str = 'start_time',
+    sort_dir: str = 'desc',
     skip: int = 0,
     limit: int = 100
 ) -> List[models.TimeLog]:
     query = db.query(models.TimeLog).options(
         joinedload(models.TimeLog.user),
-        joinedload(models.TimeLog.project)
+        joinedload(models.TimeLog.project),
+        joinedload(models.TimeLog.task)
     )
 
-    # Apply filters
+    # --- THIS IS THE CORRECTED LOGIC ---
+
+    # Join User model for tenant and search filtering
+    # We use outerjoin in case user is deleted but logs remain
+    query = query.outerjoin(models.User, models.TimeLog.user_id == models.User.id)
+
     if user_id is not None:
         query = query.filter(models.TimeLog.user_id == user_id)
     if project_id is not None:
         query = query.filter(models.TimeLog.project_id == project_id)
     if tenant_id is not None:
-        query = query.join(models.User).filter(models.User.tenant_id == tenant_id)
+        # Filter by the tenant ID from the joined User table
+        query = query.filter(models.User.tenant_id == tenant_id)
+    
     if start_date:
         query = query.filter(models.TimeLog.start_time >= start_date)
     if end_date:
-        # Add 1 day to end_date to make the range inclusive of the selected day
-        inclusive_end_date = end_date + timedelta(days=1)
-        query = query.filter(models.TimeLog.start_time < inclusive_end_date)
+        # Add one day to end_date to be inclusive
+        end_date_inclusive = end_date + timedelta(days=1)
+        query = query.filter(models.TimeLog.start_time < end_date_inclusive)
+    
+    if search:
+        search_term = f"%{search}%"
+        # We need outerjoin because a log might not have a project
+        query = query.outerjoin(models.Project, models.TimeLog.project_id == models.Project.id)
+        query = query.filter(
+            (models.TimeLog.notes.ilike(search_term)) |
+            (models.Project.name.ilike(search_term)) |
+            (models.User.full_name.ilike(search_term))
+        )
+    # --- END CORRECTION ---
 
-    # Apply sorting
-    order_column = models.TimeLog.start_time # Default
-    if sort_by == 'start_time': order_column = models.TimeLog.start_time
-    elif sort_by == 'end_time': order_column = models.TimeLog.end_time
-    elif sort_by == 'duration': order_column = models.TimeLog.duration
-    # Add more sortable columns as needed
-
+    # Sorting
+    sort_column = getattr(models.TimeLog, sort_by, models.TimeLog.start_time)
     if sort_dir == 'desc':
-        query = query.order_by(desc(order_column).nullslast())
+        query = query.order_by(desc(sort_column))
     else:
-        query = query.order_by(asc(order_column).nullsfirst())
+        query = query.order_by(asc(sort_column))
 
     return query.offset(skip).limit(limit).all()
+
+def get_active_timelogs_for_project(db: Session, project_id: int) -> List[models.TimeLog]:
+    """Retrieves all currently open time logs for a specific project."""
+    return db.query(models.TimeLog).options(
+        joinedload(models.TimeLog.user)
+    ).filter(
+        models.TimeLog.project_id == project_id,
+        models.TimeLog.end_time == None
+    ).order_by(models.TimeLog.start_time.asc()).all()
 # --- END MISSING FUNCTION ---
 # --- Task Photo Metadata CRUD ---
 def get_task_photo(db: Session, photo_id: int) -> Optional[models.TaskPhoto]:

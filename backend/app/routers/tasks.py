@@ -41,7 +41,7 @@ async def create_new_task(request: Request, task_data: schemas.TaskCreate, db: D
     return crud.create_task(db=db, task=task_data, project_tenant_id=project.tenant_id)
 
 @router.get("/", response_model=List[schemas.TaskRead])
-@limiter.limit("100/minute")
+@limiter.limit("200/minute")
 async def read_all_tasks(
     request: Request,
     db: DbDependency,
@@ -49,22 +49,27 @@ async def read_all_tasks(
     project_id: Optional[int] = Query(None),
     assignee_id: Optional[int] = Query(None),
     status: Optional[schemas.TaskStatusLiteral] = Query(None),
+    search: Optional[str] = Query(None, description="Search tasks by title"), # <-- Add search query param
     sort_by: Optional[AllowedTaskSortFields] = Query('id'),
     sort_dir: Optional[AllowedSortDirections] = Query('asc'),
     skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=200)
+    limit: int = Query(100, ge=1, le=200) # Keep limit reasonable
 ):
     effective_project_id = project_id
     if project_id and not current_user.is_superuser:
         project = crud.get_project(db, project_id=project_id, tenant_id=current_user.tenant_id)
         if not project:
             return []
-    
-    tasks = crud.get_tasks(db=db, project_id=effective_project_id, assignee_id=assignee_id, status=status, sort_by=sort_by, sort_dir=sort_dir, skip=skip, limit=limit)
-    
+
+    tasks = crud.get_tasks(
+        db=db, project_id=effective_project_id, assignee_id=assignee_id, status=status,
+        search=search, # <-- Pass search to CRUD
+        sort_by=sort_by, sort_dir=sort_dir, skip=skip, limit=limit
+    )
+
     if not current_user.is_superuser:
         tasks = [task for task in tasks if task.project.tenant_id == current_user.tenant_id]
-        
+
     return tasks
 
 @router.get("/{task_id}", response_model=schemas.TaskRead)

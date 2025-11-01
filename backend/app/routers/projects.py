@@ -45,13 +45,18 @@ async def read_all_projects_for_tenant(
     db: DbDependency,
     current_user: CurrentUserDependency,
     status_filter: Optional[str] = Query(None, alias="status"),
+    search: Optional[str] = Query(None, description="Search projects by name"), # <-- Add search query param
     sort_by: Optional[AllowedProjectSortFields] = Query('name'),
     sort_dir: Optional[AllowedSortDirections] = Query('asc'),
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=200)
 ):
     effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
-    projects = crud.get_projects(db=db, tenant_id=effective_tenant_id, status=status_filter, sort_by=sort_by, sort_dir=sort_dir, skip=skip, limit=limit)
+    projects = crud.get_projects(
+        db=db, tenant_id=effective_tenant_id, status=status_filter,
+        search=search, # <-- Pass search to CRUD
+        sort_by=sort_by, sort_dir=sort_dir, skip=skip, limit=limit
+    )
     return projects
 
 @router.get("/{project_id}", response_model=schemas.ProjectRead)

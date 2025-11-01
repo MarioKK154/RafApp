@@ -2,7 +2,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query, Request
 from sqlalchemy.orm import Session
 from typing import Annotated, List, Optional, Literal
-from datetime import datetime
+from datetime import datetime, date
 
 from .. import crud, models, schemas, security
 from ..database import get_db
@@ -53,10 +53,39 @@ async def get_timelog_status(request: Request, db: DbDependency, current_user: C
     open_log = crud.get_open_timelog_for_user(db, user_id=current_user.id)
     return {"is_clocked_in": bool(open_log), "current_log": open_log}
 
+# --- THIS ENDPOINT IS NOW CORRECTED ---
 @router.get("/me", response_model=List[schemas.TimeLogRead])
 @limiter.limit("100/minute")
-async def read_my_timelogs(request: Request, db: DbDependency, current_user: CurrentUserDependency, skip: int = Query(0, ge=0), limit: int = Query(100, ge=1, le=1000)):
-    return crud.get_timelogs(db=db, user_id=current_user.id, skip=skip, limit=limit)
+async def read_my_timelogs(
+    request: Request, 
+    db: DbDependency, 
+    current_user: CurrentUserDependency,
+    # Add all the same filter/sort parameters
+    start_date: Optional[date] = Query(None, description="Start date (YYYY-MM-DD)"),
+    end_date: Optional[date] = Query(None, description="End date (YYYY-MM-DD)"),
+    search: Optional[str] = Query(None, description="Search notes, project, user"),
+    sort_by: Optional[AllowedTimeLogSortFields] = Query('start_time'),
+    sort_dir: Optional[AllowedSortDirections] = Query('desc'),
+    skip: int = Query(0, ge=0), 
+    limit: int = Query(100, ge=1, le=1000)
+):
+    start_dt = datetime.combine(start_date, datetime.min.time()) if start_date else None
+    end_dt = datetime.combine(end_date, datetime.min.time()) if end_date else None
+
+    # Call crud.get_timelogs, but force the user_id to the current user
+    return crud.get_timelogs(
+        db=db, 
+        user_id=current_user.id, # Force user_id
+        project_id=None, # User can see logs from all their projects
+        tenant_id=current_user.tenant_id,
+        start_date=start_dt, 
+        end_date=end_dt, 
+        search=search,
+        sort_by=sort_by, 
+        sort_dir=sort_dir, 
+        skip=skip, 
+        limit=limit
+    )
 
 @router.get("/", response_model=List[schemas.TimeLogRead])
 @limiter.limit("100/minute")
@@ -66,30 +95,20 @@ async def read_all_timelogs_for_tenant(
     current_user: ManagerOrAdminTenantDependency,
     project_id: Optional[int] = Query(None),
     user_id: Optional[int] = Query(None),
-    start_date: Optional[datetime] = Query(None),
-    end_date: Optional[datetime] = Query(None),
+    start_date: Optional[date] = Query(None, description="Start date (YYYY-MM-DD)"),
+    end_date: Optional[date] = Query(None, description="End date (YYYY-MM-DD)"),
+    search: Optional[str] = Query(None, description="Search notes, project, user"),
     sort_by: Optional[AllowedTimeLogSortFields] = Query('start_time'),
     sort_dir: Optional[AllowedSortDirections] = Query('desc'),
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000)
 ):
     effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
-    return crud.get_timelogs(db=db, user_id=user_id, project_id=project_id, tenant_id=effective_tenant_id, start_date=start_date, end_date=end_date, sort_by=sort_by, sort_dir=sort_dir, skip=skip, limit=limit)
+    start_dt = datetime.combine(start_date, datetime.min.time()) if start_date else None
+    end_dt = datetime.combine(end_date, datetime.min.time()) if end_date else None
 
-@router.get("/project/{project_id}/active", response_model=List[schemas.TimeLogRead])
-@limiter.limit("100/minute")
-async def read_active_timelogs_for_project(
-    request: Request,
-    project_id: int,
-    db: DbDependency,
-    current_user: ManagerOrAdminTenantDependency # Only managers/admins can see this
-):
-    """Gets a list of users currently clocked in to a specific project."""
-    # Verify the project exists and is accessible
-    project = await get_project_if_accessible(project_id=project_id, db=db, current_user=current_user)
-    if not project:
-        # get_project_if_accessible raises HTTPException, but check just in case
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found.")
-        
-    active_logs = crud.get_active_timelogs_for_project(db=db, project_id=project_id)
-    return active_logs
+    return crud.get_timelogs(
+        db=db, user_id=user_id, project_id=project_id, tenant_id=effective_tenant_id,
+        start_date=start_dt, end_date=end_dt, search=search,
+        sort_by=sort_by, sort_dir=sort_dir, skip=skip, limit=limit
+    )

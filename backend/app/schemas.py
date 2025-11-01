@@ -367,8 +367,23 @@ class TimeLogRead(TimeLogBase):
     id: int
     start_time: datetime
     end_time: Optional[datetime] = None
-    duration: Optional[timedelta] = None
+    duration: Optional[timedelta] = None # Keep the original timedelta from DB
     user_id: int
+    # Add project and task basic schemas if not already present
+    project: Optional[ProjectReadBasic] = None
+    task: Optional[TaskReadBasic] = None
+    user: Optional[UserReadBasic] = None # Ensure user is included
+
+
+    # --- NEW: Calculated field for duration in hours ---
+    @computed_field
+    @property
+    def duration_hours(self) -> Optional[float]:
+        if self.duration:
+            return round(self.duration.total_seconds() / 3600.0, 2)
+        return None
+    # --- END NEW ---
+
     model_config = ConfigDict(from_attributes=True)
 
 class TimeLogStatus(BaseModel):
