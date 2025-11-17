@@ -2,7 +2,7 @@
 # Final version based on the user-provided file with corrections.
 
 from sqlalchemy import (Boolean, Column, ForeignKey, Integer, String, DateTime,
-                        Text, Enum as SQLAlchemyEnum, Float, Interval, Table, Date)
+                        Text, Enum as SQLAlchemyEnum, Float, Interval, Table, Date, UniqueConstraint)
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from sqlalchemy.sql import func
 import enum
@@ -99,6 +99,7 @@ class Tenant(Base):
     shops: Mapped[list["Shop"]] = relationship(back_populates="tenant")
     offers: Mapped[list["Offer"]] = relationship(back_populates="tenant")
     labor_catalog_items: Mapped[list["LaborCatalogItem"]] = relationship(back_populates="tenant", cascade="all, delete-orphan")
+    customers: Mapped[list["Customer"]] = relationship(back_populates="tenant", cascade="all, delete-orphan")
 
 project_members_table = Table(
     "project_members", Base.metadata,
@@ -516,3 +517,28 @@ class BoQItem(Base):
     
     boq: Mapped["BoQ"] = relationship(back_populates="items")
     inventory_item: Mapped["InventoryItem"] = relationship(back_populates="boq_items")
+
+class Customer(Base):
+    __tablename__ = "customers"
+    
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id"), nullable=False, index=True)
+    
+    name: Mapped[str] = mapped_column(String, index=True, nullable=False)
+    address: Mapped[Optional[str]] = mapped_column(String)
+    kennitala: Mapped[Optional[str]] = mapped_column(String, index=True)
+    contact_person: Mapped[Optional[str]] = mapped_column(String)
+    phone_number: Mapped[Optional[str]] = mapped_column(String)
+    email: Mapped[Optional[str]] = mapped_column(String, index=True)
+    notes: Mapped[Optional[str]] = mapped_column(Text)
+    
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    tenant: Mapped["Tenant"] = relationship(back_populates="customers")
+
+    __table_args__ = (
+        UniqueConstraint('tenant_id', 'name', name='_tenant_customer_name_uc'),
+        UniqueConstraint('tenant_id', 'kennitala', name='_tenant_customer_kennitala_uc'),
+        UniqueConstraint('tenant_id', 'email', name='_tenant_customer_email_uc')
+    )

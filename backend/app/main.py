@@ -19,7 +19,7 @@ from .routers import (
     timelogs, admin_tools, comments, task_photos, 
     shopping_list, reports,
     dashboard, project_inventory, offers, events,
-    labor_catalog
+    labor_catalog, calculators, customers
 )
 
 models.Base.metadata.create_all(bind=engine)
@@ -63,6 +63,8 @@ app.include_router(offers.router)
 app.include_router(reports.router)
 app.include_router(events.router)
 app.include_router(labor_catalog.router)
+app.include_router(calculators.router)
+app.include_router(customers.router)
 app.include_router(drawings.router)
 app.include_router(timelogs.router)
 app.include_router(comments.router)

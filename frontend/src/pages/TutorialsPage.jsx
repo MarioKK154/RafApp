@@ -1,5 +1,6 @@
 // frontend/src/pages/TutorialsPage.jsx
 import React from 'react';
+import CableSizingCalculator from '../components/CableSizingCalculator'; // <-- IMPORT
 
 function TutorialsPage() {
     return (
@@ -9,31 +10,24 @@ function TutorialsPage() {
             </h1>
 
             <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md space-y-6">
-                {/* Tutorials Section */}
-                <section>
-                    <h2 className="text-xl font-semibold mb-3">Tutorials & Diagrams</h2>
-                    <p>
-                        This section will host helpful tutorials, connection guides, and wiring diagrams.
-                    </p>
-                    <p>
-                        {/* Placeholder */}
-                        Content coming soon...
-                    </p>
-                </section>
-
-                <hr className="dark:border-gray-600"/>
-
                 {/* Calculators Section */}
                 <section>
                     <h2 className="text-xl font-semibold mb-3">Calculators</h2>
-                    <div className="space-y-4">
+                    <div className="space-y-6">
+                        {/* --- START: CABLE SIZING CALCULATOR --- */}
                         <div>
-                            <h3 className="text-lg font-medium">Cable Sizing Calculator</h3>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">
-                                Feature coming soon. This calculator will help determine the appropriate cable size based on load, distance, and other factors.
+                            <h3 className="text-lg font-medium mb-2">Cable Sizing Calculator</h3>
+                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                                This calculator determines the minimum standards-compliant cable size
+                                based on load, distance, installation, and safety factors.
                             </p>
-                            {/* Placeholder for the calculator component */}
+                            {/* --- RENDER THE COMPONENT --- */}
+                            <CableSizingCalculator />
                         </div>
+                        {/* --- END: CABLE SIZING CALCULATOR --- */}
+
+                        <hr className="dark:border-gray-600"/>
+
                         <div>
                             <h3 className="text-lg font-medium">Voltage Drop Calculator</h3>
                             <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -43,6 +37,20 @@ function TutorialsPage() {
                         </div>
                     </div>
                 </section>
+                
+                <hr className="dark:border-gray-600"/>
+
+                {/* Tutorials Section */}
+                <section>
+                    <h2 className="text-xl font-semibold mb-3">Tutorials & Diagrams</h2>
+                    <p>
+                        This section will host helpful tutorials, connection guides, and wiring diagrams.
+                    </p>
+                    <p>
+                        Content coming soon...
+                    </p>
+                </section>
+
             </div>
         </div>
     );

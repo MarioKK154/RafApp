@@ -727,6 +727,37 @@ class EventRead(EventBase):
     attendees: List[UserReadBasic] = []
     model_config = ConfigDict(from_attributes=True)
 
+# --- NEW: Customer Schemas ---
+
+class CustomerBase(BaseModel):
+    name: str = Field(..., min_length=1)
+    address: Optional[str] = None
+    kennitala: Optional[str] = None
+    contact_person: Optional[str] = None
+    phone_number: Optional[str] = None
+    email: Optional[EmailStr] = None
+    notes: Optional[str] = None
+
+class CustomerCreate(CustomerBase):
+    pass
+
+class CustomerUpdate(BaseModel):
+    name: Optional[str] = Field(None, min_length=1)
+    address: Optional[str] = None
+    kennitala: Optional[str] = None
+    contact_person: Optional[str] = None
+    phone_number: Optional[str] = None
+    email: Optional[EmailStr] = None
+    notes: Optional[str] = None
+
+class CustomerRead(CustomerBase):
+    id: int
+    tenant_id: int
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
 # --- NEW: Labor Catalog Schemas ---
 
 class LaborCatalogItemBase(BaseModel):
@@ -746,3 +777,139 @@ class LaborCatalogItemRead(LaborCatalogItemBase):
     id: int
     tenant_id: int
     model_config = ConfigDict(from_attributes=True)
+
+# --- UPDATED: Calculator Schemas ---
+
+# Define Literals based on the keys from your CABLE_DATA
+InstallMethodLiteral = Literal[
+    "in_air_spaced", "clipped_direct", "conduit_surface", 
+    "conduit_embedded", "buried_direct", "buried_in_duct"
+]
+InsulationLiteral = Literal["PVC", "XLPE"]
+MaterialLiteral = Literal["copper", "aluminum"]
+LoadTypeLiteral = Literal[
+    "lighting", "general_power", "motors", "ev_chargers", "data_centers"
+]
+
+class CableSizerInput(BaseModel):
+    # Core Load
+    voltage_system: Literal["single_phase", "three_phase"] = Field(..., example="single_phase")
+    voltage: float = Field(..., gt=0, example=230)
+    load_power_kw: float = Field(..., gt=0, example=12)
+    power_factor: float = Field(..., gt=0, le=1, example=0.9)
+    cable_length_m: float = Field(..., gt=0, example=40)
+    
+    # Cable & Installation
+    material: MaterialLiteral = Field(..., example="copper")
+    insulation: InsulationLiteral = Field(..., example="XLPE")
+    installation_method: InstallMethodLiteral = Field(..., example="conduit_surface")
+    ambient_temperature_c: int = Field(..., example=35)
+    
+    # Requirements
+    load_type: Optional[LoadTypeLiteral] = Field(None, example="general_power")
+    allowable_vdrop_percent: Optional[float] = Field(None, gt=0, example=5.0)
+    
+    # ------------------------------------------------------------------
+    # Fault Check (UPDATED)
+    # ------------------------------------------------------------------
+    # Backward compatible:
+    #   - If none of the new short-circuit fields are sent,
+    #     the calculator switches SC check OFF automatically.
+    #
+    fault_current_ka: Optional[float] = Field(
+        None, gt=0, example=6.0,
+        description="Source prospective fault level (kA) — optional"
+    )
+    disconnection_time_s: Optional[float] = Field(
+        None, gt=0, example=0.4,
+        description="Disconnection time for SC check — optional"
+    )
+
+    # NEW — toggle SC calculations
+    enable_short_circuit_check: bool = Field(
+        False,
+        example=False,
+        description="Enable thermal short-circuit sizing check"
+    )
+
+    # NEW — preferred fault current at the LOAD
+    fault_current_at_load_ka: Optional[float] = Field(
+        None, gt=0,
+        description="Actual fault current at cable end (preferred)"
+    )
+
+    # NEW — attenuation when using source fault_current_ka
+    assume_fault_at_load_fraction: Optional[float] = Field(
+        None, ge=0, le=1,
+        description="Fraction of source fault current reaching load (default = 0.10)"
+    )
+    
+    model_config = ConfigDict(from_attributes=True)
+
+class CableSizerDerivedValues(BaseModel):
+    load_current_a: float
+    allowable_vdrop_percent: float
+    allowable_vdrop_v: float
+    Ct_temp: float
+    Ci_install: float
+    Cg_grouping: float = 1.0 # Hardcoded for now
+    total_derating_factor: float
+    effective_required_ampacity_a: float
+    short_circuit_k_factor: float
+    short_circuit_min_mm2: float
+
+class CableSizerReasoningStep(BaseModel):
+    size_mm2: float
+    
+    # Ampacity Check
+    base_ampacity_a: float
+    derated_ampacity_a: float
+    ampacity_ok: bool
+    
+    # Voltage Drop Check
+    resistance_ohm_per_km: float
+    reactance_ohm_per_km: float
+    voltage_drop_percent: float
+    vdrop_ok: bool
+    
+    # Short Circuit Check
+    short_circuit_ok: bool
+
+class CableSizerOutput(BaseModel):
+    inputs: CableSizerInput
+    derived_values: CableSizerDerivedValues
+    reasoning: List[CableSizerReasoningStep]
+    final_selection: CableSizerReasoningStep
+    
+    @computed_field
+    @property
+    def final_message(self) -> str:
+        final_size = self.final_selection.size_mm2
+        if final_size == self.reasoning[0].size_mm2:
+            return f"Selected size {final_size}mm² is the minimum size for all checks."
+        
+        # Check why it was upsized
+        ampacity_min_size = self.reasoning[0].size_mm2
+        vdrop_min_size = next(s.size_mm2 for s in self.reasoning if s.ampacity_ok and s.vdrop_ok)
+        sc_min_size = next(s.size_mm2 for s in self.reasoning if s.short_circuit_ok)
+
+        reasons = []
+        if final_size > ampacity_min_size:
+            reasons.append(f"voltage drop (required {vdrop_min_size}mm²)")
+        if final_size > vdrop_min_size:
+             reasons.append(f"short-circuit withstand (required {sc_min_size}mm²)")
+        
+        if not reasons:
+             # This can happen if, e.g., vdrop_min_size > ampacity_min_size and sc_min_size > ampacity_min_size
+             # but vdrop_min_size == final_size and sc_min_size == final_size
+             if vdrop_min_size == final_size:
+                 reasons.append("voltage drop")
+             if sc_min_size == final_size:
+                 reasons.append("short-circuit withstand")
+
+        # Deduplicate reasons if necessary (e.g., if both vdrop and sc point to the same final size)
+        unique_reasons = " and ".join(sorted(list(set(reasons))))
+        
+        return f"Selected size {final_size}mm²; upsized from {ampacity_min_size}mm² (for ampacity) due to {unique_reasons}."
+
+# --- END UPDATED ---

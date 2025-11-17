@@ -1378,6 +1378,115 @@ def delete_event(db: Session, db_event: models.Event):
     db.delete(db_event)
     db.commit()
 
+# --- NEW: Customer CRUD Operations ---
+
+def get_customer(db: Session, customer_id: int, tenant_id: int) -> Optional[models.Customer]:
+    """Gets a single customer by ID, scoped to a tenant."""
+    return db.query(models.Customer).filter(
+        models.Customer.id == customer_id,
+        models.Customer.tenant_id == tenant_id
+    ).first()
+
+def get_customers(
+    db: Session, 
+    tenant_id: int, 
+    skip: int = 0, 
+    limit: int = 100
+) -> List[models.Customer]:
+    """Gets a list of all customers for a tenant."""
+    return db.query(models.Customer).filter(
+        models.Customer.tenant_id == tenant_id
+    ).order_by(models.Customer.name).offset(skip).limit(limit).all()
+
+def create_customer(db: Session, customer: schemas.CustomerCreate, tenant_id: int) -> models.Customer:
+    """Creates a new customer for a specific tenant."""
+    # Check for duplicates explicitly to give better error messages
+    if customer.kennitala:
+        existing_kt = db.query(models.Customer).filter(
+            models.Customer.tenant_id == tenant_id, 
+            models.Customer.kennitala == customer.kennitala
+        ).first()
+        if existing_kt:
+            raise ValueError(f"Customer with Kennitala {customer.kennitala} already exists.")
+            
+    if customer.email:
+        existing_email = db.query(models.Customer).filter(
+            models.Customer.tenant_id == tenant_id, 
+            models.Customer.email == customer.email
+        ).first()
+        if existing_email:
+            raise ValueError(f"Customer with email {customer.email} already exists.")
+
+    existing_name = db.query(models.Customer).filter(
+        models.Customer.tenant_id == tenant_id, 
+        models.Customer.name == customer.name
+    ).first()
+    if existing_name:
+        raise ValueError(f"Customer with name '{customer.name}' already exists.")
+
+    db_customer = models.Customer(
+        **customer.model_dump(exclude_unset=True),
+        tenant_id=tenant_id
+    )
+    db.add(db_customer)
+    db.commit()
+    db.refresh(db_customer)
+    return db_customer
+
+def update_customer(
+    db: Session, 
+    db_customer: models.Customer, 
+    customer_update: schemas.CustomerUpdate
+) -> models.Customer:
+    """Updates a customer's details."""
+    update_data = customer_update.model_dump(exclude_unset=True)
+    
+    tenant_id = db_customer.tenant_id
+    
+    # Check for duplicates on update
+    if 'kennitala' in update_data and update_data['kennitala']:
+        existing_kt = db.query(models.Customer).filter(
+            models.Customer.tenant_id == tenant_id, 
+            models.Customer.kennitala == update_data['kennitala'],
+            models.Customer.id != db_customer.id
+        ).first()
+        if existing_kt:
+            raise ValueError(f"Customer with Kennitala {update_data['kennitala']} already exists.")
+            
+    if 'email' in update_data and update_data['email']:
+        existing_email = db.query(models.Customer).filter(
+            models.Customer.tenant_id == tenant_id, 
+            models.Customer.email == update_data['email'],
+            models.Customer.id != db_customer.id
+        ).first()
+        if existing_email:
+            raise ValueError(f"Customer with email {update_data['email']} already exists.")
+
+    if 'name' in update_data and update_data['name']:
+        existing_name = db.query(models.Customer).filter(
+            models.Customer.tenant_id == tenant_id, 
+            models.Customer.name == update_data['name'],
+            models.Customer.id != db_customer.id
+        ).first()
+        if existing_name:
+            raise ValueError(f"Customer with name '{update_data['name']}' already exists.")
+
+    for key, value in update_data.items():
+        setattr(db_customer, key, value)
+        
+    db.add(db_customer)
+    db.commit()
+    db.refresh(db_customer)
+    return db_customer
+
+def delete_customer(db: Session, db_customer: models.Customer):
+    """Deletes a customer."""
+    # Note: You may want to check for dependencies (like projects) first
+    db.delete(db_customer)
+    db.commit()
+
+# --- END NEW ---
+
 # --- NEW: Labor Catalog CRUD Operations ---
 
 def create_labor_catalog_item(db: Session, item_data: schemas.LaborCatalogItemCreate, tenant_id: int) -> models.LaborCatalogItem:

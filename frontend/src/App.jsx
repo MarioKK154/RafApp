@@ -53,6 +53,11 @@ import LaborCatalogListPage from './pages/LaborCatalogListPage';
 import LaborCatalogCreatePage from './pages/LaborCatalogCreatePage';
 import LaborCatalogEditPage from './pages/LaborCatalogEditPage';
 
+// --- 1. ADD THESE IMPORTS ---
+import CustomerListPage from './pages/CustomerListPage';
+import CustomerCreatePage from './pages/CustomerCreatePage';
+import CustomerEditPage from './pages/CustomerEditPage';
+
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
     const { isAuthenticated, isLoading } = useAuth();
@@ -85,6 +90,12 @@ function App() {
                         <Route path="/projects" element={<ProtectedRoute><ProjectsPage /></ProtectedRoute>} />
                         <Route path="/projects/new" element={<ProtectedRoute><ProjectCreatePage /></ProtectedRoute>} />
                         <Route path="/projects/edit/:projectId" element={<ProtectedRoute><ProjectEditPage /></ProtectedRoute>} />
+
+                        {/* --- 2. ADD THESE NEW ROUTES --- */}
+                        <Route path="/customers" element={<ProtectedRoute><CustomerListPage /></ProtectedRoute>} />
+                        <Route path="/customers/new" element={<ProtectedRoute><CustomerCreatePage /></ProtectedRoute>} />
+                        <Route path="/customers/edit/:customerId" element={<ProtectedRoute><CustomerEditPage /></ProtectedRoute>} />
+                        {/* --- END NEW ROUTES --- */}
 
                         {/* Task Routes */}
                         <Route path="/tasks" element={<ProtectedRoute><TasksListPage /></ProtectedRoute>} />

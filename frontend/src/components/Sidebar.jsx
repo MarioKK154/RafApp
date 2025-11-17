@@ -6,12 +6,13 @@ import defaultLogo from '../assets/logo.png';
 import {
     HomeIcon, BriefcaseIcon, ClipboardDocumentListIcon, CircleStackIcon,
     WrenchScrewdriverIcon, TruckIcon, BuildingStorefrontIcon, ClockIcon,
-    ChartBarSquareIcon, // <-- CORRECTED ICON IMPORT
+    ChartBarSquareIcon,
     CalendarDaysIcon, UsersIcon, ListBulletIcon, DocumentChartBarIcon,
     Cog6ToothIcon, ArrowRightOnRectangleIcon, // Logout
     AdjustmentsHorizontalIcon, // Tenants
     WrenchIcon, // Admin Tools
-    ChevronDoubleLeftIcon, ChevronDoubleRightIcon // Collapse/Expand
+    ChevronDoubleLeftIcon, ChevronDoubleRightIcon, // Collapse/Expand
+    UserGroupIcon
 } from '@heroicons/react/24/outline';
 
 function Sidebar() {
@@ -71,6 +72,16 @@ function Sidebar() {
                              <BriefcaseIcon className="h-5 w-5 mr-3 flex-shrink-0"/>
                             {!isCollapsed && <span>Projects</span>}
                         </NavLink>
+                        
+                        {/* --- HIDE THIS LINK BASED ON ROLE --- */}
+                        {isAdmin && (
+                            <NavLink to="/customers" className={getNavLinkClass}>
+                                <UserGroupIcon className="h-5 w-5 mr-3 flex-shrink-0"/>
+                                {!isCollapsed && <span>Customers</span>}
+                            </NavLink>
+                        )}
+                        {/* --- END CHANGE --- */}
+
                         <NavLink to="/tasks" className={getNavLinkClass}>
                              <ClipboardDocumentListIcon className="h-5 w-5 mr-3 flex-shrink-0"/>
                             {!isCollapsed && <span>Tasks</span>}
@@ -96,7 +107,6 @@ function Sidebar() {
                             {!isCollapsed && <span>Time Logs</span>}
                         </NavLink>
                          <NavLink to="/gantt" className={getNavLinkClass}>
-                             {/* --- THIS IS THE FIX --- */}
                              <ChartBarSquareIcon className="h-5 w-5 mr-3 flex-shrink-0"/>
                             {!isCollapsed && <span>Gantt</span>}
                         </NavLink>
@@ -126,11 +136,11 @@ function Sidebar() {
                                     {!isCollapsed && <span>Shopping List</span>}
                                 </NavLink>
                                 <NavLink to="/labor-catalog" className={getNavLinkClass}>
-                                     <ListBulletIcon className="h-5 w-5 mr-3 flex-shrink-0"/>
+                                      <ListBulletIcon className="h-5 w-5 mr-3 flex-shrink-0"/>
                                     {!isCollapsed && <span>Labor Catalog</span>}
                                 </NavLink>
                                 <NavLink to="/reports" className={getNavLinkClass}>
-                                     <DocumentChartBarIcon className="h-5 w-5 mr-3 flex-shrink-0"/>
+                                      <DocumentChartBarIcon className="h-5 w-5 mr-3 flex-shrink-0"/>
                                     {!isCollapsed && <span>Reports</span>}
                                 </NavLink>
                             </>
@@ -141,11 +151,11 @@ function Sidebar() {
                             <>
                                  <hr className="my-2 border-gray-200 dark:border-gray-600"/>
                                 <NavLink to="/tenants" className={getNavLinkClass}>
-                                     <AdjustmentsHorizontalIcon className="h-5 w-5 mr-3 flex-shrink-0"/>
+                                      <AdjustmentsHorizontalIcon className="h-5 w-5 mr-3 flex-shrink-0"/>
                                     {!isCollapsed && <span>Tenants</span>}
                                 </NavLink>
                                 <NavLink to="/admin/tools" className={getNavLinkClass}>
-                                     <WrenchIcon className="h-5 w-5 mr-3 flex-shrink-0"/>
+                                      <WrenchIcon className="h-5 w-5 mr-3 flex-shrink-0"/>
                                     {!isCollapsed && <span>Admin Tools</span>}
                                 </NavLink>
                             </>
@@ -177,7 +187,7 @@ function Sidebar() {
                 ) : (
                     <NavLink to="/login" className={getNavLinkClass}>
                          <ArrowRightOnRectangleIcon className="h-5 w-5 mr-3 flex-shrink-0"/>
-                         {!isCollapsed && <span>Login</span>}
+                        {!isCollapsed && <span>Login</span>}
                     </NavLink>
                 )}
             </div>
