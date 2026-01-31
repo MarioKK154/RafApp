@@ -28,34 +28,65 @@ async def create_new_project(
     db: DbDependency, 
     current_user: ManagerOrAdminOfTenantDependency
 ):
+    # 1. Determine target tenant
+    # Superadmins can specify a tenant_id; regular users are locked to their own.
+    if current_user.is_superuser:
+        # We check if tenant_id was provided in the request, otherwise default to System (1)
+        target_tenant_id = getattr(project_data, 'tenant_id', 1) 
+        if target_tenant_id is None:
+            target_tenant_id = 1
+    else:
+        target_tenant_id = current_user.tenant_id
+
+    # 2. Validate Project Manager
     if project_data.project_manager_id:
         pm_user = crud.get_user(db, user_id=project_data.project_manager_id)
-        if not pm_user or pm_user.tenant_id != current_user.tenant_id:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Selected Project Manager is invalid or not in your tenant.")
-        if pm_user.role != 'project manager':
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"User ID {pm_user.id} is not a Project Manager.")
+        # Validate PM exists and belongs to the correct tenant (or is a superuser)
+        if not pm_user or (pm_user.tenant_id != target_tenant_id and not pm_user.is_superuser):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, 
+                detail="Selected Project Manager is invalid or does not belong to the target tenant."
+            )
+        if pm_user.role != 'project manager' and pm_user.role != 'admin':
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, 
+                detail=f"User ID {pm_user.id} does not have a Managerial role."
+            )
     
-    new_project = crud.create_project(db=db, project=project_data, creator_id=current_user.id, tenant_id=current_user.tenant_id)
+    # 3. Create the project
+    new_project = crud.create_project(
+        db=db, 
+        project=project_data, 
+        creator_id=current_user.id, 
+        tenant_id=target_tenant_id
+    )
     return new_project
 
 @router.get("/", response_model=List[schemas.ProjectRead])
-@limiter.limit("100/minute")
+@limiter.limit("1000/minute")
 async def read_all_projects_for_tenant(
     request: Request,
     db: DbDependency,
     current_user: CurrentUserDependency,
     status_filter: Optional[str] = Query(None, alias="status"),
-    search: Optional[str] = Query(None, description="Search projects by name"), # <-- Add search query param
+    search: Optional[str] = Query(None, description="Search projects by name"),
     sort_by: Optional[AllowedProjectSortFields] = Query('name'),
     sort_dir: Optional[AllowedSortDirections] = Query('asc'),
     skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=200)
+    limit: int = Query(100, ge=1, le=1000)
 ):
+    # Superadmin bypass: effective_tenant_id is None, meaning crud.get_projects returns all
     effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
+    
     projects = crud.get_projects(
-        db=db, tenant_id=effective_tenant_id, status=status_filter,
-        search=search, # <-- Pass search to CRUD
-        sort_by=sort_by, sort_dir=sort_dir, skip=skip, limit=limit
+        db=db, 
+        tenant_id=effective_tenant_id, 
+        status=status_filter,
+        search=search,
+        sort_by=sort_by, 
+        sort_dir=sort_dir, 
+        skip=skip, 
+        limit=limit
     )
     return projects
 
@@ -69,8 +100,9 @@ async def read_single_project_for_tenant(
 ):
     effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
     db_project = crud.get_project(db=db, project_id=project_id, tenant_id=effective_tenant_id)
+    
     if db_project is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found.")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found or access denied.")
     return db_project
 
 @router.put("/{project_id}", response_model=schemas.ProjectRead)
@@ -83,19 +115,28 @@ async def update_existing_project_for_tenant(
     current_user: ManagerOrAdminOfTenantDependency
 ):
     effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
-    # First, verify the project exists in the tenant
+    
+    # 1. Verify access
     project_to_update = crud.get_project(db, project_id=project_id, tenant_id=effective_tenant_id)
     if not project_to_update:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found.")
 
+    # 2. Validate new PM if provided
     if project_update_data.project_manager_id is not None:
         pm_user = crud.get_user(db, user_id=project_update_data.project_manager_id)
-        if not pm_user or pm_user.tenant_id != project_to_update.tenant_id:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Selected Project Manager is invalid or not in the project's tenant.")
-        if pm_user.role != 'project manager':
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"User ID {pm_user.id} is not a Project Manager.")
+        if not pm_user or (pm_user.tenant_id != project_to_update.tenant_id and not pm_user.is_superuser):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, 
+                detail="Selected Project Manager is invalid or not in the project's tenant."
+            )
     
-    updated_project = crud.update_project(db=db, project_id=project_id, project_update=project_update_data, tenant_id=project_to_update.tenant_id)
+    # 3. Perform update
+    updated_project = crud.update_project(
+        db=db, 
+        project_id=project_id, 
+        project_update=project_update_data, 
+        tenant_id=effective_tenant_id
+    )
     return updated_project
 
 @router.delete("/{project_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -108,6 +149,7 @@ async def delete_existing_project_for_tenant(
 ):
     effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
     deleted_project = crud.delete_project(db=db, project_id=project_id, tenant_id=effective_tenant_id)
+    
     if deleted_project is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found.")
     return None
@@ -124,6 +166,7 @@ async def get_project_member_list_for_tenant(
     project = crud.get_project(db=db, project_id=project_id, tenant_id=effective_tenant_id)
     if not project:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found.")
+        
     return crud.get_project_members(db=db, project_id=project_id, tenant_id=effective_tenant_id)
 
 @router.post("/{project_id}/members", status_code=status.HTTP_204_NO_CONTENT)
@@ -137,6 +180,7 @@ async def assign_member_to_project_for_tenant(
 ):
     effective_tenant_id = None if current_user_assigning.is_superuser else current_user_assigning.tenant_id
     db_project = crud.get_project(db=db, project_id=project_id, tenant_id=effective_tenant_id)
+    
     if not db_project:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found.")
     
@@ -144,8 +188,12 @@ async def assign_member_to_project_for_tenant(
     if not user_to_assign:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User to assign not found.")
     
-    if user_to_assign.tenant_id != db_project.tenant_id:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot assign users from a different tenant to this project.")
+    # Validation: Users must be in the same tenant as the project, unless it's a superuser.
+    if user_to_assign.tenant_id != db_project.tenant_id and not user_to_assign.is_superuser:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, 
+            detail="Cannot assign users from a different tenant to this project."
+        )
     
     crud.add_member_to_project(db=db, project=db_project, user=user_to_assign)
     return None
@@ -161,6 +209,7 @@ async def remove_member_from_project_for_tenant(
 ):
     effective_tenant_id = None if current_user_removing.is_superuser else current_user_removing.tenant_id
     db_project = crud.get_project(db=db, project_id=project_id, tenant_id=effective_tenant_id)
+    
     if not db_project:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found.")
     

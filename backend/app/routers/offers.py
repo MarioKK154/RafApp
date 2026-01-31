@@ -19,18 +19,26 @@ ManagerOrAdminDependency = Annotated[models.User, Depends(security.require_role(
 
 # Helper to get offer and check permissions
 def get_offer_and_check_auth(offer_id: int, db: DbDependency, current_user: CurrentUserDependency) -> models.Offer:
+    """
+    Helper to fetch an offer record and verify access. 
+    Superusers bypass the tenant ownership check.
+    """
     effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
     db_offer = crud.get_offer(db, offer_id=offer_id, tenant_id=effective_tenant_id)
     if not db_offer:
-        raise HTTPException(status_code=404, detail="Offer not found.")
+        raise HTTPException(status_code=404, detail="Offer not found or access denied.")
     return db_offer
 
-# Helper to get line item and check permissions via its offer
+# Helper to get line item and check permissions via its parent offer
 def get_line_item_and_check_auth(line_item_id: int, db: DbDependency, current_user: CurrentUserDependency) -> models.OfferLineItem:
+    """
+    Helper to fetch a line item and verify access through its parent offer.
+    """
     db_item = crud.get_offer_line_item(db, line_item_id=line_item_id)
     if not db_item:
         raise HTTPException(status_code=404, detail="Offer line item not found.")
-    # Check permission via the parent offer
+    
+    # Check permission via the parent offer logic
     get_offer_and_check_auth(db_item.offer_id, db, current_user)
     return db_item
 
@@ -44,10 +52,16 @@ def create_new_offer(
     db: DbDependency,
     current_user: ManagerOrAdminDependency
 ):
-    # Verify project exists and belongs to the user's tenant
-    project = crud.get_project(db, project_id=offer_data.project_id, tenant_id=current_user.tenant_id)
+    """
+    Creates a new work offer for a project.
+    Superadmins can create offers for any project; others are limited to their tenant.
+    """
+    effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
+    
+    # Verify the project exists and the user has access to it
+    project = crud.get_project(db, project_id=offer_data.project_id, tenant_id=effective_tenant_id)
     if not project:
-        raise HTTPException(status_code=404, detail="Project not found.")
+        raise HTTPException(status_code=404, detail="Project not found or not accessible.")
         
     return crud.create_offer(db, offer_data=offer_data, user=current_user)
 
@@ -59,10 +73,15 @@ def get_offers_for_a_project(
     db: DbDependency,
     current_user: CurrentUserDependency
 ):
-    # Verify project exists and belongs to the user's tenant
-    project = crud.get_project(db, project_id=project_id, tenant_id=current_user.tenant_id)
+    """
+    Lists all offers associated with a specific project.
+    """
+    effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
+    
+    # Verify project exists and user has access
+    project = crud.get_project(db, project_id=project_id, tenant_id=effective_tenant_id)
     if not project:
-        raise HTTPException(status_code=404, detail="Project not found.")
+        raise HTTPException(status_code=404, detail="Project not found or not accessible.")
         
     return crud.get_offers_for_project(db, project_id=project_id)
 
@@ -74,6 +93,9 @@ def get_single_offer(
     db: DbDependency,
     current_user: CurrentUserDependency
 ):
+    """
+    Retrieves details for a specific offer.
+    """
     return get_offer_and_check_auth(offer_id, db, current_user)
 
 @router.put("/{offer_id}", response_model=schemas.OfferRead)
@@ -85,6 +107,9 @@ def update_offer_details(
     db: DbDependency,
     current_user: ManagerOrAdminDependency
 ):
+    """
+    Updates the general details of an offer (title, status, client info).
+    """
     db_offer = get_offer_and_check_auth(offer_id, db, current_user)
     return crud.update_offer(db, db_offer=db_offer, offer_update=offer_update)
 
@@ -96,6 +121,9 @@ def delete_an_offer(
     db: DbDependency,
     current_user: ManagerOrAdminDependency
 ):
+    """
+    Deletes an offer and its associated line items.
+    """
     db_offer = get_offer_and_check_auth(offer_id, db, current_user)
     crud.delete_offer(db, db_offer=db_offer)
     return None
@@ -111,14 +139,25 @@ def add_item_to_an_offer(
     db: DbDependency,
     current_user: ManagerOrAdminDependency
 ):
+    """
+    Adds a Material or Labor line item to an offer.
+    Only allowed while the offer is in 'Draft' status.
+    """
     db_offer = get_offer_and_check_auth(offer_id, db, current_user)
-    if db_offer.status != models.OfferStatus.Draft:
-        raise HTTPException(status_code=400, detail="Can only add items to offers in Draft status.")
     
-    # If it's a material item, check if the inventory item exists
+    if db_offer.status != models.OfferStatus.Draft:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, 
+            detail="Can only add items to offers in Draft status."
+        )
+    
+    # Validate Material type requirements
     if item_data.item_type == models.OfferLineItemType.Material:
         if not item_data.inventory_item_id:
-            raise HTTPException(status_code=400, detail="inventory_item_id is required for Material type items.")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, 
+                detail="inventory_item_id is required for Material type items."
+            )
         inv_item = crud.get_inventory_item(db, item_id=item_data.inventory_item_id)
         if not inv_item:
             raise HTTPException(status_code=404, detail="Inventory item not found.")
@@ -134,13 +173,24 @@ def update_an_offer_item(
     db: DbDependency,
     current_user: ManagerOrAdminDependency
 ):
+    """
+    Updates a line item's quantity or price.
+    Only allowed while the parent offer is in 'Draft' status.
+    """
     db_item = get_line_item_and_check_auth(line_item_id, db, current_user)
+    
     if db_item.offer.status != models.OfferStatus.Draft:
-        raise HTTPException(status_code=400, detail="Can only update items on offers in Draft status.")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, 
+            detail="Can only update items on offers in Draft status."
+        )
 
-    # Prevent changing type or material link via update for simplicity, force delete/re-add
+    # Restriction: Prevent changing the linked material via simple update to maintain data integrity
     if item_update.inventory_item_id and item_update.inventory_item_id != db_item.inventory_item_id:
-         raise HTTPException(status_code=400, detail="Cannot change linked inventory item via update.")
+         raise HTTPException(
+             status_code=status.HTTP_400_BAD_REQUEST, 
+             detail="Cannot change linked inventory item via update. Delete and re-add if necessary."
+         )
             
     return crud.update_offer_line_item(db, db_item=db_item, item_update=item_update)
 
@@ -152,9 +202,16 @@ def remove_item_from_an_offer(
     db: DbDependency,
     current_user: ManagerOrAdminDependency
 ):
+    """
+    Removes a specific line item from an offer.
+    """
     db_item = get_line_item_and_check_auth(line_item_id, db, current_user)
+    
     if db_item.offer.status != models.OfferStatus.Draft:
-        raise HTTPException(status_code=400, detail="Can only remove items from offers in Draft status.")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, 
+            detail="Can only remove items from offers in Draft status."
+        )
         
     crud.remove_line_item_from_offer(db, db_item=db_item)
     return None

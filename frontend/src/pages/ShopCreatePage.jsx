@@ -1,49 +1,213 @@
-// frontend/src/pages/ShopCreatePage.jsx
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axiosInstance from '../api/axiosInstance';
 import { toast } from 'react-toastify';
+import { useAuth } from '../context/AuthContext';
+import { 
+    BuildingStorefrontIcon, 
+    MapPinIcon, 
+    UserIcon, 
+    PhoneIcon, 
+    EnvelopeIcon, 
+    GlobeAltIcon, 
+    DocumentTextIcon,
+    ChevronLeftIcon,
+    ArrowPathIcon,
+    CheckBadgeIcon,
+    InformationCircleIcon
+} from '@heroicons/react/24/outline';
 
 function ShopCreatePage() {
     const navigate = useNavigate();
+    const { user } = useAuth();
+    
+    // Data State
     const [formData, setFormData] = useState({
-        name: '', address: '', contact_person: '', phone_number: '', email: '', website: '', notes: ''
+        name: '', 
+        address: '', 
+        contact_person: '', 
+        phone_number: '', 
+        email: '', 
+        website: '', 
+        notes: ''
     });
     const [isSaving, setIsSaving] = useState(false);
 
-    const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
+    // Permissions: Administrative access required for registry modifications
+    const isSuperuser = user?.is_superuser;
+    const canManageShops = user && (['admin', 'project manager'].includes(user.role) || isSuperuser);
+
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (!canManageShops) {
+            toast.error("Administrative privileges required to create vendor records.");
+            return;
+        }
+
         setIsSaving(true);
         try {
             await axiosInstance.post('/shops/', formData);
-            toast.success('Shop created successfully!');
+            toast.success(`Vendor "${formData.name}" registered successfully.`);
             navigate('/shops');
         } catch (err) {
-            toast.error(err.response?.data?.detail || 'Failed to create shop.');
+            console.error("Vendor Creation Error:", err);
+            toast.error(err.response?.data?.detail || 'Failed to initialize vendor record.');
         } finally {
             setIsSaving(false);
         }
     };
 
     return (
-        <div className="container mx-auto p-6 max-w-lg">
-            <h1 className="text-2xl font-bold mb-6">Add New Shop</h1>
-            <form onSubmit={handleSubmit} className="space-y-4 bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
-                <div><label htmlFor="name">Shop Name</label><input type="text" name="name" id="name" required value={formData.name} onChange={handleChange} className="mt-1 block w-full rounded-md"/></div>
-                <div><label htmlFor="address">Address</label><input type="text" name="address" id="address" value={formData.address} onChange={handleChange} className="mt-1 block w-full rounded-md"/></div>
-                <div><label htmlFor="contact_person">Contact Person</label><input type="text" name="contact_person" id="contact_person" value={formData.contact_person} onChange={handleChange} className="mt-1 block w-full rounded-md"/></div>
-                <div><label htmlFor="phone_number">Phone Number</label><input type="tel" name="phone_number" id="phone_number" value={formData.phone_number} onChange={handleChange} className="mt-1 block w-full rounded-md"/></div>
-                <div><label htmlFor="email">Email</label><input type="email" name="email" id="email" value={formData.email} onChange={handleChange} className="mt-1 block w-full rounded-md"/></div>
-                <div><label htmlFor="website">Website</label><input type="url" name="website" id="website" value={formData.website} onChange={handleChange} className="mt-1 block w-full rounded-md"/></div>
-                <div><label htmlFor="notes">Notes</label><textarea name="notes" id="notes" value={formData.notes} onChange={handleChange} rows="3" className="mt-1 block w-full rounded-md"></textarea></div>
-                <div className="flex justify-end space-x-4">
-                    <Link to="/shops" className="px-4 py-2 bg-gray-200 rounded-md">Cancel</Link>
-                    <button type="submit" disabled={isSaving} className="px-4 py-2 bg-blue-600 text-white rounded-md disabled:opacity-50">{isSaving ? 'Saving...' : 'Add Shop'}</button>
+        <div className="container mx-auto p-4 md:p-8 max-w-5xl animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {/* Navigation Header */}
+            <div className="mb-8">
+                <Link 
+                    to="/shops" 
+                    className="flex items-center text-xs font-black text-gray-400 hover:text-indigo-600 transition mb-2 uppercase tracking-widest"
+                >
+                    <ChevronLeftIcon className="h-3 w-3 mr-1" /> Supply Chain Directory
+                </Link>
+                <div className="flex items-center gap-3">
+                    <div className="p-3 bg-indigo-600 rounded-2xl shadow-lg shadow-indigo-100 dark:shadow-none">
+                        <BuildingStorefrontIcon className="h-8 w-8 text-white" />
+                    </div>
+                    <div>
+                        <h1 className="text-3xl font-black text-gray-900 dark:text-white leading-none uppercase tracking-tight">
+                            Register New Vendor
+                        </h1>
+                        <p className="text-gray-500 dark:text-gray-400 text-sm mt-1 font-medium">Initialize a new procurement endpoint in the master registry.</p>
+                    </div>
+                </div>
+            </div>
+
+            <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                {/* Main Content: 8 Columns */}
+                <div className="lg:col-span-8 space-y-6">
+                    
+                    {/* Identity Section */}
+                    <section className="bg-white dark:bg-gray-800 p-6 md:p-8 rounded-[2rem] shadow-sm border border-gray-100 dark:border-gray-700 space-y-6">
+                        <h2 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] border-b pb-2 flex items-center gap-2">
+                            <BuildingStorefrontIcon className="h-4 w-4" /> Vendor Identity
+                        </h2>
+                        
+                        <div className="space-y-6">
+                            <div>
+                                <label className="block text-[10px] font-black text-gray-500 uppercase mb-1 ml-1">Legal Entity Name*</label>
+                                <input 
+                                    type="text" 
+                                    name="name" 
+                                    required 
+                                    value={formData.name} 
+                                    onChange={handleChange} 
+                                    placeholder="Full company name..."
+                                    className="block w-full h-12 rounded-2xl border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-indigo-500 font-bold" 
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-[10px] font-black text-gray-500 uppercase mb-1 ml-1">Primary Headquarters / Address</label>
+                                <div className="relative group">
+                                    <MapPinIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-indigo-500 transition-colors" />
+                                    <input 
+                                        type="text" 
+                                        name="address" 
+                                        value={formData.address} 
+                                        onChange={handleChange} 
+                                        placeholder="Physical street address..."
+                                        className="pl-12 block w-full h-12 rounded-2xl border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-indigo-500 text-sm" 
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* Communication Section */}
+                    <section className="bg-white dark:bg-gray-800 p-6 md:p-8 rounded-[2rem] shadow-sm border border-gray-100 dark:border-gray-700 space-y-6">
+                        <h2 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] border-b pb-2 flex items-center gap-2">
+                            <EnvelopeIcon className="h-4 w-4" /> Communication & Logistics
+                        </h2>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label className="block text-[10px] font-black text-gray-500 uppercase mb-1 ml-1">Account Manager</label>
+                                <div className="relative">
+                                    <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                                    <input type="text" name="contact_person" value={formData.contact_person} onChange={handleChange} placeholder="Direct contact name" className="pl-12 block w-full h-12 rounded-2xl border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-indigo-500 text-sm" />
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-[10px] font-black text-gray-500 uppercase mb-1 ml-1">Contact Phone</label>
+                                <div className="relative">
+                                    <PhoneIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                                    <input type="tel" name="phone_number" value={formData.phone_number} onChange={handleChange} placeholder="+354..." className="pl-12 block w-full h-12 rounded-2xl border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-indigo-500 text-sm" />
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-[10px] font-black text-gray-500 uppercase mb-1 ml-1">Primary Email</label>
+                                <div className="relative">
+                                    <EnvelopeIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                                    <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="procurement@vendor.is" className="pl-12 block w-full h-12 rounded-2xl border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-indigo-500 text-sm" />
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-[10px] font-black text-gray-500 uppercase mb-1 ml-1">Website (URL)</label>
+                                <div className="relative">
+                                    <GlobeAltIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                                    <input type="url" name="website" value={formData.website} onChange={handleChange} placeholder="https://..." className="pl-12 block w-full h-12 rounded-2xl border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-indigo-500 text-sm" />
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                {/* Sidebar: 4 Columns */}
+                <div className="lg:col-span-4 space-y-6">
+                    <section className="bg-white dark:bg-gray-800 p-6 md:p-8 rounded-[2rem] shadow-sm border border-gray-100 dark:border-gray-700 space-y-4">
+                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-1.5 ml-1">
+                            <DocumentTextIcon className="h-4 w-4" /> Internal Notes
+                        </label>
+                        <textarea 
+                            name="notes" 
+                            value={formData.notes} 
+                            onChange={handleChange} 
+                            rows="6" 
+                            placeholder="Special agreements, account numbers, or preferred shipping terms..."
+                            className="block w-full rounded-[1.5rem] border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-indigo-500 text-sm"
+                        ></textarea>
+                    </section>
+
+                    <button 
+                        type="submit" 
+                        disabled={isSaving || !canManageShops}
+                        className="w-full inline-flex justify-center items-center h-14 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-2xl shadow-lg shadow-indigo-100 dark:shadow-none transition transform active:scale-95 disabled:opacity-50"
+                    >
+                        {isSaving ? (
+                            <>
+                                <ArrowPathIcon className="h-6 w-6 mr-2 animate-spin" />
+                                Processing Registry...
+                            </>
+                        ) : (
+                            <>
+                                <CheckBadgeIcon className="h-6 w-6 mr-2" />
+                                Commit to Directory
+                            </>
+                        )}
+                    </button>
+
+                    <div className="p-5 bg-indigo-50 dark:bg-indigo-900/10 rounded-[1.5rem] border border-indigo-100 dark:border-indigo-800 flex gap-3">
+                        <InformationCircleIcon className="h-5 w-5 text-indigo-600 shrink-0 mt-0.5" />
+                        <p className="text-[10px] text-indigo-700 dark:text-indigo-300 leading-relaxed font-bold uppercase tracking-tight">
+                            Note: New vendors become immediately available as procurement endpoints for all active project teams.
+                        </p>
+                    </div>
                 </div>
             </form>
         </div>
     );
 }
+
 export default ShopCreatePage;

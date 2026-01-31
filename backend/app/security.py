@@ -1,7 +1,7 @@
 # backend/app/security.py
 # ABSOLUTELY FINAL Meticulously Checked Uncondensed Version
 from datetime import datetime, timedelta, timezone
-from typing import Annotated, Optional, List # Ensure List is imported for require_role
+from typing import Annotated, Optional, List 
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
@@ -9,8 +9,9 @@ from jose import JWTError, jwt
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 
-from . import crud, models, schemas # Assuming crud, models, schemas are in the same 'app' directory
-from .database import get_db # Assuming get_db is correctly placed for Session
+# --- 1. REMOVE 'from . import crud' FROM HERE ---
+from . import models, schemas
+from .database import get_db
 
 
 # --- Configuration ---
@@ -70,7 +71,7 @@ async def get_current_user(
         # No need to create TokenData schema instance here if just using email
     except JWTError:
         raise credentials_exception
-    
+    from . import crud
     user = crud.get_user_by_email(db, email=email) # Fetch user by email from token
     if user is None:
         raise credentials_exception

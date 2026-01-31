@@ -1,121 +1,120 @@
 // frontend/src/pages/LoginPage.jsx
-// Uncondensed and Refactored with Single Return, Toasts, and Debug Logs
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import axiosInstance from '../api/axiosInstance';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import axiosInstance from '../api/axiosInstance';
 import { toast } from 'react-toastify';
-
-console.log("LoginPage.jsx: Loaded");
+import LoadingSpinner from '../components/LoadingSpinner';
+import { 
+    EnvelopeIcon, 
+    LockClosedIcon, 
+    ShieldCheckIcon,
+    // CHANGED: From Square to Rectangle
+    ArrowLeftOnRectangleIcon 
+} from '@heroicons/react/24/outline';
 
 function LoginPage() {
-  console.log("LoginPage: Rendering component");
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const navigate = useNavigate();
-  const { login, isAuthenticated, isLoading: authIsLoading } = useAuth();
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    
+    const navigate = useNavigate();
+    const { login, isAuthenticated, isLoading: authIsLoading } = useAuth();
 
-  useEffect(() => {
-    console.log("LoginPage useEffect: authIsLoading=", authIsLoading, "isAuthenticated=", isAuthenticated);
-    if (!authIsLoading && isAuthenticated) {
-      console.log("LoginPage useEffect: Authenticated, navigating to /");
-      navigate('/', { replace: true });
-    }
-  }, [isAuthenticated, authIsLoading, navigate]);
+    useEffect(() => {
+        if (!authIsLoading && isAuthenticated) {
+            navigate('/', { replace: true });
+        }
+    }, [isAuthenticated, authIsLoading, navigate]);
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    console.log("LoginPage handleSubmit: Attempting login with email:", email);
-    setError('');
-    setIsSubmitting(true);
+    const handleSubmit = async (event) => {
+        event.preventDefault();
+        setError('');
+        setIsSubmitting(true);
 
-    const loginData = new URLSearchParams();
-    loginData.append('username', email);
-    loginData.append('password', password);
+        const loginData = new URLSearchParams();
+        loginData.append('username', email.trim());
+        loginData.append('password', password);
 
-    try {
-      const response = await axiosInstance.post('/auth/token', loginData, {
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
-      });
-      const accessToken = response.data.access_token;
-      console.log("LoginPage handleSubmit: Token received:", accessToken ? "Yes" : "No");
-      login(accessToken); // Call context login
-      toast.success('Login successful!');
-      // Navigation will be handled by AuthContext state change or can be done here if preferred
-      // navigate('/'); // Already navigating above based on isAuthenticated change via useEffect
-    } catch (err) {
-      console.error('LoginPage handleSubmit: Login error:', err.response?.status, err.response?.data?.detail || err.message);
-      const errorMsg = err.response?.data?.detail || 'Login failed. Please check credentials.';
-      setError(errorMsg);
-      toast.error(errorMsg);
-    } finally {
-        setIsSubmitting(false);
-    }
-  };
+        try {
+            const response = await axiosInstance.post('/auth/token', loginData, {
+                headers: { 'Content-Type': 'application/x-form-urlencoded' }
+            });
+            const accessToken = response.data.access_token;
+            login(accessToken);
+            toast.success('Authentication established.');
+        } catch (err) {
+            const errorMsg = err.response?.data?.detail || 'Invalid credentials. Access denied.';
+            setError(errorMsg);
+            toast.error(errorMsg);
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
 
-  if (authIsLoading) {
-    console.log("LoginPage: Rendering 'Loading...' due to authIsLoading");
+    if (authIsLoading) return <LoadingSpinner text="Verifying session integrity..." size="lg" />;
+    if (isAuthenticated) return null;
+
     return (
-        <div className="min-h-screen flex justify-center items-center">
-            <p className="text-xl text-gray-500 dark:text-gray-400">Loading...</p>
+        <div className="min-h-screen flex items-center justify-center p-6 bg-gray-50 dark:bg-gray-900">
+            <div className="w-full max-w-md">
+                <div className="flex justify-center mb-8">
+                    <div className="p-4 bg-indigo-600 rounded-[2rem] shadow-xl">
+                        <ShieldCheckIcon className="h-12 w-12 text-white" />
+                    </div>
+                </div>
+
+                <div className="bg-white dark:bg-gray-800 p-8 md:p-10 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-700">
+                    <header className="mb-8 text-center">
+                        <h1 className="text-3xl font-black text-gray-900 dark:text-white">RafApp Login</h1>
+                        <p className="text-sm text-gray-500 mt-2 font-medium">Authorized Access Only</p>
+                    </header>
+
+                    <form className="space-y-6" onSubmit={handleSubmit}>
+                        <div>
+                            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Email</label>
+                            <div className="relative group">
+                                <EnvelopeIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-indigo-500" />
+                                <input
+                                    type="email"
+                                    required
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    className="block w-full pl-12 pr-4 h-14 rounded-2xl border border-gray-200 dark:bg-gray-700 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500 h-12"
+                                    placeholder="admin@rafapp.com"
+                                />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Password</label>
+                            <div className="relative group">
+                                <LockClosedIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-indigo-500" />
+                                <input
+                                    type="password"
+                                    required
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    className="block w-full pl-12 pr-4 h-14 rounded-2xl border border-gray-200 dark:bg-gray-700 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500 h-12"
+                                    placeholder="••••••••"
+                                />
+                            </div>
+                        </div>
+
+                        <button
+                            type="submit"
+                            disabled={isSubmitting}
+                            className="w-full flex items-center justify-center gap-2 h-14 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-2xl shadow-lg transition active:scale-95 disabled:opacity-50"
+                        >
+                            {isSubmitting ? 'Authenticating...' : 'Establish Access'}
+                            {!isSubmitting && <ArrowLeftOnRectangleIcon className="h-5 w-5" />}
+                        </button>
+                    </form>
+                </div>
+            </div>
         </div>
     );
-  }
-
-  // If already authenticated, useEffect will redirect. Return null to avoid flash of content.
-  if (isAuthenticated) {
-      console.log("LoginPage: Rendering null because already authenticated (should redirect soon)");
-      return null;
-  }
-
-  console.log("LoginPage: Rendering login form");
-  return (
-    <div className="min-h-screen flex flex-col justify-center items-center p-6 bg-gray-100 dark:bg-gray-900">
-      <div className="w-full max-w-md p-8 space-y-6 bg-white dark:bg-gray-800 rounded-lg shadow-md">
-        <h1 className="text-3xl font-bold text-center text-gray-900 dark:text-white">
-          Login to RafApp
-        </h1>
-        {error && (
-          <div className="p-3 text-sm text-red-700 bg-red-100 dark:bg-red-900 dark:text-red-300 rounded-md" role="alert">
-            {error}
-          </div>
-        )}
-        <form className="space-y-6" onSubmit={handleSubmit}>
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Email address</label>
-            <input
-              id="email" name="email" type="email" autoComplete="email" required
-              value={email} onChange={(e) => setEmail(e.target.value)}
-              disabled={isSubmitting}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50"
-              placeholder="you@example.com"
-            />
-          </div>
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
-            <input
-              id="password" name="password" type="password" autoComplete="current-password" required
-              value={password} onChange={(e) => setPassword(e.target.value)}
-              disabled={isSubmitting}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50"
-              placeholder="********"
-            />
-          </div>
-          <div>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800 disabled:opacity-50"
-            >
-              {isSubmitting ? 'Signing in...' : 'Sign in'}
-            </button>
-          </div>
-        </form>
-        {/* Public registration link removed */}
-      </div>
-    </div>
-  );
 }
+
 export default LoginPage;

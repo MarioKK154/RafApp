@@ -1,16 +1,26 @@
-// frontend/src/pages/TasksListPage.jsx
-// Card layout + Search Bar + Quick Action Buttons
-
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import axiosInstance from '../api/axiosInstance';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
 import LoadingSpinner from '../components/LoadingSpinner';
-import { PlusIcon, PencilIcon, MagnifyingGlassIcon, PlayIcon, CheckCircleIcon } from '@heroicons/react/24/solid'; // Added PlayIcon, CheckCircleIcon
 import Select from 'react-select';
+import { 
+    PlusIcon, 
+    PencilIcon, 
+    MagnifyingGlassIcon, 
+    PlayIcon, 
+    CheckCircleIcon,
+    BuildingOfficeIcon,
+    CalendarIcon,
+    UserIcon,
+    BriefcaseIcon,
+    AdjustmentsHorizontalIcon
+} from '@heroicons/react/24/outline';
 
-// Debounce hook (should be defined or imported)
+/**
+ * Custom Hook: Debounce search inputs to reduce API load.
+ */
 function useDebounce(value, delay) {
     const [debouncedValue, setDebouncedValue] = useState(value);
     useEffect(() => {
@@ -20,226 +30,282 @@ function useDebounce(value, delay) {
     return debouncedValue;
 }
 
-// useQuery hook (should be defined or imported)
+/**
+ * Custom Hook: Handle URL search params easily.
+ */
 function useQuery() {
     const { search } = useLocation();
     return useMemo(() => new URLSearchParams(search), [search]);
 }
 
-// Constants for react-select options (remain the same)
-const TASK_STATUS_OPTIONS = [ /* ... */ ];
-const SORT_BY_OPTIONS = [ /* ... */ ];
-const SORT_DIR_OPTIONS = [ /* ... */ ];
-// Add constants back
-const TASK_STATUS_OPTIONS_FULL = [
+// Filter Constants
+const TASK_STATUS_OPTIONS = [
     { value: '', label: 'All Statuses' },
     { value: 'To Do', label: 'To Do' },
     { value: 'In Progress', label: 'In Progress' },
     { value: 'Done', label: 'Done' },
     { value: 'Commissioned', label: 'Commissioned' },
     { value: 'Blocked', label: 'Blocked' },
-    { value: 'Cancelled', label: 'Cancelled' },
 ];
-const SORT_BY_OPTIONS_FULL = [
+
+const SORT_BY_OPTIONS = [
+    { value: 'id', label: 'Recent' },
     { value: 'title', label: 'Title' },
-    { value: 'status', label: 'Status' },
     { value: 'priority', label: 'Priority' },
-    { value: 'due_date', label: 'Due Date' },
-    { value: 'id', label: 'Creation Date (Default)' },
+    { value: 'due_date', label: 'Deadline' },
 ];
-const SORT_DIR_OPTIONS_FULL = [
+
+const SORT_DIR_OPTIONS = [
     { value: 'asc', label: 'Ascending' },
     { value: 'desc', label: 'Descending' },
 ];
 
 function TasksListPage() {
-    // ... (All existing state variables: tasks, isLoading, error, user, filters, etc.)
-    const [tasks, setTasks] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState('');
     const { user } = useAuth();
     const navigate = useNavigate();
     const query = useQuery();
+
+    // Data State
+    const [tasks, setTasks] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState('');
+
+    // Filter State
     const [projectOptions, setProjectOptions] = useState([]);
     const [userOptions, setUserOptions] = useState([]);
     const [selectedProject, setSelectedProject] = useState(null);
     const [selectedAssignee, setSelectedAssignee] = useState(null);
-    const [selectedStatus, setSelectedStatus] = useState(TASK_STATUS_OPTIONS_FULL[0]);
-    const [sortBy, setSortBy] = useState(SORT_BY_OPTIONS_FULL[4]); // Default sort
-    const [sortDir, setSortDir] = useState(SORT_DIR_OPTIONS_FULL[0]);
+    const [selectedStatus, setSelectedStatus] = useState(TASK_STATUS_OPTIONS[0]);
+    const [sortBy, setSortBy] = useState(SORT_BY_OPTIONS[0]);
+    const [sortDir, setSortDir] = useState(SORT_DIR_OPTIONS[1]); // Newest first by default
     const [searchTerm, setSearchTerm] = useState('');
     const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
-    const canCreateTasks = user && ['admin', 'project manager', 'team leader'].includes(user.role);
-    // Determine who can update status (adjust roles as needed)
-    const canUpdateStatus = user && ['admin', 'project manager', 'team leader', 'electrician'].includes(user.role);
+    // Permissions: God Mode integrated
+    const isSuperuser = user?.is_superuser;
+    const canCreateTasks = user && (['admin', 'project manager', 'team leader'].includes(user.role) || isSuperuser);
+    const canUpdateStatus = user && (['admin', 'project manager', 'team leader', 'electrician'].includes(user.role) || isSuperuser);
 
-
-    // ... (fetchFilters and fetchTasks useCallback hooks remain the same) ...
-     const fetchFilters = useCallback(async () => { // fetchFilters remains the same
+    const fetchFilters = useCallback(async () => {
         try {
+            // Fetch projects and staff lists for the filter dropdowns
             const [projRes, userRes] = await Promise.all([
-                axiosInstance.get('/projects/'),
-                axiosInstance.get('/users/')
+                axiosInstance.get('/projects/', { params: { limit: 500 } }),
+                axiosInstance.get('/users/', { params: { limit: 500 } })
             ]);
+
             const projOpts = [{ value: '', label: 'All Projects' }, ...projRes.data.map(p => ({ value: p.id, label: p.name }))];
             setProjectOptions(projOpts);
-            const userOpts = [{ value: '', label: 'All Users' }, ...userRes.data.map(u => ({ value: u.id, label: u.full_name || u.email }))];
-            setUserOptions(userOpts);
 
+            const staffOpts = [{ value: '', label: 'All Staff' }, ...userRes.data.map(u => ({ value: u.id, label: u.full_name || u.email }))];
+            setUserOptions(staffOpts);
+
+            // Handle pre-filtered project ID from URL (e.g., coming from ProjectDetails)
             const queryProjectId = query.get('project_id');
             if (queryProjectId) {
                 const initialProject = projOpts.find(p => p.value === parseInt(queryProjectId));
                 if (initialProject) setSelectedProject(initialProject);
             }
-        } catch (err) { toast.error("Failed to load filter options."); }
+        } catch (err) {
+            console.error("Filter loading failed", err);
+        }
     }, [query]);
 
-    const fetchTasks = useCallback(() => { // fetchTasks remains the same
+    const fetchTasks = useCallback(() => {
         setIsLoading(true);
         setError('');
         axiosInstance.get('/tasks/', {
-            params: { /* ... params ... */
+            params: {
                 project_id: selectedProject?.value || undefined,
                 assignee_id: selectedAssignee?.value || undefined,
                 status: selectedStatus?.value || undefined,
                 search: debouncedSearchTerm || undefined,
                 sort_by: sortBy?.value || 'id',
-                sort_dir: sortDir?.value || 'asc',
-                limit: 200
-             }
+                sort_dir: sortDir?.value || 'desc',
+                limit: 500
+            }
         })
         .then(response => setTasks(response.data))
-        .catch(err => { setError('Failed to fetch tasks.'); console.error(err); })
+        .catch(() => setError('Failed to retrieve task registry.'))
         .finally(() => setIsLoading(false));
     }, [selectedProject, selectedAssignee, selectedStatus, debouncedSearchTerm, sortBy, sortDir]);
 
-
     useEffect(() => { fetchFilters(); }, [fetchFilters]);
-    useEffect(() => {
-        if (projectOptions.length > 0 && userOptions.length > 0) { fetchTasks(); }
-        else if (!isLoading) { fetchTasks(); } // Fetch even if filters fail
-    }, [fetchTasks, projectOptions, userOptions]); // Removed isLoading dependency here
+    useEffect(() => { fetchTasks(); }, [fetchTasks]);
 
-
-    // --- NEW: Handler for Quick Status Updates ---
     const handleUpdateStatus = async (taskId, newStatus, taskTitle) => {
         try {
             await axiosInstance.put(`/tasks/${taskId}`, { status: newStatus });
-            toast.success(`Task "${taskTitle}" updated to "${newStatus}"`);
-            // Optimistic update (optional but makes UI faster)
-            setTasks(prevTasks => prevTasks.map(task =>
-                task.id === taskId ? { ...task, status: newStatus } : task
-            ));
-            // Or just refetch: fetchTasks();
+            toast.success(`Task "${taskTitle}" is now ${newStatus}`);
+            // Update local state for immediate feedback
+            setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: newStatus } : t));
         } catch (err) {
-            toast.error(`Failed to update status for "${taskTitle}"`);
+            toast.error("Status update failed.");
         }
     };
-    // --- END NEW ---
 
-    // ... (getStatusColor and getPriorityColor helper functions remain the same) ...
-     const getStatusColor = (status) => { /* ... */ };
-     const getPriorityColor = (priority) => { /* ... */ };
+    const getStatusStyle = (status) => {
+        switch (status) {
+            case 'Done': return 'bg-green-100 text-green-700 dark:bg-green-900/30';
+            case 'In Progress': return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30';
+            case 'Blocked': return 'bg-red-100 text-red-700 dark:bg-red-900/30';
+            default: return 'bg-gray-100 text-gray-700 dark:bg-gray-800';
+        }
+    };
 
-
-    if (isLoading && tasks.length === 0) { /* ... loading spinner ... */ }
+    const getPriorityStyle = (priority) => {
+        switch (priority?.toLowerCase()) {
+            case 'high': return 'text-red-600 dark:text-red-400 font-black';
+            case 'medium': return 'text-orange-600 dark:text-orange-400 font-bold';
+            default: return 'text-gray-500 font-medium';
+        }
+    };
 
     return (
-        <div className="container mx-auto p-4 md:p-6">
-            {/* Header (remains the same) */}
-            {/* Controls: Search, Filters, Sort (remains the same) */}
-            <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
-                <h1 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white">Tasks</h1>
+        <div className="container mx-auto p-4 md:p-8 max-w-7xl">
+            {/* Header */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+                <div>
+                    <h1 className="text-3xl font-black text-gray-900 dark:text-white">Task Management</h1>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                        {isSuperuser ? "Global work registry" : `Site tasks for ${user?.tenant?.name}`}
+                    </p>
+                </div>
                 {canCreateTasks && (
-                    <button onClick={() => navigate('/tasks/new')} className="flex items-center bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg shadow transition duration-150 ease-in-out">
-                        <PlusIcon className="h-5 w-5 mr-2" /> Create Task
+                    <button 
+                        onClick={() => navigate('/tasks/new')}
+                        className="inline-flex items-center px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-100 dark:shadow-none transition transform active:scale-95"
+                    >
+                        <PlusIcon className="h-5 w-5 mr-2" /> New Task
                     </button>
                 )}
             </div>
-             <div className="mb-6 bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md flex flex-col md:flex-row md:items-center justify-between gap-4 text-sm">
-                <div className="relative flex-grow md:max-w-xs">
-                     <input type="text" placeholder="Search by title..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10 pr-4 py-2 w-full rounded-md border border-gray-300 dark:bg-gray-700 dark:border-gray-600 focus:border-indigo-500 focus:ring-indigo-500 text-sm"/>
-                    <MagnifyingGlassIcon className="h-5 w-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2 pointer-events-none" />
+
+            {/* Global Controls */}
+            <div className="mb-8 grid grid-cols-1 xl:grid-cols-12 gap-4 bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
+                {/* Search */}
+                <div className="xl:col-span-3 relative">
+                    <MagnifyingGlassIcon className="h-5 w-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <input 
+                        type="text" 
+                        placeholder="Search tasks..." 
+                        value={searchTerm} 
+                        onChange={(e) => setSearchTerm(e.target.value)} 
+                        className="block w-full pl-10 pr-4 py-2 border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-gray-700 dark:text-white focus:ring-indigo-500"
+                    />
                 </div>
-                 <div className="flex flex-wrap items-center gap-4">
-                     <Select options={projectOptions} value={selectedProject} onChange={setSelectedProject} placeholder="Filter Project..." isClearable className="min-w-[150px] react-select-container z-20" classNamePrefix="react-select"/>
-                     <Select options={userOptions} value={selectedAssignee} onChange={setSelectedAssignee} placeholder="Filter Assignee..." isClearable className="min-w-[150px] react-select-container z-20" classNamePrefix="react-select"/>
-                     <Select options={TASK_STATUS_OPTIONS_FULL} value={selectedStatus} onChange={setSelectedStatus} className="min-w-[150px] react-select-container z-20" classNamePrefix="react-select"/>
-                     <div className="flex items-center gap-2">
-                         <label className="font-medium text-gray-700 dark:text-gray-300">Sort:</label>
-                         <Select options={SORT_BY_OPTIONS_FULL} value={sortBy} onChange={setSortBy} className="min-w-[120px] react-select-container z-10" classNamePrefix="react-select"/>
-                         <Select options={SORT_DIR_OPTIONS_FULL} value={sortDir} onChange={setSortDir} className="min-w-[100px] react-select-container z-10" classNamePrefix="react-select"/>
-                     </div>
+
+                {/* Dropdown Filters */}
+                <div className="xl:col-span-9 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                    <Select 
+                        options={projectOptions} value={selectedProject} onChange={setSelectedProject} 
+                        placeholder="Project..." isClearable className="react-select-container" classNamePrefix="react-select" 
+                    />
+                    <Select 
+                        options={userOptions} value={selectedAssignee} onChange={setSelectedAssignee} 
+                        placeholder="Assignee..." isClearable className="react-select-container" classNamePrefix="react-select" 
+                    />
+                    <Select 
+                        options={TASK_STATUS_OPTIONS} value={selectedStatus} onChange={setSelectedStatus} 
+                        className="react-select-container" classNamePrefix="react-select" 
+                    />
+                    <div className="flex gap-2">
+                        <Select 
+                            options={SORT_BY_OPTIONS} value={sortBy} onChange={setSortBy} 
+                            className="flex-1 react-select-container" classNamePrefix="react-select" 
+                        />
+                        <Select 
+                            options={SORT_DIR_OPTIONS} value={sortDir} onChange={setSortDir} 
+                            className="w-24 react-select-container" classNamePrefix="react-select" 
+                        />
+                    </div>
                 </div>
             </div>
 
-            {/* Task Cards List */}
-            {isLoading && tasks.length > 0 && <LoadingSpinner text="Refreshing tasks..." />}
-            {error && <div className="text-center py-10 text-red-500">{error}</div>}
-            {!isLoading && !error && tasks.length > 0 ? (
-                <div className="space-y-4">
-                    {tasks.map(task => (
-                        <div key={task.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden transition hover:shadow-lg">
-                            <div className="p-5">
-                                <div className="flex flex-wrap justify-between items-start gap-2 mb-2">
-                                     <h2 className="text-lg font-semibold text-gray-800 dark:text-white">
-                                         <Link to={`/tasks/${task.id}`} className="hover:text-indigo-600 dark:hover:text-indigo-400">{task.title}</Link>
-                                     </h2>
-                                     <div className="flex items-center gap-2 flex-shrink-0">
-                                         <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${getStatusColor(task.status)}`}>{task.status}</span>
-                                         <span className={`text-xs font-medium ${getPriorityColor(task.priority)}`}>{task.priority} Priority</span>
-                                     </div>
-                                </div>
-                                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-                                    Project: <Link to={`/projects/edit/${task.project_id}`} className="hover:underline">{task.project?.name || 'N/A'}</Link>
-                                </p>
-                                <p className="text-sm text-gray-600 dark:text-gray-400">
-                                    Assigned to: {task.assignee?.full_name || 'Unassigned'}
-                                </p>
-                                <div className="flex flex-wrap justify-between items-center mt-4 text-xs text-gray-500 dark:text-gray-400 gap-2">
-                                     <div className="flex gap-4"> {/* Group dates */}
-                                         <span>Start: {task.start_date ? new Date(task.start_date).toLocaleDateString() : 'N/A'}</span>
-                                         <span>Due: {task.due_date ? new Date(task.due_date).toLocaleDateString() : 'N/A'}</span>
-                                     </div>
+            {isLoading && tasks.length === 0 ? (
+                <LoadingSpinner text="Synchronizing workflow..." />
+            ) : (
+                <div className="grid grid-cols-1 gap-4">
+                    {tasks.length > 0 ? tasks.map(task => (
+                        <div key={task.id} className="group bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden">
+                            <div className="p-5 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+                                
+                                {/* Info Block */}
+                                <div className="flex-grow min-w-0">
+                                    <div className="flex flex-wrap items-center gap-2 mb-2">
+                                        <h2 className="text-lg font-bold text-gray-900 dark:text-white truncate max-w-md">
+                                            <Link to={`/tasks/${task.id}`} className="hover:text-indigo-600 transition-colors">
+                                                {task.title}
+                                            </Link>
+                                        </h2>
+                                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest ${getStatusStyle(task.status)}`}>
+                                            {task.status}
+                                        </span>
+                                        <span className={`text-[10px] uppercase tracking-widest ${getPriorityStyle(task.priority)}`}>
+                                            {task.priority} Priority
+                                        </span>
+                                    </div>
 
-                                     {/* --- NEW Quick Action Buttons --- */}
-                                     <div className="flex items-center space-x-2">
-                                        {canUpdateStatus && task.status === 'To Do' && (
-                                            <button
-                                                onClick={() => handleUpdateStatus(task.id, 'In Progress', task.title)}
-                                                className="px-2 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600 flex items-center"
-                                                title="Start Progress"
-                                            >
-                                                <PlayIcon className="h-3 w-3 mr-1"/> Start
-                                            </button>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-1.5">
+                                        <div className="flex items-center gap-2 text-xs text-gray-500">
+                                            <BriefcaseIcon className="h-4 w-4 text-indigo-400" />
+                                            <span className="font-bold text-gray-700 dark:text-gray-300">Project:</span>
+                                            <span className="truncate">{task.project?.name || 'Unassigned'}</span>
+                                        </div>
+                                        <div className="flex items-center gap-2 text-xs text-gray-500">
+                                            <UserIcon className="h-4 w-4 text-indigo-400" />
+                                            <span className="font-bold text-gray-700 dark:text-gray-300">Lead:</span>
+                                            <span>{task.assignee?.full_name || 'TBD'}</span>
+                                        </div>
+                                        <div className="flex items-center gap-2 text-xs text-gray-500">
+                                            <CalendarIcon className="h-4 w-4 text-indigo-400" />
+                                            <span className="font-bold text-gray-700 dark:text-gray-300">Due:</span>
+                                            <span>{task.due_date ? new Date(task.due_date).toLocaleDateString() : 'No deadline'}</span>
+                                        </div>
+                                        {isSuperuser && task.tenant && (
+                                            <div className="flex items-center gap-2 text-[10px] text-orange-600 font-black uppercase tracking-tighter">
+                                                <BuildingOfficeIcon className="h-3.5 w-3.5" />
+                                                {task.tenant.name}
+                                            </div>
                                         )}
-                                        {canUpdateStatus && task.status === 'In Progress' && (
-                                            <button
-                                                onClick={() => handleUpdateStatus(task.id, 'Done', task.title)}
-                                                className="px-2 py-1 bg-green-500 text-white rounded text-xs hover:bg-green-600 flex items-center"
-                                                title="Mark as Done"
-                                            >
-                                                 <CheckCircleIcon className="h-3 w-3 mr-1"/> Done
-                                            </button>
-                                        )}
-                                         <button onClick={() => navigate(`/tasks/${task.id}`)} className="text-indigo-600 dark:text-indigo-400 hover:underline font-medium flex items-center text-xs">
-                                             <PencilIcon className="h-3 w-3 mr-1"/> Details
-                                         </button>
-                                     </div>
-                                     {/* --- END Quick Action Buttons --- */}
+                                    </div>
+                                </div>
+
+                                {/* Quick Actions */}
+                                <div className="flex items-center gap-2 w-full lg:w-auto border-t lg:border-t-0 pt-4 lg:pt-0 border-gray-50 dark:border-gray-700">
+                                    {canUpdateStatus && task.status === 'To Do' && (
+                                        <button 
+                                            onClick={() => handleUpdateStatus(task.id, 'In Progress', task.title)}
+                                            className="flex-1 lg:flex-none inline-flex items-center justify-center px-4 py-2 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 text-xs font-bold rounded-xl hover:bg-blue-100 transition"
+                                        >
+                                            <PlayIcon className="h-3.5 w-3.5 mr-1.5" /> Start Work
+                                        </button>
+                                    )}
+                                    {canUpdateStatus && task.status === 'In Progress' && (
+                                        <button 
+                                            onClick={() => handleUpdateStatus(task.id, 'Done', task.title)}
+                                            className="flex-1 lg:flex-none inline-flex items-center justify-center px-4 py-2 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 text-xs font-bold rounded-xl hover:bg-green-100 transition"
+                                        >
+                                            <CheckCircleIcon className="h-3.5 w-3.5 mr-1.5" /> Complete
+                                        </button>
+                                    )}
+                                    <button 
+                                        onClick={() => navigate(`/tasks/${task.id}`)}
+                                        className="flex-1 lg:flex-none inline-flex items-center justify-center px-4 py-2 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-xs font-bold rounded-xl hover:bg-gray-100 transition"
+                                    >
+                                        <AdjustmentsHorizontalIcon className="h-3.5 w-3.5 mr-1.5" /> Manage
+                                    </button>
                                 </div>
                             </div>
                         </div>
-                    ))}
+                    )) : (
+                        <div className="py-20 text-center bg-white dark:bg-gray-800 rounded-3xl border-2 border-dashed border-gray-100 dark:border-gray-700">
+                            <BriefcaseIcon className="h-12 w-12 text-gray-200 mx-auto mb-4" />
+                            <h3 className="text-lg font-bold text-gray-900 dark:text-white">No active tasks found</h3>
+                            <p className="text-sm text-gray-500 mt-1">Try adjusting your project or assignee filters.</p>
+                        </div>
+                    )}
                 </div>
-            ) : (
-                 !isLoading && !error && <div className="text-center py-10 bg-white dark:bg-gray-800 rounded-lg shadow">
-                      <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300">No Tasks Found</h3>
-                      <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                         {searchTerm ? `No tasks match your search for "${searchTerm}".` : 'No tasks match the current filters.'}
-                      </p>
-                 </div>
             )}
         </div>
     );

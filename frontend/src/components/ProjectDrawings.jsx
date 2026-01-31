@@ -1,37 +1,50 @@
-// frontend/src/components/ProjectDrawings.jsx
 import React, { useState, useEffect, useCallback } from 'react';
 import axiosInstance from '../api/axiosInstance';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
 import LoadingSpinner from './LoadingSpinner';
-import Modal from 'react-modal';
-import { DocumentArrowDownIcon, PencilIcon, TrashIcon, XMarkIcon, CheckIcon } from '@heroicons/react/24/solid';
+import Modal from './Modal';
+import ConfirmationModal from './ConfirmationModal';
+import { 
+    DocumentArrowDownIcon, 
+    PencilIcon, 
+    TrashIcon, 
+    CloudArrowUpIcon,
+    DocumentTextIcon,
+    TagIcon,
+    UserIcon,
+    CalendarIcon
+} from '@heroicons/react/24/outline';
 
-// Ensure react-modal is initialized
-Modal.setAppElement('#root');
+const DRAWING_STATUSES = ["Draft", "For Approval", "Approved", "As-Built", "Archived"];
 
 const formatDate = (dateString) => dateString ? new Date(dateString).toLocaleDateString() : 'N/A';
 const formatDateForInput = (dateString) => dateString ? dateString.split('T')[0] : '';
-
-const DRAWING_STATUSES = ["Draft", "For Approval", "Approved", "As-Built", "Archived"];
 
 function ProjectDrawings({ projectId }) {
     const [drawings, setDrawings] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
     const { user } = useAuth();
+
+    // Upload State
     const [selectedFile, setSelectedFile] = useState(null);
     const [description, setDescription] = useState('');
     const [isUploading, setIsUploading] = useState(false);
 
-    // State for editing modal
+    // Edit Modal State
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editingDrawing, setEditingDrawing] = useState(null);
     const [editFormData, setEditFormData] = useState({
         description: '', revision: '', discipline: '', status: 'Draft', drawing_date: '', author: ''
     });
 
-    const canManageDrawings = user && ['admin', 'project manager', 'team leader'].includes(user.role);
+    // Delete Modal State
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [drawingToDelete, setDrawingToDelete] = useState(null);
+
+    // Permissions: Superadmin has global root access
+    const canManageDrawings = user && (['admin', 'project manager', 'team leader'].includes(user.role) || user.is_superuser);
 
     const fetchDrawings = useCallback(async () => {
         if (!projectId) return;
@@ -41,8 +54,8 @@ function ProjectDrawings({ projectId }) {
             const response = await axiosInstance.get(`/drawings/project/${projectId}`);
             setDrawings(response.data);
         } catch (err) {
-            setError('Failed to load drawings.');
-            // toast.error('Failed to load drawings.'); // Can be noisy on initial load fail
+            setError('Failed to load drawing registry.');
+            console.error("Fetch drawings error:", err);
         } finally {
             setIsLoading(false);
         }
@@ -64,12 +77,11 @@ function ProjectDrawings({ projectId }) {
             toast.warn("Please select a file to upload.");
             return;
         }
+
         setIsUploading(true);
         const formData = new FormData();
         formData.append('file', selectedFile);
         formData.append('description', description);
-        // Add new fields to upload if desired, otherwise they can be edited later
-        // formData.append('revision', 'Initial'); // Example
 
         try {
             await axiosInstance.post(`/drawings/upload/${projectId}`, formData, {
@@ -78,23 +90,13 @@ function ProjectDrawings({ projectId }) {
             toast.success('Drawing uploaded successfully!');
             setSelectedFile(null);
             setDescription('');
-            document.getElementById('drawing-file-input').value = ''; // Reset file input
-            fetchDrawings(); // Refresh list
+            const fileInput = document.getElementById('drawing-file-input');
+            if (fileInput) fileInput.value = ''; 
+            fetchDrawings();
         } catch (err) {
-            toast.error(err.response?.data?.detail || 'Failed to upload drawing.');
+            toast.error(err.response?.data?.detail || 'Upload failed.');
         } finally {
             setIsUploading(false);
-        }
-    };
-
-    const handleDelete = async (drawingId, drawingName) => {
-        if (!window.confirm(`Are you sure you want to delete the drawing "${drawingName}"?`)) return;
-        try {
-            await axiosInstance.delete(`/drawings/${drawingId}`);
-            toast.success(`Drawing "${drawingName}" deleted.`);
-            fetchDrawings(); // Refresh list
-        } catch (err) {
-            toast.error('Failed to delete drawing.');
         }
     };
 
@@ -112,11 +114,11 @@ function ProjectDrawings({ projectId }) {
             link.parentNode.removeChild(link);
             window.URL.revokeObjectURL(url);
         } catch (error) {
-            toast.error("Could not download file.");
+            toast.error("File download failed.");
         }
     };
 
-    // --- Edit Modal Functions ---
+    // --- Modal Management ---
     const openEditModal = (drawing) => {
         setEditingDrawing(drawing);
         setEditFormData({
@@ -130,144 +132,215 @@ function ProjectDrawings({ projectId }) {
         setIsEditModalOpen(true);
     };
 
-    const closeEditModal = () => {
-        setIsEditModalOpen(false);
-        setEditingDrawing(null);
-    };
-
     const handleEditFormChange = (e) => {
-        setEditFormData({ ...editFormData, [e.target.name]: e.target.value });
+        const { name, value } = e.target;
+        setEditFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleSaveChanges = async (e) => {
-        e.preventDefault();
+    const handleSaveChanges = async () => {
         if (!editingDrawing) return;
         try {
-            const payload = {
-                ...editFormData,
-                drawing_date: editFormData.drawing_date || null // Ensure null if empty
-            };
+            const payload = { ...editFormData, drawing_date: editFormData.drawing_date || null };
             await axiosInstance.put(`/drawings/${editingDrawing.id}`, payload);
-            toast.success("Drawing details updated.");
-            closeEditModal();
-            fetchDrawings(); // Refresh list
+            toast.success("Registry updated.");
+            setIsEditModalOpen(false);
+            fetchDrawings();
         } catch (err) {
-            toast.error("Failed to update drawing details.");
+            toast.error("Update failed.");
         }
     };
-    // --- End Edit Modal Functions ---
 
+    const triggerDelete = (drawing) => {
+        setDrawingToDelete(drawing);
+        setIsDeleteModalOpen(true);
+    };
 
-    if (isLoading) {
-        return <LoadingSpinner text="Loading Drawings..." />;
-    }
+    const confirmDelete = async () => {
+        try {
+            await axiosInstance.delete(`/drawings/${drawingToDelete.id}`);
+            toast.success(`Deleted ${drawingToDelete.filename}`);
+            setIsDeleteModalOpen(false);
+            fetchDrawings();
+        } catch (err) {
+            toast.error("Deletion failed.");
+        }
+    };
+
+    if (isLoading) return <LoadingSpinner text="Accessing blueprints..." />;
 
     return (
-        <div className="mt-8 pt-6 border-t dark:border-gray-600">
-            <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Project Drawings</h2>
-            {error && <p className="text-red-500 mb-4">{error}</p>}
+        <div className="mt-10 pt-8 border-t border-gray-200 dark:border-gray-700">
+            <div className="flex items-center gap-2 mb-6">
+                <DocumentTextIcon className="h-6 w-6 text-indigo-600" />
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white">Project Drawings & Documentation</h2>
+            </div>
 
-            {/* Upload Form */}
+            {/* Modernized Upload Form */}
             {canManageDrawings && (
-                <form onSubmit={handleUpload} className="mb-6 p-4 border rounded-lg bg-gray-50 dark:bg-gray-700 grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-                    <div>
-                        <label htmlFor="description" className="block text-sm font-medium">Description (Optional)</label>
-                        <input type="text" id="description" value={description} onChange={e => setDescription(e.target.value)} className="mt-1 block w-full rounded-md"/>
-                    </div>
-                    <div>
-                        <label htmlFor="drawing-file-input" className="block text-sm font-medium">Drawing File*</label>
-                        <input type="file" id="drawing-file-input" onChange={handleFileChange} required className="mt-1 block w-full text-sm"/>
-                    </div>
-                    <button type="submit" disabled={isUploading} className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50">
-                        {isUploading ? 'Uploading...' : 'Upload Drawing'}
-                    </button>
-                </form>
+                <div className="mb-8 p-6 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-100 dark:border-gray-700">
+                    <form onSubmit={handleUpload} className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+                        <div className="md:col-span-5">
+                            <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">Description</label>
+                            <input 
+                                type="text" 
+                                value={description} 
+                                onChange={e => setDescription(e.target.value)} 
+                                placeholder="e.g., First Floor Electrical Plan"
+                                className="block w-full rounded-xl border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-indigo-500 transition"
+                            />
+                        </div>
+                        <div className="md:col-span-4">
+                            <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">Select File (PDF/DWG)</label>
+                            <input 
+                                type="file" 
+                                id="drawing-file-input" 
+                                onChange={handleFileChange} 
+                                required 
+                                className="block w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 dark:file:bg-indigo-900/30 dark:file:text-indigo-300"
+                            />
+                        </div>
+                        <div className="md:col-span-3">
+                            <button 
+                                type="submit" 
+                                disabled={isUploading} 
+                                className="w-full inline-flex justify-center items-center px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-sm transition disabled:opacity-50"
+                            >
+                                <CloudArrowUpIcon className="h-5 w-5 mr-2" />
+                                {isUploading ? 'Sending...' : 'Upload'}
+                            </button>
+                        </div>
+                    </form>
+                </div>
             )}
 
             {/* Drawings Table */}
-            <div className="overflow-x-auto relative shadow-md sm:rounded-lg">
-                <table className="w-full text-sm text-left min-w-[800px]"> {/* Added min-width */}
-                    <thead className="text-xs uppercase bg-gray-50 dark:bg-gray-700">
-                        <tr>
-                            <th className="py-3 px-4">Filename</th>
-                            <th className="py-3 px-2">Rev</th>
-                            <th className="py-3 px-4">Discipline</th>
-                            <th className="py-3 px-4">Status</th>
-                            <th className="py-3 px-4">Date</th>
-                            <th className="py-3 px-4">Author</th>
-                            <th className="py-3 px-4">Uploaded</th>
-                            <th className="py-3 px-4">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {drawings.map(drawing => (
-                            <tr key={drawing.id} className="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
-                                <td className="py-2 px-4 font-medium">{drawing.filename}</td>
-                                <td className="py-2 px-2">{drawing.revision || '-'}</td>
-                                <td className="py-2 px-4">{drawing.discipline || '-'}</td>
-                                <td className="py-2 px-4">{drawing.status || '-'}</td>
-                                <td className="py-2 px-4">{formatDate(drawing.drawing_date)}</td>
-                                <td className="py-2 px-4">{drawing.author || '-'}</td>
-                                <td className="py-2 px-4 text-xs">{formatDate(drawing.uploaded_at)}</td>
-                                <td className="py-2 px-4 flex items-center space-x-2">
-                                    <button onClick={() => handleDownload(drawing.id, drawing.filename)} title="Download" className="text-green-600 hover:text-green-800"><DocumentArrowDownIcon className="h-5 w-5"/></button>
-                                    {canManageDrawings && (
-                                        <>
-                                            <button onClick={() => openEditModal(drawing)} title="Edit Details" className="text-blue-600 hover:text-blue-800"><PencilIcon className="h-5 w-5"/></button>
-                                            <button onClick={() => handleDelete(drawing.id, drawing.filename)} title="Delete" className="text-red-600 hover:text-red-800"><TrashIcon className="h-5 w-5"/></button>
-                                        </>
-                                    )}
-                                </td>
+            <div className="overflow-hidden bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
+                <div className="overflow-x-auto">
+                    <table className="w-full text-sm text-left min-w-[900px]">
+                        <thead className="text-xs text-gray-500 uppercase bg-gray-50 dark:bg-gray-700/50 font-bold">
+                            <tr>
+                                <th className="py-4 px-6">Document Name</th>
+                                <th className="py-4 px-2">Rev</th>
+                                <th className="py-4 px-4">Discipline</th>
+                                <th className="py-4 px-4">Status</th>
+                                <th className="py-4 px-4">Author</th>
+                                <th className="py-4 px-4">Registry Date</th>
+                                <th className="py-4 px-4 text-center">Actions</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
-                 {drawings.length === 0 && <p className="p-4 text-center">No drawings uploaded for this project yet.</p>}
+                        </thead>
+                        <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                            {drawings.length > 0 ? drawings.map(drawing => (
+                                <tr key={drawing.id} className="hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
+                                    <td className="py-4 px-6">
+                                        <div className="font-bold text-gray-900 dark:text-white truncate max-w-[200px]" title={drawing.filename}>
+                                            {drawing.filename}
+                                        </div>
+                                        <div className="text-[10px] text-gray-400 truncate max-w-[200px]">{drawing.description || 'No description'}</div>
+                                    </td>
+                                    <td className="py-4 px-2 font-mono text-xs">{drawing.revision || '0'}</td>
+                                    <td className="py-4 px-4 text-gray-500">{drawing.discipline || 'General'}</td>
+                                    <td className="py-4 px-4">
+                                        <span className={`px-2 py-0.5 text-[10px] font-bold rounded-full uppercase tracking-tighter ${
+                                            drawing.status === 'Approved' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'
+                                        }`}>
+                                            {drawing.status || 'Draft'}
+                                        </span>
+                                    </td>
+                                    <td className="py-4 px-4 text-gray-500 flex items-center gap-1">
+                                        <UserIcon className="h-3 w-3" /> {drawing.author || 'N/A'}
+                                    </td>
+                                    <td className="py-4 px-4 text-gray-400 text-xs">
+                                        {formatDate(drawing.drawing_date)}
+                                    </td>
+                                    <td className="py-4 px-4">
+                                        <div className="flex justify-center items-center gap-3">
+                                            <button 
+                                                onClick={() => handleDownload(drawing.id, drawing.filename)} 
+                                                className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
+                                                title="Download PDF/DWG"
+                                            >
+                                                <DocumentArrowDownIcon className="h-5 w-5"/>
+                                            </button>
+                                            {canManageDrawings && (
+                                                <>
+                                                    <button onClick={() => openEditModal(drawing)} className="p-2 text-gray-400 hover:text-blue-600 transition">
+                                                        <PencilIcon className="h-5 w-5"/>
+                                                    </button>
+                                                    <button onClick={() => triggerDelete(drawing)} className="p-2 text-gray-400 hover:text-red-600 transition">
+                                                        <TrashIcon className="h-5 w-5"/>
+                                                    </button>
+                                                </>
+                                            )}
+                                        </div>
+                                    </td>
+                                </tr>
+                            )) : (
+                                <tr>
+                                    <td colSpan="7" className="py-12 text-center text-gray-500 italic">No blueprints uploaded for this site yet.</td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
-             {/* Edit Drawing Modal */}
-            <Modal
-                isOpen={isEditModalOpen}
-                onRequestClose={closeEditModal}
-                contentLabel="Edit Drawing Details"
-                className="modal fixed inset-0 flex items-center justify-center p-4"
-                overlayClassName="modal-overlay fixed inset-0 bg-black bg-opacity-50"
+            {/* Custom Edit Modal */}
+            <Modal 
+                isOpen={isEditModalOpen} 
+                onClose={() => setIsEditModalOpen(false)} 
+                onConfirm={handleSaveChanges}
+                title="Update Drawing Metadata"
+                confirmText="Save Registry"
             >
-                <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl p-6 w-full max-w-lg">
-                    <div className="flex justify-between items-center mb-4">
-                        <h2 className="text-xl font-bold">Edit Drawing Details</h2>
-                        <button onClick={closeEditModal}><XMarkIcon className="h-6 w-6"/></button>
+                <div className="space-y-4 py-2">
+                    <div>
+                        <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Description</label>
+                        <textarea 
+                            name="description" 
+                            value={editFormData.description} 
+                            onChange={handleEditFormChange} 
+                            rows="2" 
+                            className="w-full rounded-xl border-gray-300 dark:bg-gray-700 dark:text-white"
+                        />
                     </div>
-                    {editingDrawing && (
-                        <form onSubmit={handleSaveChanges} className="space-y-4">
-                            <p className="text-sm font-semibold">Filename: {editingDrawing.filename}</p>
-                            <div><label>Description</label><textarea name="description" value={editFormData.description} onChange={handleEditFormChange} rows="2" className="mt-1 block w-full rounded-md"/></div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div><label>Revision</label><input type="text" name="revision" value={editFormData.revision} onChange={handleEditFormChange} className="mt-1 block w-full rounded-md"/></div>
-                                <div><label>Discipline</label><input type="text" name="discipline" value={editFormData.discipline} onChange={handleEditFormChange} className="mt-1 block w-full rounded-md"/></div>
-                            </div>
-                             <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label>Status</label>
-                                    <select name="status" value={editFormData.status} onChange={handleEditFormChange} className="mt-1 block w-full rounded-md">
-                                        {DRAWING_STATUSES.map(s => <option key={s} value={s}>{s.replace('_', ' ')}</option>)}
-                                    </select>
-                                </div>
-                                <div><label>Drawing Date</label><input type="date" name="drawing_date" value={editFormData.drawing_date} onChange={handleEditFormChange} className="mt-1 block w-full rounded-md"/></div>
-                             </div>
-                             <div><label>Author (Drawn By)</label><input type="text" name="author" value={editFormData.author} onChange={handleEditFormChange} className="mt-1 block w-full rounded-md"/></div>
-
-                            <div className="flex justify-end space-x-3 pt-4">
-                                <button type="button" onClick={closeEditModal} className="px-4 py-2 bg-gray-300 rounded-md">Cancel</button>
-                                <button type="submit" className="px-4 py-2 bg-green-600 text-white rounded-md flex items-center">
-                                    <CheckIcon className="h-5 w-5 mr-1"/> Save Changes
-                                </button>
-                            </div>
-                        </form>
-                    )}
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Revision</label>
+                            <input type="text" name="revision" value={editFormData.revision} onChange={handleEditFormChange} className="w-full rounded-xl border-gray-300 dark:bg-gray-700 dark:text-white" />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Discipline</label>
+                            <input type="text" name="discipline" value={editFormData.discipline} onChange={handleEditFormChange} className="w-full rounded-xl border-gray-300 dark:bg-gray-700 dark:text-white" />
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Status</label>
+                            <select name="status" value={editFormData.status} onChange={handleEditFormChange} className="w-full rounded-xl border-gray-300 dark:bg-gray-700 dark:text-white">
+                                {DRAWING_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Drawing Date</label>
+                            <input type="date" name="drawing_date" value={editFormData.drawing_date} onChange={handleEditFormChange} className="w-full rounded-xl border-gray-300 dark:bg-gray-700 dark:text-white" />
+                        </div>
+                    </div>
+                    <div>
+                        <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Author</label>
+                        <input type="text" name="author" value={editFormData.author} onChange={handleEditFormChange} className="w-full rounded-xl border-gray-300 dark:bg-gray-700 dark:text-white" />
+                    </div>
                 </div>
             </Modal>
 
+            {/* Custom Confirmation Modal */}
+            <ConfirmationModal 
+                isOpen={isDeleteModalOpen}
+                onClose={() => setIsDeleteModalOpen(false)}
+                onConfirm={confirmDelete}
+                title="Purge Drawing"
+                message={`Are you sure you want to permanently delete "${drawingToDelete?.filename}"? This will remove the file from the cloud storage.`}
+                confirmText="Delete Permanently"
+            />
         </div>
     );
 }

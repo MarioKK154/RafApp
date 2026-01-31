@@ -25,9 +25,16 @@ def get_project_boq(
     db: DbDependency,
     current_user: CurrentUserDependency
 ):
-    project = crud.get_project(db, project_id=project_id, tenant_id=current_user.tenant_id)
+    """
+    Retrieves the Bill of Quantities for a project. 
+    If it doesn't exist, it creates one.
+    """
+    # Superadmin bypass: effective_tenant_id is None for superusers
+    effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
+    
+    project = crud.get_project(db, project_id=project_id, tenant_id=effective_tenant_id)
     if not project:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found in your tenant.")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found or access denied.")
     
     boq = crud.get_or_create_boq_for_project(db, project_id=project.id, project_name=project.name)
     return boq
@@ -41,13 +48,18 @@ def add_boq_item(
     db: DbDependency,
     current_user: ManagerOrAdminDependency
 ):
-    project = crud.get_project(db, project_id=project_id, tenant_id=current_user.tenant_id)
+    """
+    Adds an item from the global catalog to a project's BoQ.
+    """
+    effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
+    
+    project = crud.get_project(db, project_id=project_id, tenant_id=effective_tenant_id)
     if not project:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found.")
     
     inventory_item = crud.get_inventory_item(db, item_id=item.inventory_item_id)
     if not inventory_item:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Inventory item not found.")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Inventory catalog item not found.")
         
     boq = crud.get_or_create_boq_for_project(db, project_id=project.id, project_name=project.name)
     updated_boq = crud.add_item_to_boq(db, boq=boq, item_data=item)
@@ -62,11 +74,15 @@ def update_boq_item_quantity(
     db: DbDependency,
     current_user: ManagerOrAdminDependency
 ):
+    """
+    Updates the required quantity for a specific item in the BoQ.
+    """
     db_item = crud.get_boq_item(db, boq_item_id=boq_item_id)
     if not db_item:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="BoQ item not found.")
     
-    project = crud.get_project(db, project_id=db_item.boq.project_id, tenant_id=current_user.tenant_id)
+    effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
+    project = crud.get_project(db, project_id=db_item.boq.project_id, tenant_id=effective_tenant_id)
     if not project:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to modify this BoQ item.")
         
@@ -80,11 +96,15 @@ def remove_boq_item(
     db: DbDependency,
     current_user: ManagerOrAdminDependency
 ):
+    """
+    Removes an item from the Bill of Quantities.
+    """
     db_item = crud.get_boq_item(db, boq_item_id=boq_item_id)
     if not db_item:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="BoQ item not found.")
 
-    project = crud.get_project(db, project_id=db_item.boq.project_id, tenant_id=current_user.tenant_id)
+    effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
+    project = crud.get_project(db, project_id=db_item.boq.project_id, tenant_id=effective_tenant_id)
     if not project:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to modify this BoQ item.")
         

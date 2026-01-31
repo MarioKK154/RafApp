@@ -1,6 +1,3 @@
-// frontend/src/pages/CarFleetPage.jsx
-// Card layout + Basic Search
-
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -8,9 +5,23 @@ import axiosInstance from '../api/axiosInstance';
 import { toast } from 'react-toastify';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ConfirmationModal from '../components/ConfirmationModal';
-import { PlusIcon, TrashIcon, PencilIcon, MagnifyingGlassIcon, ArrowUpOnSquareIcon, ArrowDownOnSquareIcon } from '@heroicons/react/24/solid';
+import { 
+    PlusIcon, 
+    TrashIcon, 
+    PencilIcon, 
+    MagnifyingGlassIcon, 
+    ArrowPathRoundedSquareIcon, // Check-in/out vibe
+    TruckIcon,
+    UserIcon,
+    IdentificationIcon,
+    WrenchIcon,
+    BuildingOfficeIcon,
+    ArrowRightCircleIcon
+} from '@heroicons/react/24/outline';
 
-// Debounce hook (reuse if available globally, otherwise define here)
+/**
+ * Debounce hook to optimize frontend search filtering.
+ */
 function useDebounce(value, delay) {
     const [debouncedValue, setDebouncedValue] = useState(value);
     useEffect(() => {
@@ -21,219 +32,256 @@ function useDebounce(value, delay) {
 }
 
 function CarFleetPage() {
+    const navigate = useNavigate();
+    const { user } = useAuth();
+
+    // Data States
     const [cars, setCars] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
-    const { user } = useAuth();
-    const navigate = useNavigate();
 
+    // UI/Filter States
     const [carToDelete, setCarToDelete] = useState(null);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
-    const debouncedSearchTerm = useDebounce(searchTerm, 300); // Debounce search
+    const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
-    const isAdmin = user && (user.role === 'admin' || user.is_superuser);
+    // Permissions: Admin or Superuser for fleet management
+    const isSuperuser = user?.is_superuser;
+    const canManageFleet = user && (user.role === 'admin' || isSuperuser);
 
-    const fetchCars = useCallback(() => {
+    const fetchCars = useCallback(async () => {
         setIsLoading(true);
-        axiosInstance.get('/cars/') // Add search param later if needed on backend
-            .then(response => setCars(response.data))
-            .catch(() => {
-                setError('Failed to load car fleet data.');
-                toast.error('Failed to load car fleet data.');
-            })
-            .finally(() => setIsLoading(false));
-    }, []); // Removed debouncedSearchTerm dependency for now (frontend filter)
+        setError('');
+        try {
+            // Fetching global list (Backend handles tenant isolation unless superuser)
+            const response = await axiosInstance.get('/cars/', { params: { limit: 500 } });
+            setCars(response.data);
+        } catch (err) {
+            console.error("Fleet fetch error:", err);
+            setError('Failed to synchronize with fleet registry.');
+            toast.error('Registry sync failed.');
+        } finally {
+            setIsLoading(false);
+        }
+    }, []);
 
     useEffect(() => { fetchCars(); }, [fetchCars]);
 
-     // Filter cars based on search term (frontend filtering)
+    /**
+     * Frontend Search Logic
+     */
     const filteredCars = useMemo(() => {
-        if (!debouncedSearchTerm) {
-            return cars;
-        }
-        const lowerSearch = debouncedSearchTerm.toLowerCase();
+        if (!debouncedSearchTerm) return cars;
+        const query = debouncedSearchTerm.toLowerCase();
         return cars.filter(car =>
-            car.make.toLowerCase().includes(lowerSearch) ||
-            car.model.toLowerCase().includes(lowerSearch) ||
-            car.license_plate.toLowerCase().includes(lowerSearch) ||
-            (car.vin && car.vin.toLowerCase().includes(lowerSearch))
+            car.make.toLowerCase().includes(query) ||
+            car.model.toLowerCase().includes(query) ||
+            car.license_plate.toLowerCase().includes(query) ||
+            (car.vin && car.vin.toLowerCase().includes(query))
         );
     }, [cars, debouncedSearchTerm]);
 
-
-    const handleCheckout = async (carId) => {
-        // Navigate to details page to checkout with odometer/notes
-        navigate(`/cars/${carId}`);
-        // Alternatively, implement a quick checkout modal here
-        // try {
-        //     await axiosInstance.post(`/cars/${carId}/checkout`, {}); // Send empty body for quick checkout
-        //     toast.success('Car checked out successfully!');
-        //     fetchCars();
-        // } catch (err) { toast.error(err.response?.data?.detail || 'Failed to check out car.'); }
-    };
-
-    const handleCheckin = async (carId) => {
-         // Navigate to details page to checkin with odometer/notes
-         navigate(`/cars/${carId}`);
-        // Alternatively, implement a quick checkin modal here
-        // try {
-        //     await axiosInstance.post(`/cars/${carId}/checkin`, {}); // Send empty body for quick checkin
-        //     toast.success('Car checked in successfully!');
-        //     fetchCars();
-        // } catch (err) { toast.error(err.response?.data?.detail || 'Failed to check in car.'); }
-    };
-
-    const handleDeleteClick = (car) => {
+    const triggerDelete = (car) => {
         setCarToDelete(car);
         setIsDeleteModalOpen(true);
     };
 
     const confirmDelete = async () => {
-        // ... (delete logic remains the same)
         if (!carToDelete) return;
         try {
             await axiosInstance.delete(`/cars/${carToDelete.id}`);
-            toast.success(`Car "${carToDelete.make} ${carToDelete.model}" deleted.`);
+            toast.success(`Vehicle ${carToDelete.license_plate} removed from fleet.`);
             fetchCars();
-        } catch (err) { toast.error(err.response?.data?.detail || 'Failed to delete car.'); }
-        finally {
+        } catch (err) {
+            toast.error(err.response?.data?.detail || 'Deletion failed.');
+        } finally {
             setIsDeleteModalOpen(false);
             setCarToDelete(null);
         }
     };
 
-    const getStatusColor = (status) => {
-        // ... (status color logic - adjust as needed)
-         switch (status) {
-            case 'Available': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
-            case 'Checked Out': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
-            case 'In Service': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
-            case 'Needs Service': return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300';
-            case 'Retired': return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
-            default: return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
+    const getStatusStyle = (status) => {
+        switch (status) {
+            case 'Available': return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
+            case 'Checked Out': return 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400';
+            case 'In Service': return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400';
+            case 'Needs Service': return 'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400';
+            case 'Retired': return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400';
+            default: return 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30';
         }
     };
 
-
-    if (isLoading && cars.length === 0) {
-        return <LoadingSpinner text="Loading Car Fleet..." />;
-    }
+    if (isLoading && cars.length === 0) return <LoadingSpinner text="Retrieving fleet status..." />;
 
     return (
-        <div className="container mx-auto p-4 md:p-6">
+        <div className="container mx-auto p-4 md:p-8 max-w-7xl animate-in fade-in duration-500">
             {/* Header */}
-             <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
-                <h1 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white">Car Fleet</h1>
-                {isAdmin && ( // Only Admins can add/delete cars
-                    <Link to="/cars/new" className="flex items-center bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg shadow transition duration-150 ease-in-out">
-                        <PlusIcon className="h-5 w-5 mr-2" /> Add New Car
-                    </Link>
+            <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+                <div>
+                    <div className="flex items-center gap-3 mb-1">
+                        <div className="p-2 bg-indigo-600 rounded-xl shadow-lg shadow-indigo-100 dark:shadow-none">
+                            <TruckIcon className="h-6 w-6 text-white" />
+                        </div>
+                        <h1 className="text-3xl font-black text-gray-900 dark:text-white leading-none">Fleet Registry</h1>
+                    </div>
+                    <p className="text-gray-500 dark:text-gray-400 text-sm">
+                        {isSuperuser ? "Global vehicle asset management" : `Company vehicles for ${user?.tenant?.name}`}
+                    </p>
+                </div>
+
+                {canManageFleet && (
+                    <button 
+                        onClick={() => navigate('/cars/new')}
+                        className="inline-flex items-center px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-100 dark:shadow-none transition transform active:scale-95"
+                    >
+                        <PlusIcon className="h-5 w-5 mr-1.5" /> 
+                        Register Vehicle
+                    </button>
+                )}
+            </header>
+
+            {/* Global Search & Stats */}
+            <div className="mb-8 grid grid-cols-1 lg:grid-cols-4 gap-4">
+                <div className="lg:col-span-3 relative">
+                    <MagnifyingGlassIcon className="h-5 w-5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" />
+                    <input
+                        type="text"
+                        placeholder="Search by Brand, Model, Plate or VIN..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="block w-full pl-12 pr-4 h-12 rounded-2xl border border-gray-200 dark:bg-gray-800 dark:border-gray-700 text-sm focus:ring-2 focus:ring-indigo-500 transition-all shadow-sm"
+                    />
+                </div>
+                <div className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl p-3 flex items-center justify-center gap-4 text-xs font-bold uppercase tracking-widest text-gray-400 shadow-sm">
+                    <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-green-500"></div> {cars.filter(c => c.status === 'Available').length} Ready</span>
+                    <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-orange-500"></div> {cars.filter(c => c.status === 'Checked Out').length} Active</span>
+                </div>
+            </div>
+
+            {error && <div className="mb-8 p-4 bg-red-50 text-red-700 rounded-2xl text-sm font-bold">{error}</div>}
+
+            {/* Fleet Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                {filteredCars.length > 0 ? filteredCars.map(car => (
+                    <div key={car.id} className="group relative bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden">
+                        
+                        {/* Vehicle Image / Placeholder */}
+                        <div className="aspect-[16/9] bg-gray-100 dark:bg-gray-900 relative overflow-hidden">
+                            <img
+                                src={car.image_url || '/default-car.png'}
+                                alt={`${car.make} ${car.model}`}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                onError={(e) => { e.target.src = 'https://via.placeholder.com/600x400?text=Vehicle+Image+Pending'; }}
+                            />
+                            <div className="absolute top-4 left-4">
+                                <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg ${getStatusStyle(car.status)}`}>
+                                    {car.status.replace('_', ' ')}
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* Card Content */}
+                        <div className="p-6">
+                            <div className="flex justify-between items-start mb-4">
+                                <div className="min-w-0">
+                                    <h2 className="text-xl font-black text-gray-900 dark:text-white truncate">
+                                        {car.make} {car.model}
+                                    </h2>
+                                    <p className="text-sm font-mono font-bold text-indigo-600 dark:text-indigo-400 mt-0.5">
+                                        {car.license_plate}
+                                    </p>
+                                </div>
+                                <Link 
+                                    to={`/cars/${car.id}`} 
+                                    className="p-2 text-gray-400 hover:text-indigo-600 transition"
+                                    title="View Logs & Details"
+                                >
+                                    <ArrowRightCircleIcon className="h-8 w-8" />
+                                </Link>
+                            </div>
+
+                            <div className="space-y-2.5 mb-6">
+                                <div className="flex items-center gap-2 text-xs text-gray-500">
+                                    <IdentificationIcon className="h-4 w-4 text-gray-400" />
+                                    <span className="font-bold">VIN:</span>
+                                    <span className="truncate">{car.vin || 'Not Registered'}</span>
+                                </div>
+                                <div className="flex items-center gap-2 text-xs text-gray-500">
+                                    <UserIcon className="h-4 w-4 text-gray-400" />
+                                    <span className="font-bold">Custodian:</span>
+                                    <span>{car.current_user?.full_name || 'Fleet Pool (Available)'}</span>
+                                </div>
+                                {isSuperuser && car.tenant && (
+                                    <div className="flex items-center gap-2 text-[10px] text-orange-600 font-black uppercase tracking-tighter pt-1">
+                                        <BuildingOfficeIcon className="h-3.5 w-3.5" />
+                                        {car.tenant.name}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Action Buttons */}
+                            <div className="flex items-center gap-2 pt-4 border-t border-gray-50 dark:border-gray-700">
+                                {car.status === 'Available' ? (
+                                    <button 
+                                        onClick={() => navigate(`/cars/${car.id}`)}
+                                        className="flex-1 inline-flex justify-center items-center h-10 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 text-xs font-black rounded-xl hover:bg-green-100 transition uppercase tracking-widest"
+                                    >
+                                        <ArrowPathRoundedSquareIcon className="h-4 w-4 mr-1.5" /> Start Trip
+                                    </button>
+                                ) : car.current_user?.id === user.id ? (
+                                    <button 
+                                        onClick={() => navigate(`/cars/${car.id}`)}
+                                        className="flex-1 inline-flex justify-center items-center h-10 bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-400 text-xs font-black rounded-xl hover:bg-orange-100 transition uppercase tracking-widest"
+                                    >
+                                        <ArrowPathRoundedSquareIcon className="h-4 w-4 mr-1.5" /> Check-in
+                                    </button>
+                                ) : (
+                                    <div className="flex-1 h-10 bg-gray-50 dark:bg-gray-700 flex items-center justify-center text-[10px] font-bold text-gray-400 uppercase rounded-xl italic">
+                                        Vehicle in Use
+                                    </div>
+                                )}
+
+                                {canManageFleet && (
+                                    <>
+                                        <button 
+                                            onClick={() => navigate(`/cars/edit/${car.id}`)}
+                                            className="p-2.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-xl transition"
+                                            title="Edit Metadata"
+                                        >
+                                            <PencilIcon className="h-5 w-5" />
+                                        </button>
+                                        <button 
+                                            onClick={() => triggerDelete(car)}
+                                            className="p-2.5 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-xl transition"
+                                            title="Purge Vehicle"
+                                        >
+                                            <TrashIcon className="h-5 w-5" />
+                                        </button>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )) : (
+                    <div className="col-span-full py-20 text-center bg-white dark:bg-gray-800 rounded-3xl border-2 border-dashed border-gray-100 dark:border-gray-700">
+                        <TruckIcon className="h-12 w-12 text-gray-200 mx-auto mb-4" />
+                        <h3 className="text-lg font-bold text-gray-900 dark:text-white">No vehicles found</h3>
+                        <p className="text-sm text-gray-500 mt-1">Try adjusting your search criteria or register a new asset.</p>
+                    </div>
                 )}
             </div>
 
-            {/* Search Bar */}
-            <div className="mb-6">
-                <div className="relative flex-grow max-w-md">
-                    <input
-                        type="text"
-                        placeholder="Search by make, model, plate, VIN..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10 pr-4 py-2 w-full rounded-md border border-gray-300 dark:bg-gray-700 dark:border-gray-600 focus:border-indigo-500 focus:ring-indigo-500 text-sm"
-                    />
-                    <MagnifyingGlassIcon className="h-5 w-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2 pointer-events-none" />
-                </div>
-            </div>
-
-
-            {error && <p className="text-red-500 text-center mb-4">{error}</p>}
-
-             {/* Car Cards List */}
-            {isLoading && cars.length > 0 && <LoadingSpinner text="Refreshing fleet..." />}
-            {!isLoading && filteredCars.length > 0 ? (
-                 <div className="space-y-4">
-                    {filteredCars.map(car => (
-                        <div key={car.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden transition hover:shadow-lg">
-                            <div className="p-5 flex flex-wrap justify-between items-start gap-4">
-                                {/* Image and Main Info */}
-                                <div className="flex items-start gap-4 flex-grow min-w-[200px]">
-                                     <img
-                                        src={car.image_url || '/default-car.png'}
-                                        alt={`${car.make} ${car.model}`}
-                                        className="h-16 w-24 object-cover rounded flex-shrink-0 bg-gray-100 dark:bg-gray-700 p-1"
-                                        onError={(e) => { e.target.onerror = null; e.target.src='/default-car.png' }}
-                                    />
-                                    <div>
-                                         <h2 className="text-lg font-semibold text-gray-800 dark:text-white mb-1">
-                                             <Link to={`/cars/${car.id}`} className="hover:text-indigo-600 dark:hover:text-indigo-400">
-                                                 {car.make} {car.model}
-                                             </Link>
-                                         </h2>
-                                         <p className="text-sm font-mono text-gray-700 dark:text-gray-300">
-                                             {car.license_plate}
-                                         </p>
-                                          <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-                                             VIN: {car.vin || 'N/A'}
-                                         </p>
-                                    </div>
-                                </div>
-                                {/* Status, User, and Actions */}
-                                <div className="flex-shrink-0 text-right space-y-2 min-w-[150px]">
-                                     <span className={`block px-2 py-0.5 text-xs font-semibold rounded-full ${getStatusColor(car.status)}`}>
-                                         {car.status.replace('_', ' ')}
-                                     </span>
-                                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                                         With: {car.current_user?.full_name || '-'}
-                                     </p>
-                                     <div className="flex justify-end items-center space-x-3 mt-2">
-                                        {/* Check-in/out Buttons - Link to details page for full flow */}
-                                        {car.status === 'Available' && (
-                                            <button onClick={() => navigate(`/cars/${car.id}`)} className="text-green-600 hover:text-green-800 text-sm font-medium flex items-center" title="Check Out">
-                                                <ArrowUpOnSquareIcon className="h-4 w-4 mr-1"/> Check Out
-                                            </button>
-                                        )}
-                                        {car.status === 'Checked Out' && car.current_user?.id === user.id && (
-                                             <button onClick={() => navigate(`/cars/${car.id}`)} className="text-yellow-600 hover:text-yellow-800 text-sm font-medium flex items-center" title="Check In">
-                                                <ArrowDownOnSquareIcon className="h-4 w-4 mr-1"/> Check In
-                                            </button>
-                                        )}
-                                        {/* Admin Actions */}
-                                        {isAdmin && (
-                                            <>
-                                                <button onClick={() => navigate(`/cars/edit/${car.id}`)} className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 text-sm font-medium flex items-center" title="Edit Car">
-                                                    <PencilIcon className="h-4 w-4 mr-1"/> Edit
-                                                </button>
-                                                <button onClick={() => handleDeleteClick(car)} className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 text-sm font-medium flex items-center" title="Delete Car">
-                                                    <TrashIcon className="h-4 w-4 mr-1"/> Delete
-                                                </button>
-                                            </>
-                                        )}
-                                     </div>
-                                </div>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            ) : (
-                 !isLoading && <div className="text-center py-10 bg-white dark:bg-gray-800 rounded-lg shadow">
-                      <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300">No Cars Found</h3>
-                     <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                         {searchTerm ? `No cars match your search for "${searchTerm}".` : 'There are no cars in the fleet currently.'}
-                     </p>
-                 </div>
-            )}
-
-
-            {isDeleteModalOpen && (
-                <ConfirmationModal
-                    isOpen={isDeleteModalOpen}
-                    onClose={() => setIsDeleteModalOpen(false)}
-                    onConfirm={confirmDelete}
-                    title="Delete Car"
-                    message={`Are you sure you want to delete the car "${carToDelete?.make} ${carToDelete?.model} (${carToDelete?.license_plate})"?`}
-                />
-            )}
+            {/* Deletion confirmation handled by standardized modal */}
+            <ConfirmationModal
+                isOpen={isDeleteModalOpen}
+                onClose={() => setIsDeleteModalOpen(false)}
+                onConfirm={confirmDelete}
+                title="Purge Vehicle Asset"
+                message={`Are you sure you want to delete ${carToDelete?.license_plate} (${carToDelete?.make})? This will permanently remove its historical data from the active registry.`}
+                confirmText="Permanently Remove"
+                type="danger"
+            />
         </div>
     );
 }

@@ -1,16 +1,21 @@
-// frontend/src/pages/UserListPage.jsx
-// Card layout + Basic Search
-
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import axiosInstance from '../api/axiosInstance';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
 import LoadingSpinner from '../components/LoadingSpinner';
-import ConfirmationModal from '../components/ConfirmationModal'; // Assuming you still have this for future delete
-import { PlusIcon, PencilIcon, MagnifyingGlassIcon, UserCircleIcon, EnvelopeIcon, PhoneIcon } from '@heroicons/react/24/solid';
+import { 
+    PlusIcon, 
+    PencilIcon, 
+    MagnifyingGlassIcon, 
+    UserCircleIcon, 
+    EnvelopeIcon, 
+    PhoneIcon,
+    BuildingOfficeIcon, // For Tenant display
+    IdentificationIcon // For Employee ID
+} from '@heroicons/react/24/outline';
 
-// Debounce hook (reuse if available globally)
+// Debounce hook for smooth searching
 function useDebounce(value, delay) {
     const [debouncedValue, setDebouncedValue] = useState(value);
     useEffect(() => {
@@ -26,162 +31,189 @@ function UserListPage() {
     const [error, setError] = useState('');
     const { user: currentUser } = useAuth();
     const navigate = useNavigate();
+    
     const [searchTerm, setSearchTerm] = useState('');
     const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
-    const isAdmin = currentUser && (currentUser.role === 'admin' || currentUser.is_superuser);
+    const isSuperuser = currentUser?.is_superuser;
+    const isAdmin = currentUser && (currentUser.role === 'admin' || isSuperuser);
 
     const fetchUsers = useCallback(() => {
         setIsLoading(true);
         setError('');
-        axiosInstance.get('/users/', { params: { limit: 200 } }) // Fetch a reasonable limit
+        // Superadmin fetches all users; Tenant Admin fetches their tenant's users
+        axiosInstance.get('/users/', { params: { limit: 500 } })
             .then(response => setUsers(response.data))
             .catch(() => {
-                setError('Failed to fetch users.');
-                // toast.error('Failed to fetch users.'); // Can be noisy
+                setError('Failed to fetch users. Please check your connection.');
+                toast.error('Error loading user list.');
             })
             .finally(() => setIsLoading(false));
     }, []);
 
     useEffect(() => { fetchUsers(); }, [fetchUsers]);
 
-    // Filter users based on search term (frontend filtering)
+    // Enhanced Search: Name, Email, Role, Employee ID, and Tenant Name
     const filteredUsers = useMemo(() => {
-        if (!debouncedSearchTerm) {
-            return users;
-        }
         const lowerSearch = debouncedSearchTerm.toLowerCase();
-        return users.filter(user =>
-            (user.full_name && user.full_name.toLowerCase().includes(lowerSearch)) ||
-            user.email.toLowerCase().includes(lowerSearch) ||
-            user.role.toLowerCase().includes(lowerSearch) ||
-            (user.employee_id && user.employee_id.toLowerCase().includes(lowerSearch))
+        if (!lowerSearch) return users;
+
+        return users.filter(u =>
+            (u.full_name?.toLowerCase().includes(lowerSearch)) ||
+            (u.email.toLowerCase().includes(lowerSearch)) ||
+            (u.role.toLowerCase().includes(lowerSearch)) ||
+            (u.employee_id?.toLowerCase().includes(lowerSearch)) ||
+            (u.tenant?.name?.toLowerCase().includes(lowerSearch))
         );
     }, [users, debouncedSearchTerm]);
 
     const handleToggleActiveStatus = async (userToToggle) => {
-        const action = userToToggle.is_active ? 'deactivate' : 'activate';
-        const newStatus = !userToToggle.is_active;
-
-        if (userToToggle.is_superuser && !newStatus) {
-            toast.warn("Superusers cannot be deactivated.");
+        if (userToToggle.id === currentUser.id) {
+            toast.error("You cannot deactivate your own account.");
             return;
         }
 
-        if (!window.confirm(`Are you sure you want to ${action} user "${userToToggle.email}"?`)) return;
+        const action = userToToggle.is_active ? 'deactivate' : 'activate';
+        if (!window.confirm(`Are you sure you want to ${action} "${userToToggle.email}"?`)) return;
 
         try {
-            await axiosInstance.put(`/users/${userToToggle.id}`, { is_active: newStatus });
+            await axiosInstance.put(`/users/${userToToggle.id}`, { is_active: !userToToggle.is_active });
             toast.success(`User ${action}d successfully.`);
-            fetchUsers(); // Refresh the list
+            fetchUsers();
         } catch (err) {
             toast.error(`Failed to ${action} user.`);
         }
     };
 
-
     if (isLoading && users.length === 0) {
-        return <LoadingSpinner text="Loading users..." />;
+        return <LoadingSpinner text="Loading workforce..." />;
     }
 
     return (
         <div className="container mx-auto p-4 md:p-6">
-            {/* Header */}
-            <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
-                <h1 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white">Users</h1>
+            {/* Header Section */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+                <div>
+                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Users</h1>
+                    <p className="text-gray-500 dark:text-gray-400">
+                        {isSuperuser ? "Global workforce management" : `Team members for ${currentUser?.tenant?.name}`}
+                    </p>
+                </div>
                 {isAdmin && (
-                    <div className="flex gap-3">
-                         <button onClick={() => navigate('/users/import')} className="flex items-center bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded-lg shadow transition duration-150 ease-in-out text-sm">
-                             Import Users
-                         </button>
-                         <button onClick={() => navigate('/users/new')} className="flex items-center bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg shadow transition duration-150 ease-in-out">
+                    <div className="flex gap-2">
+                        <button 
+                            onClick={() => navigate('/users/import')}
+                            className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition"
+                        >
+                            Import
+                        </button>
+                        <button 
+                            onClick={() => navigate('/users/new')}
+                            className="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition"
+                        >
                             <PlusIcon className="h-5 w-5 mr-2" /> Add User
                         </button>
                     </div>
                 )}
             </div>
 
-            {/* Search Bar */}
-             <div className="mb-6">
-                <div className="relative flex-grow max-w-md">
-                    <input
-                        type="text"
-                        placeholder="Search by name, email, role, ID..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10 pr-4 py-2 w-full rounded-md border border-gray-300 dark:bg-gray-700 dark:border-gray-600 focus:border-indigo-500 focus:ring-indigo-500 text-sm"
-                    />
-                    <MagnifyingGlassIcon className="h-5 w-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2 pointer-events-none" />
-                </div>
+            {/* Search and Filters */}
+            <div className="relative mb-8 max-w-md">
+                <MagnifyingGlassIcon className="h-5 w-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                    type="text"
+                    placeholder="Search by name, ID, or company..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl leading-5 bg-white dark:bg-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 sm:text-sm transition"
+                />
             </div>
 
-            {error && <p className="text-red-500 text-center mb-4">{error}</p>}
+            {error && <div className="p-4 mb-6 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded-lg">{error}</div>}
 
-            {/* User Cards List */}
-            {isLoading && users.length > 0 && <LoadingSpinner text="Refreshing users..." />}
-            {!isLoading && filteredUsers.length > 0 ? (
-                <div className="space-y-4">
-                    {filteredUsers.map(listUser => (
-                        <div key={listUser.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden transition hover:shadow-lg">
-                           <div className="p-5 flex flex-wrap justify-between items-center gap-4">
-                                {/* User Info */}
-                                <div className="flex items-center gap-4 flex-grow min-w-[250px]">
-                                    {listUser.profile_picture_url ? (
-                                        <img src={listUser.profile_picture_url} alt={listUser.full_name || listUser.email} className="h-12 w-12 rounded-full object-cover flex-shrink-0"/>
+            {/* User Cards Grid */}
+            {filteredUsers.length > 0 ? (
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                    {filteredUsers.map(u => (
+                        <div key={u.id} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all">
+                            <div className="p-5 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                                {/* Profile Info */}
+                                <div className="flex-shrink-0">
+                                    {u.profile_picture_url ? (
+                                        <img src={u.profile_picture_url} alt="" className="h-16 w-16 rounded-full object-cover border-2 border-gray-100 dark:border-gray-700"/>
                                     ) : (
-                                        <UserCircleIcon className="h-12 w-12 text-gray-400 flex-shrink-0"/>
+                                        <div className="h-16 w-16 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
+                                            <UserCircleIcon className="h-10 w-10 text-indigo-600 dark:text-indigo-400" />
+                                        </div>
                                     )}
-                                    <div>
-                                         <h2 className="text-lg font-semibold text-gray-800 dark:text-white mb-1 truncate">
-                                             {listUser.full_name || 'N/A'}
-                                         </h2>
-                                          <p className="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-1 truncate">
-                                             <EnvelopeIcon className="h-4 w-4"/> {listUser.email}
-                                          </p>
-                                          {listUser.phone_number && (
-                                              <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-1">
-                                                  <PhoneIcon className="h-3 w-3"/> {listUser.phone_number}
-                                              </p>
-                                          )}
+                                </div>
+
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2">
+                                        <h2 className="text-lg font-bold text-gray-900 dark:text-white truncate">
+                                            {u.full_name || 'Unnamed User'}
+                                        </h2>
+                                        <span className={`px-2 py-0.5 text-[10px] font-bold uppercase rounded-full ${u.is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                            {u.is_active ? 'Active' : 'Disabled'}
+                                        </span>
+                                    </div>
+                                    
+                                    <div className="mt-1 space-y-1">
+                                        <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1.5 truncate">
+                                            <EnvelopeIcon className="h-4 w-4" /> {u.email}
+                                        </p>
+                                        
+                                        <div className="flex flex-wrap gap-x-4 gap-y-1">
+                                            <p className="text-xs text-gray-400 flex items-center gap-1">
+                                                <IdentificationIcon className="h-4 w-4" /> {u.employee_id || 'No ID'}
+                                            </p>
+                                            <p className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
+                                                {u.is_superuser ? 'Superuser' : u.role}
+                                            </p>
+                                        </div>
+
+                                        {/* Superadmin specific info */}
+                                        {isSuperuser && u.tenant && (
+                                            <p className="text-xs text-orange-600 dark:text-orange-400 font-medium flex items-center gap-1 mt-1">
+                                                <BuildingOfficeIcon className="h-3.5 w-3.5" /> {u.tenant.name}
+                                            </p>
+                                        )}
                                     </div>
                                 </div>
-                                {/* Role, Status & Actions */}
-                                <div className="flex-shrink-0 text-right space-y-2 min-w-[150px]">
-                                     <p className="text-sm font-medium text-gray-700 dark:text-gray-300 capitalize">
-                                         {listUser.is_superuser ? 'Superuser' : listUser.role.replace('_', ' ')}
-                                     </p>
-                                     <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${listUser.is_active ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'}`}>
-                                         {listUser.is_active ? 'Active' : 'Inactive'}
-                                     </span>
 
-                                     {/* --- CORRECTED JSX STRUCTURE --- */}
-                                     {isAdmin && (
-                                         <div className="flex justify-end items-center space-x-3 mt-2">
-                                            {/* Deactivate/Activate Button */}
-                                            {currentUser && listUser.id !== currentUser.id && !listUser.is_superuser && (
-                                                <button onClick={() => handleToggleActiveStatus(listUser)} className={`text-xs font-medium flex items-center ${listUser.is_active ? 'text-orange-600 hover:underline' : 'text-green-600 hover:underline'}`}>
-                                                    {listUser.is_active ? 'Deactivate' : 'Activate'}
-                                                </button>
-                                            )}
-                                             <button onClick={() => navigate(`/users/edit/${listUser.id}`)} className="text-indigo-600 dark:text-indigo-400 hover:underline text-sm font-medium flex items-center" title="Edit User">
-                                                 <PencilIcon className="h-4 w-4 mr-1"/> Edit
-                                             </button>
-                                             {/* Delete button placeholder */}
-                                         </div> // This closes the inner flex div for actions
-                                     )}
-                                     {/* --- END CORRECTION --- */}
-                                </div> {/* This closes the outer flex-shrink div */}
-                            </div> {/* This closes the p-5 flex div */}
-                        </div> // This closes the main card div
+                                {/* Actions */}
+                                {isAdmin && (
+                                    <div className="flex sm:flex-col gap-2 w-full sm:w-auto mt-4 sm:mt-0 pt-4 sm:pt-0 border-t sm:border-0 border-gray-100 dark:border-gray-700">
+                                        <button 
+                                            onClick={() => navigate(`/users/edit/${u.id}`)}
+                                            className="flex-1 sm:flex-none inline-flex items-center justify-center px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 transition"
+                                        >
+                                            <PencilIcon className="h-3.5 w-3.5 mr-1.5" /> Edit
+                                        </button>
+                                        {!u.is_superuser && (
+                                            <button 
+                                                onClick={() => handleToggleActiveStatus(u)}
+                                                className={`flex-1 sm:flex-none inline-flex items-center justify-center px-3 py-1.5 text-xs font-medium rounded-md transition ${
+                                                    u.is_active 
+                                                    ? 'text-red-600 bg-red-50 hover:bg-red-100 dark:bg-red-900/10' 
+                                                    : 'text-green-600 bg-green-50 hover:bg-green-100 dark:bg-green-900/10'
+                                                }`}
+                                            >
+                                                {u.is_active ? 'Deactivate' : 'Activate'}
+                                            </button>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
                     ))}
                 </div>
             ) : (
-                 !isLoading && <div className="text-center py-10 bg-white dark:bg-gray-800 rounded-lg shadow">
-                      <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300">No Users Found</h3>
-                     <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                         {searchTerm ? `No users match your search for "${searchTerm}".` : 'There are no users matching the current criteria.'}
-                     </p>
-                 </div>
+                <div className="bg-white dark:bg-gray-800 rounded-2xl p-12 text-center border-2 border-dashed border-gray-200 dark:border-gray-700">
+                    <UserCircleIcon className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white">No users found</h3>
+                    <p className="text-gray-500 mt-1">Try adjusting your search or filters.</p>
+                </div>
             )}
         </div>
     );

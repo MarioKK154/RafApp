@@ -1,18 +1,56 @@
-/* frontend/src/index.css */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-body {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-  color-scheme: light dark;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+@layer base {
+  body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    @apply bg-gray-50 text-gray-900 antialiased selection:bg-indigo-100 selection:text-indigo-700;
+    text-rendering: optimizeLegibility;
+    min-height: 100vh;
+  }
+  
+  .dark body {
+    @apply bg-gray-900 text-gray-100 selection:bg-indigo-500/30 selection:text-white;
+  }
+}
 
-  /* These default Tailwind v3 classes should now work */
-  @apply bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-200;
-  min-height: 100vh;
+@layer components {
+  /* High-Precision Input Styling used across the app */
+  .modern-input {
+    @apply block w-full h-12 px-4 rounded-2xl border-gray-200 bg-white 
+           dark:bg-gray-800 dark:border-gray-700 dark:text-white 
+           focus:ring-2 focus:ring-indigo-500 focus:border-transparent 
+           transition-all duration-200 font-bold text-sm outline-none shadow-sm
+           disabled:opacity-50 disabled:cursor-not-allowed placeholder:text-gray-400;
+  }
+
+  /* Status Badge Base used in Inventory and Tools */
+  .status-badge {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-[0.2em] border shadow-sm;
+  }
+
+  /* Custom Scrollbar for Technical Logs and sidebars */
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+/* Page Transition Animations */
+.animate-in {
+  animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* React Select styling overrides to match modern-input */
+.react-select-container .react-select__control {
+  @apply !rounded-2xl !border-gray-200 !h-12 !shadow-sm dark:!bg-gray-800 dark:!border-gray-700;
 }

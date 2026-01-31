@@ -1,4 +1,3 @@
-// frontend/src/pages/CustomerListPage.jsx
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -6,9 +5,25 @@ import axiosInstance from '../api/axiosInstance';
 import { toast } from 'react-toastify';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ConfirmationModal from '../components/ConfirmationModal';
-import { PlusIcon, TrashIcon, PencilIcon, MagnifyingGlassIcon, UserCircleIcon, EnvelopeIcon, PhoneIcon, MapPinIcon } from '@heroicons/react/24/solid';
+import { 
+    PlusIcon, 
+    TrashIcon, 
+    PencilIcon, 
+    MagnifyingGlassIcon, 
+    UserGroupIcon, 
+    EnvelopeIcon, 
+    PhoneIcon, 
+    MapPinIcon,
+    IdentificationIcon,
+    UserIcon,
+    BuildingOfficeIcon,
+    ChevronRightIcon,
+    InformationCircleIcon
+} from '@heroicons/react/24/outline';
 
-// Debounce hook
+/**
+ * Debounce hook to minimize unnecessary filtering computations.
+ */
 function useDebounce(value, delay) {
     const [debouncedValue, setDebouncedValue] = useState(value);
     useEffect(() => {
@@ -19,65 +34,72 @@ function useDebounce(value, delay) {
 }
 
 function CustomerListPage() {
+    const navigate = useNavigate();
+    const { user, isAuthenticated, isLoading: authIsLoading } = useAuth();
+
+    // Data States
     const [customers, setCustomers] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
-    const { user, isAuthenticated, isLoading: authIsLoading } = useAuth(); // <-- 1. GET ALL AUTH STATE
-    const navigate = useNavigate();
 
+    // Modal & Search States
     const [customerToDelete, setCustomerToDelete] = useState(null);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
-    // --- 2. UPDATE THIS VARIABLE ---
-    const isAdmin = user && (user.role === 'admin' || user.is_superuser);
+    // Permissions: Admin or Superuser for CRM directory
+    const isSuperuser = user?.is_superuser;
+    const isAdmin = user && (user.role === 'admin' || isSuperuser);
 
-    // --- 3. ADD THIS AUTH GUARD ---
+    /**
+     * Auth Guard: Protect the directory from unauthorized access.
+     */
     useEffect(() => {
         if (!authIsLoading) {
             if (!isAuthenticated) {
-                toast.error("You must be logged in.");
+                toast.error("Global authentication required.");
                 navigate('/login', { replace: true });
             } else if (!isAdmin) {
-                toast.error("Access Denied: You do not have permission to view customers.");
-                navigate('/', { replace: true }); // Redirect to home
+                toast.error("Access Denied: You do not have permission to view the client registry.");
+                navigate('/', { replace: true });
             }
         }
     }, [isAuthenticated, authIsLoading, isAdmin, navigate]);
 
-    const fetchCustomers = useCallback(() => {
-        if (!isAdmin) { // Don't fetch if permissions aren't set
-            setIsLoading(false);
-            return; 
-        }
+    const fetchCustomers = useCallback(async () => {
+        if (!isAdmin) return;
         setIsLoading(true);
-        axiosInstance.get('/customers/')
-            .then(response => setCustomers(response.data))
-            .catch(() => {
-                setError('Failed to load customers.');
-                toast.error('Failed to load customers.');
-            })
-            .finally(() => setIsLoading(false));
-    }, [isAdmin]); // <-- 4. ADD isAdmin as dependency
+        setError('');
+        try {
+            const response = await axiosInstance.get('/customers/', { params: { limit: 1000 } });
+            setCustomers(response.data);
+        } catch (err) {
+            console.error("CRM Sync Error:", err);
+            setError('Failed to synchronize with client database.');
+            toast.error('Registry sync failed.');
+        } finally {
+            setIsLoading(false);
+        }
+    }, [isAdmin]);
 
     useEffect(() => { fetchCustomers(); }, [fetchCustomers]);
     
-    // Filter customers (client-side)
+    /**
+     * Client-side search logic.
+     */
     const filteredCustomers = useMemo(() => {
-        if (!debouncedSearchTerm) {
-            return customers;
-        }
-        const lowerSearch = debouncedSearchTerm.toLowerCase();
+        if (!debouncedSearchTerm) return customers;
+        const query = debouncedSearchTerm.toLowerCase();
         return customers.filter(cust =>
-            cust.name.toLowerCase().includes(lowerSearch) ||
-            (cust.contact_person && cust.contact_person.toLowerCase().includes(lowerSearch)) ||
-            (cust.email && cust.email.toLowerCase().includes(lowerSearch)) ||
-            (cust.kennitala && cust.kennitala.includes(lowerSearch))
+            cust.name.toLowerCase().includes(query) ||
+            (cust.contact_person && cust.contact_person.toLowerCase().includes(query)) ||
+            (cust.email && cust.email.toLowerCase().includes(query)) ||
+            (cust.kennitala && cust.kennitala.includes(query))
         );
     }, [customers, debouncedSearchTerm]);
 
-    const handleDeleteClick = (customer) => {
+    const triggerDelete = (customer) => {
         setCustomerToDelete(customer);
         setIsDeleteModalOpen(true);
     };
@@ -86,10 +108,10 @@ function CustomerListPage() {
         if (!customerToDelete) return;
         try {
             await axiosInstance.delete(`/customers/${customerToDelete.id}`);
-            toast.success(`Customer "${customerToDelete.name}" deleted successfully.`);
-            fetchCustomers(); // Refetch after delete
+            toast.success(`Client "${customerToDelete.name}" purged from registry.`);
+            fetchCustomers();
         } catch (err) {
-            toast.error(err.response?.data?.detail || 'Failed to delete customer.');
+            toast.error(err.response?.data?.detail || 'Failed to remove customer.');
         } finally {
             setIsDeleteModalOpen(false);
             setCustomerToDelete(null);
@@ -97,100 +119,157 @@ function CustomerListPage() {
     };
 
     if (authIsLoading || (isLoading && customers.length === 0)) {
-        return <LoadingSpinner text="Loading customers..." />;
+        return <LoadingSpinner text="Accessing client registry..." />;
     }
     
-    // --- 5. ADD THIS FALLBACK RENDER ---
-    if (!isAdmin) {
-        return <div className="container mx-auto p-6 text-center text-red-500"><p>Access Denied. Redirecting...</p></div>;
-    }
+    if (!isAdmin) return null;
 
     return (
-        <div className="container mx-auto p-4 md:p-6">
+        <div className="container mx-auto p-4 md:p-8 max-w-7xl animate-in fade-in duration-500">
             {/* Header */}
-            <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
-                <h1 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white">Customers (CRM)</h1>
-                {isAdmin && ( // <-- 6. UPDATE THIS CHECK
-                    <Link to="/customers/new" className="flex items-center bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg shadow transition duration-150 ease-in-out">
-                        <PlusIcon className="h-5 w-5 mr-2" /> Add New Customer
-                    </Link>
+            <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+                <div>
+                    <div className="flex items-center gap-3 mb-1">
+                        <div className="p-2 bg-indigo-600 rounded-xl shadow-lg shadow-indigo-100 dark:shadow-none">
+                            <UserGroupIcon className="h-6 w-6 text-white" />
+                        </div>
+                        <h1 className="text-3xl font-black text-gray-900 dark:text-white leading-none">Customer Directory</h1>
+                    </div>
+                    <p className="text-gray-500 dark:text-gray-400 text-sm">
+                        {isSuperuser ? "Global CRM Management" : `Verified clients for ${user?.tenant?.name}`}
+                    </p>
+                </div>
+
+                <button 
+                    onClick={() => navigate('/customers/new')}
+                    className="inline-flex items-center px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-100 dark:shadow-none transition transform active:scale-95"
+                >
+                    <PlusIcon className="h-5 w-5 mr-1.5" /> 
+                    Register New Client
+                </button>
+            </header>
+
+            {/* Global Controls */}
+            <div className="mb-8 grid grid-cols-1 lg:grid-cols-4 gap-4">
+                <div className="lg:col-span-3 relative">
+                    <MagnifyingGlassIcon className="h-5 w-5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" />
+                    <input
+                        type="text"
+                        placeholder="Search by Name, Kennitala, Contact or Email..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="block w-full pl-12 pr-4 h-12 rounded-2xl border border-gray-200 dark:bg-gray-800 dark:border-gray-700 text-sm focus:ring-2 focus:ring-indigo-500 transition-all shadow-sm"
+                    />
+                </div>
+                <div className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl p-3 flex items-center justify-center gap-2 text-xs font-black uppercase tracking-widest text-gray-400 shadow-sm">
+                    <UserGroupIcon className="h-4 w-4" /> {filteredCustomers.length} Records Found
+                </div>
+            </div>
+
+            {error && <div className="mb-8 p-4 bg-red-50 text-red-700 rounded-2xl text-xs font-bold">{error}</div>}
+
+            {/* Customer Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredCustomers.length > 0 ? filteredCustomers.map(cust => (
+                    <div key={cust.id} className="group bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col overflow-hidden">
+                        
+                        {/* Header: Name & SSN */}
+                        <div className="p-6 pb-4 border-b border-gray-50 dark:border-gray-700">
+                            <h2 className="text-xl font-black text-gray-900 dark:text-white truncate group-hover:text-indigo-600 transition-colors">
+                                {cust.name}
+                            </h2>
+                            <div className="flex items-center gap-1.5 mt-1 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                                <IdentificationIcon className="h-3 w-3" />
+                                SSN: {cust.kennitala || 'No SSN Recorded'}
+                            </div>
+                        </div>
+
+                        {/* Body: Contact Details */}
+                        <div className="p-6 flex-grow space-y-3">
+                            <div className="flex items-start gap-3">
+                                <UserIcon className="h-5 w-5 text-indigo-500 shrink-0" />
+                                <div>
+                                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Primary Contact</p>
+                                    <p className="text-sm font-bold text-gray-700 dark:text-gray-200">{cust.contact_person || 'No Contact Listed'}</p>
+                                </div>
+                            </div>
+
+                            <div className="flex items-start gap-3">
+                                <MapPinIcon className="h-5 w-5 text-indigo-500 shrink-0" />
+                                <div>
+                                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Address</p>
+                                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400 leading-tight">{cust.address || 'Location Unknown'}</p>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center gap-4 pt-2">
+                                {cust.phone_number && (
+                                    <div className="flex items-center gap-1.5 text-xs font-bold text-gray-500 dark:text-gray-400">
+                                        <PhoneIcon className="h-4 w-4 text-gray-400" />
+                                        {cust.phone_number}
+                                    </div>
+                                )}
+                                {cust.email && (
+                                    <a href={`mailto:${cust.email}`} className="flex items-center gap-1.5 text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline truncate min-w-0">
+                                        <EnvelopeIcon className="h-4 w-4 shrink-0" />
+                                        <span className="truncate">{cust.email}</span>
+                                    </a>
+                                )}
+                            </div>
+
+                            {isSuperuser && cust.tenant && (
+                                <div className="mt-4 pt-4 border-t border-gray-50 dark:border-gray-700 flex items-center gap-2 text-[9px] font-black text-orange-600 uppercase tracking-tighter">
+                                    <BuildingOfficeIcon className="h-3.5 w-3.5" />
+                                    Owner: {cust.tenant.name}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Footer: Actions */}
+                        <div className="px-6 py-4 bg-gray-50 dark:bg-gray-700/30 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <button 
+                                    onClick={() => navigate(`/customers/edit/${cust.id}`)} 
+                                    className="p-2 bg-white dark:bg-gray-800 text-gray-400 hover:text-indigo-600 rounded-xl shadow-sm border border-gray-100 dark:border-gray-600 transition"
+                                    title="Edit Client Profile"
+                                >
+                                    <PencilIcon className="h-5 w-5" />
+                                </button>
+                                <button 
+                                    onClick={() => triggerDelete(cust)} 
+                                    className="p-2 bg-white dark:bg-gray-800 text-gray-400 hover:text-red-600 rounded-xl shadow-sm border border-gray-100 dark:border-gray-600 transition"
+                                    title="Purge Record"
+                                >
+                                    <TrashIcon className="h-5 w-5" />
+                                </button>
+                            </div>
+                            <Link 
+                                to={`/customers/edit/${cust.id}`} 
+                                className="flex items-center gap-1 text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest hover:gap-2 transition-all"
+                            >
+                                Management <ChevronRightIcon className="h-3 w-3" />
+                            </Link>
+                        </div>
+                    </div>
+                )) : (
+                    <div className="col-span-full py-20 text-center bg-white dark:bg-gray-800 rounded-3xl border-2 border-dashed border-gray-100 dark:border-gray-700">
+                        <UserGroupIcon className="h-12 w-12 text-gray-200 mx-auto mb-4" />
+                        <h3 className="text-lg font-bold text-gray-900 dark:text-white uppercase tracking-tighter">Empty Registry</h3>
+                        <p className="text-sm text-gray-500 mt-1">Initialize your first customer to start tracking commercial site project associations.</p>
+                    </div>
                 )}
             </div>
 
-            {/* Search Bar */}
-            <div className="mb-6">
-                <div className="relative flex-grow max-w-md">
-                    <input
-                        type="text"
-                        placeholder="Search by name, contact, email, kennitala..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10 pr-4 py-2 w-full rounded-md border border-gray-300 dark:bg-gray-700 dark:border-gray-600 focus:border-indigo-500 focus:ring-indigo-500 text-sm"
-                    />
-                    <MagnifyingGlassIcon className="h-5 w-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2 pointer-events-none" />
-                </div>
-            </div>
-
-            {error && <p className="text-red-500 text-center mb-4">{error}</p>}
-
-            {/* Customer Cards List */}
-            {isLoading && customers.length > 0 && <LoadingSpinner text="Refreshing customers..." />}
-            {!isLoading && filteredCustomers.length > 0 ? (
-                <div className="space-y-4">
-                    {filteredCustomers.map(cust => (
-                        <div key={cust.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden transition hover:shadow-lg">
-                            <div className="p-5 flex flex-wrap justify-between items-start gap-4">
-                                {/* Main Info */}
-                                <div className="flex-grow">
-                                    <h2 className="text-lg font-semibold text-gray-800 dark:text-white mb-1">
-                                        {cust.name}
-                                    </h2>
-                                    <p className="text-sm text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1">
-                                        <UserCircleIcon className="h-4 w-4 text-gray-500"/> Contact: {cust.contact_person || 'N/A'}
-                                    </p>
-                                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-                                        Kennitala: {cust.kennitala || 'N/A'}
-                                    </p>
-                                    <div className="text-xs text-gray-500 dark:text-gray-400 space-y-1 mt-2">
-                                        {cust.address && <p className="flex items-center"><MapPinIcon className="h-4 w-4 mr-1 flex-shrink-0"/> {cust.address}</p>}
-                                        {cust.phone_number && <p className="flex items-center"><PhoneIcon className="h-4 w-4 mr-1 flex-shrink-0"/> {cust.phone_number}</p>}
-                                        {cust.email && <p className="flex items-center truncate"><EnvelopeIcon className="h-4 w-4 mr-1 flex-shrink-0"/> <a href={`mailto:${cust.email}`} className="hover:underline text-blue-600 dark:text-blue-400">{cust.email}</a></p>}
-                                        {cust.notes && <p className="mt-2 text-gray-600 dark:text-gray-300 text-xs italic">Notes: {cust.notes}</p>}
-                                    </div>
-                                </div>
-                                {/* Actions */}
-                                {isAdmin && ( // <-- 7. UPDATE THIS CHECK
-                                    <div className="flex-shrink-0 flex items-center space-x-3">
-                                        <button onClick={() => navigate(`/customers/edit/${cust.id}`)} className="text-indigo-600 dark:text-indigo-400 hover:underline text-sm font-medium flex items-center" title="Edit Customer">
-                                            <PencilIcon className="h-4 w-4 mr-1"/> Edit
-                                        </button>
-                                        <button onClick={() => handleDeleteClick(cust)} className="text-red-600 dark:text-red-400 hover:underline text-sm font-medium flex items-center" title="Delete Customer">
-                                            <TrashIcon className="h-4 w-4 mr-1"/> Delete
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            ) : (
-                !isLoading && <div className="text-center py-10 bg-white dark:bg-gray-800 rounded-lg shadow">
-                    <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300">No Customers Found</h3>
-                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                        {searchTerm ? `No customers match your search for "${searchTerm}".` : 'There are no customers in the directory yet.'}
-                    </p>
-                </div>
-            )}
-
-            {isDeleteModalOpen && (
-                <ConfirmationModal
-                    isOpen={isDeleteModalOpen}
-                    onClose={() => setIsDeleteModalOpen(false)}
-                    onConfirm={confirmDelete}
-                    title="Delete Customer"
-                    message={`Are you sure you want to delete the customer "${customerToDelete?.name}"?`}
-                />
-            )}
+            {/* Deletion Confirmation */}
+            <ConfirmationModal
+                isOpen={isDeleteModalOpen}
+                onClose={() => setIsDeleteModalOpen(false)}
+                onConfirm={confirmDelete}
+                title="Purge Customer Record"
+                message={`Are you sure you want to permanently delete "${customerToDelete?.name}"? This will remove their profile from all future project creation associations.`}
+                confirmText="Purge Record"
+                type="danger"
+            />
         </div>
     );
 }

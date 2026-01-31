@@ -1,15 +1,15 @@
 # backend/app/models.py
-# Final version based on the user-provided file with corrections.
-
 from sqlalchemy import (Boolean, Column, ForeignKey, Integer, String, DateTime,
                         Text, Enum as SQLAlchemyEnum, Float, Interval, Table, Date, UniqueConstraint)
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from sqlalchemy.sql import func
 import enum
 from typing import Optional, List
-from datetime import datetime, date # <--- ADDED THE MISSING IMPORT
+from datetime import datetime, date
 
 from .database import Base
+
+# --- Enums ---
 
 class UserRole(enum.Enum):
     admin = "admin"
@@ -17,6 +17,7 @@ class UserRole(enum.Enum):
     team_lead = "team_lead"
     regular_user = "regular_user"
     superuser = "superuser"
+    accountant = "accountant"  # Added accountant role
 
 class ProjectStatus(enum.Enum):
     Not_Started = "Not Started"
@@ -39,7 +40,6 @@ class ToolStatus(enum.Enum):
     In_Repair = "In Repair"
     Retired = "Retired"
 
-# --- NEW: Tool Log Action Enum ---
 class ToolLogAction(enum.Enum):
     Checked_Out = "Checked Out"
     Checked_In = "Checked In"
@@ -59,19 +59,16 @@ class CarLogAction(enum.Enum):
     Maintenance = "Maintenance"
     Created = "Created"
 
-# --- NEW: TyreType Enum ---
 class TyreType(enum.Enum):
     Summer = "Summer"
     Winter = "Winter"
 
-# --- NEW: Offer Status Enum ---
 class OfferStatus(enum.Enum):
     Draft = "Draft"
     Sent = "Sent"
     Accepted = "Accepted"
     Rejected = "Rejected"
 
-# --- NEW: Offer Line Item Type Enum ---
 class OfferLineItemType(enum.Enum):
     Material = "Material"
     Labor = "Labor"
@@ -83,23 +80,12 @@ class DrawingStatus(enum.Enum):
     As_Built = "As-Built"
     Archived = "Archived"
 
-class Tenant(Base):
-    __tablename__ = "tenants"
-    id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String, unique=True, index=True)
-    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
-    logo_url: Mapped[Optional[str]] = mapped_column(String, nullable=True)
-    background_image_url: Mapped[Optional[str]] = mapped_column(String, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
-    users: Mapped[list["User"]] = relationship(back_populates="tenant")
-    projects: Mapped[list["Project"]] = relationship(back_populates="tenant")
-    tools: Mapped[list["Tool"]] = relationship(back_populates="tenant")
-    cars: Mapped[list["Car"]] = relationship(back_populates="tenant")
-    shops: Mapped[list["Shop"]] = relationship(back_populates="tenant")
-    offers: Mapped[list["Offer"]] = relationship(back_populates="tenant")
-    labor_catalog_items: Mapped[list["LaborCatalogItem"]] = relationship(back_populates="tenant", cascade="all, delete-orphan")
-    customers: Mapped[list["Customer"]] = relationship(back_populates="tenant", cascade="all, delete-orphan")
+class LeaveStatus(enum.Enum):
+    Pending = "Pending"
+    Approved = "Approved"
+    Rejected = "Rejected"
+
+# --- Association Tables ---
 
 project_members_table = Table(
     "project_members", Base.metadata,
@@ -121,6 +107,30 @@ event_attendees_table = Table(
     Column("user_id", Integer, ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
 )
 
+# --- Models ---
+
+class Tenant(Base):
+    __tablename__ = "tenants"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String, unique=True, index=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    logo_url: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    background_image_url: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    
+    # Relationships
+    users: Mapped[list["User"]] = relationship(back_populates="tenant")
+    projects: Mapped[list["Project"]] = relationship(back_populates="tenant")
+    tools: Mapped[list["Tool"]] = relationship(back_populates="tenant")
+    cars: Mapped[list["Car"]] = relationship(back_populates="tenant")
+    shops: Mapped[list["Shop"]] = relationship(back_populates="tenant")
+    offers: Mapped[list["Offer"]] = relationship(back_populates="tenant")
+    labor_catalog_items: Mapped[list["LaborCatalogItem"]] = relationship(back_populates="tenant", cascade="all, delete-orphan")
+    customers: Mapped[list["Customer"]] = relationship(back_populates="tenant", cascade="all, delete-orphan")
+    payslips: Mapped[list["Payslip"]] = relationship(back_populates="tenant", cascade="all, delete-orphan")
+    leave_requests: Mapped[list["LeaveRequest"]] = relationship(back_populates="tenant", cascade="all, delete-orphan")
+
 class User(Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True, index=True)
@@ -129,7 +139,7 @@ class User(Base):
     full_name = Column(String, index=True, nullable=True)
     employee_id = Column(String, unique=True, index=True, nullable=True)
     kennitala = Column(String, unique=True, index=True, nullable=True)
-    profile_picture_path = Column(String, nullable=True) # This was already correct
+    profile_picture_path = Column(String, nullable=True)
     hourly_rate = Column(Float, nullable=True)
     phone_number = Column(String, nullable=True)
     location = Column(String, nullable=True)
@@ -139,8 +149,10 @@ class User(Base):
     tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True) 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-    tools_checked_out: Mapped[list["Tool"]] = relationship(back_populates="current_user")
+    
+    # Relationships
     tenant = relationship("Tenant", back_populates="users")
+    tools_checked_out: Mapped[list["Tool"]] = relationship(back_populates="current_user")
     projects_created = relationship("Project", foreign_keys="[Project.creator_id]", back_populates="creator")
     projects_managed = relationship("Project", foreign_keys="[Project.project_manager_id]", back_populates="project_manager")
     uploaded_drawings = relationship("Drawing", back_populates="uploader", cascade="all, delete-orphan")
@@ -154,17 +166,17 @@ class User(Base):
     car_logs: Mapped[list["CarLog"]] = relationship(back_populates="user")
     licenses: Mapped[list["UserLicense"]] = relationship(back_populates="user", cascade="all, delete-orphan")
     events_attending = relationship("Event", secondary=event_attendees_table, back_populates="attendees")
-    
-# --- NEW: UserLicense Model ---
+    payslips: Mapped[list["Payslip"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+    leave_requests: Mapped[list["LeaveRequest"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+
 class UserLicense(Base):
     __tablename__ = "user_licenses"
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     description: Mapped[str] = mapped_column(String, nullable=False)
     issue_date: Mapped[Optional[date]] = mapped_column(Date)
     expiry_date: Mapped[Optional[date]] = mapped_column(Date)
-    file_path: Mapped[str] = mapped_column(String, nullable=False) # Relative path to the file in static folder
-    filename: Mapped[str] = mapped_column(String, nullable=False) # Original filename for download
-
+    file_path: Mapped[str] = mapped_column(String, nullable=False)
+    filename: Mapped[str] = mapped_column(String, nullable=False)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
     user: Mapped["User"] = relationship(back_populates="licenses")
 
@@ -175,12 +187,10 @@ class Event(Base):
     description: Mapped[Optional[str]] = mapped_column(Text)
     start_time: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     end_time: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-    location: Mapped[Optional[str]] = mapped_column(String) # E.g., meeting room, project site address
-
+    location: Mapped[Optional[str]] = mapped_column(String)
     creator_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
     tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id"), nullable=False)
-    project_id: Mapped[Optional[int]] = mapped_column(ForeignKey("projects.id")) # Optional link to a project
-
+    project_id: Mapped[Optional[int]] = mapped_column(ForeignKey("projects.id"))
     creator: Mapped["User"] = relationship()
     tenant: Mapped["Tenant"] = relationship()
     project: Mapped[Optional["Project"]] = relationship()
@@ -251,7 +261,6 @@ class InventoryItem(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, index=True, nullable=False)
     description = Column(Text, nullable=True)
-    # quantity, quantity_needed, and location are REMOVED from here
     unit = Column(String, nullable=True)
     low_stock_threshold = Column(Float, nullable=True)
     shop_url_1 = Column(String, nullable=True)
@@ -264,11 +273,10 @@ class InventoryItem(Base):
     boq_items: Mapped[List["BoQItem"]] = relationship(back_populates="inventory_item")
     offer_line_items: Mapped[list["OfferLineItem"]] = relationship(back_populates="inventory_item")
 
-# --- NEW: Offer Model ---
 class Offer(Base):
     __tablename__ = "offers"
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    offer_number: Mapped[str] = mapped_column(String, unique=True, index=True) # E.g., OFFER-2025-001
+    offer_number: Mapped[str] = mapped_column(String, unique=True, index=True) 
     title: Mapped[str] = mapped_column(String, default="Work Offer")
     status: Mapped[OfferStatus] = mapped_column(SQLAlchemyEnum(OfferStatus), default=OfferStatus.Draft)
     client_name: Mapped[Optional[str]] = mapped_column(String)
@@ -276,40 +284,34 @@ class Offer(Base):
     client_email: Mapped[Optional[str]] = mapped_column(String)
     issue_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     expiry_date: Mapped[Optional[Date]] = mapped_column(Date)
-    total_amount: Mapped[Optional[float]] = mapped_column(Float) # Calculated field
-
+    total_amount: Mapped[Optional[float]] = mapped_column(Float)
     project_id: Mapped[int] = mapped_column(ForeignKey("projects.id"), nullable=False)
     tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id"), nullable=False)
     created_by_user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
-
     project: Mapped["Project"] = relationship(back_populates="offers")
     tenant: Mapped["Tenant"] = relationship(back_populates="offers")
     creator: Mapped["User"] = relationship()
     line_items: Mapped[list["OfferLineItem"]] = relationship(back_populates="offer", cascade="all, delete-orphan")
 
-# --- NEW: OfferLineItem Model ---
 class OfferLineItem(Base):
     __tablename__ = "offer_line_items"
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     item_type: Mapped[OfferLineItemType] = mapped_column(SQLAlchemyEnum(OfferLineItemType), nullable=False)
-    description: Mapped[str] = mapped_column(Text, nullable=False) # E.g., "Install socket" or "2.5mm Cable"
+    description: Mapped[str] = mapped_column(Text, nullable=False) 
     quantity: Mapped[float] = mapped_column(Float, nullable=False)
-    unit_price: Mapped[float] = mapped_column(Float, nullable=False) # Price per unit/hour
-    total_price: Mapped[float] = mapped_column(Float, nullable=False) # Calculated: quantity * unit_price
-
+    unit_price: Mapped[float] = mapped_column(Float, nullable=False)
+    total_price: Mapped[float] = mapped_column(Float, nullable=False)
     offer_id: Mapped[int] = mapped_column(ForeignKey("offers.id"), nullable=False)
-    inventory_item_id: Mapped[Optional[int]] = mapped_column(ForeignKey("inventory_items.id")) # Null if Labor
-
+    inventory_item_id: Mapped[Optional[int]] = mapped_column(ForeignKey("inventory_items.id"))
     offer: Mapped["Offer"] = relationship(back_populates="line_items")
-    inventory_item: Mapped[Optional["InventoryItem"]] = relationship(back_populates="offer_line_items") # Null if Labor
+    inventory_item: Mapped[Optional["InventoryItem"]] = relationship(back_populates="offer_line_items")
 
 class LaborCatalogItem(Base):
     __tablename__ = "labor_catalog_items"
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    description: Mapped[str] = mapped_column(String, nullable=False, index=True) # E.g., "Install double socket", "Run 10m conduit"
-    default_unit_price: Mapped[float] = mapped_column(Float, nullable=False) # Default price per unit/hour
-    unit: Mapped[str] = mapped_column(String, default="hour") # Default unit, e.g., 'hour', 'item', 'meter'
-
+    description: Mapped[str] = mapped_column(String, nullable=False, index=True)
+    default_unit_price: Mapped[float] = mapped_column(Float, nullable=False)
+    unit: Mapped[str] = mapped_column(String, default="hour")
     tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id"), nullable=False)
     tenant: Mapped["Tenant"] = relationship(back_populates="labor_catalog_items")
     
@@ -318,10 +320,8 @@ class ProjectInventoryItem(Base):
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     quantity: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
     location: Mapped[Optional[str]] = mapped_column(String)
-    
     project_id: Mapped[int] = mapped_column(ForeignKey("projects.id"), nullable=False)
     inventory_item_id: Mapped[int] = mapped_column(ForeignKey("inventory_items.id"), nullable=False)
-    
     project: Mapped["Project"] = relationship(back_populates="project_inventory")
     inventory_item: Mapped["InventoryItem"] = relationship(back_populates="project_allocations")
 
@@ -336,12 +336,11 @@ class Drawing(Base):
     uploaded_at = Column(DateTime(timezone=True), server_default=func.now())
     project_id = Column(Integer, ForeignKey("projects.id", ondelete="CASCADE"), nullable=False)
     uploader_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    revision: Mapped[Optional[str]] = mapped_column(String) # e.g., "A", "B", "1.1"
-    discipline: Mapped[Optional[str]] = mapped_column(String) # e.g., "Electrical", "Lighting"
+    revision: Mapped[Optional[str]] = mapped_column(String)
+    discipline: Mapped[Optional[str]] = mapped_column(String)
     status: Mapped[Optional[DrawingStatus]] = mapped_column(SQLAlchemyEnum(DrawingStatus), default=DrawingStatus.Draft)
     drawing_date: Mapped[Optional[date]] = mapped_column(Date)
-    author: Mapped[Optional[str]] = mapped_column(String) # Drawn By
-    
+    author: Mapped[Optional[str]] = mapped_column(String)
     project = relationship("Project", back_populates="drawings")
     uploader = relationship("User", back_populates="uploaded_drawings")
 
@@ -355,7 +354,6 @@ class TimeLog(Base):
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     project_id = Column(Integer, ForeignKey("projects.id", ondelete="SET NULL"), nullable=True)
     task_id = Column(Integer, ForeignKey("tasks.id", ondelete="SET NULL"), nullable=True)
-    
     user = relationship("User", back_populates="time_logs")
     project = relationship("Project")
     task = relationship("Task")
@@ -367,7 +365,6 @@ class TaskComment(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     task_id = Column(Integer, ForeignKey("tasks.id", ondelete="CASCADE"), nullable=False)
     author_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    
     task = relationship("Task", back_populates="comments")
     author = relationship("User", back_populates="task_comments")
 
@@ -382,11 +379,9 @@ class TaskPhoto(Base):
     uploaded_at = Column(DateTime(timezone=True), server_default=func.now())
     task_id = Column(Integer, ForeignKey("tasks.id", ondelete="CASCADE"), nullable=False)
     uploader_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    
     task = relationship("Task", back_populates="photos")
     uploader = relationship("User", back_populates="uploaded_task_photos")
 
-# --- NEW: Tool Model ---
 class Tool(Base):
     __tablename__ = "tools"
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
@@ -399,17 +394,11 @@ class Tool(Base):
     purchase_date: Mapped[Optional[Date]] = mapped_column(Date)
     last_service_date: Mapped[Optional[Date]] = mapped_column(Date)
     image_path: Mapped[Optional[str]] = mapped_column(String)
-
-    # Foreign Keys
     current_user_id: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id"))
     tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id"), nullable=False)
-
-    # Relationships
     current_user: Mapped[Optional["User"]] = relationship(back_populates="tools_checked_out")
     tenant: Mapped["Tenant"] = relationship(back_populates="tools")
     history_logs: Mapped[list["ToolLog"]] = relationship(back_populates="tool", cascade="all, delete-orphan")
-
-# --- END NEW MODEL ---
 
 class ToolLog(Base):
     __tablename__ = "tool_logs"
@@ -417,10 +406,8 @@ class ToolLog(Base):
     timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     action: Mapped[ToolLogAction] = mapped_column(SQLAlchemyEnum(ToolLogAction), nullable=False)
     notes: Mapped[Optional[str]] = mapped_column(Text)
-
     tool_id: Mapped[int] = mapped_column(ForeignKey("tools.id"), nullable=False)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
-
     tool: Mapped["Tool"] = relationship(back_populates="history_logs")
     user: Mapped["User"] = relationship(back_populates="tool_logs")
 
@@ -429,31 +416,23 @@ class Car(Base):
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     make: Mapped[str] = mapped_column(String, nullable=False)
     model: Mapped[str] = mapped_column(String, nullable=False)
-    year: Mapped[Optional[int]] = mapped_column(Integer) # Year manufactured
-    purchase_date: Mapped[Optional[Date]] = mapped_column(Date) # Year bought
+    year: Mapped[Optional[int]] = mapped_column(Integer) 
+    purchase_date: Mapped[Optional[Date]] = mapped_column(Date)
     license_plate: Mapped[str] = mapped_column(String, unique=True, index=True, nullable=False)
     status: Mapped[CarStatus] = mapped_column(SQLAlchemyEnum(CarStatus), default=CarStatus.Available)
-    
     last_oil_change_km: Mapped[Optional[int]] = mapped_column(Integer)
     next_oil_change_due_km: Mapped[Optional[int]] = mapped_column(Integer)
-    
     service_needed: Mapped[bool] = mapped_column(Boolean, default=False)
     service_notes: Mapped[Optional[str]] = mapped_column(Text)
-    
     image_path: Mapped[Optional[str]] = mapped_column(String)
     vin: Mapped[Optional[str]] = mapped_column(String, unique=True)
-
-    # Foreign Keys
     current_user_id: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id"))
     tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id"), nullable=False)
-
-    # Relationships
     current_user: Mapped[Optional["User"]] = relationship(back_populates="car_checked_out")
     tenant: Mapped["Tenant"] = relationship(back_populates="cars")
     history_logs: Mapped[list["CarLog"]] = relationship(back_populates="car", cascade="all, delete-orphan")
     tyre_sets: Mapped[list["TyreSet"]] = relationship(back_populates="car", cascade="all, delete-orphan")
 
-# --- NEW: TyreSet Model ---
 class TyreSet(Base):
     __tablename__ = "tyre_sets"
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
@@ -462,11 +441,9 @@ class TyreSet(Base):
     brand: Mapped[Optional[str]] = mapped_column(String)
     notes: Mapped[Optional[str]] = mapped_column(Text)
     is_on_car: Mapped[bool] = mapped_column(Boolean, default=False)
-
     car_id: Mapped[int] = mapped_column(ForeignKey("cars.id"), nullable=False)
     car: Mapped["Car"] = relationship(back_populates="tyre_sets")
 
-# --- CarLog Model (previously defined, remains correct) ---
 class CarLog(Base):
     __tablename__ = "car_logs"
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
@@ -474,10 +451,8 @@ class CarLog(Base):
     action: Mapped[CarLogAction] = mapped_column(SQLAlchemyEnum(CarLogAction), nullable=False)
     odometer_reading: Mapped[Optional[int]] = mapped_column(Integer)
     notes: Mapped[Optional[str]] = mapped_column(Text)
-
     car_id: Mapped[int] = mapped_column(ForeignKey("cars.id"), nullable=False)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
-
     car: Mapped["Car"] = relationship(back_populates="history_logs")
     user: Mapped["User"] = relationship(back_populates="car_logs")
 
@@ -491,39 +466,30 @@ class Shop(Base):
     email: Mapped[Optional[str]] = mapped_column(String)
     website: Mapped[Optional[str]] = mapped_column(String)
     notes: Mapped[Optional[str]] = mapped_column(Text)
-
     tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id"), nullable=False)
     tenant: Mapped["Tenant"] = relationship(back_populates="shops")
 
-# --- NEW: BoQ Model ---
 class BoQ(Base):
     __tablename__ = "boqs"
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     name: Mapped[str] = mapped_column(String, default="Main Bill of Quantities")
-    
     project_id: Mapped[int] = mapped_column(ForeignKey("projects.id"), unique=True, nullable=False)
-    
     project: Mapped["Project"] = relationship(back_populates="boq")
     items: Mapped[List["BoQItem"]] = relationship(back_populates="boq", cascade="all, delete-orphan")
 
-# --- NEW: BoQItem Model ---
 class BoQItem(Base):
     __tablename__ = "boq_items"
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     quantity_required: Mapped[float] = mapped_column(Float, nullable=False)
-    
     boq_id: Mapped[int] = mapped_column(ForeignKey("boqs.id"), nullable=False)
     inventory_item_id: Mapped[int] = mapped_column(ForeignKey("inventory_items.id"), nullable=False)
-    
     boq: Mapped["BoQ"] = relationship(back_populates="items")
     inventory_item: Mapped["InventoryItem"] = relationship(back_populates="boq_items")
 
 class Customer(Base):
     __tablename__ = "customers"
-    
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id"), nullable=False, index=True)
-    
     name: Mapped[str] = mapped_column(String, index=True, nullable=False)
     address: Mapped[Optional[str]] = mapped_column(String)
     kennitala: Mapped[Optional[str]] = mapped_column(String, index=True)
@@ -531,14 +497,44 @@ class Customer(Base):
     phone_number: Mapped[Optional[str]] = mapped_column(String)
     email: Mapped[Optional[str]] = mapped_column(String, index=True)
     notes: Mapped[Optional[str]] = mapped_column(Text)
-    
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
-
     tenant: Mapped["Tenant"] = relationship(back_populates="customers")
-
     __table_args__ = (
         UniqueConstraint('tenant_id', 'name', name='_tenant_customer_name_uc'),
         UniqueConstraint('tenant_id', 'kennitala', name='_tenant_customer_kennitala_uc'),
         UniqueConstraint('tenant_id', 'email', name='_tenant_customer_email_uc')
     )
+
+# --- NEW: HR / Accounting Models ---
+
+class Payslip(Base):
+    __tablename__ = "payslips"
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    issue_date: Mapped[date] = mapped_column(Date, nullable=False)
+    amount_brutto: Mapped[float] = mapped_column(Float, nullable=False)
+    amount_netto: Mapped[float] = mapped_column(Float, nullable=False)
+    file_path: Mapped[str] = mapped_column(String, nullable=False) # Path to PDF
+    filename: Mapped[str] = mapped_column(String, nullable=False) # Display name
+    
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id"), nullable=False)
+    
+    user: Mapped["User"] = relationship(back_populates="payslips")
+    tenant: Mapped["Tenant"] = relationship(back_populates="payslips")
+
+class LeaveRequest(Base):
+    __tablename__ = "leave_requests"
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    start_date: Mapped[date] = mapped_column(Date, nullable=False)
+    end_date: Mapped[date] = mapped_column(Date, nullable=False)
+    leave_type: Mapped[str] = mapped_column(String, nullable=False) # e.g., Sick, Vacation
+    reason: Mapped[Optional[str]] = mapped_column(Text)
+    status: Mapped[LeaveStatus] = mapped_column(SQLAlchemyEnum(LeaveStatus), default=LeaveStatus.Pending)
+    manager_comment: Mapped[Optional[str]] = mapped_column(Text)
+    
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id"), nullable=False)
+    
+    user: Mapped["User"] = relationship(back_populates="leave_requests")
+    tenant: Mapped["Tenant"] = relationship(back_populates="leave_requests")

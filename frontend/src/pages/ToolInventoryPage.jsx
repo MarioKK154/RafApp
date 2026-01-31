@@ -1,6 +1,3 @@
-// frontend/src/pages/ToolInventoryPage.jsx
-// Card layout + Basic Search
-
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -8,72 +5,107 @@ import axiosInstance from '../api/axiosInstance';
 import { toast } from 'react-toastify';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ConfirmationModal from '../components/ConfirmationModal';
-import { PlusIcon, TrashIcon, PencilIcon, MagnifyingGlassIcon, ArrowUpOnSquareIcon, ArrowDownOnSquareIcon } from '@heroicons/react/24/solid';
+import { 
+    PlusIcon, 
+    TrashIcon, 
+    PencilIcon, 
+    MagnifyingGlassIcon, 
+    // FIXED: Correct Heroicons v2 naming (Up/Down use Square, Left/Right use Rectangle)
+    ArrowUpOnSquareIcon,    
+    ArrowDownOnSquareIcon, 
+    WrenchScrewdriverIcon,
+    IdentificationIcon,
+    UserIcon,
+    AdjustmentsHorizontalIcon,
+    ChevronRightIcon,
+    ShieldCheckIcon
+} from '@heroicons/react/24/outline';
+
+/**
+ * Debounce hook to ensure high performance during registry searches
+ */
+function useDebounce(value, delay) {
+    const [debouncedValue, setDebouncedValue] = useState(value);
+    useEffect(() => {
+        const handler = setTimeout(() => setDebouncedValue(value), delay);
+        return () => clearTimeout(handler);
+    }, [value, delay]);
+    return debouncedValue;
+}
 
 function ToolInventoryPage() {
+    const { user } = useAuth();
+    const navigate = useNavigate();
+    
+    // Data & Load States
     const [tools, setTools] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
-    const { user } = useAuth();
-    const navigate = useNavigate();
-
+    
+    // Filter & UI States
+    const [searchTerm, setSearchTerm] = useState('');
+    const debouncedSearch = useDebounce(searchTerm, 300);
     const [toolToDelete, setToolToDelete] = useState(null);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-    const [searchTerm, setSearchTerm] = useState(''); // State for search
 
-    const canManageTools = user && (user.role === 'admin' || user.role === 'project manager');
+    const isSuperuser = user?.is_superuser;
+    const canManageTools = user && (['admin', 'project manager'].includes(user.role) || isSuperuser);
 
-    const fetchTools = useCallback(() => {
+    /**
+     * Telemetry Sync: Load all hardware assets from registry
+     */
+    const fetchTools = useCallback(async () => {
         setIsLoading(true);
-        axiosInstance.get('/tools/')
-            .then(response => {
-                setTools(response.data);
-            })
-            .catch(err => {
-                setError('Failed to load tool inventory.');
-                toast.error('Failed to load tool inventory.');
-            })
-            .finally(() => setIsLoading(false));
+        setError('');
+        try {
+            const response = await axiosInstance.get('/tools/', { params: { limit: 1000 } });
+            setTools(response.data);
+        } catch (err) {
+            console.error("Asset Registry Error:", err);
+            setError('Hardware registry synchronization failed.');
+            toast.error('Registry sync failure.');
+        } finally {
+            setIsLoading(false);
+        }
     }, []);
 
-    useEffect(() => {
-        fetchTools();
-    }, [fetchTools]);
+    useEffect(() => { fetchTools(); }, [fetchTools]);
 
-    // Filter tools based on search term (frontend filtering)
+    /**
+     * Optimized Frontend Filtering
+     */
     const filteredTools = useMemo(() => {
-        if (!searchTerm) {
-            return tools;
-        }
+        if (!debouncedSearch) return tools;
+        const query = debouncedSearch.toLowerCase();
         return tools.filter(tool =>
-            tool.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (tool.brand && tool.brand.toLowerCase().includes(searchTerm.toLowerCase())) ||
-            (tool.model && tool.model.toLowerCase().includes(searchTerm.toLowerCase())) ||
-            (tool.serial_number && tool.serial_number.toLowerCase().includes(searchTerm.toLowerCase()))
+            tool.name.toLowerCase().includes(query) ||
+            (tool.brand && tool.brand.toLowerCase().includes(query)) ||
+            (tool.model && tool.model.toLowerCase().includes(query)) ||
+            (tool.serial_number && tool.serial_number.toLowerCase().includes(query))
         );
-    }, [tools, searchTerm]);
+    }, [tools, debouncedSearch]);
 
     const handleCheckout = async (toolId) => {
         try {
             await axiosInstance.post(`/tools/${toolId}/checkout`);
-            toast.success('Tool checked out successfully!');
-            fetchTools(); // Refresh the list
+            toast.success('Asset assigned to your profile.');
+            fetchTools();
         } catch (err) {
-            toast.error(err.response?.data?.detail || 'Failed to check out tool.');
+            toast.error(err.response?.data?.detail || 'Checkout protocol rejected.');
         }
     };
 
     const handleCheckin = async (toolId) => {
         try {
             await axiosInstance.post(`/tools/${toolId}/checkin`);
-            toast.success('Tool checked in successfully!');
-            fetchTools(); // Refresh the list
+            toast.success('Asset returned to base storage.');
+            fetchTools();
         } catch (err) {
-            toast.error(err.response?.data?.detail || 'Failed to check in tool.');
+            toast.error(err.response?.data?.detail || 'Return protocol rejected.');
         }
     };
 
-    const handleDeleteClick = (tool) => {
+    const triggerDelete = (tool) => {
         setToolToDelete(tool);
         setIsDeleteModalOpen(true);
     };
@@ -82,143 +114,194 @@ function ToolInventoryPage() {
         if (!toolToDelete) return;
         try {
             await axiosInstance.delete(`/tools/${toolToDelete.id}`);
-            toast.success(`Tool "${toolToDelete.name}" deleted successfully.`);
+            toast.success(`Asset purged from registry.`);
             fetchTools();
         } catch (err) {
-            toast.error(err.response?.data?.detail || 'Failed to delete tool.');
+            toast.error(err.response?.data?.detail || 'Purge failed.');
         } finally {
             setIsDeleteModalOpen(false);
             setToolToDelete(null);
         }
     };
 
-    // Helper to get status color
-     const getStatusColor = (status) => {
+    const getStatusStyles = (status) => {
         switch (status) {
-            case 'Available': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
-            case 'In Use': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
-            case 'In Repair': return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300';
-            case 'Retired': return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
-            default: return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
+            case 'Available': return 'bg-green-50 text-green-700 border-green-100 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800';
+            case 'In Use': return 'bg-indigo-50 text-indigo-700 border-indigo-100 dark:bg-indigo-900/20 dark:text-indigo-400 dark:border-indigo-800';
+            case 'In Repair': return 'bg-orange-50 text-orange-700 border-orange-100 dark:bg-orange-900/20 dark:text-orange-400 dark:border-orange-800';
+            case 'Retired': return 'bg-red-50 text-red-700 border-red-100 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800';
+            default: return 'bg-gray-50 text-gray-700 border-gray-100';
         }
     };
 
     if (isLoading && tools.length === 0) {
-        return <LoadingSpinner text="Loading tool inventory..." />;
+        return <LoadingSpinner text="Accessing hardware telemetry..." size="lg" />;
     }
 
     return (
-        <div className="container mx-auto p-4 md:p-6">
+        <div className="container mx-auto p-4 md:p-8 max-w-7xl animate-in fade-in duration-500">
             {/* Header */}
-            <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
-                <h1 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white">Tool Inventory</h1>
+            <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-10">
+                <div>
+                    <div className="flex items-center gap-3 mb-1">
+                        <div className="p-2 bg-indigo-600 rounded-xl shadow-lg shadow-indigo-100 dark:shadow-none">
+                            <WrenchScrewdriverIcon className="h-6 w-6 text-white" />
+                        </div>
+                        <h1 className="text-3xl font-black text-gray-900 dark:text-white leading-none tracking-tight uppercase">Hardware Registry</h1>
+                    </div>
+                    <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">Field resource monitoring & tracking</p>
+                </div>
+
                 {canManageTools && (
-                    <Link to="/tools/new" className="flex items-center bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg shadow transition duration-150 ease-in-out">
-                        <PlusIcon className="h-5 w-5 mr-2" /> Add New Tool
-                    </Link>
+                    <button 
+                        onClick={() => navigate('/tools/new')}
+                        className="inline-flex items-center px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-xl shadow-lg transition transform active:scale-95"
+                    >
+                        <PlusIcon className="h-5 w-5 mr-1.5" /> 
+                        Register Asset
+                    </button>
+                )}
+            </header>
+
+            {/* Controls Hub */}
+            <div className="mb-8 grid grid-cols-1 lg:grid-cols-4 gap-4">
+                <div className="lg:col-span-3 relative group">
+                    <MagnifyingGlassIcon className="h-5 w-5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2 group-focus-within:text-indigo-500 transition-colors" />
+                    <input
+                        type="text"
+                        placeholder="Search by ID, Serial Number, Manufacturer or Tool Name..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="block w-full pl-12 pr-4 h-12 rounded-2xl border border-gray-200 dark:bg-gray-800 dark:border-gray-700 text-sm font-bold focus:ring-2 focus:ring-indigo-500 transition-all outline-none shadow-sm"
+                    />
+                </div>
+                <div className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl p-3 flex items-center justify-center gap-2 text-xs font-black uppercase tracking-widest text-gray-400 shadow-sm">
+                    <AdjustmentsHorizontalIcon className="h-4 w-4" /> {filteredTools.length} Units Online
+                </div>
+            </div>
+
+            {error && <div className="mb-8 p-4 bg-red-50 text-red-700 rounded-2xl text-xs font-bold border border-red-100">{error}</div>}
+
+            {/* Main Asset Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredTools.length > 0 ? filteredTools.map(tool => (
+                    <div key={tool.id} className="group bg-white dark:bg-gray-800 rounded-[2rem] border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col overflow-hidden">
+                        
+                        {/* Tool Identity Header */}
+                        <div className="p-6 pb-4 border-b border-gray-50 dark:border-gray-700">
+                            <div className="flex justify-between items-start mb-4">
+                                <span className={`px-3 py-1 text-[9px] font-black uppercase tracking-[0.2em] rounded-full border ${getStatusStyles(tool.status)}`}>
+                                    {tool.status.replace('_', ' ')}
+                                </span>
+                                <div className="p-2 bg-gray-50 dark:bg-gray-700 rounded-xl">
+                                    <IdentificationIcon className="h-4 w-4 text-gray-400" />
+                                </div>
+                            </div>
+                            <h2 className="text-xl font-black text-gray-900 dark:text-white truncate group-hover:text-indigo-600 transition-colors">
+                                {tool.name}
+                            </h2>
+                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">
+                                {tool.brand || 'Generic'} • {tool.model || 'OEM Standard'}
+                            </p>
+                        </div>
+
+                        {/* Visual & Technical Body */}
+                        <div className="p-6 flex-grow space-y-4">
+                            <div className="flex items-center gap-4">
+                                <div className="h-16 w-16 bg-gray-50 dark:bg-gray-900 rounded-2xl p-2 border border-gray-100 dark:border-gray-700 shrink-0">
+                                    <img 
+                                        src={tool.image_url || '/default-tool.png'} 
+                                        alt="" 
+                                        className="h-full w-full object-contain grayscale group-hover:grayscale-0 transition-all duration-500"
+                                        onError={(e) => { e.target.src = '/default-tool.png'; }}
+                                    />
+                                </div>
+                                <div className="min-w-0">
+                                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Registry Identifier</p>
+                                    <p className="text-xs font-mono font-bold text-gray-700 dark:text-gray-300 truncate">
+                                        {tool.serial_number || `REG-ID-${tool.id}`}
+                                    </p>
+                                    
+                                    <div className="flex items-center gap-2 mt-3">
+                                        <UserIcon className="h-3.5 w-3.5 text-indigo-500" />
+                                        <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-tight">
+                                            {tool.current_user?.full_name || 'Storage (Base)'}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Logistics Interface */}
+                            <div className="pt-2">
+                                {tool.status === 'Available' ? (
+                                    <button 
+                                        onClick={() => handleCheckout(tool.id)}
+                                        className="w-full flex items-center justify-center gap-2 h-11 bg-green-600 hover:bg-green-700 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-xl transition shadow-lg shadow-green-100 dark:shadow-none"
+                                    >
+                                        <ArrowUpOnSquareIcon className="h-4 w-4" /> Initialize Checkout
+                                    </button>
+                                ) : tool.status === 'In Use' && tool.current_user?.id === user.id ? (
+                                    <button 
+                                        onClick={() => handleCheckin(tool.id)}
+                                        className="w-full flex items-center justify-center gap-2 h-11 bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-xl transition shadow-lg shadow-indigo-100 dark:shadow-none"
+                                    >
+                                        <ArrowDownOnSquareIcon className="h-4 w-4" /> End Assignment
+                                    </button>
+                                ) : (
+                                    <div className="h-11 flex items-center justify-center border border-dashed border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50/50 dark:bg-gray-800/50">
+                                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest italic">Unit Occupied</span>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Admin Overrides */}
+                        {canManageTools && (
+                            <div className="px-6 py-4 bg-gray-50 dark:bg-gray-700/30 border-t border-gray-50 dark:border-gray-700 flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <button 
+                                        onClick={() => navigate(`/tools/edit/${tool.id}`)} 
+                                        className="p-2 bg-white dark:bg-gray-800 text-gray-400 hover:text-indigo-600 rounded-xl shadow-sm border border-gray-100 dark:border-gray-600 transition"
+                                        title="Modify Specs"
+                                    >
+                                        <PencilIcon className="h-5 w-5" />
+                                    </button>
+                                    <button 
+                                        onClick={() => triggerDelete(tool)} 
+                                        className="p-2 bg-white dark:bg-gray-800 text-gray-400 hover:text-red-600 rounded-xl shadow-sm border border-gray-100 dark:border-gray-600 transition"
+                                        title="Purge Record"
+                                    >
+                                        <TrashIcon className="h-5 w-5" />
+                                    </button>
+                                </div>
+                                <Link 
+                                    to={`/tools/${tool.id}`}
+                                    className="flex items-center gap-1 text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-indigo-600 transition-colors"
+                                >
+                                    Audit <ChevronRightIcon className="h-3 w-3" />
+                                </Link>
+                            </div>
+                        )}
+                    </div>
+                )) : (
+                    <div className="col-span-full py-32 text-center bg-white dark:bg-gray-800 rounded-[2.5rem] border-2 border-dashed border-gray-100 dark:border-gray-700">
+                        <WrenchScrewdriverIcon className="h-12 w-12 text-gray-200 mx-auto mb-4" />
+                        <h3 className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">No Matches Found</h3>
+                        <p className="text-sm text-gray-400 mt-1">Adjust your search parameters or register a new hardware unit.</p>
+                    </div>
                 )}
             </div>
 
-             {/* Search Bar */}
-             <div className="mb-6">
-                <div className="relative flex-grow max-w-md">
-                    <input
-                        type="text"
-                        placeholder="Search by name, brand, model, serial..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10 pr-4 py-2 w-full rounded-md border border-gray-300 dark:bg-gray-700 dark:border-gray-600 focus:border-indigo-500 focus:ring-indigo-500 text-sm"
-                    />
-                    <MagnifyingGlassIcon className="h-5 w-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2 pointer-events-none" />
-                </div>
-            </div>
-
-            {error && <p className="text-red-500 text-center mb-4">{error}</p>}
-
-            {/* Tool Cards List */}
-            {isLoading && tools.length > 0 && <LoadingSpinner text="Refreshing tools..." />}
-            {!isLoading && filteredTools.length > 0 ? (
-                <div className="space-y-4">
-                    {filteredTools.map(tool => (
-                        <div key={tool.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden transition hover:shadow-lg">
-                            <div className="p-5 flex flex-wrap justify-between items-start gap-4">
-                                {/* Image and Main Info */}
-                                <div className="flex items-start gap-4 flex-grow min-w-[200px]">
-                                     <img
-                                        src={tool.image_url || '/default-tool.png'}
-                                        alt={tool.name}
-                                        className="h-16 w-16 object-contain rounded flex-shrink-0 bg-gray-100 dark:bg-gray-700 p-1"
-                                        onError={(e) => { e.target.onerror = null; e.target.src='/default-tool.png' }}
-                                    />
-                                    <div>
-                                         <h2 className="text-lg font-semibold text-gray-800 dark:text-white mb-1">
-                                             <Link to={`/tools/${tool.id}`} className="hover:text-indigo-600 dark:hover:text-indigo-400">
-                                                 {tool.name}
-                                             </Link>
-                                         </h2>
-                                         <p className="text-sm text-gray-600 dark:text-gray-400">
-                                             {tool.brand || ''} {tool.model || ''}
-                                         </p>
-                                         <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-                                             S/N: {tool.serial_number || 'N/A'}
-                                         </p>
-                                    </div>
-                                </div>
-                                {/* Status, User, and Actions */}
-                                <div className="flex-shrink-0 text-right space-y-2">
-                                    <span className={`block px-2 py-0.5 text-xs font-semibold rounded-full ${getStatusColor(tool.status)}`}>
-                                         {tool.status.replace('_', ' ')}
-                                     </span>
-                                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                                         With: {tool.current_user?.full_name || 'In Stock'}
-                                     </p>
-                                     <div className="flex justify-end items-center space-x-3 mt-2">
-                                        {/* Check-in/out Buttons */}
-                                        {tool.status === 'Available' && (
-                                            <button onClick={() => handleCheckout(tool.id)} className="text-green-600 hover:text-green-800 text-sm font-medium flex items-center" title="Check Out">
-                                                <ArrowUpOnSquareIcon className="h-4 w-4 mr-1"/> Check Out
-                                            </button>
-                                        )}
-                                        {tool.status === 'In Use' && tool.current_user?.id === user.id && (
-                                            <button onClick={() => handleCheckin(tool.id)} className="text-yellow-600 hover:text-yellow-800 text-sm font-medium flex items-center" title="Check In">
-                                                <ArrowDownOnSquareIcon className="h-4 w-4 mr-1"/> Check In
-                                            </button>
-                                        )}
-                                        {/* Admin Actions */}
-                                        {canManageTools && (
-                                            <>
-                                                <button onClick={() => navigate(`/tools/edit/${tool.id}`)} className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 text-sm font-medium flex items-center" title="Edit Tool">
-                                                    <PencilIcon className="h-4 w-4 mr-1"/> Edit
-                                                </button>
-                                                <button onClick={() => handleDeleteClick(tool)} className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 text-sm font-medium flex items-center" title="Delete Tool">
-                                                    <TrashIcon className="h-4 w-4 mr-1"/> Delete
-                                                </button>
-                                            </>
-                                        )}
-                                     </div>
-                                </div>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            ) : (
-                 !isLoading && <div className="text-center py-10 bg-white dark:bg-gray-800 rounded-lg shadow">
-                     <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300">No Tools Found</h3>
-                     <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                         {searchTerm ? `No tools match your search for "${searchTerm}".` : 'The tool inventory is currently empty.'}
-                     </p>
-                 </div>
-            )}
-
-            {isDeleteModalOpen && (
-                <ConfirmationModal
-                    isOpen={isDeleteModalOpen}
-                    onClose={() => setIsDeleteModalOpen(false)}
-                    onConfirm={confirmDelete}
-                    title="Delete Tool"
-                    message={`Are you sure you want to delete the tool "${toolToDelete?.name}"?`}
-                />
-            )}
+            {/* Deletion confirmation modal */}
+            <ConfirmationModal
+                isOpen={isDeleteModalOpen}
+                onClose={() => setIsDeleteModalOpen(false)}
+                onConfirm={confirmDelete}
+                title="Purge Operational Unit"
+                message={`CRITICAL: Permanent removal of "${toolToDelete?.name}" from the hardware registry. Historical check-out telemetry will remain archived.`}
+                confirmText="Purge Unit"
+                type="danger"
+            />
         </div>
     );
 }

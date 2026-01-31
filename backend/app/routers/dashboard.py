@@ -27,6 +27,15 @@ def get_dashboard(
 ):
     """
     Retrieves all relevant data for the current user's dashboard view.
+    
+    This includes:
+    - Open tasks assigned to the user.
+    - Tools currently checked out by the user.
+    - The car currently checked out by the user.
+    - (For PMs/Admins) A summary of projects they are managing.
     """
+    # The actual aggregation logic is handled in CRUD to keep the 
+    # controller clean and ensure it respects tenant isolation.
     dashboard_data = crud.get_dashboard_data(db, user=current_user)
+    
     return dashboard_data

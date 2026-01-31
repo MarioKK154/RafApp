@@ -1,6 +1,4 @@
 # backend/app/main.py
-# Final version with the 'dashboard' router and corrected root endpoint.
-
 from fastapi import FastAPI, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -12,16 +10,18 @@ from .limiter import limiter
 from . import models
 from .database import engine
 
-# Import all your routers
+# 1. Import all routers (Including the new accounting router)
 from .routers import (
     auth, users, projects, tasks, tenants,
     inventory, tools, cars, shops, boq, drawings, 
     timelogs, admin_tools, comments, task_photos, 
     shopping_list, reports,
     dashboard, project_inventory, offers, events,
-    labor_catalog, calculators, customers
+    labor_catalog, calculators, customers,
+    accounting  # <--- Added new HR/Accounting router
 )
 
+# 2. Create database tables
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
@@ -33,7 +33,7 @@ app = FastAPI(
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-# CORS Middleware
+# 3. CORS Middleware configuration
 origins = ["http://localhost:5173", "http://127.0.0.1:5173"]
 app.add_middleware(
     CORSMiddleware,
@@ -43,10 +43,25 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# 4. Static Files Setup & Directory Initialization
 BASE_DIR = Path(__file__).resolve().parent
-app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
+STATIC_DIR = BASE_DIR / "static"
 
-# Include all routers
+# Ensure all upload subdirectories exist to prevent I/O errors
+subdirs = [
+    "car_images", 
+    "tool_images", 
+    "project_drawings", 
+    "task_photos", 
+    "payslips", 
+    "licenses"
+]
+for folder in subdirs:
+    (STATIC_DIR / folder).mkdir(parents=True, exist_ok=True)
+
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+
+# 5. Include all routers in the app
 app.include_router(auth.router)
 app.include_router(dashboard.router)
 app.include_router(tenants.router)
@@ -70,12 +85,14 @@ app.include_router(timelogs.router)
 app.include_router(comments.router)
 app.include_router(task_photos.router)
 app.include_router(shopping_list.router)
+app.include_router(accounting.router) # <--- Added to the app
 app.include_router(admin_tools.router)
 
-
-# --- THIS IS THE FIX ---
-# The decorator should be attached to 'app', not 'router'.
+# 6. Root Endpoint
 @app.get("/")
 @limiter.limit("5/minute")
 def read_root(request: Request):
+    """
+    Base API health check.
+    """
     return {"message": "Welcome to the Raf-App API"}
