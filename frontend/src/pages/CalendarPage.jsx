@@ -1,287 +1,307 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
-import format from 'date-fns/format';
-import parse from 'date-fns/parse';
-import startOfWeek from 'date-fns/startOfWeek';
-import getDay from 'date-fns/getDay';
-import enUS from 'date-fns/locale/en-US';
-import 'react-big-calendar/lib/css/react-big-calendar.css';
+import { useTranslation } from 'react-i18next';
+import FullCalendar from '@fullcalendar/react';
+import dayGridPlugin from '@fullcalendar/daygrid';
+import timeGridPlugin from '@fullcalendar/timegrid';
+import interactionPlugin from '@fullcalendar/interaction';
+import listPlugin from '@fullcalendar/list';
 import axiosInstance from '../api/axiosInstance';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
-import Select from 'react-select';
 import LoadingSpinner from '../components/LoadingSpinner';
-import Modal from '../components/Modal'; // Switched to your standardized Modal
+import Modal from '../components/Modal';
+import Select from 'react-select'; // Standardized multi-select for personnel
 import { 
-    CalendarIcon, 
-    MapPinIcon, 
-    UserGroupIcon, 
+    CalendarDaysIcon, 
+    PlusIcon, 
     ClockIcon, 
-    PlusIcon,
-    InformationCircleIcon
+    MapPinIcon, 
+    DocumentTextIcon,
+    ChevronLeftIcon,
+    ChevronRightIcon,
+    AdjustmentsHorizontalIcon,
+    ArrowPathIcon,
+    UserGroupIcon,
+    TagIcon
 } from '@heroicons/react/24/outline';
 
-// Setup the localizer for date-fns
-const locales = { 'en-US': enUS };
-const localizer = dateFnsLocalizer({
-  format,
-  parse,
-  startOfWeek,
-  getDay,
-  locales,
-});
-
 function CalendarPage() {
+    const { t, i18n } = useTranslation();
     const { user } = useAuth();
     const [events, setEvents] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [users, setUsers] = useState([]);
-    const [viewRange, setViewRange] = useState({ 
-        start: new Date(new Date().getFullYear(), new Date().getMonth(), 1), 
-        end: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0) 
-    });
-
-    // Modal state
+    const [userOptions, setUserOptions] = useState([]);
+    
+    // Modal & Telemetry Form State
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [newEventData, setNewEventData] = useState({
+    const [selectedEvent, setSelectedEvent] = useState(null);
+    const [formData, setFormData] = useState({
         title: '',
+        event_type: 'custom', // 'meeting', 'task', 'custom'
+        start: '',
+        end: '',
         description: '',
-        start: null,
-        end: null,
         location: '',
-        attendee_ids: [],
+        attendee_ids: []
     });
 
-    const isSuperuser = user?.is_superuser;
-    const canManageEvents = user && (['admin', 'project manager'].includes(user.role) || isSuperuser);
-
-    // Fetch users for attendee dropdown
-    useEffect(() => {
-        axiosInstance.get('/users/', { params: { limit: 1000 } })
-            .then(response => setUsers(response.data.filter(u => u.is_active)))
-            .catch(() => toast.error("Could not load personnel for invite list."));
-    }, []);
-
-    // Fetch events for current view
-    const fetchEvents = useCallback(async (range) => {
-        if (!range?.start || !range?.end) return;
+    /**
+     * Protocol: Fetch Metadata & Events
+     */
+    const fetchData = useCallback(async () => {
         setIsLoading(true);
         try {
-            const response = await axiosInstance.get('/events/', {
-                params: {
-                    start: range.start.toISOString(),
-                    end: range.end.toISOString(),
-                }
-            });
-            const formattedEvents = response.data.map(event => ({
-                ...event,
-                start: new Date(event.start_time),
-                end: new Date(event.end_time),
+            // Concurrent sync: Task registry, Project registry, Global Events, and Personnel list
+            const [tasksRes, projectsRes, eventsRes, usersRes] = await Promise.all([
+                axiosInstance.get('/tasks/', { params: { limit: 1000 } }),
+                axiosInstance.get('/projects/', { params: { limit: 1000 } }),
+                axiosInstance.get('/events/', { params: { 
+                    start: new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1).toISOString(),
+                    end: new Date(new Date().getFullYear(), new Date().getMonth() + 2, 1).toISOString()
+                }}),
+                axiosInstance.get('/users/', { params: { limit: 1000 } })
+            ]);
+
+            // Logic: Map Personnel for Meeting Registry
+            setUserOptions(usersRes.data.map(u => ({ value: u.id, label: u.full_name || u.email })));
+
+            // Logic: Map Tasks
+            const taskEvents = tasksRes.data
+                .filter(task => task.due_date)
+                .map(task => ({
+                    id: `task-${task.id}`,
+                    title: `[TASK] ${task.title}`,
+                    start: task.due_date,
+                    backgroundColor: '#4f46e5',
+                    extendedProps: { type: 'task', description: task.description }
+                }));
+
+            // Logic: Map Projects
+            const projectEvents = projectsRes.data
+                .filter(proj => proj.start_date)
+                .map(proj => ({
+                    id: `proj-${proj.id}`,
+                    title: `[PROJ] ${proj.name}`,
+                    start: proj.start_date,
+                    end: proj.end_date,
+                    backgroundColor: '#10b981',
+                    extendedProps: { type: 'project', description: proj.description }
+                }));
+
+            // Logic: Map Calendar Events
+            const customEvents = eventsRes.data.map(evt => ({
+                id: evt.id.toString(),
+                title: evt.event_type === 'meeting' ? `[MTG] ${evt.title}` : evt.title,
+                start: evt.start_time,
+                end: evt.end_time,
+                backgroundColor: evt.event_type === 'meeting' ? '#f59e0b' : '#6b7280',
+                extendedProps: { ...evt, type: 'event' }
             }));
-            setEvents(formattedEvents);
+
+            setEvents([...taskEvents, ...projectEvents, ...customEvents]);
         } catch (err) {
-            toast.error('Failed to synchronize schedule.');
+            toast.error(t('sync_error'));
         } finally {
             setIsLoading(false);
         }
-    }, []);
+    }, [t]);
 
-    useEffect(() => {
-        fetchEvents(viewRange);
-    }, [viewRange, fetchEvents]);
+    useEffect(() => { fetchData(); }, [fetchData]);
 
-    const handleRangeChange = (range) => {
-        let start, end;
-        if (Array.isArray(range)) {
-            start = range[0];
-            end = range[range.length - 1];
-        } else {
-            start = range.start;
-            end = range.end;
-        }
-        setViewRange({ start, end });
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleSelectSlot = ({ start, end }) => {
-        if (!canManageEvents) return;
-        setNewEventData({
-            title: '', 
-            description: '', 
-            start, 
-            end, 
-            location: '', 
-            attendee_ids: [user.id]
+    /**
+     * Interaction Protocol: Initiation via Date Click
+     */
+    const handleDateClick = (arg) => {
+        const dateStr = arg.dateStr;
+        // Check if dateStr contains time or just date
+        const hasTime = dateStr.includes('T');
+        
+        setFormData({
+            title: '',
+            event_type: 'custom',
+            start: hasTime ? dateStr.slice(0, 16) : `${dateStr}T09:00`,
+            end: hasTime ? dateStr.slice(0, 16) : `${dateStr}T17:00`,
+            description: '',
+            location: '',
+            attendee_ids: []
         });
+        setSelectedEvent(null);
         setIsModalOpen(true);
     };
 
-    const handleAttendeeChange = (selectedOptions) => {
-        const ids = selectedOptions ? selectedOptions.map(opt => opt.value) : [];
-        setNewEventData(prev => ({ ...prev, attendee_ids: ids }));
-    };
-
-    const handleCreateEvent = async () => {
-        if (!newEventData.title.trim()) {
-            toast.warn("Event title is required.");
-            return;
-        }
-
+    /**
+     * Protocol: Commit to Registry
+     */
+    const handleSubmit = async (e) => {
+        e.preventDefault();
         setIsSubmitting(true);
-        const payload = {
-            ...newEventData,
-            start_time: newEventData.start.toISOString(),
-            end_time: newEventData.end.toISOString(),
-        };
-        delete payload.start;
-        delete payload.end;
-
         try {
+            const payload = {
+                title: formData.title,
+                event_type: formData.event_type,
+                start_time: new Date(formData.start).toISOString(),
+                end_time: new Date(formData.end).toISOString(),
+                description: formData.description,
+                location: formData.location,
+                attendee_ids: formData.attendee_ids.map(a => a.value)
+            };
+
             await axiosInstance.post('/events/', payload);
-            toast.success('Schedule updated successfully!');
+            toast.success(t('event_created'));
             setIsModalOpen(false);
-            fetchEvents(viewRange);
+            fetchData();
         } catch (err) {
-            toast.error(err.response?.data?.detail || 'Failed to register event.');
+            toast.error(err.response?.data?.detail || "Creation Failed");
         } finally {
             setIsSubmitting(false);
         }
     };
 
-    const userOptions = useMemo(() => users.map(u => ({ 
-        value: u.id, 
-        label: `${u.full_name || u.email} (${u.role.replace('_', ' ')})` 
-    })), [users]);
-
-    const selectedAttendeeOptions = useMemo(() => 
-        newEventData.attendee_ids.map(id => userOptions.find(opt => opt.value === id)).filter(Boolean),
-        [newEventData.attendee_ids, userOptions]
-    );
+    if (isLoading) return <LoadingSpinner text={t('syncing')} size="lg" />;
 
     return (
         <div className="container mx-auto p-4 md:p-8 max-w-7xl animate-in fade-in duration-500">
-            {/* Header */}
-            <header className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-10">
                 <div>
                     <div className="flex items-center gap-3 mb-1">
-                        <div className="p-2 bg-indigo-600 rounded-xl shadow-lg shadow-indigo-100 dark:shadow-none">
-                            <CalendarIcon className="h-6 w-6 text-white" />
+                        <div className="p-2 bg-indigo-600 rounded-xl shadow-lg text-white">
+                            <CalendarDaysIcon className="h-6 w-6" />
                         </div>
-                        <h1 className="text-3xl font-black text-gray-900 dark:text-white leading-none">Global Schedule</h1>
+                        <h1 className="text-3xl font-black text-gray-900 dark:text-white uppercase italic tracking-tight">
+                            {t('calendar')}
+                        </h1>
                     </div>
-                    <p className="text-gray-500 dark:text-gray-400 text-sm">
-                        {isSuperuser ? "Master calendar across all tenants" : `Site deployments for ${user?.tenant?.name}`}
-                    </p>
+                    <p className="text-gray-500 text-[10px] font-black uppercase tracking-[0.2em]">Operational Deployment Map</p>
+                </div>
+                <div className="flex gap-2">
+                    <div className="flex items-center gap-4 px-6 h-12 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm text-[9px] font-black uppercase tracking-widest">
+                        <div className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-indigo-500"></span> Tasks</div>
+                        <div className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-emerald-500"></span> Projects</div>
+                        <div className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-orange-500"></span> Meetings</div>
+                    </div>
                 </div>
             </header>
 
-            {/* Calendar Container */}
-            <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 p-4 md:p-6 overflow-hidden">
-                <div className="h-[75vh]">
-                    {isLoading && <div className="absolute inset-0 z-10 bg-white/50 dark:bg-gray-800/50 flex items-center justify-center"><LoadingSpinner size="lg" /></div>}
-                    <Calendar
-                        localizer={localizer}
-                        events={events}
-                        startAccessor="start"
-                        endAccessor="end"
-                        style={{ height: '100%' }}
-                        onRangeChange={handleRangeChange}
-                        selectable={canManageEvents}
-                        onSelectSlot={handleSelectSlot}
-                        onSelectEvent={(e) => toast.info(`Viewing event: ${e.title}`)}
-                        className="dark:text-white"
-                        eventPropGetter={() => ({
-                            style: {
-                                backgroundColor: '#4f46e5',
-                                borderRadius: '8px',
-                                border: 'none',
-                                fontSize: '0.75rem',
-                                fontWeight: '700',
-                                padding: '2px 6px'
-                            }
-                        })}
-                    />
-                </div>
-            </div>
+            <section className="bg-white dark:bg-gray-800 p-6 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-700">
+                <FullCalendar
+                    plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
+                    initialView="dayGridMonth"
+                    locale={i18n.language === 'is' ? 'is' : 'en-gb'}
+                    events={events}
+                    dateClick={handleDateClick}
+                    headerToolbar={{ left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,listMonth' }}
+                    height="auto"
+                />
+            </section>
 
-            {/* Event Form Modal */}
-            <Modal
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                onConfirm={handleCreateEvent}
-                title="Schedule Project Deployment"
-                confirmText={isSubmitting ? "Syncing..." : "Commit to Schedule"}
-            >
-                <div className="space-y-5 py-2">
-                    <div className="bg-indigo-50 dark:bg-indigo-900/20 p-4 rounded-2xl flex gap-3 items-start border border-indigo-100 dark:border-indigo-800">
-                        <ClockIcon className="h-5 w-5 text-indigo-600 mt-0.5" />
-                        <div>
-                            <p className="text-xs font-black text-indigo-700 dark:text-indigo-300 uppercase tracking-widest">Selected Window</p>
-                            <p className="text-sm font-bold text-indigo-900 dark:text-indigo-100">
-                                {newEventData.start?.toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })} 
-                                <span className="mx-2 text-indigo-300">→</span>
-                                {newEventData.end?.toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}
-                            </p>
+            <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={t('register_event')}>
+                <form onSubmit={handleSubmit} className="space-y-6 pt-4">
+                    {/* Event Type Protocol */}
+                    <div>
+                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Sequence Type</label>
+                        <div className="grid grid-cols-3 gap-2">
+                            {['custom', 'meeting', 'task'].map(type => (
+                                <button
+                                    key={type}
+                                    type="button"
+                                    onClick={() => setFormData(p => ({ ...p, event_type: type }))}
+                                    className={`h-10 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${
+                                        formData.event_type === type 
+                                        ? 'bg-indigo-600 text-white border-indigo-600 shadow-lg' 
+                                        : 'bg-gray-50 text-gray-400 border-gray-100 hover:bg-gray-100'
+                                    }`}
+                                >
+                                    {type}
+                                </button>
+                            ))}
                         </div>
                     </div>
 
                     <div>
-                        <label className="block text-[10px] font-black text-gray-400 uppercase mb-1 ml-1 tracking-widest">Event Title*</label>
-                        <input 
-                            type="text" 
-                            name="title" 
-                            value={newEventData.title} 
-                            onChange={handleNewEventChange} 
-                            placeholder="e.g., On-site Electrical Installation"
-                            className="block w-full rounded-2xl border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-indigo-500"
-                        />
+                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">{t('title')}</label>
+                        <input type="text" name="title" required value={formData.title} onChange={handleInputChange} className="modern-input" placeholder="Identifier..." />
                     </div>
+
+                    {/* Conditional Metadata: Time vs End Date */}
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">
+                                {formData.event_type === 'meeting' ? 'Start Time' : 'Start Date'}
+                            </label>
+                            <input 
+                                type={formData.event_type === 'meeting' ? "datetime-local" : "date"} 
+                                name="start" 
+                                required 
+                                value={formData.event_type === 'meeting' ? formData.start : formData.start.split('T')[0]} 
+                                onChange={handleInputChange} 
+                                className="modern-input text-xs font-bold" 
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">
+                                {formData.event_type === 'meeting' ? 'End Time' : 'End Date'}
+                            </label>
+                            <input 
+                                type={formData.event_type === 'meeting' ? "datetime-local" : "date"} 
+                                name="end" 
+                                required 
+                                value={formData.event_type === 'meeting' ? formData.end : formData.end.split('T')[0]} 
+                                onChange={handleInputChange} 
+                                className="modern-input text-xs font-bold" 
+                            />
+                        </div>
+                    </div>
+
+                    {/* Personnel Registry (Meetings Only) */}
+                    {formData.event_type === 'meeting' && (
+                        <div className="animate-in slide-in-from-top-2 duration-300">
+                            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1 flex items-center gap-1.5">
+                                <UserGroupIcon className="h-3 w-3" /> Personnel Registry
+                            </label>
+                            <Select
+                                isMulti
+                                options={userOptions}
+                                value={formData.attendee_ids}
+                                onChange={(selected) => setFormData(p => ({ ...p, attendee_ids: selected }))}
+                                className="modern-select-container"
+                                classNamePrefix="react-select"
+                                placeholder="Select Attendees..."
+                            />
+                        </div>
+                    )}
 
                     <div>
-                        <label className="block text-[10px] font-black text-gray-400 uppercase mb-1 ml-1 tracking-widest">Attendees & Resources</label>
-                        <Select
-                            isMulti
-                            options={userOptions}
-                            value={selectedAttendeeOptions}
-                            onChange={handleAttendeeChange}
-                            className="react-select-container"
-                            classNamePrefix="react-select"
-                            placeholder="Assign personnel..."
-                        />
+                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">{t('registry_notes')}</label>
+                        <textarea name="description" value={formData.description} onChange={handleInputChange} rows="3" className="modern-input h-auto py-3 text-sm" placeholder="Context..."></textarea>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-[10px] font-black text-gray-400 uppercase mb-1 ml-1 tracking-widest">Location</label>
-                            <div className="relative">
-                                <MapPinIcon className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-                                <input 
-                                    type="text" 
-                                    name="location" 
-                                    value={newEventData.location} 
-                                    onChange={handleNewEventChange} 
-                                    placeholder="Site Address"
-                                    className="pl-9 block w-full rounded-2xl border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-indigo-500"
-                                />
-                            </div>
-                        </div>
-                        <div>
-                            <label className="block text-[10px] font-black text-gray-400 uppercase mb-1 ml-1 tracking-widest italic">Optional Notes</label>
-                            <div className="relative">
-                                <InformationCircleIcon className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-                                <input 
-                                    type="text" 
-                                    name="description" 
-                                    value={newEventData.description} 
-                                    onChange={handleNewEventChange} 
-                                    placeholder="Access codes, etc."
-                                    className="pl-9 block w-full rounded-2xl border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-indigo-500"
-                                />
-                            </div>
-                        </div>
+                    <div className="flex justify-end gap-3 pt-6 border-t border-gray-50 dark:border-gray-700">
+                        <button type="button" onClick={() => setIsModalOpen(false)} className="px-6 h-12 text-[10px] font-black uppercase text-gray-400">Abort</button>
+                        <button 
+                            type="submit" 
+                            disabled={isSubmitting}
+                            className="px-10 h-12 bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl shadow-lg transition transform active:scale-95 flex items-center gap-2"
+                        >
+                            {isSubmitting ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <PlusIcon className="h-4 w-4 stroke-[3px]" />}
+                            Commit Sequence
+                        </button>
                     </div>
-                </div>
+                </form>
             </Modal>
+
+            <style>{`
+                .fc { --fc-border-color: #f3f4f6; --fc-button-bg-color: #4f46e5; --fc-button-border-color: #4f46e5; }
+                .dark .fc { --fc-border-color: #374151; }
+                .fc .fc-toolbar-title { font-size: 1rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.05em; }
+                .fc .fc-button { border-radius: 12px; font-size: 9px; font-weight: 900; text-transform: uppercase; }
+                .fc-event { border-radius: 6px; padding: 2px 4px; font-weight: 800; font-size: 9px; border: none; text-transform: uppercase; cursor: pointer; }
+            `}</style>
         </div>
     );
 }

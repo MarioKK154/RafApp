@@ -1,4 +1,3 @@
-# backend/app/routers/events.py
 from fastapi import APIRouter, Depends, HTTPException, status, Request, Query
 from sqlalchemy.orm import Session
 from typing import Annotated, List, Optional
@@ -16,7 +15,7 @@ router = APIRouter(
 
 DbDependency = Annotated[Session, Depends(get_db)]
 CurrentUserDependency = Annotated[models.User, Depends(security.get_current_active_user)]
-ManagerOrAdminDependency = Annotated[models.User, Depends(security.require_role(["admin", "project manager"]))]
+ManagerOrAdminDependency = Annotated[models.User, Depends(security.require_role(["admin", "project manager", "superuser"]))]
 
 # Helper to fetch event and verify access
 def get_event_and_check_auth(event_id: int, db: DbDependency, current_user: CurrentUserDependency) -> models.Event:
@@ -36,11 +35,11 @@ def create_new_event(
     request: Request,
     event_data: schemas.EventCreate,
     db: DbDependency,
-    current_user: ManagerOrAdminDependency
+    current_user: CurrentUserDependency # Changed to CurrentUser to allow anyone to create personal events
 ):
     """
-    Creates a new calendar event. 
-    Superadmins can link events to any project; regular users are limited to their tenant.
+    Creates a new calendar event (Meeting, Task, or Custom). 
+    Logic: Automatically handles attendee linkage and type categorization.
     """
     if event_data.project_id:
         effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
@@ -54,19 +53,17 @@ def create_new_event(
 @limiter.limit("100/minute")
 def get_events_in_range(
     request: Request,
-    start: datetime,
-    end: datetime,
-    db: DbDependency,
-    current_user: CurrentUserDependency
+    db: DbDependency,           # Moved Up
+    current_user: CurrentUserDependency, # Moved Up
+    start: datetime = Query(...), # Moved Down
+    end: datetime = Query(...)    # Moved Down
 ):
     """
-    Retrieves all events within a specific time range.
-    Superadmins see all system events; regular users see events for their tenant.
+    Oversight: Retrieves all events within a specific temporal window.
+    Isolation: Superadmins see system-wide; regular users see tenant-specific sequences.
     """
-    # Superadmin bypass: Passing None to the CRUD function triggers the "return all" logic
     effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
 
-    # If a regular user is missing a tenant ID, something is wrong with the account configuration
     if not current_user.is_superuser and effective_tenant_id is None:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -83,7 +80,7 @@ def get_single_event(
     db: DbDependency,
     current_user: CurrentUserDependency
 ):
-    """Retrieves details for a specific event."""
+    """Registry: Retrieve specific event telemetry."""
     return get_event_and_check_auth(event_id, db, current_user)
 
 @router.put("/{event_id}", response_model=schemas.EventRead)
@@ -93,15 +90,18 @@ def update_an_event(
     event_id: int,
     event_update: schemas.EventUpdate,
     db: DbDependency,
-    current_user: ManagerOrAdminDependency
+    current_user: CurrentUserDependency
 ):
     """
-    Updates an event's time, location, or attendees.
+    Protocol: Synchronize changes to timing, type, or personnel registry.
     """
     db_event = get_event_and_check_auth(event_id, db, current_user)
     
-    # We pass the event's actual tenant_id to the CRUD to ensure 
-    # attendee validation happens within the correct company context.
+    # Permission logic: Only creator or admins/managers can update
+    is_manager = current_user.role in ["admin", "project manager", "superuser"]
+    if db_event.creator_id != current_user.id and not is_manager:
+        raise HTTPException(status_code=403, detail="Unauthorized to modify this sequence.")
+
     return crud.update_event(
         db, 
         db_event=db_event, 
@@ -115,9 +115,14 @@ def delete_an_event(
     request: Request,
     event_id: int,
     db: DbDependency,
-    current_user: ManagerOrAdminDependency
+    current_user: CurrentUserDependency
 ):
-    """Removes an event from the calendar."""
+    """Protocol: Terminate event sequence."""
     db_event = get_event_and_check_auth(event_id, db, current_user)
+    
+    is_manager = current_user.role in ["admin", "project manager", "superuser"]
+    if db_event.creator_id != current_user.id and not is_manager:
+        raise HTTPException(status_code=403, detail="Unauthorized to terminate this sequence.")
+        
     crud.delete_event(db, db_event=db_event)
     return None

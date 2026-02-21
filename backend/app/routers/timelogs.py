@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query, Request
 from sqlalchemy.orm import Session
-from typing import Annotated, List, Optional, Literal
+from typing import Annotated, List, Optional, Literal, Union
 from datetime import datetime, date
 
 from .. import crud, models, schemas, security
@@ -43,6 +43,23 @@ async def get_project_if_accessible(project_id: int, db: Session, current_user: 
 
 # --- Endpoints ---
 
+@router.get("/active", response_model=Union[schemas.TimeLogRead, None])
+@router.get("/status", response_model=schemas.TimeLogStatus)
+@limiter.limit("100/minute")
+async def get_current_session_status(request: Request, db: DbDependency, current_user: CurrentUserDependency):
+    """
+    DUAL-PROTOCOL ENDPOINT:
+    - /active: Returns the raw log or None if not clocked in.
+    - /status: Returns structured boolean telemetry.
+    """
+    open_log = crud.get_open_timelog_for_user(db, user_id=current_user.id)
+    
+    # Check the actual path called
+    if "/active" in request.url.path:
+        return open_log
+        
+    return {"is_clocked_in": bool(open_log), "current_log": open_log}
+
 @router.post("/clock-in", response_model=schemas.TimeLogRead, status_code=status.HTTP_201_CREATED)
 @limiter.limit("100/minute")
 async def clock_in(
@@ -76,13 +93,6 @@ async def clock_out(request: Request, db: DbDependency, current_user: CurrentUse
         )
     
     return crud.update_timelog_entry(db=db, timelog_id=open_log.id)
-
-@router.get("/status", response_model=schemas.TimeLogStatus)
-@limiter.limit("100/minute")
-async def get_timelog_status(request: Request, db: DbDependency, current_user: CurrentUserDependency):
-    """Retrieves current session telemetry for the authenticated user."""
-    open_log = crud.get_open_timelog_for_user(db, user_id=current_user.id)
-    return {"is_clocked_in": bool(open_log), "current_log": open_log}
 
 @router.get("/me", response_model=List[schemas.TimeLogRead])
 @limiter.limit("100/minute")
@@ -128,10 +138,7 @@ async def read_active_timelogs_for_project(
     Returns all personnel currently 'On-Site' for a specific project.
     Used by the ProjectMembers component to show real-time status pulses.
     """
-    # Security: Ensure user has access to view this project
     await get_project_if_accessible(project_id, db, current_user)
-    
-    # Return logs where end_time is null
     return crud.get_active_timelogs_by_project(db=db, project_id=project_id)
 
 @router.get("/", response_model=List[schemas.TimeLogRead])

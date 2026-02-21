@@ -1,197 +1,179 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import axiosInstance from '../api/axiosInstance';
 import { toast } from 'react-toastify';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { 
-    CubeIcon, 
-    ClipboardDocumentCheckIcon, 
-    ArrowRightIcon, 
-    Squares2X2Icon,
-    BuildingOfficeIcon
+    CircleStackIcon, 
+    MagnifyingGlassIcon, 
+    PlusIcon, 
+    ChevronRightIcon,
+    ExclamationTriangleIcon,
+    CubeIcon,
+    TagIcon,
+    AdjustmentsHorizontalIcon,
+    ShoppingCartIcon,
+    ArchiveBoxIcon,
+    HashtagIcon,
+    PencilSquareIcon
 } from '@heroicons/react/24/outline';
 
 function GlobalInventoryPage() {
-    const [summary, setSummary] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState('');
+    const { t } = useTranslation();
+    const navigate = useNavigate();
     const { user } = useAuth();
+    
+    const [items, setItems] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [searchTerm, setSearchTerm] = useState('');
 
-    // Permission check: Admins, PMs, and Superusers
-    const isSuperuser = user?.is_superuser;
-    const canViewPage = user && (['admin', 'project manager'].includes(user.role) || isSuperuser);
+    const canManageInventory = user && (['admin', 'project manager'].includes(user.role) || user.is_superuser);
 
-    const fetchSummary = useCallback(() => {
-        if (!canViewPage) {
-            setError('You do not have permission to view the global inventory registry.');
-            setIsLoading(false);
-            return;
-        }
-
+    /**
+     * Protocol: Synchronize with /inventory/catalog registry
+     */
+    const fetchInventory = useCallback(async () => {
         setIsLoading(true);
-        setError('');
-        
-        // The backend /inventory/global-summary sums quantity across all locations for the user's context
-        axiosInstance.get('/inventory/global-summary')
-            .then(response => {
-                setSummary(response.data);
-            })
-            .catch((err) => {
-                console.error("Inventory Summary Error:", err);
-                setError('Failed to aggregate global inventory data.');
-                toast.error('Data synchronization failed.');
-            })
-            .finally(() => setIsLoading(false));
-    }, [canViewPage]);
+        try {
+            // FIXED: Path synchronized with backend router @router.get("/catalog")
+            const response = await axiosInstance.get('/inventory/catalog', { 
+                params: { search: searchTerm, limit: 1000 } 
+            });
+            setItems(Array.isArray(response.data) ? response.data : []);
+        } catch (err) {
+            console.error("Registry Sync Failure:", err);
+            toast.error(t('error_loading_inventory', { defaultValue: 'Connection to registry lost.' }));
+            setItems([]);
+        } finally {
+            setIsLoading(false);
+        }
+    }, [searchTerm, t]);
 
     useEffect(() => {
-        fetchSummary();
-    }, [fetchSummary]);
+        fetchInventory();
+    }, [fetchInventory]);
 
-    if (isLoading) {
-        return <LoadingSpinner text="Aggregating stock levels across all sites..." size="lg" />;
-    }
-
-    if (error) {
-        return (
-            <div className="flex flex-col items-center justify-center h-[calc(100vh-10rem)] p-8">
-                <div className="bg-red-50 dark:bg-red-900/20 p-6 rounded-2xl text-center">
-                    <p className="text-red-600 dark:text-red-400 font-bold mb-2">Access Error</p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">{error}</p>
-                </div>
-            </div>
-        );
-    }
+    if (isLoading && items.length === 0) return <LoadingSpinner text={t('syncing')} />;
 
     return (
-        <div className="container mx-auto p-4 md:p-6 lg:p-8">
-            {/* Header Section */}
-            <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+        <div className="container mx-auto p-4 md:p-8 max-w-7xl animate-in fade-in duration-500">
+            {/* Header Area */}
+            <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-12">
                 <div>
-                    <div className="flex items-center gap-2 mb-1">
-                        <CubeIcon className="h-8 w-8 text-indigo-600" />
-                        <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
-                            Global Inventory
-                        </h1>
+                    <div className="flex items-center gap-4 mb-3">
+                        <div className="p-4 bg-indigo-600 rounded-2xl shadow-xl shadow-indigo-100 dark:shadow-none">
+                            <CircleStackIcon className="h-8 w-8 text-white" />
+                        </div>
+                        <div>
+                            <h1 className="text-4xl font-black text-gray-900 dark:text-white leading-none tracking-tighter uppercase italic">
+                                {t('inventory')}
+                            </h1>
+                            <p className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.3em] mt-2">
+                                CENTRALIZED LOGISTICS CLUSTER
+                            </p>
+                        </div>
                     </div>
-                    <p className="text-gray-500 dark:text-gray-400 text-sm max-w-xl">
-                        A consolidated view of materials across the entire company. 
-                        Quantities shown are the sum of items in central storage and active project sites.
-                    </p>
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-4 w-full md:w-auto">
                     <Link 
-                        to="/inventory/catalog" 
-                        className="inline-flex items-center px-5 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-sm font-bold text-gray-700 dark:text-gray-200 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition shadow-sm"
+                        to="/shopping-list"
+                        className="flex-1 md:flex-none h-14 px-6 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 text-gray-500 hover:text-indigo-600 rounded-2xl flex items-center justify-center gap-2 shadow-sm transition"
                     >
-                        <Squares2X2Icon className="h-4 w-4 mr-2" />
-                        Manage Catalog
+                        <ShoppingCartIcon className="h-5 w-5" />
+                        <span className="text-[10px] font-black uppercase tracking-widest">Procurement</span>
                     </Link>
+                    {canManageInventory && (
+                        <Link 
+                            to="/inventory/new"
+                            className="flex-1 md:flex-none h-14 px-8 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-[0.2em] rounded-2xl shadow-lg transition transform active:scale-95 flex items-center justify-center gap-2"
+                        >
+                            <PlusIcon className="h-4 w-4 stroke-[3px]" /> 
+                            {t('create_new')}
+                        </Link>
+                    )}
                 </div>
             </header>
 
-            {/* Summary Statistics (Optional visual cards) */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <div className="bg-indigo-600 rounded-2xl p-6 text-white shadow-lg shadow-indigo-200 dark:shadow-none">
-                    <p className="text-indigo-100 text-xs font-bold uppercase tracking-wider mb-1">Unique Skus</p>
-                    <p className="text-3xl font-black">{summary.length}</p>
+            {/* Tactical Filtering Terminal */}
+            <div className="mb-10 grid grid-cols-1 lg:grid-cols-4 gap-6">
+                <div className="lg:col-span-3 relative group">
+                    <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-indigo-500 transition-colors" />
+                    <input
+                        type="text"
+                        placeholder={t('search_placeholder')}
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="modern-input pl-12 h-14 !rounded-[1.25rem] font-bold"
+                    />
                 </div>
-                <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 shadow-sm">
-                    <p className="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">Total Assets</p>
-                    <p className="text-3xl font-black text-gray-900 dark:text-white">
-                        {summary.reduce((acc, item) => acc + item.total_quantity, 0).toLocaleString()}
-                    </p>
-                </div>
-                <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 shadow-sm">
-                    <p className="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">Status</p>
-                    <div className="flex items-center gap-2 text-green-500 font-bold">
-                        <ClipboardDocumentCheckIcon className="h-6 w-6" />
-                        <span>Registry Sync OK</span>
-                    </div>
+                <div className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-[1.25rem] px-6 flex items-center justify-center gap-3 text-[10px] font-black uppercase tracking-widest text-gray-400 shadow-sm">
+                    <AdjustmentsHorizontalIcon className="h-4 w-4 text-indigo-500" /> 
+                    <span className="text-gray-900 dark:text-gray-100">{items.length} SKUs Active</span>
                 </div>
             </div>
 
-            {/* Inventory Table */}
-            <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-left">
-                        <thead className="text-xs text-gray-400 uppercase bg-gray-50 dark:bg-gray-700/50 font-bold">
-                            <tr>
-                                <th className="py-4 px-6">Material Description</th>
-                                {isSuperuser && <th className="py-4 px-6">Tenant</th>}
-                                <th className="py-4 px-6 text-right">Total Quantity</th>
-                                <th className="py-4 px-6">Unit</th>
-                                <th className="py-4 px-6 text-center">Details</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                            {summary.length > 0 ? summary.map(item => (
-                                <tr key={item.inventory_item.id} className="hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
-                                    <td className="py-4 px-6">
-                                        <div className="font-bold text-gray-900 dark:text-white">
-                                            {item.inventory_item.name}
-                                        </div>
-                                        <div className="text-[10px] text-gray-400 font-mono uppercase tracking-tighter">
-                                            SKU: {item.inventory_item.sku || 'NOT-ASSIGNED'}
-                                        </div>
-                                    </td>
-                                    
-                                    {isSuperuser && (
-                                        <td className="py-4 px-6">
-                                            <div className="flex items-center gap-1.5 text-xs text-orange-600 dark:text-orange-400 font-bold">
-                                                <BuildingOfficeIcon className="h-3.5 w-3.5" />
-                                                {item.inventory_item.tenant?.name || 'System Root'}
-                                            </div>
-                                        </td>
-                                    )}
-
-                                    <td className="py-4 px-6 text-right">
-                                        <span className="inline-flex items-center px-3 py-1 rounded-lg text-sm font-black bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white">
-                                            {item.total_quantity.toLocaleString()}
-                                        </span>
-                                    </td>
-                                    
-                                    <td className="py-4 px-6 text-gray-500 italic lowercase">
-                                        {item.inventory_item.unit || 'pcs'}
-                                    </td>
-
-                                    <td className="py-4 px-6 text-center">
-                                        <Link 
-                                            to={`/inventory/catalog/edit/${item.inventory_item.id}`} 
-                                            className="inline-flex items-center justify-center p-2 text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition"
-                                            title="View Catalog Details"
-                                        >
-                                            <ArrowRightIcon className="h-5 w-5" />
-                                        </Link>
-                                    </td>
-                                </tr>
-                            )) : (
-                                <tr>
-                                    <td colSpan={isSuperuser ? 5 : 4} className="py-20 text-center">
-                                        <div className="flex flex-col items-center">
-                                            <Squares2X2Icon className="h-12 w-12 text-gray-200 mb-2" />
-                                            <p className="text-gray-500 italic">No consolidated inventory items found.</p>
-                                        </div>
-                                    </td>
-                                </tr>
+            {/* Registry Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                {items.length > 0 ? items.map(item => (
+                    <div key={item.id} className="group bg-white dark:bg-gray-800 rounded-[2.5rem] border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-2xl transition-all duration-500 flex flex-col overflow-hidden animate-in zoom-in-95 duration-300">
+                        
+                        <div className="h-44 bg-gray-50 dark:bg-gray-900/50 flex items-center justify-center relative overflow-hidden border-b border-gray-50 dark:border-gray-800">
+                            {item.local_image_path ? (
+                                <img src={item.local_image_path} alt={item.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" />
+                            ) : (
+                                <ArchiveBoxIcon className="h-14 w-14 text-gray-200 dark:text-gray-700" />
                             )}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            
-            {/* Footer Legend */}
-            <div className="mt-6 flex items-center gap-4 text-[10px] text-gray-400 uppercase tracking-widest font-bold">
-                <div className="flex items-center gap-1.5">
-                    <div className="h-2 w-2 rounded-full bg-indigo-600"></div>
-                    <span>Aggregated Live Data</span>
-                </div>
-                {isSuperuser && (
-                    <div className="flex items-center gap-1.5">
-                        <div className="h-2 w-2 rounded-full bg-orange-500"></div>
-                        <span>Cross-Tenant Visibility Active</span>
+                            
+                            {item.quantity <= (item.low_stock_threshold || 5) && (
+                                <div className="absolute top-4 right-4 bg-red-600 text-white p-2 rounded-xl shadow-2xl animate-pulse flex items-center gap-2 border-2 border-white dark:border-gray-800">
+                                    <ExclamationTriangleIcon className="h-4 w-4" />
+                                    <span className="text-[8px] font-black uppercase tracking-tighter pr-1">Low Stock</span>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="p-8 flex-grow flex flex-col">
+                            <h2 className="text-md font-black text-gray-900 dark:text-white uppercase tracking-tighter truncate mb-1 italic">
+                                {item.name}
+                            </h2>
+                            <div className="flex items-center gap-2 mb-6">
+                                <HashtagIcon className="h-3 w-3 text-indigo-500" />
+                                <span className="text-[10px] font-mono font-black text-gray-400 uppercase tracking-widest leading-none pt-0.5">
+                                    SKU-{item.id.toString().padStart(4, '0')}
+                                </span>
+                            </div>
+
+                            <div className="mt-auto space-y-4">
+                                <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900/80 rounded-2xl border border-transparent group-hover:border-indigo-100 transition-colors">
+                                    <div>
+                                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none mb-2">{t('stock_level')}</p>
+                                        <p className={`text-xl font-black tracking-tighter ${item.quantity <= (item.low_stock_threshold || 5) ? 'text-red-600' : 'text-gray-900 dark:text-white'}`}>
+                                            {item.quantity} <span className="text-xs text-gray-400 uppercase font-black ml-1">{item.unit || 'pcs'}</span>
+                                        </p>
+                                    </div>
+                                    <div className="p-2 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700">
+                                        <TagIcon className="h-5 w-5 text-indigo-500" />
+                                    </div>
+                                </div>
+
+                                <Link 
+                                    to={`/inventory/edit/${item.id}`}
+                                    className="flex items-center justify-center gap-3 w-full h-12 bg-gray-900 dark:bg-gray-700 text-white hover:bg-indigo-600 transition-all rounded-[1.25rem] shadow-lg"
+                                >
+                                    <PencilSquareIcon className="h-4 w-4" />
+                                    <span className="text-[10px] font-black uppercase tracking-[0.2em]">{t('edit')}</span>
+                                    <ChevronRightIcon className="h-4 w-4 stroke-[3px]" />
+                                </Link>
+                            </div>
+                        </div>
+                    </div>
+                )) : (
+                    <div className="col-span-full py-32 text-center bg-white dark:bg-gray-800 rounded-[3rem] border-2 border-dashed border-gray-100 dark:border-gray-700">
+                        <CubeIcon className="h-16 w-16 text-gray-200 mx-auto mb-6" />
+                        <h3 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">{t('no_data')}</h3>
                     </div>
                 )}
             </div>

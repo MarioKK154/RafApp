@@ -23,11 +23,11 @@ import {
     CheckBadgeIcon,
     NoSymbolIcon,
     ReceiptPercentIcon,
-    CurrencyIskIcon
+    PaperAirplaneIcon
 } from '@heroicons/react/24/outline';
 
 /**
- * Technical Currency Formatter for ISK
+ * Technical Currency Formatter for ISK (Icelandic Króna)
  */
 const formatCurrency = (value) => {
     if (value === null || value === undefined) return '0 kr.';
@@ -47,6 +47,13 @@ const formatDateForInput = (dateString) => {
         return isNaN(date.getTime()) ? '' : date.toISOString().split('T')[0];
      } catch (e) { return ''; }
 };
+
+/**
+ * Custom ISK Icon placeholder since Heroicons lacks a kr. symbol
+ */
+const IskIcon = () => (
+    <span className="text-[10px] font-black leading-none text-indigo-600 dark:text-indigo-400">kr.</span>
+);
 
 function OfferPage() {
     const { offerId } = useParams();
@@ -176,7 +183,7 @@ function OfferPage() {
         } catch (err) { toast.error("Purge protocol failed."); }
     };
 
-    // Calculate totals for visual analytics
+    // Derived analytics
     const laborTotal = useMemo(() => offer?.line_items.filter(i => i.item_type === 'Labor').reduce((sum, i) => sum + i.total_price, 0) || 0, [offer]);
     const materialTotal = useMemo(() => offer?.line_items.filter(i => i.item_type === 'Material').reduce((sum, i) => sum + i.total_price, 0) || 0, [offer]);
 
@@ -219,8 +226,6 @@ function OfferPage() {
                 </div>
             </header>
 
-            
-
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                 
                 {/* Left Column: Bid Logic (8 cols) */}
@@ -230,7 +235,7 @@ function OfferPage() {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <SummaryCard label="Labor Subtotal" value={formatCurrency(laborTotal)} icon={<UserIcon />} />
                         <SummaryCard label="Material Subtotal" value={formatCurrency(materialTotal)} icon={<TagIcon />} />
-                        <SummaryCard label="Net Proposal Valuation" value={formatCurrency(offer.total_amount)} icon={<CheckBadgeIcon />} highlight />
+                        <SummaryCard label="Proposal Valuation" value={formatCurrency(offer.total_amount)} icon={<CheckBadgeIcon />} highlight />
                     </div>
 
                     {/* Technical Line Items Table */}
@@ -243,7 +248,7 @@ function OfferPage() {
                             <table className="w-full text-sm text-left">
                                 <thead className="text-[10px] text-gray-400 uppercase font-black bg-gray-50 dark:bg-gray-700/50">
                                     <tr>
-                                        <th className="py-5 px-8">Asset / Service Scope</th>
+                                        <th className="py-5 px-8">Scope / Description</th>
                                         <th className="py-5 px-4 text-right">Qty</th>
                                         <th className="py-5 px-6 text-right">Unit Rate</th>
                                         <th className="py-5 px-8 text-right">Line Total</th>
@@ -287,7 +292,7 @@ function OfferPage() {
                                 <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
                                     <div className="md:col-span-4">
                                         <label className="block text-[10px] font-black text-gray-400 uppercase mb-1 ml-1 tracking-widest">Protocol Type</label>
-                                        <select value={newItemType} onChange={(e) => setNewItemType(e.target.value)} className="w-full h-12 rounded-2xl border-gray-200 dark:bg-gray-700 text-xs font-bold uppercase tracking-widest">
+                                        <select value={newItemType} onChange={(e) => setNewItemType(e.target.value)} className="modern-input h-12 text-xs uppercase tracking-widest">
                                             <option value="Labor">Personnel (Labor Catalog)</option>
                                             <option value="Material">Inventory (Material List)</option>
                                         </select>
@@ -295,12 +300,12 @@ function OfferPage() {
                                     <div className="md:col-span-8">
                                         <label className="block text-[10px] font-black text-gray-400 uppercase mb-1 ml-1 tracking-widest">Target Asset</label>
                                         {newItemType === 'Labor' ? (
-                                            <select value={selectedLaborCatalogId} onChange={handleLaborCatalogChange} className="w-full h-12 rounded-2xl border-gray-200 dark:bg-gray-700 text-xs font-bold tracking-tight">
+                                            <select value={selectedLaborCatalogId} onChange={handleLaborCatalogChange} className="modern-input h-12 text-xs tracking-tight">
                                                 <option value="">-- Custom Labor Allocation --</option>
                                                 {laborCatalog.map(i => <option key={i.id} value={i.id}>{i.description} ({formatCurrency(i.default_unit_price)} / {i.unit})</option>)}
                                             </select>
                                         ) : (
-                                            <select value={newItemInventoryId} onChange={(e) => setNewItemInventoryId(e.target.value)} required className="w-full h-12 rounded-2xl border-gray-200 dark:bg-gray-700 text-xs font-bold tracking-tight">
+                                            <select value={newItemInventoryId} onChange={(e) => setNewItemInventoryId(e.target.value)} required className="modern-input h-12 text-xs tracking-tight">
                                                 <option value="" disabled>-- Select Stock Reference --</option>
                                                 {inventoryCatalog.map(i => <option key={i.id} value={i.id}>{i.name} ({i.unit || 'unit'})</option>)}
                                             </select>
@@ -385,7 +390,7 @@ function OfferPage() {
                             <div className="space-y-3">
                                 {offer.status === 'Draft' && (
                                     <button onClick={() => handleStatusChange('Sent')} className="w-full flex items-center justify-center gap-2 h-14 bg-indigo-600 hover:bg-indigo-500 rounded-2xl text-[10px] font-black uppercase tracking-widest transition transform active:scale-95 shadow-lg shadow-indigo-500/20">
-                                        <ArrowPathIcon className="h-5 w-5" /> Dispatch Proposal
+                                        <PaperAirplaneIcon className="h-5 w-5" /> Dispatch Proposal
                                     </button>
                                 )}
                                 {offer.status === 'Sent' && (
@@ -412,7 +417,6 @@ function OfferPage() {
                 </div>
             </div>
 
-            {/* Registry Purge Confirmation */}
             <ConfirmationModal
                 isOpen={isDeleteModalOpen}
                 onClose={() => setIsDeleteModalOpen(false)}

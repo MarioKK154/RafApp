@@ -1,13 +1,14 @@
-# backend/app/schemas.py
 from pydantic import BaseModel, EmailStr, Field, HttpUrl, ConfigDict
 from typing import Optional, List, Literal, Any, Union
 from datetime import datetime, date, timedelta
 from os import environ
 from pydantic import computed_field
 
+# SYNC: All Enums imported from models including new Roadmap Categories
 from .models import (UserRole, ProjectStatus, TaskStatus, ToolStatus, 
                      ToolLogAction, CarStatus, CarLogAction, TyreType, 
-                     OfferStatus, OfferLineItemType, DrawingStatus, LeaveStatus)
+                     OfferStatus, OfferLineItemType, DrawingStatus, LeaveStatus,
+                     EventType, TutorialCategory)
 
 STATIC_BASE_URL = environ.get("STATIC_BASE_URL", "http://localhost:8000")
 
@@ -23,6 +24,7 @@ class TenantReadBasic(BaseModel):
 class ProjectReadBasic(BaseModel):
     id: int
     name: str
+    project_number: Optional[str] = None # ROADMAP #6
     model_config = ConfigDict(from_attributes=True)
 
 class TaskReadBasic(BaseModel):
@@ -35,6 +37,7 @@ class UserReadBasic(BaseModel):
     email: EmailStr
     full_name: Optional[str] = None
     profile_picture_path: Optional[str] = None 
+    city: Optional[str] = None # ROADMAP #3: Standardized location
     
     @computed_field
     @property
@@ -100,7 +103,8 @@ class UserBase(BaseModel):
     employee_id: Optional[str] = None
     kennitala: Optional[str] = None
     phone_number: Optional[str] = None
-    location: Optional[str] = None
+    city: Optional[str] = None # ROADMAP #3
+    location: Optional[str] = None # Legacy support
 
 class UserCreateAdmin(UserBase):
     password: str
@@ -139,6 +143,7 @@ class UserUpdateAdmin(BaseModel):
     employee_id: Optional[str] = None
     kennitala: Optional[str] = None
     phone_number: Optional[str] = None
+    city: Optional[str] = None
     location: Optional[str] = None
     hourly_rate: Optional[float] = None
     is_active: Optional[bool] = None
@@ -159,13 +164,25 @@ class UserImportCSVRow(BaseModel):
     Employee_ID: Optional[str] = Field(None, alias='Employee ID')
     Kennitala: Optional[str] = None
     Phone: Optional[str] = None
-    Location: Optional[str] = None
+    City: Optional[str] = None
     model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
+# --- Notification Schemas (ROADMAP #2) ---
+
+class NotificationRead(BaseModel):
+    id: int
+    message: str
+    link: Optional[str] = None
+    is_read: bool
+    created_at: datetime
+    model_config = ConfigDict(from_attributes=True)
 
 # --- Project Schemas ---
 
 class ProjectBase(BaseModel):
     name: str
+    project_number: Optional[str] = None # ROADMAP #6
+    parent_id: Optional[int] = None      # ROADMAP #6
     description: Optional[str] = None
     address: Optional[str] = None
     status: Optional[str] = "Planning"
@@ -179,9 +196,10 @@ class ProjectCreate(ProjectBase):
 
 class ProjectUpdate(BaseModel):
     name: Optional[str] = None
+    project_number: Optional[str] = None
     description: Optional[str] = None
     address: Optional[str] = None
-    status: Optional[str] = None
+    status: Optional[Literal['Planning', 'Active', 'Pending', 'Commissioned', 'Completed', 'Archived']] = None
     start_date: Optional[datetime] = None
     end_date: Optional[datetime] = None
     project_manager_id: Optional[int] = None
@@ -191,6 +209,8 @@ class ProjectRead(ProjectBase):
     id: int
     creator_id: int
     tenant_id: int
+    verified_by_admin: bool = False # ROADMAP #1
+    commissioned_at: Optional[datetime] = None # ROADMAP #1
     tenant: Optional[TenantReadBasic] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
@@ -202,7 +222,7 @@ class ProjectAssignMember(BaseModel):
 
 # --- Task Schemas ---
 
-TaskStatusLiteral = Literal["To Do", "In Progress", "Done", "Blocked", "Commissioned"]
+TaskStatusLiteral = Literal["To Do", "In Progress", "Done", "Blocked", "Awaiting Commissioning", "Commissioned"]
 TaskPriorityLiteral = Literal["Low", "Medium", "High"]
 
 class TaskBase(BaseModel):
@@ -227,6 +247,7 @@ class TaskUpdate(BaseModel):
     due_date: Optional[datetime] = None
     project_id: Optional[int] = None
     assignee_id: Optional[int] = None
+    predecessors: Optional[List[Any]] = None
 
 class TaskRead(TaskBase):
     id: int
@@ -288,6 +309,23 @@ class TaskDependencyCreate(BaseModel):
 
 class InventoryItemBase(BaseModel):
     name: str
+    category: Optional[str] = None # ROADMAP: Multi-level hierarchy
+    subcategory: Optional[str] = None
+    description: Optional[str] = None
+    unit: Optional[str] = None
+    low_stock_threshold: Optional[float] = None
+    shop_url_1: Optional[HttpUrl | str] = None # Ronning
+    shop_url_2: Optional[HttpUrl | str] = None # Iskraft
+    shop_url_3: Optional[HttpUrl | str] = None # Reykjafell
+    local_image_path: Optional[str] = None
+
+class InventoryItemCreate(InventoryItemBase):
+    pass
+
+class InventoryItemUpdate(BaseModel):
+    name: Optional[str] = None
+    category: Optional[str] = None
+    subcategory: Optional[str] = None
     description: Optional[str] = None
     unit: Optional[str] = None
     low_stock_threshold: Optional[float] = None
@@ -295,12 +333,6 @@ class InventoryItemBase(BaseModel):
     shop_url_2: Optional[HttpUrl | str] = None
     shop_url_3: Optional[HttpUrl | str] = None
     local_image_path: Optional[str] = None
-
-class InventoryItemCreate(InventoryItemBase):
-    pass
-
-class InventoryItemUpdate(InventoryItemBase):
-    name: Optional[str] = None
 
 class InventoryItemRead(InventoryItemBase):
     id: int
@@ -314,19 +346,11 @@ class ProjectInventoryItemCreate(ProjectInventoryItemBase):
     inventory_item_id: int
     project_id: int
 
-class ProjectInventoryItemUpdate(ProjectInventoryItemBase):
-    pass
-
 class ProjectInventoryItemRead(ProjectInventoryItemBase):
     id: int
     project_id: int
     inventory_item: InventoryItemRead 
     model_config = ConfigDict(from_attributes=True)
-
-class InventoryItemReadWithURLs(InventoryItemRead):
-    shop_url_1: Optional[HttpUrl | str] = None
-    shop_url_2: Optional[HttpUrl | str] = None
-    shop_url_3: Optional[HttpUrl | str] = None
 
 class InventoryItemUpdateNeededQty(BaseModel):
     quantity_needed: float = Field(..., ge=0)
@@ -365,11 +389,24 @@ class BoQRead(BoQBase):
     items: List[BoQItemRead] = []
     model_config = ConfigDict(from_attributes=True)
 
-# --- Drawing Schemas ---
+# --- Drawing & Folder Schemas (ROADMAP #4) ---
+
+class DrawingFolderBase(BaseModel):
+    name: str
+    project_id: int
+    parent_id: Optional[int] = None
+
+class DrawingFolderCreate(DrawingFolderBase):
+    pass
+
+class DrawingFolderRead(DrawingFolderBase):
+    id: int
+    model_config = ConfigDict(from_attributes=True)
 
 class DrawingBase(BaseModel):
     description: Optional[str] = None
     project_id: int
+    folder_id: Optional[int] = None
     revision: Optional[str] = None
     discipline: Optional[str] = None
     status: Optional[DrawingStatus] = DrawingStatus.Draft
@@ -385,6 +422,7 @@ class DrawingCreate(DrawingBase):
 
 class DrawingUpdate(BaseModel):
     description: Optional[str] = None
+    folder_id: Optional[int] = None
     revision: Optional[str] = None
     discipline: Optional[str] = None
     status: Optional[DrawingStatus] = None
@@ -398,6 +436,18 @@ class DrawingRead(DrawingBase):
     size_bytes: Optional[int] = None
     uploaded_at: datetime
     uploader_id: int
+    model_config = ConfigDict(from_attributes=True)
+
+# --- Wiring Diagram Schemas (ROADMAP #5) ---
+
+class WiringDiagramRead(BaseModel):
+    id: int
+    title: str
+    category: TutorialCategory
+    description: Optional[str] = None
+    tutorial_text: Optional[str] = None
+    image_path: Optional[str] = None
+    created_at: datetime
     model_config = ConfigDict(from_attributes=True)
 
 # --- Time Log Schemas ---
@@ -431,22 +481,6 @@ class TimeLogRead(TimeLogBase):
 class TimeLogStatus(BaseModel):
     is_clocked_in: bool
     current_log: Optional[TimeLogRead] = None
-
-# --- Management Tools (Clean Slate) ---
-
-class CleanSlateRequest(BaseModel):
-    main_admin_email: EmailStr
-
-class CleanSlateSummary(BaseModel):
-    users_deactivated: int
-    projects_creator_reassigned: int = 0
-    projects_pm_cleared: int = 0
-    tasks_unassigned: int = 0
-    message: Optional[str] = None
-
-class CleanSlateResponse(BaseModel):
-    message: str
-    summary: CleanSlateSummary
 
 # --- Asset Schemas (Tools) ---
 
@@ -614,6 +648,12 @@ class ShopRead(ShopBase):
 
 # --- Reporting & Dashboard ---
 
+class DashboardStats(BaseModel):
+    active_projects: int
+    pending_tasks: int
+    active_users: int
+    weekly_hours: float
+
 class ReportTimeLogEntry(BaseModel):
     user_name: str
     duration_hours: float
@@ -630,14 +670,12 @@ class ReportProjectSummary(BaseModel):
     detailed_logs: List[ReportTimeLogEntry]
 
 class DashboardData(BaseModel):
-    """The main response model for the user dashboard."""
     my_open_tasks: List[TaskRead]
     my_checked_out_tools: List[ToolReadBasic]
     my_checked_out_car: Optional[CarReadBasic] = None
     managed_projects: Optional[List[ProjectRead]] = None 
 
 class ShoppingListItem(BaseModel):
-    """Represents a single item on a project's shopping list."""
     inventory_item: InventoryItemRead
     quantity_required: float
     quantity_in_stock: float
@@ -648,20 +686,29 @@ class ShoppingListItem(BaseModel):
 
 class LaborCatalogItemBase(BaseModel):
     description: str = Field(..., min_length=1)
-    default_unit_price: float = Field(..., ge=0)
+    category: Optional[str] = None # ROADMAP: Hierarchy support
     unit: Optional[str] = "hour"
+    recommended_item_ids: Optional[str] = None # Roadmap: Estimator Linkage
 
 class LaborCatalogItemCreate(LaborCatalogItemBase):
-    pass
+    default_unit_price: float = Field(..., ge=0)
 
 class LaborCatalogItemUpdate(BaseModel):
     description: Optional[str] = Field(None, min_length=1)
+    category: Optional[str] = None
     default_unit_price: Optional[float] = Field(None, ge=0)
     unit: Optional[str] = None
+    recommended_item_ids: Optional[str] = None
+
+class TenantLaborPriceRead(BaseModel):
+    id: int
+    tenant_id: int
+    price: float
+    model_config = ConfigDict(from_attributes=True)
 
 class LaborCatalogItemRead(LaborCatalogItemBase):
     id: int
-    tenant_id: int
+    # Pricing is injected dynamically based on tenant in CRUD
     model_config = ConfigDict(from_attributes=True)
 
 class PayslipCreate(BaseModel):
@@ -685,6 +732,7 @@ class LeaveRequestCreate(BaseModel):
     end_date: date
     leave_type: str
     reason: Optional[str] = None
+    status: Optional[str] = "Pending"
 
 class LeaveRequestRead(BaseModel):
     id: int
@@ -693,9 +741,17 @@ class LeaveRequestRead(BaseModel):
     end_date: date
     leave_type: str
     reason: Optional[str] = None
-    status: str
+    status: LeaveStatus 
     manager_comment: Optional[str] = None
     user: Optional[UserReadBasic] = None
+
+    @computed_field
+    @property
+    def user_name(self) -> str:
+        if self.user:
+            return self.user.full_name or self.user.email
+        return "Unknown Node"
+
     model_config = ConfigDict(from_attributes=True)
 
 class LeaveRequestReview(BaseModel):
@@ -775,6 +831,7 @@ class UserLicenseRead(UserLicenseBase):
 class EventBase(BaseModel):
     title: str = Field(..., min_length=1)
     description: Optional[str] = None
+    event_type: EventType = EventType.custom
     start_time: datetime
     end_time: datetime
     location: Optional[str] = None
@@ -786,6 +843,7 @@ class EventCreate(EventBase):
 class EventUpdate(BaseModel):
     title: Optional[str] = Field(None, min_length=1)
     description: Optional[str] = None
+    event_type: Optional[EventType] = None
     start_time: Optional[datetime] = None
     end_time: Optional[datetime] = None
     location: Optional[str] = None
@@ -829,6 +887,22 @@ class CustomerRead(CustomerBase):
     created_at: datetime
     updated_at: Optional[datetime] = None
     model_config = ConfigDict(from_attributes=True)
+
+# --- MANAGEMENT TOOLS (Clean Slate) ---
+
+class CleanSlateRequest(BaseModel):
+    main_admin_email: EmailStr
+
+class CleanSlateSummary(BaseModel):
+    users_deactivated: int
+    projects_creator_reassigned: int = 0
+    projects_pm_cleared: int = 0
+    tasks_unassigned: int = 0
+    message: Optional[str] = None
+
+class CleanSlateResponse(BaseModel):
+    message: str
+    summary: CleanSlateSummary
 
 # --- Cable Sizer Schemas ---
 
@@ -904,3 +978,25 @@ class CableSizerOutput(BaseModel):
         if reasons:
             msg += f" Upsized from {ampacity_min_size}mm² due to {', '.join(reasons)}."
         return msg
+
+# --- Assignment Schemas (ROADMAP #3) ---
+
+class AssignmentBase(BaseModel):
+    user_id: int
+    project_id: int
+    start_date: date
+    end_date: date
+    notes: Optional[str] = None
+
+class AssignmentCreate(AssignmentBase):
+    pass
+
+class AssignmentRead(AssignmentBase):
+    id: int
+    created_at: datetime
+    # We include user/project info for the Grid labels
+    user_name: Optional[str] = None 
+    project_name: Optional[str] = None
+    project_number: Optional[str] = None
+
+    model_config = ConfigDict(from_attributes=True)

@@ -85,26 +85,27 @@ async def change_current_user_password(request: Request, password_data: schemas.
 
 # --- User Management Endpoints ---
 
-@router.get("/", response_model=List[Union[schemas.UserReadAdmin, schemas.UserRead]])
-@limiter.limit("1000/minute")
+@router.get("/", response_model=List[schemas.UserRead])
 async def read_users(
-    request: Request,
     db: DbDependency,
-    current_user_requesting: CurrentUserDependency,
-    filter_tenant_id: Optional[int] = Query(None),
-    is_active: Optional[bool] = Query(None),
+    current_user: CurrentUserDependency,
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000)
 ):
-    if not current_user_requesting.is_superuser and current_user_requesting.role not in ['admin', 'project manager']:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions.")
+    """
+    Protocol: Retrieve Personnel Registry.
+    FIXED: Allows all authenticated users to fetch. 
+    ENFORCED: Non-superusers are automatically limited to their own tenant nodes.
+    """
+    # Technical Sync: If not a superuser, force-filter by the user's own tenant_id
+    effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
     
-    # Logic: Superusers can filter by any tenant; Regular Admins are locked to their own.
-    target_tenant_id = current_user_requesting.tenant_id
-    if current_user_requesting.is_superuser:
-        target_tenant_id = filter_tenant_id
-        
-    return crud.get_users(db=db, tenant_id=target_tenant_id, is_active=is_active, skip=skip, limit=limit)
+    return crud.get_users(
+        db, 
+        tenant_id=effective_tenant_id, 
+        skip=skip, 
+        limit=limit
+    )
 
 @router.post("/", response_model=schemas.UserReadAdmin, status_code=status.HTTP_201_CREATED)
 @limiter.limit("100/minute")

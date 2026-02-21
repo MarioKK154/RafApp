@@ -1,8 +1,7 @@
-# backend/app/crud.py
 from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import desc, asc, func
+from sqlalchemy import desc, asc, func, or_
 from typing import Optional, List, Dict, Any
-from datetime import datetime, timezone, timedelta
+from datetime import date, datetime, timezone, timedelta
 from . import models, schemas
 from .security import get_password_hash
 
@@ -20,8 +19,8 @@ def get_tenants(db: Session, skip: int = 0, limit: int = 100) -> List[models.Ten
 def create_tenant(db: Session, tenant: schemas.TenantCreate) -> models.Tenant:
     db_tenant = models.Tenant(
         name=tenant.name,
-        logo_url=tenant.logo_url,
-        background_image_url=tenant.background_image_url
+        logo_url=str(tenant.logo_url) if tenant.logo_url else None,
+        background_image_url=str(tenant.background_image_url) if tenant.background_image_url else None
     )
     db.add(db_tenant)
     db.commit()
@@ -31,7 +30,10 @@ def create_tenant(db: Session, tenant: schemas.TenantCreate) -> models.Tenant:
 def update_tenant(db: Session, db_tenant: models.Tenant, tenant_update: schemas.TenantUpdate) -> models.Tenant:
     update_data = tenant_update.model_dump(exclude_unset=True)
     for key, value in update_data.items():
-        setattr(db_tenant, key, value)
+        if key in ['logo_url', 'background_image_url'] and value:
+            setattr(db_tenant, key, str(value))
+        else:
+            setattr(db_tenant, key, value)
     db.add(db_tenant)
     db.commit()
     db.refresh(db_tenant)
@@ -86,6 +88,14 @@ def update_user_by_admin(db: Session, user_to_update: models.User, user_data: sc
     for key, value in update_data.items():
         if hasattr(user_to_update, key):
             setattr(user_to_update, key, value)
+    
+    # ROADMAP #3: Fix the "Not Specified" location bug
+    # Ensure that if the frontend sends 'city', it also updates the database 'location' field
+    if 'city' in update_data:
+        user_to_update.location = update_data['city']
+    elif 'location' in update_data:
+        user_to_update.city = update_data['location']
+
     db.add(user_to_update)
     db.commit()
     db.refresh(user_to_update)
@@ -93,6 +103,10 @@ def update_user_by_admin(db: Session, user_to_update: models.User, user_data: sc
 
 def create_user_by_admin(db: Session, user_data: schemas.UserCreateAdmin) -> models.User:
     hashed_password = get_password_hash(user_data.password)
+    
+    # ROADMAP #3: Normalize Location/City on creation
+    loc = user_data.city or user_data.location
+
     db_user = models.User(
         email=user_data.email, 
         hashed_password=hashed_password, 
@@ -100,7 +114,8 @@ def create_user_by_admin(db: Session, user_data: schemas.UserCreateAdmin) -> mod
         employee_id=user_data.employee_id, 
         kennitala=user_data.kennitala,
         phone_number=user_data.phone_number, 
-        location=user_data.location,
+        city=loc,
+        location=loc,
         role=user_data.role, 
         tenant_id=user_data.tenant_id,
         is_active=user_data.is_active if user_data.is_active is not None else True,
@@ -117,22 +132,28 @@ def update_user_profile_picture_path(db: Session, user_id: int, path: str) -> Op
     if db_user:
         db_user.profile_picture_path = path
         db.commit()
-        db.refresh(db_user)
+        db_user.refresh(db_user)
     return db_user
 
 def delete_user_by_admin(db: Session, user_id: int) -> Optional[models.User]:
     db_user = get_user(db, user_id=user_id)
-    if db_user: db.delete(db_user); db.commit()
+    if db_user: 
+        db.delete(db_user)
+        db.commit()
     return db_user
         
 def update_user_password(db: Session, user: models.User, new_password: str) -> models.User:
     user.hashed_password = get_password_hash(new_password)
-    db.add(user); db.commit(); db.refresh(user)
+    db.add(user)
+    db.commit()
+    db.refresh(user)
     return user
 
 def set_user_password_by_admin(db: Session, user: models.User, new_password: str) -> models.User:
     user.hashed_password = get_password_hash(new_password)
-    db.add(user); db.commit(); db.refresh(user)
+    db.add(user)
+    db.commit()
+    db.refresh(user)
     return user
 
 def get_user_by_employee_id(db: Session, employee_id: str) -> Optional[models.User]:
@@ -153,7 +174,10 @@ async def reassign_and_deactivate_other_users(db: Session, main_admin_user_to_ke
             for task in tasks_assigned: task.assignee_id = None; db.add(task); tasks_unassigned_count += 1
             user_to_deactivate.is_active = False; db.add(user_to_deactivate); processed_users_count += 1
         db.commit()
-    except Exception as e: db.rollback(); print(f"ERROR during reassign_and_deactivate_other_users: {str(e)}"); raise e
+    except Exception as e: 
+        db.rollback()
+        print(f"ERROR during reassign_and_deactivate_other_users: {str(e)}")
+        raise e
     return schemas.CleanSlateSummary(users_deactivated=processed_users_count, projects_creator_reassigned=projects_reassigned_creator_count, projects_pm_cleared=projects_cleared_pm_count, tasks_unassigned=tasks_unassigned_count, message=f"{processed_users_count} user(s) in tenant processed.")
 
 def bulk_create_users_from_csv(db: Session, users_data: List[schemas.UserImportCSVRow], tenant_id: int, default_password: str, default_role: str, default_is_active: bool = True, default_is_superuser: bool = False, skip_employee_ids: Optional[List[str]] = None) -> Dict[str, Any]:
@@ -172,22 +196,48 @@ def bulk_create_users_from_csv(db: Session, users_data: List[schemas.UserImportC
             existing_by_kennitala = db.query(models.User).filter(models.User.kennitala == user_row_data.Kennitala, models.User.tenant_id == tenant_id).first()
             if existing_by_kennitala: errors.append(f"Row {row_num}: Kennitala '{user_row_data.Kennitala}' exists in tenant for '{existing_by_kennitala.email}'. Skipped."); skipped_count +=1; continue
         try:
-            db_user = models.User(email=user_row_data.Email, hashed_password=hashed_default_password, full_name=user_row_data.Name, employee_id=user_row_data.Employee_ID, kennitala=user_row_data.Kennitala, phone_number=user_row_data.Phone, location=user_row_data.Location, role=default_role, tenant_id=tenant_id, is_active=default_is_active, is_superuser=default_is_superuser)
+            # ROADMAP #3 Fix: Map CSV City to both fields
+            csv_loc = user_row_data.City or user_row_data.Location
+            db_user = models.User(email=user_row_data.Email, hashed_password=hashed_default_password, full_name=user_row_data.Name, employee_id=user_row_data.Employee_ID, kennitala=user_row_data.Kennitala, phone_number=user_row_data.Phone, city=csv_loc, location=csv_loc, role=default_role, tenant_id=tenant_id, is_active=default_is_active, is_superuser=default_is_superuser)
             db.add(db_user); db.commit(); db.refresh(db_user); created_count += 1; created_users_emails.append(db_user.email)
-        except Exception as e: db.rollback(); errors.append(f"Row {row_num}: Error for '{user_row_data.Email}': {str(e)}. Skipped."); skipped_count += 1
+        except Exception as e: 
+            db.rollback()
+            errors.append(f"Row {row_num}: Error for '{user_row_data.Email}': {str(e)}. Skipped.")
+            skipped_count += 1
     return {"created_count": created_count, "skipped_count": skipped_count, "errors": errors, "created_users_emails": created_users_emails }
 
 
 # --- Project CRUD ---
 
+def get_next_project_number(db: Session, tenant_id: int, parent_id: Optional[int] = None) -> str:
+    """ROADMAP #6: Logic for 256 and 256-1 serialization."""
+    if parent_id:
+        parent = db.query(models.Project).filter(models.Project.id == parent_id).first()
+        if not parent: return "ERR"
+        child_count = db.query(models.Project).filter(models.Project.parent_id == parent_id).count()
+        return f"{parent.project_number or parent.id}-{child_count + 1}"
+    
+    latest = db.query(models.Project).filter(
+        models.Project.tenant_id == tenant_id, 
+        models.Project.parent_id == None
+    ).order_by(desc(models.Project.id)).first()
+    
+    if not latest or not latest.project_number or not latest.project_number.isdigit():
+        return str((latest.id + 100) if latest else 100)
+    return str(int(latest.project_number) + 1)
+
 def get_project(db: Session, project_id: int, tenant_id: Optional[int] = None) -> Optional[models.Project]:
     query = db.query(models.Project).options(
         joinedload(models.Project.members),
-        joinedload(models.Project.project_manager).options(joinedload(models.User.tenant)),
-        joinedload(models.Project.tenant)
+        joinedload(models.Project.project_manager),
+        joinedload(models.Project.tenant),
+        joinedload(models.Project.boq).joinedload(models.BoQ.items).joinedload(models.BoQItem.inventory_item),
+        joinedload(models.Project.project_inventory).joinedload(models.ProjectInventoryItem.inventory_item)
     ).filter(models.Project.id == project_id)
+    
     if tenant_id is not None:
         query = query.filter(models.Project.tenant_id == tenant_id)
+        
     return query.first()
 
 def get_projects(
@@ -210,7 +260,10 @@ def get_projects(
         query = query.filter(models.Project.status == status)
     if search:
         search_term = f"%{search}%"
-        query = query.filter(models.Project.name.ilike(search_term))
+        query = query.filter(or_(
+            models.Project.name.ilike(search_term),
+            models.Project.project_number.ilike(search_term)
+        ))
 
     sort_column = getattr(models.Project, sort_by, models.Project.name)
     if sort_dir == 'desc':
@@ -221,38 +274,32 @@ def get_projects(
     return query.offset(skip).limit(limit).all()
 
 def create_project(db: Session, project: schemas.ProjectCreate, tenant_id: int, creator_id: int):
-    """
-    Creates a new project, tracks the creator, and initializes the BoQ.
-    Now accepts 'creator_id' to satisfy the Router's request.
-    """
     project_data = project.model_dump()
-
-    # Safety: Remove potential collisions from the dictionary
     project_data.pop("tenant_id", None)
-    project_data.pop("creator_id", None) # Remove this too, just in case
+    project_data.pop("creator_id", None) 
+
+    # ROADMAP #6: Auto-Serialization
+    if not project_data.get("project_number"):
+        project_data["project_number"] = get_next_project_number(db, tenant_id, project_data.get("parent_id"))
 
     db_project = models.Project(
         **project_data,
         tenant_id=tenant_id,
-        creator_id=creator_id  # Save who created it
+        creator_id=creator_id
     )
     
     db.add(db_project)
     
     try:
         db.flush() 
-        
-        # Initialize the BoQ
         new_boq = models.BoQ(
             project_id=db_project.id,
             name=f"BoQ for {db_project.name}"
         )
         db.add(new_boq)
-        
         db.commit()
         db.refresh(db_project)
         return db_project
-        
     except Exception as e:
         db.rollback()
         print(f"Error creating project: {e}")
@@ -266,6 +313,11 @@ def update_project(
         return None
     
     update_data = project_update.model_dump(exclude_unset=True)
+    
+    # ROADMAP #1: Commissioning Trigger
+    if update_data.get("status") == "Commissioned":
+        db_project.commissioned_at = datetime.now(timezone.utc)
+
     new_pm_id = update_data.pop('project_manager_id', 'UNCHANGED')
     
     if new_pm_id != 'UNCHANGED':
@@ -280,7 +332,19 @@ def update_project(
 
     for key, value in update_data.items(): setattr(db_project, key, value)
     db.add(db_project)
-    db.commit(); db.refresh(db_project); db.refresh(db_project, attribute_names=['project_manager', 'members', 'tenant'])
+    db.commit()
+    db.refresh(db_project)
+    db.refresh(db_project, attribute_names=['project_manager', 'members', 'tenant'])
+    return db_project
+
+def update_project_status(db: Session, db_project: models.Project, status: str) -> models.Project:
+    """ROADMAP #1: Formalized status transitions."""
+    db_project.status = status
+    if status == "Completed":
+        db_project.verified_by_admin = True
+    db.add(db_project)
+    db.commit()
+    db.refresh(db_project)
     return db_project
 
 def delete_project(db: Session, project_id: int, tenant_id: Optional[int] = None) -> Optional[models.Project]:
@@ -323,7 +387,8 @@ def get_task(db: Session, task_id: int) -> Optional[models.Task]:
         joinedload(models.Task.comments).joinedload(models.TaskComment.author),
         joinedload(models.Task.photos).joinedload(models.TaskPhoto.uploader),
         joinedload(models.Task.assignee).options(joinedload(models.User.assigned_projects)),
-        joinedload(models.Task.project).joinedload(models.Project.tenant)
+        joinedload(models.Task.project).joinedload(models.Project.tenant),
+        joinedload(models.Task.predecessors)
     ).filter(models.Task.id == task_id).first()
 
 def get_tasks(
@@ -365,25 +430,47 @@ def create_task(db: Session, task: schemas.TaskCreate, project_tenant_id: int) -
         assignee = get_user(db, user_id=assignee_id)
         if not assignee or (assignee.tenant_id != project_tenant_id and not assignee.is_superuser):
              print(f"Warning: Assignee {assignee_id} not in project tenant {project_tenant_id}")
-    task_data = task.model_dump(); popped_assignee_id = task_data.pop('assignee_id', None);
-    if popped_assignee_id == '': popped_assignee_id = None;
-    start_date = task_data.pop('start_date', None);
+    task_data = task.model_dump()
+    popped_assignee_id = task_data.pop('assignee_id', None)
+    if popped_assignee_id == '': popped_assignee_id = None
+    start_date = task_data.pop('start_date', None)
     db_task = models.Task(**task_data, assignee_id=assignee_id, start_date=start_date)
-    db.add(db_task); db.commit(); db.refresh(db_task); return db_task
+    db.add(db_task); db.commit(); db.refresh(db_task)
+    
+    # ROADMAP #2: Send Assignment Notification
+    if db_task.assignee_id:
+        create_notification(db, db_task.assignee_id, f"Node Update: You have been assigned task '{db_task.title}'.", f"/tasks/{db_task.id}")
+    
+    return db_task
 
 def update_task(db: Session, task_id: int, task_update: schemas.TaskUpdate, project_tenant_id: int) -> Optional[models.Task]:
     db_task = get_task(db, task_id=task_id)
     if not db_task or (db_task.project.tenant_id != project_tenant_id and project_tenant_id is not None): return None
+    
     update_data = task_update.model_dump(exclude_unset=True)
+    update_data.pop("predecessors", None)
+    
+    old_assignee = db_task.assignee_id
+
     if 'assignee_id' in update_data and update_data['assignee_id'] is not None:
         assignee = get_user(db, user_id=update_data['assignee_id'])
         if not assignee or (assignee.tenant_id != project_tenant_id and not assignee.is_superuser):
              update_data.pop('assignee_id')
+             
     for key, value in update_data.items():
         if key == 'assignee_id' and (value == '' or value is None): setattr(db_task, key, None)
         elif key in ['start_date', 'due_date'] and value == '': setattr(db_task, key, None)
         else: setattr(db_task, key, value)
-    db.add(db_task); db.commit(); db.refresh(db_task); return db_task
+        
+    db.add(db_task)
+    db.commit()
+    db.refresh(db_task)
+    
+    # ROADMAP #2: Notification on re-assignment
+    if db_task.assignee_id and db_task.assignee_id != old_assignee:
+        create_notification(db, db_task.assignee_id, f"Deployment Change: Task '{db_task.title}' assigned to you.", f"/tasks/{db_task.id}")
+
+    return db_task
 
 def commission_task(db: Session, task_to_commission: models.Task) -> models.Task:
     if task_to_commission.status != "Done": return task_to_commission
@@ -450,8 +537,18 @@ def delete_task_photo_metadata(db: Session, photo_id: int) -> Optional[models.Ta
 def get_inventory_item(db: Session, item_id: int) -> Optional[models.InventoryItem]:
     return db.query(models.InventoryItem).filter(models.InventoryItem.id == item_id).first()
 
-def get_inventory_items(db: Session, skip: int = 0, limit: int = 100) -> List[models.InventoryItem]:
-    return db.query(models.InventoryItem).order_by(models.InventoryItem.name).offset(skip).limit(limit).all()
+def get_inventory_items(
+    db: Session, 
+    search: Optional[str] = None, 
+    skip: int = 0, 
+    limit: int = 100
+) -> List[models.InventoryItem]:
+    query = db.query(models.InventoryItem)
+    if search:
+        search_term = f"%{search}%"
+        query = query.filter(models.InventoryItem.name.ilike(search_term))
+    
+    return query.order_by(models.InventoryItem.name).offset(skip).limit(limit).all()
 
 def create_inventory_item(db: Session, item: schemas.InventoryItemCreate) -> models.InventoryItem:
     db_item = models.InventoryItem(**item.model_dump())
@@ -663,6 +760,22 @@ def delete_drawing_metadata(db: Session, drawing_id: int) -> Optional[models.Dra
     if not db_drawing: return None
     db.delete(db_drawing); db.commit(); return db_drawing
 
+
+# --- ROADMAP #4: Drawing Folders ---
+
+def create_drawing_folder(db: Session, folder_data: schemas.DrawingFolderCreate) -> models.DrawingFolder:
+    db_folder = models.DrawingFolder(**folder_data.model_dump())
+    db.add(db_folder); db.commit(); db.refresh(db_folder); return db_folder
+
+def get_drawings_hierarchy(db: Session, project_id: int) -> List[models.DrawingFolder]:
+    return db.query(models.DrawingFolder).options(joinedload(models.DrawingFolder.drawings)).filter(
+        models.DrawingFolder.project_id == project_id, 
+        models.DrawingFolder.parent_id == None
+    ).all()
+
+
+# --- Time Logs ---
+
 def create_timelog_entry(db: Session, timelog_data: schemas.TimeLogCreate, user_id: int) -> models.TimeLog:
     db_timelog = models.TimeLog(**timelog_data.model_dump(), user_id=user_id, start_time=datetime.now(timezone.utc))
     db.add(db_timelog); db.commit(); db.refresh(db_timelog); return db_timelog
@@ -671,10 +784,14 @@ def update_timelog_entry(db: Session, timelog_id: int) -> Optional[models.TimeLo
     db_timelog = db.query(models.TimeLog).filter(models.TimeLog.id == timelog_id).first()
     if db_timelog and not db_timelog.end_time:
         now = datetime.now(timezone.utc)
-        start_time = db_timelog.start_time.replace(tzinfo=timezone.utc) if db_timelog.start_time.tzinfo is None else db_timelog.start_time
+        start_time = db_timelog.start_time
+        if start_time.tzinfo is None:
+            start_time = start_time.replace(tzinfo=timezone.utc)
         db_timelog.end_time = now
         db_timelog.duration = now - start_time
-        db.add(db_timelog); db.commit(); db.refresh(db_timelog)
+        db.add(db_timelog) 
+        db.commit()
+        db.refresh(db_timelog)
     return db_timelog
 
 def get_open_timelog_for_user(db: Session, user_id: int) -> Optional[models.TimeLog]:
@@ -710,7 +827,6 @@ def get_timelogs(
     return query.offset(skip).limit(limit).all()
 
 def get_active_timelogs_by_project(db: Session, project_id: int):
-    """Returns all timelogs for a project that haven't been closed (end_time is None)."""
     return db.query(models.TimeLog).filter(
         models.TimeLog.project_id == project_id,
         models.TimeLog.end_time == None
@@ -743,7 +859,56 @@ def get_dashboard_data(db: Session, user: models.User) -> Dict[str, Any]:
     return {"my_open_tasks": my_open_tasks, "my_checked_out_tools": my_checked_out_tools, "my_checked_out_car": my_checked_out_car, "managed_projects": managed_projects}
 
 
-# --- Offers & Labor Catalog & Licenses & Events ---
+# --- ROADMAP #2: Notification Hub ---
+
+def create_notification(db: Session, user_id: int, message: str, link: Optional[str] = None) -> models.Notification:
+    db_note = models.Notification(user_id=user_id, message=message, link=link)
+    db.add(db_note); db.commit(); db.refresh(db_note); return db_note
+
+def get_notifications(db: Session, user_id: int, unread_only: bool = True) -> List[models.Notification]:
+    query = db.query(models.Notification).filter(models.Notification.user_id == user_id)
+    if unread_only: query = query.filter(models.Notification.is_read == False)
+    return query.order_by(desc(models.Notification.created_at)).limit(50).all()
+
+
+# --- ROADMAP: Labor Catalog & Private Tenant Pricing ---
+
+def create_labor_catalog_item(db: Session, item_data: schemas.LaborCatalogItemCreate) -> models.LaborCatalogItem:
+    db_item = models.LaborCatalogItem(**item_data.model_dump())
+    db.add(db_item); db.commit(); db.refresh(db_item); return db_item
+
+def get_labor_catalog_item(db: Session, item_id: int) -> Optional[models.LaborCatalogItem]:
+    return db.query(models.LaborCatalogItem).filter(models.LaborCatalogItem.id == item_id).first()
+
+def get_labor_catalog_items(db: Session, tenant_id: int, skip: int = 0, limit: int = 100) -> List[Dict[str, Any]]:
+    # Fetches global catalog items and injects the requesting tenant's private price
+    items = db.query(models.LaborCatalogItem).order_by(models.LaborCatalogItem.description).offset(skip).limit(limit).all()
+    tenant_prices = {tp.labor_item_id: tp.price for tp in db.query(models.TenantLaborPrice).filter(models.TenantLaborPrice.tenant_id == tenant_id).all()}
+    
+    results = []
+    for item in items:
+        res = item.__dict__.copy()
+        res["tenant_price"] = tenant_prices.get(item.id)
+        results.append(res)
+    return results
+
+def update_tenant_labor_price(db: Session, tenant_id: int, labor_item_id: int, price: float):
+    existing = db.query(models.TenantLaborPrice).filter(
+        models.TenantLaborPrice.tenant_id == tenant_id, 
+        models.TenantLaborPrice.labor_item_id == labor_item_id
+    ).first()
+    if existing:
+        existing.price = price
+    else:
+        new_price = models.TenantLaborPrice(tenant_id=tenant_id, labor_item_id=labor_item_id, price=price)
+        db.add(new_price)
+    db.commit()
+
+def delete_labor_catalog_item(db: Session, db_item: models.LaborCatalogItem):
+    db.delete(db_item); db.commit()
+
+
+# --- Offers, Licenses & Events ---
 
 def get_next_offer_number(db: Session, tenant_id: int) -> str:
     current_year = datetime.now().year; prefix = f"OFFER-{current_year}-"
@@ -814,11 +979,19 @@ def delete_user_license(db: Session, db_license: models.UserLicense):
     db.delete(db_license); db.commit()
 
 def create_event(db: Session, event_data: schemas.EventCreate, user: models.User) -> models.Event:
-    attendee_ids = event_data.attendee_ids
-    if user.id not in attendee_ids: attendee_ids.append(user.id)
+    attendee_ids = event_data.attendee_ids if event_data.attendee_ids else []
+    if user.id not in attendee_ids: 
+        attendee_ids.append(user.id)
     attendees = db.query(models.User).filter(models.User.id.in_(attendee_ids), models.User.tenant_id == user.tenant_id).all()
-    db_event = models.Event(title=event_data.title, description=event_data.description, start_time=event_data.start_time, end_time=event_data.end_time, location=event_data.location, project_id=event_data.project_id, creator_id=user.id, tenant_id=user.tenant_id, attendees=attendees)
-    db.add(db_event); db.commit(); db.refresh(db_event); return db_event
+    db_event = models.Event(title=event_data.title, description=event_data.description, event_type=event_data.event_type, start_time=event_data.start_time, end_time=event_data.end_time, location=event_data.location, project_id=event_data.project_id, creator_id=user.id, tenant_id=user.tenant_id, attendees=attendees)
+    db.add(db_event); db.commit(); db.refresh(db_event)
+    
+    # ROADMAP #2: Notify attendees
+    for attendee in attendees:
+        if attendee.id != user.id:
+            create_notification(db, attendee.id, f"Meeting Invite: {db_event.title} at {db_event.start_time.strftime('%H:%M')}", f"/calendar")
+    
+    return db_event
 
 def get_event(db: Session, event_id: int, tenant_id: Optional[int]) -> Optional[models.Event]:
     query = db.query(models.Event).options(joinedload(models.Event.attendees), joinedload(models.Event.creator)).filter(models.Event.id == event_id)
@@ -832,34 +1005,15 @@ def update_event(db: Session, db_event: models.Event, event_update: schemas.Even
     update_data = event_update.model_dump(exclude_unset=True, exclude={'attendee_ids'})
     for key, value in update_data.items(): setattr(db_event, key, value)
     if event_update.attendee_ids is not None:
-        attendee_ids = set(event_update.attendee_ids)
-        if db_event.creator_id == event_update.creator_id: attendee_ids.add(db_event.creator_id)
-        attendees = db.query(models.User).filter(models.User.id.in_(list(attendee_ids)), models.User.tenant_id == tenant_id).all()
+        attendees = db.query(models.User).filter(models.User.id.in_(event_update.attendee_ids), models.User.tenant_id == tenant_id).all()
         db_event.attendees = attendees
     db.add(db_event); db.commit(); db.refresh(db_event); return db_event
 
 def delete_event(db: Session, db_event: models.Event):
     db.delete(db_event); db.commit()
 
-def create_labor_catalog_item(db: Session, item_data: schemas.LaborCatalogItemCreate, tenant_id: int) -> models.LaborCatalogItem:
-    db_item = models.LaborCatalogItem(**item_data.model_dump(), tenant_id=tenant_id); db.add(db_item); db.commit(); db.refresh(db_item); return db_item
 
-def get_labor_catalog_item(db: Session, item_id: int, tenant_id: int) -> Optional[models.LaborCatalogItem]:
-    return db.query(models.LaborCatalogItem).filter(models.LaborCatalogItem.id == item_id, models.LaborCatalogItem.tenant_id == tenant_id).first()
-
-def get_labor_catalog_items(db: Session, tenant_id: int, skip: int, limit: int) -> List[models.LaborCatalogItem]:
-    return db.query(models.LaborCatalogItem).filter(models.LaborCatalogItem.tenant_id == tenant_id).order_by(models.LaborCatalogItem.description).offset(skip).limit(limit).all()
-
-def update_labor_catalog_item(db: Session, db_item: models.LaborCatalogItem, item_update: schemas.LaborCatalogItemUpdate) -> models.LaborCatalogItem:
-    update_data = item_update.model_dump(exclude_unset=True)
-    for key, value in update_data.items(): setattr(db_item, key, value)
-    db.add(db_item); db.commit(); db.refresh(db_item); return db_item
-
-def delete_labor_catalog_item(db: Session, db_item: models.LaborCatalogItem):
-    db.delete(db_item); db.commit()
-
-
-# --- Customer CRUD ---
+# --- Customer CRUD Operations ---
 
 def get_customer(db: Session, customer_id: int, tenant_id: Optional[int] = None) -> Optional[models.Customer]:
     query = db.query(models.Customer).filter(models.Customer.id == customer_id)
@@ -867,12 +1021,7 @@ def get_customer(db: Session, customer_id: int, tenant_id: Optional[int] = None)
         query = query.filter(models.Customer.tenant_id == tenant_id)
     return query.first()
 
-def get_customers(
-    db: Session, 
-    tenant_id: Optional[int] = None, 
-    skip: int = 0, 
-    limit: int = 100
-) -> List[models.Customer]:
+def get_customers(db: Session, tenant_id: Optional[int] = None, skip: int = 0, limit: int = 100) -> List[models.Customer]:
     query = db.query(models.Customer)
     if tenant_id is not None:
         query = query.filter(models.Customer.tenant_id == tenant_id)
@@ -880,155 +1029,73 @@ def get_customers(
 
 def create_customer(db: Session, customer: schemas.CustomerCreate, tenant_id: int) -> models.Customer:
     if customer.kennitala:
-        existing_kt = db.query(models.Customer).filter(
-            models.Customer.tenant_id == tenant_id, 
-            models.Customer.kennitala == customer.kennitala
-        ).first()
-        if existing_kt:
-            raise ValueError(f"Customer with Kennitala {customer.kennitala} already exists.")
-            
+        existing_kt = db.query(models.Customer).filter(models.Customer.tenant_id == tenant_id, models.Customer.kennitala == customer.kennitala).first()
+        if existing_kt: raise ValueError(f"Customer with Kennitala {customer.kennitala} already exists.")
     if customer.email:
-        existing_email = db.query(models.Customer).filter(
-            models.Customer.tenant_id == tenant_id, 
-            models.Customer.email == customer.email
-        ).first()
-        if existing_email:
-            raise ValueError(f"Customer with email {customer.email} already exists.")
+        existing_email = db.query(models.Customer).filter(models.Customer.tenant_id == tenant_id, models.Customer.email == customer.email).first()
+        if existing_email: raise ValueError(f"Customer with email {customer.email} already exists.")
+    db_customer = models.Customer(**customer.model_dump(exclude_unset=True), tenant_id=tenant_id)
+    db.add(db_customer); db.commit(); db.refresh(db_customer); return db_customer
 
-    existing_name = db.query(models.Customer).filter(
-        models.Customer.tenant_id == tenant_id, 
-        models.Customer.name == customer.name
-    ).first()
-    if existing_name:
-        raise ValueError(f"Customer with name '{customer.name}' already exists.")
-
-    db_customer = models.Customer(
-        **customer.model_dump(exclude_unset=True),
-        tenant_id=tenant_id
-    )
-    db.add(db_customer)
-    db.commit()
-    db.refresh(db_customer)
-    return db_customer
-
-def update_customer(
-    db: Session, 
-    db_customer: models.Customer, 
-    customer_update: schemas.CustomerUpdate
-) -> models.Customer:
+def update_customer(db: Session, db_customer: models.Customer, customer_update: schemas.CustomerUpdate) -> models.Customer:
     update_data = customer_update.model_dump(exclude_unset=True)
-    tenant_id = db_customer.tenant_id
-    
-    if 'kennitala' in update_data and update_data['kennitala']:
-        existing_kt = db.query(models.Customer).filter(
-            models.Customer.tenant_id == tenant_id, 
-            models.Customer.kennitala == update_data['kennitala'],
-            models.Customer.id != db_customer.id
-        ).first()
-        if existing_kt:
-            raise ValueError(f"Customer with Kennitala {update_data['kennitala']} already exists.")
-            
-    if 'email' in update_data and update_data['email']:
-        existing_email = db.query(models.Customer).filter(
-            models.Customer.tenant_id == tenant_id, 
-            models.Customer.email == update_data['email'],
-            models.Customer.id != db_customer.id
-        ).first()
-        if existing_email:
-            raise ValueError(f"Customer with email {update_data['email']} already exists.")
-
-    if 'name' in update_data and update_data['name']:
-        existing_name = db.query(models.Customer).filter(
-            models.Customer.tenant_id == tenant_id, 
-            models.Customer.name == update_data['name'],
-            models.Customer.id != db_customer.id
-        ).first()
-        if existing_name:
-            raise ValueError(f"Customer with name '{update_data['name']}' already exists.")
-
-    for key, value in update_data.items():
-        setattr(db_customer, key, value)
-        
-    db.add(db_customer)
-    db.commit()
-    db.refresh(db_customer)
-    return db_customer
+    for key, value in update_data.items(): setattr(db_customer, key, value)
+    db.add(db_customer); db.commit(); db.refresh(db_customer); return db_customer
 
 def delete_customer(db: Session, db_customer: models.Customer):
-    db.delete(db_customer)
-    db.commit()
+    db.delete(db_customer); db.commit()
 
 
-# --- ACCOUNTING, PAYSLIPS & LEAVE REQUESTS ---
+# --- Accounting, Payslips & Leave Requests ---
 
 def create_payslip(db: Session, payslip: schemas.PayslipCreate, tenant_id: int, file_path: str, filename: str):
-    """
-    Creates a payslip record and links it to a user and their tenant.
-    """
-    db_payslip = models.Payslip(
-        **payslip.model_dump(),
-        tenant_id=tenant_id,
-        file_path=file_path,
-        filename=filename
-    )
-    db.add(db_payslip)
-    db.commit()
-    db.refresh(db_payslip)
-    return db_payslip
+    db_payslip = models.Payslip(**payslip.model_dump(), tenant_id=tenant_id, file_path=file_path, filename=filename)
+    db.add(db_payslip); db.commit(); db.refresh(db_payslip); return db_payslip
 
 def get_payslip(db: Session, payslip_id: int):
-    """Fetches a single payslip by ID."""
     return db.query(models.Payslip).filter(models.Payslip.id == payslip_id).first()
 
 def get_payslips_for_user(db: Session, user_id: int):
-    """Retrieves all payslips belonging to a specific user, newest first."""
     return db.query(models.Payslip).filter(models.Payslip.user_id == user_id).order_by(models.Payslip.issue_date.desc()).all()
 
 def create_leave_request(db: Session, leave_data: schemas.LeaveRequestCreate, user_id: int, tenant_id: int):
-    """
-    Submits a new leave request for an employee.
-    """
-    db_leave = models.LeaveRequest(
-        **leave_data.model_dump(),
-        user_id=user_id,
-        tenant_id=tenant_id,
-        status="pending" # Explicitly set default
-    )
-    db.add(db_leave)
-    db.commit()
-    db.refresh(db_leave)
-    return db_leave
+    data = leave_data.model_dump(); data.pop("status", None) 
+    db_leave = models.LeaveRequest(**data, user_id=user_id, tenant_id=tenant_id, status=models.LeaveStatus.Pending)
+    db.add(db_leave); db.commit(); db.refresh(db_leave); return db_leave
 
 def get_leave_request(db: Session, request_id: int):
-    """Fetches a single leave request by ID."""
     return db.query(models.LeaveRequest).filter(models.LeaveRequest.id == request_id).first()
 
 def get_leave_requests_for_user(db: Session, user_id: int):
-    """
-    FIX: Corrected filter to use user_id instead of id.
-    Retrieves all leave requests for a specific employee.
-    """
     return db.query(models.LeaveRequest).filter(models.LeaveRequest.user_id == user_id).order_by(models.LeaveRequest.start_date.desc()).all()
 
-def get_all_leave_requests(db: Session, tenant_id: int = None, status: str = None):
-    """
-    Retrieves leave requests for management review.
-    Superadmins see everything; Tenant Admins see their own.
-    """
-    query = db.query(models.LeaveRequest)
-    if tenant_id is not None:
-        query = query.filter(models.LeaveRequest.tenant_id == tenant_id)
-    if status:
-        query = query.filter(models.LeaveRequest.status == status)
-    
+def get_all_leave_requests(db: Session, tenant_id: int = None, status: Optional[models.LeaveStatus] = None):
+    query = db.query(models.LeaveRequest).options(joinedload(models.LeaveRequest.user))
+    if tenant_id is not None: query = query.filter(models.LeaveRequest.tenant_id == tenant_id)
+    if status: query = query.filter(models.LeaveRequest.status == status)
     return query.order_by(models.LeaveRequest.start_date.asc()).all()
 
-def update_leave_request_status(db: Session, db_request: models.LeaveRequest, review_data: schemas.LeaveRequestReview):
-    """
-    Approves or Rejects a leave request.
-    """
-    db_request.status = review_data.status
-    db_request.manager_comment = review_data.manager_comment
+def update_leave_request_status(db: Session, db_request: models.LeaveRequest, status_enum: models.LeaveStatus, comment: Optional[str] = None):
+    db_request.status = status_enum; db_request.manager_comment = comment; db.commit(); db.refresh(db_request); return db_request
+
+# --- Project Assignment Logic (ROADMAP #3) ---
+
+def get_assignments(db: Session, start: date, end: date):
+    """Fetches all bookings within a specific date window."""
+    return db.query(models.ProjectAssignment).filter(
+        models.ProjectAssignment.start_date <= end,
+        models.ProjectAssignment.end_date >= start
+    ).all()
+
+def create_assignment(db: Session, assignment: schemas.AssignmentCreate):
+    # Optional: Conflict check logic can be added here
+    db_assignment = models.ProjectAssignment(**assignment.model_dump())
+    db.add(db_assignment)
     db.commit()
-    db.refresh(db_request)
-    return db_request
+    db.refresh(db_assignment)
+    return db_assignment
+
+def delete_assignment(db: Session, assignment_id: int):
+    db.query(models.ProjectAssignment).filter(models.ProjectAssignment.id == assignment_id).delete()
+    db.commit()
+    return True

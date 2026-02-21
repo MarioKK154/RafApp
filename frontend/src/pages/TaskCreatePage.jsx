@@ -4,6 +4,7 @@ import axiosInstance from '../api/axiosInstance';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { isPast, isToday, parseISO } from 'date-fns';
 import { 
     ClipboardDocumentCheckIcon, 
     ChevronLeftIcon,
@@ -21,11 +22,11 @@ function TaskCreatePage() {
     const { search } = useLocation();
     const { user: currentUser, isAuthenticated, isLoading: authIsLoading } = useAuth();
 
-    // Data for dropdowns
+    // Data Repositories
     const [projects, setProjects] = useState([]);
     const [users, setUsers] = useState([]);
 
-    // Form State
+    // Logic: Form State
     const [formData, setFormData] = useState({
         title: '',
         description: '',
@@ -39,14 +40,15 @@ function TaskCreatePage() {
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isLoadingPrerequisites, setIsLoadingPrerequisites] = useState(true);
-    const [error, setError] = useState('');
 
     const isSuperuser = currentUser?.is_superuser;
     const canManageTasks = currentUser && (['admin', 'project manager', 'team leader'].includes(currentUser.role) || isSuperuser);
 
     /**
-     * Fetches projects and staff members to populate the form.
-     * Respects multi-tenancy: regular admins see their own, superusers see all.
+     * PROTOCOL: Workflow Synchronization
+     * 1. Fetches projects and staff.
+     * 2. Promotes 'Planning' -> 'Active' based on today's date.
+     * 3. Filters dropdown to show only valid operational sites.
      */
     const fetchPrerequisites = useCallback(async () => {
         if (!authIsLoading && isAuthenticated && canManageTasks) {
@@ -57,22 +59,36 @@ function TaskCreatePage() {
                     axiosInstance.get('/users/', { params: { limit: 1000 } })
                 ]);
 
-                setProjects(projectsRes.data);
+                // Phase 1: Real-time Status Evaluation
+                const validProjects = projectsRes.data.map(p => {
+                    const startDate = p.start_date ? parseISO(p.start_date) : null;
+                    const isStarted = startDate && (isPast(startDate) || isToday(startDate));
+                    
+                    let displayStatus = p.status;
+                    // Logic: Promote Planning to Active if date reached
+                    if (['Planning', 'Active'].includes(p.status)) {
+                        displayStatus = isStarted ? 'Active' : 'Planning';
+                    }
+                    return { ...p, displayStatus };
+                }).filter(p => ['Active', 'Planning'].includes(p.displayStatus));
+
+                setProjects(validProjects);
                 setUsers(usersRes.data.filter(u => ASSIGNABLE_ROLES.includes(u.role) || u.is_superuser));
 
-                // Check for project_id in URL (e.g., ?project_id=5)
+                // Phase 2: Context Pre-selection Logic
                 const queryParams = new URLSearchParams(search);
-                const preselectedProjectId = queryParams.get('project_id');
+                const urlProjectId = queryParams.get('project_id');
 
-                if (preselectedProjectId) {
-                    setFormData(prev => ({ ...prev, project_id: preselectedProjectId }));
-                } else if (projectsRes.data.length > 0) {
-                    // Fallback to first project if none pre-selected
-                    setFormData(prev => ({ ...prev, project_id: projectsRes.data[0].id.toString() }));
+                if (urlProjectId) {
+                    // Lock to project passed via URL
+                    setFormData(prev => ({ ...prev, project_id: urlProjectId }));
+                } else if (validProjects.length > 0) {
+                    // Fallback to first available valid project
+                    setFormData(prev => ({ ...prev, project_id: validProjects[0].id.toString() }));
                 }
 
             } catch (err) {
-                console.error("Prerequisite load error:", err);
+                console.error("Registry Sync Error:", err);
                 toast.error("Failed to load project or staff registries.");
             } finally {
                 setIsLoadingPrerequisites(false);
@@ -92,209 +108,166 @@ function TaskCreatePage() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!formData.project_id) {
-            toast.error("A project must be assigned to this task.");
+            toast.error("A project assignment is required.");
             return;
         }
 
         setIsSubmitting(true);
         const payload = {
             ...formData,
-            description: formData.description || null,
-            start_date: formData.start_date || null,
-            due_date: formData.due_date || null,
             project_id: parseInt(formData.project_id, 10),
             assignee_id: formData.assignee_id ? parseInt(formData.assignee_id, 10) : null,
         };
 
         try {
-            const response = await axiosInstance.post('/tasks/', payload);
-            toast.success(`Task "${response.data.title}" created.`);
-            navigate('/tasks');
+            await axiosInstance.post('/tasks/', payload);
+            toast.success(`Work node initialized: ${formData.title}`);
+            navigate(-1); // Returns user to their previous context
         } catch (err) {
-            toast.error(err.response?.data?.detail || "Task creation failed.");
+            toast.error(err.response?.data?.detail || "Task initialization failed.");
         } finally {
             setIsSubmitting(false);
         }
     };
 
-    if (authIsLoading || isLoadingPrerequisites) {
-        return <LoadingSpinner text="Synchronizing workflow prerequisites..." />;
-    }
-
-    if (!canManageTasks) {
-        return (
-            <div className="flex flex-col items-center justify-center min-h-[60vh]">
-                <h2 className="text-xl font-bold text-red-600">Access Denied</h2>
-                <p className="text-gray-500">You do not have permission to initialize new work tasks.</p>
-                <Link to="/" className="mt-4 text-indigo-600 hover:underline">Return to Dashboard</Link>
-            </div>
-        );
-    }
+    if (authIsLoading || isLoadingPrerequisites) return <LoadingSpinner text="Synchronizing requirements..." />;
 
     return (
-        <div className="container mx-auto p-4 md:p-8 max-w-4xl">
-            {/* Header */}
-            <div className="mb-8">
-                <Link to="/tasks" className="flex items-center text-sm font-bold text-gray-400 hover:text-indigo-600 transition mb-2">
-                    <ChevronLeftIcon className="h-4 w-4 mr-1" /> Back to Registry
-                </Link>
+        <div className="container mx-auto p-4 md:p-8 max-w-4xl animate-in fade-in duration-500">
+            <header className="mb-8">
+                <button onClick={() => navigate(-1)} className="flex items-center text-sm font-bold text-gray-400 hover:text-indigo-600 transition mb-2 uppercase tracking-widest">
+                    <ChevronLeftIcon className="h-4 w-4 mr-1 stroke-[3px]" /> Cancel Operation
+                </button>
                 <div className="flex items-center gap-3">
-                    <div className="p-3 bg-indigo-600 rounded-2xl shadow-lg shadow-indigo-100 dark:shadow-none">
+                    <div className="p-3 bg-indigo-600 rounded-2xl shadow-xl shadow-indigo-100">
                         <ClipboardDocumentCheckIcon className="h-8 w-8 text-white" />
                     </div>
-                    <h1 className="text-3xl font-black text-gray-900 dark:text-white">Create New Task</h1>
+                    <h1 className="text-3xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">Initialize Work Node</h1>
                 </div>
-            </div>
+            </header>
 
             <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* Basic Info (Left) */}
-                <div className="space-y-6 bg-white dark:bg-gray-800 p-6 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm">
-                    <h2 className="text-sm font-black text-gray-400 uppercase tracking-widest border-b pb-2">Work Identity</h2>
+                {/* Identity Module */}
+                <div className="space-y-6 bg-white dark:bg-gray-800 p-8 rounded-[2.5rem] border border-gray-100 dark:border-gray-700 shadow-sm">
+                    <h2 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] border-b pb-4">Identity</h2>
                     
-                    <div>
-                        <label className="block text-xs font-bold text-gray-500 mb-1 ml-1 uppercase">Task Title*</label>
+                    <div className="space-y-1">
+                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Work Title*</label>
                         <input 
                             type="text" 
                             name="title" 
                             required 
                             value={formData.title} 
                             onChange={handleChange} 
-                            placeholder="e.g., Installation of MCB Board"
-                            className="block w-full rounded-2xl border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-indigo-500" 
+                            placeholder="e.g., Lighting Installation" 
+                            className="modern-input h-14 font-bold" 
                         />
                     </div>
 
-                    <div>
-                        <label className="block text-xs font-bold text-gray-500 mb-1 ml-1 uppercase">Project Assignment*</label>
+                    <div className="space-y-1">
+                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Site Assignment*</label>
                         <div className="relative">
-                            <BriefcaseIcon className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                            <BriefcaseIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                             <select 
                                 name="project_id" 
                                 required 
                                 value={formData.project_id} 
-                                onChange={handleChange}
-                                className="pl-10 block w-full rounded-2xl border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-indigo-500"
+                                onChange={handleChange} 
+                                className="modern-input pl-12 h-14 font-black uppercase text-[11px]"
                             >
-                                <option value="" disabled>-- Select Site --</option>
                                 {projects.map(p => (
                                     <option key={p.id} value={p.id}>
-                                        {p.name} {isSuperuser ? `(ID: ${p.tenant_id})` : ''}
+                                        {p.name} [{p.displayStatus}]
                                     </option>
                                 ))}
                             </select>
                         </div>
                     </div>
 
-                    <div>
-                        <label className="block text-xs font-bold text-gray-500 mb-1 ml-1 uppercase flex items-center gap-1">
-                            <DocumentTextIcon className="h-3 w-3" /> Technical Description
-                        </label>
+                    <div className="space-y-1">
+                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1 flex items-center gap-1">Technical Scope</label>
                         <textarea 
                             name="description" 
                             rows="5" 
                             value={formData.description} 
-                            onChange={handleChange}
-                            placeholder="Provide scope of work and specific technical requirements..."
-                            className="block w-full rounded-2xl border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-indigo-500"
+                            onChange={handleChange} 
+                            className="modern-input p-4 text-sm" 
+                            placeholder="Detail work requirements..."
                         ></textarea>
                     </div>
                 </div>
 
-                {/* Configuration (Right) */}
+                {/* Execution Module */}
                 <div className="space-y-6">
-                    <div className="bg-white dark:bg-gray-800 p-6 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm space-y-6">
-                        <h2 className="text-sm font-black text-gray-400 uppercase tracking-widest border-b pb-2">Scheduling & Logistics</h2>
+                    <div className="bg-white dark:bg-gray-800 p-8 rounded-[2.5rem] border border-gray-100 dark:border-gray-700 shadow-sm space-y-6">
+                        <h2 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] border-b pb-4">Execution</h2>
                         
-                        <div>
-                            <label className="block text-xs font-bold text-gray-500 mb-1 ml-1 uppercase">Lead Technician</label>
+                        <div className="space-y-1">
+                            <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Personnel</label>
                             <div className="relative">
-                                <UserIcon className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                                <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                                 <select 
                                     name="assignee_id" 
                                     value={formData.assignee_id} 
-                                    onChange={handleChange}
-                                    className="pl-10 block w-full rounded-2xl border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-indigo-500"
+                                    onChange={handleChange} 
+                                    className="modern-input pl-12 h-14"
                                 >
                                     <option value="">Unassigned (Open Pool)</option>
                                     {users.map(u => (
-                                        <option key={u.id} value={u.id}>
-                                            {u.full_name || u.email} ({u.role})
-                                        </option>
+                                        <option key={u.id} value={u.id}>{u.full_name}</option>
                                     ))}
                                 </select>
                             </div>
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-xs font-bold text-gray-500 mb-1 ml-1 uppercase">Priority Level</label>
-                                <div className="relative">
-                                    <FlagIcon className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-                                    <select 
-                                        name="priority" 
-                                        value={formData.priority} 
-                                        onChange={handleChange}
-                                        className="pl-10 block w-full rounded-2xl border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-indigo-500"
-                                    >
-                                        <option>Low</option>
-                                        <option>Medium</option>
-                                        <option>High</option>
-                                    </select>
-                                </div>
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Priority</label>
+                                <select 
+                                    name="priority" 
+                                    value={formData.priority} 
+                                    onChange={handleChange} 
+                                    className="modern-input h-14 font-black uppercase text-[10px]"
+                                >
+                                    <option>Low</option>
+                                    <option>Medium</option>
+                                    <option>High</option>
+                                </select>
                             </div>
-                            <div>
-                                <label className="block text-xs font-bold text-gray-500 mb-1 ml-1 uppercase">Status</label>
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Status</label>
                                 <select 
                                     name="status" 
                                     value={formData.status} 
-                                    onChange={handleChange}
-                                    className="block w-full rounded-2xl border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-indigo-500"
+                                    onChange={handleChange} 
+                                    className="modern-input h-14 font-black uppercase text-[10px]"
                                 >
                                     <option>To Do</option>
                                     <option>In Progress</option>
                                     <option>Done</option>
-                                    <option>Blocked</option>
                                 </select>
                             </div>
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-xs font-bold text-gray-500 mb-1 ml-1 uppercase flex items-center gap-1">
-                                    <CalendarDaysIcon className="h-3 w-3" /> Start Date
-                                </label>
-                                <input 
-                                    type="date" 
-                                    name="start_date" 
-                                    value={formData.start_date} 
-                                    onChange={handleChange}
-                                    className="block w-full rounded-2xl border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-indigo-500" 
-                                />
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Start Date</label>
+                                <input type="date" name="start_date" value={formData.start_date} onChange={handleChange} className="modern-input h-14 font-bold" />
                             </div>
-                            <div>
-                                <label className="block text-xs font-bold text-gray-500 mb-1 ml-1 uppercase flex items-center gap-1">
-                                    <CalendarDaysIcon className="h-3 w-3" /> Due Date
-                                </label>
-                                <input 
-                                    type="date" 
-                                    name="due_date" 
-                                    value={formData.due_date} 
-                                    onChange={handleChange}
-                                    className="block w-full rounded-2xl border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-indigo-500" 
-                                />
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Target Date</label>
+                                <input type="date" name="due_date" value={formData.due_date} onChange={handleChange} className="modern-input h-14 font-bold" />
                             </div>
                         </div>
                     </div>
 
-                    <div className="flex gap-4">
-                        <button 
-                            type="submit" 
-                            disabled={isSubmitting}
-                            className="flex-1 inline-flex justify-center items-center px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-3xl shadow-lg shadow-indigo-100 dark:shadow-none transition transform active:scale-95 disabled:opacity-50"
-                        >
-                            {isSubmitting ? 'Initializing...' : 'Commit Task to Site'}
-                        </button>
-                    </div>
+                    <button 
+                        type="submit" 
+                        disabled={isSubmitting} 
+                        className="w-full py-5 bg-indigo-600 hover:bg-indigo-700 text-white font-black uppercase text-[11px] tracking-[0.2em] rounded-[1.5rem] shadow-xl shadow-indigo-100 transition transform active:scale-95 disabled:opacity-50"
+                    >
+                        {isSubmitting ? 'Initializing Node...' : 'Commit Work to Site'}
+                    </button>
                 </div>
             </form>
         </div>

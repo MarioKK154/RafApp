@@ -10,7 +10,7 @@ from .limiter import limiter
 from . import models
 from .database import engine
 
-# 1. Import all routers (Including the new accounting router)
+# 1. Import all routers
 from .routers import (
     auth, users, projects, tasks, tenants,
     inventory, tools, cars, shops, boq, drawings, 
@@ -18,7 +18,8 @@ from .routers import (
     shopping_list, reports,
     dashboard, project_inventory, offers, events,
     labor_catalog, calculators, customers,
-    accounting  # <--- Added new HR/Accounting router
+    accounting,
+    notifications, assignments  # <--- ROADMAP #2: Added
 )
 
 # 2. Create database tables
@@ -47,7 +48,6 @@ app.add_middleware(
 BASE_DIR = Path(__file__).resolve().parent
 STATIC_DIR = BASE_DIR / "static"
 
-# Ensure all upload subdirectories exist to prevent I/O errors
 subdirs = [
     "car_images", 
     "tool_images", 
@@ -85,14 +85,13 @@ app.include_router(timelogs.router)
 app.include_router(comments.router)
 app.include_router(task_photos.router)
 app.include_router(shopping_list.router)
-app.include_router(accounting.router) # <--- Added to the app
+app.include_router(accounting.router)
+app.include_router(notifications.router) # <--- ROADMAP #2: Added
+app.include_router(assignments.router)
 app.include_router(admin_tools.router)
 
 # 6. Root Endpoint
 @app.get("/")
 @limiter.limit("5/minute")
 def read_root(request: Request):
-    """
-    Base API health check.
-    """
     return {"message": "Welcome to the Raf-App API"}

@@ -18,11 +18,12 @@ import {
     UserIcon,
     BuildingOfficeIcon,
     ChevronRightIcon,
-    InformationCircleIcon
+    InformationCircleIcon,
+    HashtagIcon
 } from '@heroicons/react/24/outline';
 
 /**
- * Debounce hook to minimize unnecessary filtering computations.
+ * Technical Protocol: Debounce search to minimize registry re-renders.
  */
 function useDebounce(value, delay) {
     const [debouncedValue, setDebouncedValue] = useState(value);
@@ -37,31 +38,24 @@ function CustomerListPage() {
     const navigate = useNavigate();
     const { user, isAuthenticated, isLoading: authIsLoading } = useAuth();
 
-    // Data States
     const [customers, setCustomers] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
-
-    // Modal & Search States
     const [customerToDelete, setCustomerToDelete] = useState(null);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
-    // Permissions: Admin or Superuser for CRM directory
     const isSuperuser = user?.is_superuser;
     const isAdmin = user && (user.role === 'admin' || isSuperuser);
 
-    /**
-     * Auth Guard: Protect the directory from unauthorized access.
-     */
     useEffect(() => {
         if (!authIsLoading) {
             if (!isAuthenticated) {
-                toast.error("Global authentication required.");
+                toast.error("Authentication required.");
                 navigate('/login', { replace: true });
             } else if (!isAdmin) {
-                toast.error("Access Denied: You do not have permission to view the client registry.");
+                toast.error("Clearance Level Insufficient.");
                 navigate('/', { replace: true });
             }
         }
@@ -76,7 +70,7 @@ function CustomerListPage() {
             setCustomers(response.data);
         } catch (err) {
             console.error("CRM Sync Error:", err);
-            setError('Failed to synchronize with client database.');
+            setError('Registry Error: Failed to synchronize with client database.');
             toast.error('Registry sync failed.');
         } finally {
             setIsLoading(false);
@@ -85,9 +79,6 @@ function CustomerListPage() {
 
     useEffect(() => { fetchCustomers(); }, [fetchCustomers]);
     
-    /**
-     * Client-side search logic.
-     */
     const filteredCustomers = useMemo(() => {
         if (!debouncedSearchTerm) return customers;
         const query = debouncedSearchTerm.toLowerCase();
@@ -108,10 +99,10 @@ function CustomerListPage() {
         if (!customerToDelete) return;
         try {
             await axiosInstance.delete(`/customers/${customerToDelete.id}`);
-            toast.success(`Client "${customerToDelete.name}" purged from registry.`);
+            toast.success(`Client purged from registry: ${customerToDelete.name}`);
             fetchCustomers();
         } catch (err) {
-            toast.error(err.response?.data?.detail || 'Failed to remove customer.');
+            toast.error(err.response?.data?.detail || 'Purge protocol failed.');
         } finally {
             setIsDeleteModalOpen(false);
             setCustomerToDelete(null);
@@ -119,157 +110,173 @@ function CustomerListPage() {
     };
 
     if (authIsLoading || (isLoading && customers.length === 0)) {
-        return <LoadingSpinner text="Accessing client registry..." />;
+        return <LoadingSpinner text="Accessing Client Registry..." />;
     }
     
     if (!isAdmin) return null;
 
     return (
         <div className="container mx-auto p-4 md:p-8 max-w-7xl animate-in fade-in duration-500">
-            {/* Header */}
-            <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+            {/* Header Protocol */}
+            <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-12">
                 <div>
-                    <div className="flex items-center gap-3 mb-1">
-                        <div className="p-2 bg-indigo-600 rounded-xl shadow-lg shadow-indigo-100 dark:shadow-none">
-                            <UserGroupIcon className="h-6 w-6 text-white" />
+                    <div className="flex items-center gap-4 mb-3">
+                        <div className="p-4 bg-indigo-600 rounded-2xl shadow-xl shadow-indigo-100 dark:shadow-none">
+                            <UserGroupIcon className="h-8 w-8 text-white" />
                         </div>
-                        <h1 className="text-3xl font-black text-gray-900 dark:text-white leading-none">Customer Directory</h1>
+                        <div>
+                            <h1 className="text-4xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic leading-none">Customer Directory</h1>
+                            <p className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.3em] mt-2">
+                                {isSuperuser ? "GLOBAL CLIENT CLUSTER" : `VERIFIED CRM ENTITIES / ${user?.tenant?.name}`}
+                            </p>
+                        </div>
                     </div>
-                    <p className="text-gray-500 dark:text-gray-400 text-sm">
-                        {isSuperuser ? "Global CRM Management" : `Verified clients for ${user?.tenant?.name}`}
-                    </p>
                 </div>
 
                 <button 
                     onClick={() => navigate('/customers/new')}
-                    className="inline-flex items-center px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-100 dark:shadow-none transition transform active:scale-95"
+                    className="h-14 px-8 bg-gray-900 dark:bg-gray-800 hover:bg-black text-white text-xs font-black uppercase tracking-widest rounded-2xl transition transform active:scale-95 shadow-xl shadow-gray-200 dark:shadow-none flex items-center gap-2"
                 >
-                    <PlusIcon className="h-5 w-5 mr-1.5" /> 
+                    <PlusIcon className="h-5 w-5" /> 
                     Register New Client
                 </button>
             </header>
 
-            {/* Global Controls */}
-            <div className="mb-8 grid grid-cols-1 lg:grid-cols-4 gap-4">
-                <div className="lg:col-span-3 relative">
-                    <MagnifyingGlassIcon className="h-5 w-5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" />
+            {/* Tactical Search Terminal */}
+            <div className="mb-10 grid grid-cols-1 lg:grid-cols-4 gap-6">
+                <div className="lg:col-span-3 relative group">
+                    <MagnifyingGlassIcon className="h-5 w-5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2 group-focus-within:text-indigo-500 transition-colors" />
                     <input
                         type="text"
-                        placeholder="Search by Name, Kennitala, Contact or Email..."
+                        placeholder="Filter by Entity Name, Tax ID, Personnel or Email..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="block w-full pl-12 pr-4 h-12 rounded-2xl border border-gray-200 dark:bg-gray-800 dark:border-gray-700 text-sm focus:ring-2 focus:ring-indigo-500 transition-all shadow-sm"
+                        className="modern-input pl-12 h-14 !rounded-[1.25rem]"
                     />
                 </div>
-                <div className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl p-3 flex items-center justify-center gap-2 text-xs font-black uppercase tracking-widest text-gray-400 shadow-sm">
-                    <UserGroupIcon className="h-4 w-4" /> {filteredCustomers.length} Records Found
+                <div className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-[1.25rem] p-4 flex items-center justify-center gap-3 text-[10px] font-black uppercase tracking-widest shadow-sm">
+                    <IdentificationIcon className="h-4 w-4 text-indigo-500" />
+                    <span className="text-gray-900 dark:text-gray-100">{filteredCustomers.length} Verified Records</span>
                 </div>
             </div>
 
-            {error && <div className="mb-8 p-4 bg-red-50 text-red-700 rounded-2xl text-xs font-bold">{error}</div>}
+            {error && <div className="mb-8 p-4 bg-red-50 dark:bg-red-900/10 text-red-700 dark:text-red-400 border border-red-100 dark:border-red-900/30 rounded-2xl text-xs font-black uppercase tracking-widest">{error}</div>}
 
-            {/* Customer Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Registry Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {filteredCustomers.length > 0 ? filteredCustomers.map(cust => (
-                    <div key={cust.id} className="group bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col overflow-hidden">
+                    <div key={cust.id} className="group bg-white dark:bg-gray-800 rounded-[2.5rem] border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-500 flex flex-col overflow-hidden">
                         
-                        {/* Header: Name & SSN */}
-                        <div className="p-6 pb-4 border-b border-gray-50 dark:border-gray-700">
-                            <h2 className="text-xl font-black text-gray-900 dark:text-white truncate group-hover:text-indigo-600 transition-colors">
+                        {/* Card Header Node */}
+                        <div className="p-8 pb-6 border-b border-gray-50 dark:border-gray-700/50">
+                            <h2 className="text-2xl font-black text-gray-900 dark:text-white truncate uppercase tracking-tighter italic group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                                 {cust.name}
                             </h2>
-                            <div className="flex items-center gap-1.5 mt-1 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                                <IdentificationIcon className="h-3 w-3" />
-                                SSN: {cust.kennitala || 'No SSN Recorded'}
+                            <div className="flex items-center gap-2 mt-2">
+                                <HashtagIcon className="h-3.5 w-3.5 text-indigo-500" />
+                                <span className="text-sm font-mono font-black text-gray-400 uppercase tracking-widest leading-none">
+                                    {cust.kennitala || 'UNREGISTERED'}
+                                </span>
                             </div>
                         </div>
 
-                        {/* Body: Contact Details */}
-                        <div className="p-6 flex-grow space-y-3">
-                            <div className="flex items-start gap-3">
-                                <UserIcon className="h-5 w-5 text-indigo-500 shrink-0" />
-                                <div>
-                                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Primary Contact</p>
-                                    <p className="text-sm font-bold text-gray-700 dark:text-gray-200">{cust.contact_person || 'No Contact Listed'}</p>
-                                </div>
-                            </div>
+                        {/* Telemetry Grid */}
+                        <div className="p-8 flex-grow space-y-5">
+                            <DetailRow 
+                                icon={<UserIcon />} 
+                                label="Primary Liaison" 
+                                value={cust.contact_person} 
+                            />
+                            <DetailRow 
+                                icon={<MapPinIcon />} 
+                                label="HQ / Billing Address" 
+                                value={cust.address} 
+                            />
 
-                            <div className="flex items-start gap-3">
-                                <MapPinIcon className="h-5 w-5 text-indigo-500 shrink-0" />
-                                <div>
-                                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Address</p>
-                                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400 leading-tight">{cust.address || 'Location Unknown'}</p>
-                                </div>
-                            </div>
-
-                            <div className="flex items-center gap-4 pt-2">
+                            <div className="flex flex-wrap items-center gap-4 pt-2">
                                 {cust.phone_number && (
-                                    <div className="flex items-center gap-1.5 text-xs font-bold text-gray-500 dark:text-gray-400">
-                                        <PhoneIcon className="h-4 w-4 text-gray-400" />
+                                    <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 dark:bg-gray-900 rounded-lg text-[11px] font-bold text-gray-600 dark:text-gray-400 border border-gray-100 dark:border-gray-800">
+                                        <PhoneIcon className="h-3.5 w-3.5" />
                                         {cust.phone_number}
                                     </div>
                                 )}
                                 {cust.email && (
-                                    <a href={`mailto:${cust.email}`} className="flex items-center gap-1.5 text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline truncate min-w-0">
-                                        <EnvelopeIcon className="h-4 w-4 shrink-0" />
-                                        <span className="truncate">{cust.email}</span>
+                                    <a href={`mailto:${cust.email}`} className="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg text-[11px] font-bold text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900 hover:bg-indigo-100 transition-colors">
+                                        <EnvelopeIcon className="h-3.5 w-3.5" />
+                                        Registry Email
                                     </a>
                                 )}
                             </div>
 
                             {isSuperuser && cust.tenant && (
-                                <div className="mt-4 pt-4 border-t border-gray-50 dark:border-gray-700 flex items-center gap-2 text-[9px] font-black text-orange-600 uppercase tracking-tighter">
-                                    <BuildingOfficeIcon className="h-3.5 w-3.5" />
-                                    Owner: {cust.tenant.name}
+                                <div className="mt-6 pt-6 border-t border-gray-50 dark:border-gray-700/50 flex items-center gap-2 text-[9px] font-black text-orange-600 uppercase tracking-[0.2em]">
+                                    <BuildingOfficeIcon className="h-4 w-4" />
+                                    Cluster Owner: {cust.tenant.name}
                                 </div>
                             )}
                         </div>
 
-                        {/* Footer: Actions */}
-                        <div className="px-6 py-4 bg-gray-50 dark:bg-gray-700/30 flex items-center justify-between">
-                            <div className="flex items-center gap-2">
+                        {/* Action Terminal */}
+                        <div className="px-8 py-6 bg-gray-50 dark:bg-gray-700/30 flex items-center justify-between border-t border-gray-50 dark:border-gray-700/50">
+                            <div className="flex items-center gap-3">
                                 <button 
                                     onClick={() => navigate(`/customers/edit/${cust.id}`)} 
-                                    className="p-2 bg-white dark:bg-gray-800 text-gray-400 hover:text-indigo-600 rounded-xl shadow-sm border border-gray-100 dark:border-gray-600 transition"
-                                    title="Edit Client Profile"
+                                    className="p-3 bg-white dark:bg-gray-800 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 transition transform active:scale-95"
+                                    title="Modify Profile"
                                 >
                                     <PencilIcon className="h-5 w-5" />
                                 </button>
                                 <button 
                                     onClick={() => triggerDelete(cust)} 
-                                    className="p-2 bg-white dark:bg-gray-800 text-gray-400 hover:text-red-600 rounded-xl shadow-sm border border-gray-100 dark:border-gray-600 transition"
-                                    title="Purge Record"
+                                    className="p-3 bg-white dark:bg-gray-800 text-gray-400 hover:text-red-600 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 transition transform active:scale-95"
+                                    title="Purge Node"
                                 >
                                     <TrashIcon className="h-5 w-5" />
                                 </button>
                             </div>
                             <Link 
                                 to={`/customers/edit/${cust.id}`} 
-                                className="flex items-center gap-1 text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest hover:gap-2 transition-all"
+                                className="flex items-center gap-2 text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-[0.2em] hover:gap-3 transition-all"
                             >
-                                Management <ChevronRightIcon className="h-3 w-3" />
+                                Management Hub <ChevronRightIcon className="h-3.5 w-3.5" />
                             </Link>
                         </div>
                     </div>
                 )) : (
-                    <div className="col-span-full py-20 text-center bg-white dark:bg-gray-800 rounded-3xl border-2 border-dashed border-gray-100 dark:border-gray-700">
-                        <UserGroupIcon className="h-12 w-12 text-gray-200 mx-auto mb-4" />
-                        <h3 className="text-lg font-bold text-gray-900 dark:text-white uppercase tracking-tighter">Empty Registry</h3>
-                        <p className="text-sm text-gray-500 mt-1">Initialize your first customer to start tracking commercial site project associations.</p>
+                    <div className="col-span-full py-32 text-center bg-white dark:bg-gray-800 rounded-[3rem] border-2 border-dashed border-gray-100 dark:border-gray-700">
+                        <UserGroupIcon className="h-16 w-16 text-gray-200 dark:text-gray-700 mx-auto mb-6" />
+                        <h3 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">No clients detected in registry</h3>
+                        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-2">Adjust search filters or initialize a new customer node.</p>
                     </div>
                 )}
             </div>
 
-            {/* Deletion Confirmation */}
             <ConfirmationModal
                 isOpen={isDeleteModalOpen}
                 onClose={() => setIsDeleteModalOpen(false)}
                 onConfirm={confirmDelete}
-                title="Purge Customer Record"
-                message={`Are you sure you want to permanently delete "${customerToDelete?.name}"? This will remove their profile from all future project creation associations.`}
-                confirmText="Purge Record"
+                title="Purge Customer Registry"
+                message={`CRITICAL: Are you sure you want to permanently delete "${customerToDelete?.name}"? This will terminate all active project associations for this entity.`}
+                confirmText="PURGE RECORD"
                 type="danger"
             />
+        </div>
+    );
+}
+
+/**
+ * Helper Node: Telemetry Row
+ */
+function DetailRow({ icon, label, value }) {
+    return (
+        <div className="flex items-start gap-4">
+            <div className="mt-1 text-indigo-500 h-4 w-4 shrink-0">{icon}</div>
+            <div className="min-w-0">
+                <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] leading-none mb-1.5">{label}</p>
+                <p className="text-sm font-black text-gray-800 dark:text-gray-200 truncate leading-tight uppercase tracking-tight">
+                    {value || 'DATA MISSING'}
+                </p>
+            </div>
         </div>
     );
 }

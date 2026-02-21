@@ -13,10 +13,15 @@
   .dark body {
     @apply bg-gray-900 text-gray-100 selection:bg-indigo-500/30 selection:text-white;
   }
+
+  /* PROTOCOL: Native HTML Select Fix */
+  /* This ensures that standard <select> dropdowns are readable in Dark Mode */
+  .dark select option {
+    @apply bg-gray-800 text-white;
+  }
 }
 
 @layer components {
-  /* High-Precision Input Styling used across the app */
   .modern-input {
     @apply block w-full h-12 px-4 rounded-2xl border-gray-200 bg-white 
            dark:bg-gray-800 dark:border-gray-700 dark:text-white 
@@ -25,18 +30,52 @@
            disabled:opacity-50 disabled:cursor-not-allowed placeholder:text-gray-400;
   }
 
-  /* Status Badge Base used in Inventory and Tools */
   .status-badge {
     @apply inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-[0.2em] border shadow-sm;
   }
 
-  /* Custom Scrollbar for Technical Logs and sidebars */
-  .scrollbar-hide::-webkit-scrollbar {
-    display: none;
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
+  .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+  /* TECHNICAL OVERRIDE: React Select Dark Mode Calibrations
+     This forces the dropdown menu and items to be visible before hover.
+  */
+  .dark .react-select__control {
+    @apply !bg-gray-800 !border-gray-700 !text-white;
   }
-  .scrollbar-hide {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
+
+  .dark .react-select__menu {
+    @apply !bg-gray-800 !border !border-gray-700 !shadow-2xl;
+  }
+
+  .dark .react-select__option {
+    @apply !bg-transparent !text-gray-300;
+  }
+
+  /* Focus and Selected states for the personnel registry */
+  .dark .react-select__option--is-focused {
+    @apply !bg-gray-700 !text-white;
+  }
+
+  .dark .react-select__option--is-selected {
+    @apply !bg-indigo-600 !text-white;
+  }
+
+  .dark .react-select__single-value,
+  .dark .react-select__input-container {
+    @apply !text-white;
+  }
+
+  .dark .react-select__multi-value {
+    @apply !bg-gray-700;
+  }
+
+  .dark .react-select__multi-value__label {
+    @apply !text-indigo-200;
+  }
+
+  .dark .react-select__multi-value__remove:hover {
+    @apply !bg-red-500 !text-white;
   }
 }
 
@@ -50,7 +89,7 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* React Select styling overrides to match modern-input */
+/* Base React Select container styling */
 .react-select-container .react-select__control {
   @apply !rounded-2xl !border-gray-200 !h-12 !shadow-sm dark:!bg-gray-800 dark:!border-gray-700;
 }

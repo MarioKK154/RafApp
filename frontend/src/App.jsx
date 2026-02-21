@@ -16,7 +16,6 @@ import TasksListPage from './pages/TasksListPage';
 import TaskCreatePage from './pages/TaskCreatePage';
 import TaskEditPage from './pages/TaskEditPage';
 import GlobalInventoryPage from './pages/GlobalInventoryPage';
-import InventoryCatalogPage from './pages/InventoryCatalogPage';
 import InventoryCatalogCreatePage from './pages/InventoryCatalogCreatePage';
 import InventoryCatalogEditPage from './pages/InventoryCatalogEditPage';
 import ToolInventoryPage from './pages/ToolInventoryPage';
@@ -56,11 +55,9 @@ import CustomerCreatePage from './pages/CustomerCreatePage';
 import CustomerEditPage from './pages/CustomerEditPage';
 import AccountingPage from './pages/AccountingPage';
 import LeaveRequestCreatePage from './pages/LeaveRequestCreatePage';
+import NotificationHubPage from './pages/NotificationHubPage'; 
+import SchedulingGridPage from './pages/SchedulingGridPage'; 
 
-/**
- * Higher Order Component for Route Protection
- * Manages authentication redirection and initialization states.
- */
 const ProtectedRoute = ({ children }) => {
     const { isAuthenticated, isLoading } = useAuth();
     
@@ -73,7 +70,7 @@ const ProtectedRoute = ({ children }) => {
                         <div className="h-2 w-2 bg-indigo-600 rounded-full animate-pulse"></div>
                     </div>
                 </div>
-                <p className="mt-4 text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] animate-pulse">
+                <p className="mt-4 text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] animate-pulse italic">
                     Synchronizing Session...
                 </p>
             </div>
@@ -86,115 +83,92 @@ const ProtectedRoute = ({ children }) => {
 function App() {
     return (
         <AuthProvider>
-            {/* Main Application Shell */}
             <div className="flex h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 font-sans selection:bg-indigo-100 selection:text-indigo-700">
-                
-                {/* Infrastructure Sidebar: 
-                  Visible only to authenticated personnel. 
-                  Handles internal navigation logic.
-                */}
                 <Sidebar />
 
-                {/* Registry Viewport: Primary Content Area */}
-                <main className="flex-1 overflow-x-hidden overflow-y-auto scroll-smooth">
+                <main className="flex-1 overflow-x-hidden overflow-y-auto scroll-smooth custom-scrollbar">
                     <Routes>
-                        {/* Public Gateway */}
                         <Route path="/login" element={<LoginPage />} />
 
-                        {/* Operational Dashboard */}
+                        {/* --- CORE OPERATIONAL HUB --- */}
                         <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
+                        <Route path="/notifications" element={<ProtectedRoute><NotificationHubPage /></ProtectedRoute>} />
+                        <Route path="/scheduling" element={<ProtectedRoute><SchedulingGridPage /></ProtectedRoute>} />
 
-                        {/* Deployment & Project Registry */}
+                        {/* --- PROJECT NODES --- */}
                         <Route path="/projects" element={<ProtectedRoute><ProjectsPage /></ProtectedRoute>} />
                         <Route path="/projects/new" element={<ProtectedRoute><ProjectCreatePage /></ProtectedRoute>} />
                         <Route path="/projects/edit/:projectId" element={<ProtectedRoute><ProjectEditPage /></ProtectedRoute>} />
+                        <Route path="/projects/:projectId" element={<ProtectedRoute><ProjectEditPage /></ProtectedRoute>} />
 
-                        {/* CRM & Customer Relations */}
+                        {/* --- CRM --- */}
                         <Route path="/customers" element={<ProtectedRoute><CustomerListPage /></ProtectedRoute>} />
                         <Route path="/customers/new" element={<ProtectedRoute><CustomerCreatePage /></ProtectedRoute>} />
                         <Route path="/customers/edit/:customerId" element={<ProtectedRoute><CustomerEditPage /></ProtectedRoute>} />
 
-                        {/* Logic & Task Distribution */}
+                        {/* --- TASKS --- */}
                         <Route path="/tasks" element={<ProtectedRoute><TasksListPage /></ProtectedRoute>} />
                         <Route path="/tasks/new" element={<ProtectedRoute><TaskCreatePage /></ProtectedRoute>} />
                         <Route path="/tasks/:taskId" element={<ProtectedRoute><TaskEditPage /></ProtectedRoute>} />
 
-                        {/* Global Material & Catalog Infrastructure */}
+                        {/* --- INVENTORY --- */}
                         <Route path="/inventory" element={<ProtectedRoute><GlobalInventoryPage /></ProtectedRoute>} />
-                        <Route path="/inventory/catalog" element={<ProtectedRoute><InventoryCatalogPage /></ProtectedRoute>} />
-                        <Route path="/inventory/catalog/new" element={<ProtectedRoute><InventoryCatalogCreatePage /></ProtectedRoute>} />
-                        <Route path="/inventory/catalog/edit/:itemId" element={<ProtectedRoute><InventoryCatalogEditPage /></ProtectedRoute>} />
+                        <Route path="/inventory/new" element={<ProtectedRoute><InventoryCatalogCreatePage /></ProtectedRoute>} />
+                        <Route path="/inventory/edit/:itemId" element={<ProtectedRoute><InventoryCatalogEditPage /></ProtectedRoute>} />
 
-                        {/* Hardware & Asset Registry */}
+                        {/* --- ASSETS & LOGISTICS --- */}
                         <Route path="/tools" element={<ProtectedRoute><ToolInventoryPage /></ProtectedRoute>} />
                         <Route path="/tools/new" element={<ProtectedRoute><ToolCreatePage /></ProtectedRoute>} />
                         <Route path="/tools/edit/:toolId" element={<ProtectedRoute><ToolEditPage /></ProtectedRoute>} />
                         <Route path="/tools/:toolId" element={<ProtectedRoute><ToolDetailsPage /></ProtectedRoute>} />
-
-                        {/* Logistics: Vehicle Fleet */}
                         <Route path="/cars" element={<ProtectedRoute><CarFleetPage /></ProtectedRoute>} />
                         <Route path="/cars/new" element={<ProtectedRoute><CarCreatePage /></ProtectedRoute>} />
                         <Route path="/cars/edit/:carId" element={<ProtectedRoute><CarEditPage /></ProtectedRoute>} />
                         <Route path="/cars/:carId" element={<ProtectedRoute><CarDetailsPage /></ProtectedRoute>} />
-
-                        {/* Supply Chain & Vendors */}
                         <Route path="/shops" element={<ProtectedRoute><ShopListPage /></ProtectedRoute>} />
                         <Route path="/shops/new" element={<ProtectedRoute><ShopCreatePage /></ProtectedRoute>} />
                         <Route path="/shops/edit/:shopId" element={<ProtectedRoute><ShopEditPage /></ProtectedRoute>} />
 
-                        {/* Personnel Labor Value Registry */}
+                        {/* --- ADMIN & HR --- */}
                         <Route path="/labor-catalog" element={<ProtectedRoute><LaborCatalogListPage /></ProtectedRoute>} />
                         <Route path="/labor-catalog/new" element={<ProtectedRoute><LaborCatalogCreatePage /></ProtectedRoute>} />
                         <Route path="/labor-catalog/edit/:itemId" element={<ProtectedRoute><LaborCatalogEditPage /></ProtectedRoute>} />
-
-                        {/* Commercial Hub */}
-                        <Route path="/offers/:offerId" element={<ProtectedRoute><OfferPage /></ProtectedRoute>} />
-
-                        {/* Temporal Analytics: Time & Attendance */}
                         <Route path="/timelogs" element={<ProtectedRoute><TimeLogsPage /></ProtectedRoute>} />
-
-                        {/* Financial Telemetry & HR */}
                         <Route path="/accounting" element={<ProtectedRoute><AccountingPage /></ProtectedRoute>} />
                         <Route path="/accounting/leave/new" element={<ProtectedRoute><LeaveRequestCreatePage /></ProtectedRoute>} />
+                        <Route path="/reports" element={<ProtectedRoute><ReportsPage /></ProtectedRoute>} />
 
-                        {/* Staff & User Management */}
+                        {/* --- USER MANAGEMENT (TARGET FIX) --- */}
                         <Route path="/users" element={<ProtectedRoute><UserListPage /></ProtectedRoute>} />
                         <Route path="/users/new" element={<ProtectedRoute><UserCreatePage /></ProtectedRoute>} />
                         <Route path="/users/import" element={<ProtectedRoute><UserBulkImportPage /></ProtectedRoute>} />
+                        {/* Ensure this line is exactly as below */}
                         <Route path="/users/edit/:userId" element={<ProtectedRoute><UserEditPage /></ProtectedRoute>} />
 
-                        {/* Infrastructure & Multi-Tenant Control (Superuser) */}
+                        {/* --- INFRASTRUCTURE --- */}
                         <Route path="/tenants" element={<ProtectedRoute><TenantListPage /></ProtectedRoute>} />
                         <Route path="/tenants/new" element={<ProtectedRoute><TenantCreatePage /></ProtectedRoute>} />
                         <Route path="/tenants/edit/:tenantId" element={<ProtectedRoute><TenantEditPage /></ProtectedRoute>} />
                         <Route path="/admin/tools" element={<ProtectedRoute><AdminToolsPage /></ProtectedRoute>} />
 
-                        {/* Planning & Intelligence Tools */}
+                        {/* --- PLANNING --- */}
                         <Route path="/shopping-list" element={<ProtectedRoute><ShoppingListPage /></ProtectedRoute>} />
                         <Route path="/gantt" element={<ProtectedRoute><GanttChartPage /></ProtectedRoute>} />
                         <Route path="/calendar" element={<ProtectedRoute><CalendarPage /></ProtectedRoute>} />
-                        <Route path="/reports" element={<ProtectedRoute><ReportsPage /></ProtectedRoute>} />
+                        <Route path="/offers/:offerId" element={<ProtectedRoute><OfferPage /></ProtectedRoute>} />
 
-                        {/* System Knowledge & Compliance */}
+                        {/* --- SETTINGS --- */}
                         <Route path="/account-settings" element={<ProtectedRoute><AccountSettingsPage /></ProtectedRoute>} />
                         <Route path="/laws" element={<ProtectedRoute><LawsPage /></ProtectedRoute>} />
                         <Route path="/tutorials" element={<ProtectedRoute><TutorialsPage /></ProtectedRoute>} />
 
-                        {/* Catch-all Protocol: Resource Lost */}
                         <Route path="*" element={<NotFoundPage />} />
                     </Routes>
                 </main>
 
-                {/* Global Notification System Container */}
                 <ToastContainer
                     position="bottom-right"
                     autoClose={4000}
-                    hideProgressBar={false}
-                    newestOnTop={true}
-                    closeOnClick
-                    pauseOnFocusLoss
-                    draggable
-                    pauseOnHover
                     theme="colored"
                 />
             </div>
