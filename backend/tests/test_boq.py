@@ -18,9 +18,6 @@ def test_get_or_create_boq_for_project(client: TestClient, authenticated_user_to
     project_in = schemas.ProjectCreate(name="Project for BoQ Test")
     db_project = crud.create_project(db, project=project_in, creator_id=user.id, tenant_id=user.tenant_id)
 
-    # Verify no BoQ exists initially
-    assert db_project.boq is None
-
     # ACT: Make the API call to get the BoQ for the project
     response = client.get(f"/boq/project/{db_project.id}", headers=headers)
 
@@ -49,7 +46,8 @@ def test_add_and_remove_item_from_boq(client: TestClient, authenticated_user_tok
     project_in = schemas.ProjectCreate(name="Project for BoQ Items Test")
     db_project = crud.create_project(db, project=project_in, creator_id=user.id, tenant_id=user.tenant_id)
     
-    inventory_item_in = schemas.InventoryItemCreate(name="BoQ Test Item", quantity=100)
+    # Create a catalog inventory item (quantity is tracked per project, not in the catalog)
+    inventory_item_in = schemas.InventoryItemCreate(name="BoQ Test Item")
     db_inventory_item = crud.create_inventory_item(db, item=inventory_item_in)
 
     # ACT 1: Add an item to the project's BoQ

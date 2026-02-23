@@ -67,13 +67,13 @@ function AccountingPage() {
 
     const handleDownloadPayslip = async (payslipId, filename) => {
         try {
-            const response = await axiosInstance.get(`/accounting/payslips/download/${payslip_id}`, {
+            const response = await axiosInstance.get(`/accounting/payslips/download/${payslipId}`, {
                 responseType: 'blob'
             });
             const url = window.URL.createObjectURL(new Blob([response.data]));
             const link = document.createElement('a');
             link.href = url;
-            link.setAttribute('download', filename || `payslip_${payslip_id}.pdf`);
+            link.setAttribute('download', filename || `payslip_${payslipId}.pdf`);
             document.body.appendChild(link);
             link.click();
             link.remove();

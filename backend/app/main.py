@@ -19,7 +19,7 @@ from .routers import (
     dashboard, project_inventory, offers, events,
     labor_catalog, calculators, customers,
     accounting,
-    notifications, assignments  # <--- ROADMAP #2: Added
+    notifications, assignments, tutorials  # <--- ROADMAP #2: Added
 )
 
 # 2. Create database tables
@@ -88,6 +88,7 @@ app.include_router(shopping_list.router)
 app.include_router(accounting.router)
 app.include_router(notifications.router) # <--- ROADMAP #2: Added
 app.include_router(assignments.router)
+app.include_router(tutorials.router)
 app.include_router(admin_tools.router)
 
 # 6. Root Endpoint

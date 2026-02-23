@@ -11,7 +11,7 @@ from app.database import Base, get_db
 from app import crud, schemas
 from app.security import create_access_token
 
-# Use an in-memory SQLite database for testing
+# Use a local SQLite database for testing
 SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
 
 engine = create_engine(
@@ -19,7 +19,8 @@ engine = create_engine(
 )
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-# Create/drop tables for each test run to ensure isolation
+# Ensure the test schema always matches the current models
+Base.metadata.drop_all(bind=engine)
 Base.metadata.create_all(bind=engine)
 
 @pytest.fixture(scope="function")

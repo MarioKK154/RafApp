@@ -20,7 +20,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 function HomePage() {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const { user } = useAuth();
     
     const [stats, setStats] = useState(null);
@@ -78,8 +78,6 @@ function HomePage() {
                 !['Done', 'Completed', 'Archived'].includes(tk.status)
             );
 
-            console.log(`Audit: Found ${rawTasks.length} raw tasks. Displaying ${verifiedActiveTasks.length} tasks linked to active projects.`);
-
             setStats({
                 ...statsRes.data,
                 active_projects: processedProjects.filter(p => p.displayStatus === 'Active').length,
@@ -104,14 +102,30 @@ function HomePage() {
 
     const getGreeting = () => {
         const hour = new Date().getHours();
-        if (hour < 12) return "Góðan daginn";
-        if (hour < 18) return "Góðan daginn";
-        return "Gott kvöld";
+        const isIcelandic = i18n.language === 'is';
+
+        if (hour < 12) {
+            return t('greeting_morning', {
+                defaultValue: isIcelandic ? 'Góðan daginn' : 'Good morning',
+            });
+        }
+        if (hour < 18) {
+            return t('greeting_afternoon', {
+                defaultValue: isIcelandic ? 'Góðan daginn' : 'Good afternoon',
+            });
+        }
+        return t('greeting_evening', {
+            defaultValue: isIcelandic ? 'Gott kvöld' : 'Good evening',
+        });
     };
 
     const handleClockIn = async () => {
         if (!selectedProjectId) {
-            toast.warning("Veldu verkefni til að byrja.");
+            toast.warning(
+                t('select_project_first', {
+                    defaultValue: 'Select a project to start.',
+                })
+            );
             return;
         }
         setIsClocking(true);
@@ -120,10 +134,19 @@ function HomePage() {
                 project_id: parseInt(selectedProjectId) 
             });
             setActiveClockIn(res.data);
-            toast.success("Innskráning tókst.");
+            toast.success(
+                t('clock_in_success', {
+                    defaultValue: 'Clock-in successful.',
+                })
+            );
             fetchDashboardData();
         } catch (err) {
-            toast.error(err.response?.data?.detail || "Innskráning mistókst.");
+            toast.error(
+                err.response?.data?.detail ||
+                    t('clock_in_failed', {
+                        defaultValue: 'Clock-in failed.',
+                    })
+            );
         } finally {
             setIsClocking(false);
         }
@@ -134,16 +157,31 @@ function HomePage() {
         try {
             await axiosInstance.post('/timelogs/clock-out');
             setActiveClockIn(null);
-            toast.success("Útskráning tókst.");
+            toast.success(
+                t('clock_out_success', {
+                    defaultValue: 'Clock-out successful.',
+                })
+            );
             fetchDashboardData();
         } catch (err) {
-            toast.error("Útskráning mistókst.");
+            toast.error(
+                t('clock_out_failed', {
+                    defaultValue: 'Clock-out failed.',
+                })
+            );
         } finally {
             setIsClocking(false);
         }
     };
 
-    if (isLoading) return <LoadingSpinner text="Synchronizing Registry..." />;
+    if (isLoading)
+        return (
+            <LoadingSpinner
+                text={t('syncing_dashboard', {
+                    defaultValue: 'Synchronizing dashboard...',
+                })}
+            />
+        );
 
     return (
         <div className="container mx-auto p-4 md:p-8 max-w-7xl animate-in fade-in duration-500">

@@ -30,7 +30,7 @@ import {
     BookOpenIcon,
     LanguageIcon,
     BellIcon,
-    Squares2X2Icon // Added for the Grid look
+    Squares2X2Icon
 } from '@heroicons/react/24/outline';
 
 function Sidebar() {
@@ -38,7 +38,6 @@ function Sidebar() {
     const { isAuthenticated, user: currentUser, logout } = useAuth();
     const [isCollapsed, setIsCollapsed] = useState(false);
 
-    // Permission Logic
     const isSuperuser = currentUser?.is_superuser;
     const isAdmin = currentUser?.role === 'admin' || isSuperuser;
     const isManager = currentUser?.role === 'project manager' || isSuperuser;
@@ -60,12 +59,13 @@ function Sidebar() {
     if (!isAuthenticated) return null;
 
     return (
-        <aside className={`flex flex-col h-screen bg-white dark:bg-gray-900 border-r border-gray-100 dark:border-gray-800 transition-all duration-300 ease-in-out sticky top-0 z-40 ${isCollapsed ? 'w-20' : 'w-72'}`}>
+        /* INCREASED Z-INDEX TO 50 TO CLEAR MAIN CONTENT */
+        <aside className={`flex flex-col h-screen bg-white dark:bg-gray-900 border-r border-gray-100 dark:border-gray-800 transition-all duration-300 ease-in-out sticky top-0 z-50 ${isCollapsed ? 'w-20' : 'w-72'}`}>
 
-            {/* Header: Identity Terminal */}
-            <div className="flex items-center justify-between px-4 h-24 border-b border-gray-50 dark:border-gray-800 overflow-hidden">
+            {/* Header: Identity Terminal - FIXED OVERFLOW */}
+            <div className="flex items-center justify-between px-4 h-24 border-b border-gray-50 dark:border-gray-800 relative overflow-visible">
                 <Link to="/" className={`flex items-center gap-3 ${isCollapsed ? 'hidden' : 'animate-in fade-in duration-500'}`}>
-                    <div className="h-12 w-12 flex-shrink-0 bg-gray-50 dark:bg-gray-800 rounded-2xl p-1.5 border border-gray-100 dark:border-gray-700 shadow-sm text-indigo-600">
+                    <div className="h-12 w-12 flex-shrink-0 bg-gray-50 dark:bg-gray-800 rounded-2xl p-1.5 border border-gray-100 dark:border-gray-700 shadow-sm">
                         <img
                             src={logoToDisplay}
                             alt="Tenant Identity"
@@ -82,6 +82,7 @@ function Sidebar() {
                 </Link>
 
                 <div className="flex items-center gap-2">
+                    {/* The Dropdown now has permission to "overflow" this container */}
                     {!isCollapsed && <NotificationDropdown />}
                     <button
                         onClick={() => setIsCollapsed(!isCollapsed)}
@@ -94,30 +95,23 @@ function Sidebar() {
 
             {/* Navigation Registry */}
             <nav className="flex-1 overflow-y-auto px-4 py-6 scrollbar-hide space-y-8">
-
-                {/* Section: Core Workflows */}
                 <div>
                     {!isCollapsed && <p className="px-3 text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-4">{t('core_operations')}</p>}
                     <div className="space-y-1">
                         <NavItem to="/" icon={<HomeIcon />} label={t('dashboard')} collapsed={isCollapsed} end />
                         <NavItem to="/notifications" icon={<BellIcon />} label="Notifications" collapsed={isCollapsed} />
-                        
-                        {/* Roadmap #3: Resource Grid Link */}
                         {isManagement && (
                             <NavItem to="/scheduling" icon={<Squares2X2Icon />} label="Resource Grid" collapsed={isCollapsed} />
                         )}
-
                         <NavItem to="/projects" icon={<BriefcaseIcon />} label={t('projects')} collapsed={isCollapsed} />
                         <NavItem to="/tasks" icon={<ClipboardDocumentListIcon />} label={t('tasks')} collapsed={isCollapsed} />
                         <NavItem to="/calendar" icon={<CalendarDaysIcon />} label={t('calendar')} collapsed={isCollapsed} />
-
                         {isManagement && (
                             <NavItem to="/gantt" icon={<ChartBarSquareIcon />} label={t('timeline')} collapsed={isCollapsed} />
                         )}
                     </div>
                 </div>
 
-                {/* Section: Logistics & Assets */}
                 <div>
                     {!isCollapsed && <p className="px-3 text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-4">{t('resources')}</p>}
                     <div className="space-y-1">
@@ -128,13 +122,11 @@ function Sidebar() {
                     </div>
                 </div>
 
-                {/* Section: Business Administration */}
                 <div>
                     {!isCollapsed && <p className="px-3 text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-4">{t('administration')}</p>}
                     <div className="space-y-1">
                         <NavItem to="/timelogs" icon={<ClockIcon />} label={t('time_tracking')} collapsed={isCollapsed} />
                         <NavItem to="/accounting" icon={<BanknotesIcon />} label={t('hr_payroll')} collapsed={isCollapsed} />
-
                         {isManagement && (
                             <>
                                 <NavItem to="/customers" icon={<UserGroupIcon />} label={t('customers')} collapsed={isCollapsed} />
@@ -142,12 +134,10 @@ function Sidebar() {
                                 <NavItem to="/reports" icon={<DocumentChartBarIcon />} label={t('analytics')} collapsed={isCollapsed} />
                             </>
                         )}
-
                         <NavItem to="/users" icon={<UsersIcon />} label={t('personnel')} collapsed={isCollapsed} />
                     </div>
                 </div>
 
-                {/* Section: Compliance & Support */}
                 <div>
                     {!isCollapsed && <p className="px-3 text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-4">{t('support')}</p>}
                     <div className="space-y-1">
@@ -156,7 +146,6 @@ function Sidebar() {
                     </div>
                 </div>
 
-                {/* Section: System Governance */}
                 {isSuperuser && (
                     <div className="pt-6 border-t border-gray-100 dark:border-gray-800">
                         {!isCollapsed && <p className="px-3 text-[10px] font-black text-orange-600 uppercase tracking-[0.3em] mb-4 flex items-center gap-2">
@@ -206,15 +195,6 @@ function Sidebar() {
                         {!isCollapsed && <span className="ml-3">{t('secure_logout')}</span>}
                     </button>
                 </div>
-
-                {!isCollapsed && (
-                    <div className="mt-6 px-4 py-3 bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm animate-in fade-in slide-in-from-bottom-2">
-                        <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1.5">{t('logged_in_as')}</p>
-                        <p className="text-[10px] font-bold text-gray-700 dark:text-gray-200 truncate italic">
-                            {currentUser?.full_name || currentUser?.email}
-                        </p>
-                    </div>
-                )}
             </div>
         </aside>
     );

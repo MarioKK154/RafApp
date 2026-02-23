@@ -18,18 +18,16 @@ def test_create_inventory_item(client: TestClient, authenticated_user_token: Dic
     item_data = {
         "name": "Test Cable 500m",
         "description": "A reel of cable for testing.",
-        "quantity": 500,
         "unit": "m"
     }
 
-    # ACT: Make the API call to create the inventory item
-    response = client.post("/inventory/", headers=headers, json=item_data)
+    # ACT: Make the API call to create the catalog inventory item
+    response = client.post("/inventory/catalog", headers=headers, json=item_data)
     
     # ASSERT: Check the results
     assert response.status_code == 201, response.text
     data = response.json()
     assert data["name"] == item_data["name"]
-    assert data["quantity"] == item_data["quantity"]
     assert "id" in data
     
     # Verify the item exists in the database
@@ -46,12 +44,12 @@ def test_get_inventory_items(client: TestClient, authenticated_user_token: Dict[
     token = authenticated_user_token["token"]
     headers = {"Authorization": f"Bearer {token}"}
     
-    # Create a couple of items to ensure the list endpoint works
-    crud.create_inventory_item(db, item=schemas.InventoryItemCreate(name="Item A", quantity=10))
-    crud.create_inventory_item(db, item=schemas.InventoryItemCreate(name="Item B", quantity=20))
+    # Create a couple of catalog items to ensure the list endpoint works
+    crud.create_inventory_item(db, item=schemas.InventoryItemCreate(name="Item A"))
+    crud.create_inventory_item(db, item=schemas.InventoryItemCreate(name="Item B"))
 
-    # ACT: Make the API call to get the list of items
-    response = client.get("/inventory/", headers=headers)
+    # ACT: Make the API call to get the list of catalog items
+    response = client.get("/inventory/catalog", headers=headers)
 
     # ASSERT: Check the results
     assert response.status_code == 200, response.text

@@ -1,8 +1,8 @@
-from sqlalchemy import (Boolean, Column, ForeignKey, Integer, String, DateTime,
+import enum
+from sqlalchemy import (Boolean, Column, ForeignKey, Integer, String, DateTime, func, Enum,
                         Text, Enum as SQLAlchemyEnum, Float, Interval, Table, Date, UniqueConstraint)
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from sqlalchemy.sql import func
-import enum
 from typing import Optional, List
 from datetime import datetime, date
 
@@ -24,7 +24,7 @@ class ProjectStatus(enum.Enum):
     On_Hold = "On Hold"
     Commissioned = "Commissioned" 
     Completed = "Completed"      
-    Cancelled = "Cancelled"
+    Archived = "Archived"
 
 class TaskStatus(enum.Enum):
     Not_Started = "Not Started"
@@ -91,12 +91,23 @@ class EventType(enum.Enum):
     custom = "custom"
 
 class TutorialCategory(enum.Enum):
+    # Systems Logic
     fire_system = "Fire Systems"
-    lights_system = "Lights Systems"
-    dali_system = "DALI Systems"
-    smart_home = "Smart Homes"
-    access_system = "Access Systems"
-    industrial = "Industrial/3-Phase"
+    lights_system = "Lighting Systems"
+    dali_system = "DALI & Controls"
+    smart_home = "Smart Homes / IoT"
+    access_system = "Access & Security"
+    
+    # Power & Industrial
+    industrial = "Industrial & Motor Control"
+    distribution = "Panels & Distribution"
+    ev_charging = "EV Charging Infrastructure"
+    renewables = "Solar & Renewables"
+    
+    # Technical Standards
+    data_comms = "Data & Networking"
+    safety_code = "Safety & Regulatory Code"
+    tools_equip = "Tool & Equipment Manuals"
 
 # --- Association Tables ---
 
@@ -141,10 +152,11 @@ class Tenant(Base):
     customers: Mapped[list["Customer"]] = relationship(back_populates="tenant", cascade="all, delete-orphan")
     payslips: Mapped[list["Payslip"]] = relationship(back_populates="tenant", cascade="all, delete-orphan")
     leave_requests: Mapped[list["LeaveRequest"]] = relationship(back_populates="tenant", cascade="all, delete-orphan")
-    
-    # ROADMAP FIX: Tenant no longer owns LaborCatalogItems directly.
-    # It owns private prices for shared LaborCatalogItems.
     labor_prices: Mapped[list["TenantLaborPrice"]] = relationship(back_populates="tenant", cascade="all, delete-orphan")
+    
+    # Roadmap #4 Integration: Direct Tenant ownership of folders/drawings
+    drawing_folders: Mapped[list["DrawingFolder"]] = relationship(back_populates="tenant", cascade="all, delete-orphan")
+    drawings: Mapped[list["Drawing"]] = relationship(back_populates="tenant", cascade="all, delete-orphan")
 
 class User(Base):
     __tablename__ = "users"
@@ -312,32 +324,22 @@ class InventoryItem(Base):
     offer_line_items: Mapped[list["OfferLineItem"]] = relationship(back_populates="inventory_item")
 
 class LaborCatalogItem(Base):
-    """
-    Shared across all tenants. No tenant_id field.
-    """
     __tablename__ = "labor_catalog_items"
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     description: Mapped[str] = mapped_column(String, nullable=False, index=True)
     unit: Mapped[str] = mapped_column(String, default="hour")
     category: Mapped[Optional[str]] = mapped_column(String) 
     recommended_item_ids: Mapped[Optional[str]] = mapped_column(Text) 
-    
-    # Relationship to private tenant prices
     tenant_prices: Mapped[list["TenantLaborPrice"]] = relationship(back_populates="labor_item", cascade="all, delete-orphan")
 
 class TenantLaborPrice(Base):
-    """
-    Links Global Labor items to specific Tenant prices.
-    """
     __tablename__ = "tenant_labor_prices"
     id: Mapped[int] = mapped_column(primary_key=True)
     tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id"), nullable=False)
     labor_item_id: Mapped[int] = mapped_column(ForeignKey("labor_catalog_items.id"), nullable=False)
     price: Mapped[float] = mapped_column(Float, nullable=False)
-    
     tenant: Mapped["Tenant"] = relationship(back_populates="labor_prices")
     labor_item: Mapped["LaborCatalogItem"] = relationship(back_populates="tenant_prices")
-    
     __table_args__ = (UniqueConstraint('tenant_id', 'labor_item_id', name='_tenant_labor_uc'),)
 
 class Offer(Base):
@@ -389,7 +391,9 @@ class DrawingFolder(Base):
     name: Mapped[str] = mapped_column(String, nullable=False)
     project_id: Mapped[int] = mapped_column(ForeignKey("projects.id"), nullable=False)
     parent_id: Mapped[Optional[int]] = mapped_column(ForeignKey("drawing_folders.id"))
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id"), nullable=False) # Roadmap #4 security
     
+    tenant: Mapped["Tenant"] = relationship(back_populates="drawing_folders")
     project: Mapped["Project"] = relationship(back_populates="drawing_folders")
     drawings: Mapped[list["Drawing"]] = relationship(back_populates="folder")
     
@@ -408,24 +412,43 @@ class Drawing(Base):
     project_id = Column(Integer, ForeignKey("projects.id", ondelete="CASCADE"), nullable=False)
     uploader_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     folder_id: Mapped[Optional[int]] = mapped_column(ForeignKey("drawing_folders.id"))
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id"), nullable=False) # Roadmap #4 security
+    
     revision: Mapped[Optional[str]] = mapped_column(String)
-    discipline: Mapped[Optional[str]] = mapped_column(String)
+    discipline: Mapped[Optional[str]] = mapped_column(String) # For 'Electrical', 'Structural' categories
     status: Mapped[Optional[DrawingStatus]] = mapped_column(SQLAlchemyEnum(DrawingStatus), default=DrawingStatus.Draft)
     drawing_date: Mapped[Optional[date]] = mapped_column(Date)
     author: Mapped[Optional[str]] = mapped_column(String)
+    
+    tenant: Mapped["Tenant"] = relationship(back_populates="drawings")
     project = relationship("Project", back_populates="drawings")
     uploader = relationship("User", back_populates="uploaded_drawings")
     folder: Mapped[Optional["DrawingFolder"]] = relationship(back_populates="drawings")
 
-class WiringDiagram(Base):
-    __tablename__ = "wiring_diagrams"
-    id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    title: Mapped[str] = mapped_column(String, nullable=False)
-    category: Mapped[TutorialCategory] = mapped_column(SQLAlchemyEnum(TutorialCategory))
-    description: Mapped[Optional[str]] = mapped_column(Text)
-    tutorial_text: Mapped[Optional[str]] = mapped_column(Text)
-    image_path: Mapped[Optional[str]] = mapped_column(String)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+class Tutorial(Base):
+    __tablename__ = "tutorials"
+
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String, nullable=False)
+    
+    # Use the SQLAlchemy Enum (Capital E) here
+    category = Column(Enum(TutorialCategory), default=TutorialCategory.industrial)
+    
+    description = Column(Text, nullable=True)
+    tutorial_text = Column(Text, nullable=True)
+    image_path = Column(String, nullable=True)
+    file_path = Column(String, nullable=True)
+    
+    created_at = Column(DateTime, default=func.now())
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+    
+    tenant_id = Column(Integer, ForeignKey("tenants.id"))
+    author_id = Column(Integer, ForeignKey("users.id"))
+    
+    author = relationship("User")
+
+    def __repr__(self):
+        return f"<Tutorial {self.title} - {self.category}>"
 
 class TimeLog(Base):
     __tablename__ = "time_logs"
@@ -616,10 +639,8 @@ class LeaveRequest(Base):
     user: Mapped["User"] = relationship(back_populates="leave_requests")
     tenant: Mapped["Tenant"] = relationship(back_populates="leave_requests")
 
-
 class ProjectAssignment(Base):
     __tablename__ = "project_assignments"
-
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"))
     project_id = Column(Integer, ForeignKey("projects.id", ondelete="CASCADE"))
@@ -627,7 +648,6 @@ class ProjectAssignment(Base):
     end_date = Column(Date, nullable=False)
     notes = Column(Text, nullable=True)
     created_at = Column(DateTime, default=func.now())
-
-    # Relationships for easy data fetching
     user = relationship("User", backref="project_assignments")
     project = relationship("Project", backref="assigned_personnel")
+    

@@ -21,7 +21,7 @@ function ProjectTasks({ projectId }) {
             .then(res => {
                 setTasks(Array.isArray(res.data) ? res.data : []);
             })
-            .catch(err => console.error("Task Registry Sync Error:", err))
+            .catch(error => console.error('Task Registry Sync Error:', error))
             .finally(() => setLoading(false));
     }, [projectId]);
 
@@ -49,7 +49,9 @@ function ProjectTasks({ projectId }) {
         <div className="space-y-4">
             {/* Header / Action Bar */}
             <div className="px-6 py-4 flex justify-between items-center bg-gray-50/50 dark:bg-gray-900/20 border-b border-gray-100 dark:border-gray-800">
-                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Site Task Registry</span>
+                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                    {t('project_tasks_header', { defaultValue: 'Site Task Registry' })}
+                </span>
                 <Link 
                     to={`/tasks/new?project_id=${projectId}`}
                     className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all transform active:scale-95 shadow-lg shadow-indigo-100 dark:shadow-none"
@@ -94,7 +96,9 @@ function ProjectTasks({ projectId }) {
                     <div className="py-20 text-center flex flex-col items-center justify-center">
                         <ArchiveBoxIcon className="h-10 w-10 text-gray-100 dark:text-gray-800 mb-4" />
                         <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] italic">
-                            No active work nodes registered for this site
+                            {t('project_tasks_empty', {
+                                defaultValue: 'No active work nodes registered for this site',
+                            })}
                         </p>
                     </div>
                 )}

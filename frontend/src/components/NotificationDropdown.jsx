@@ -4,7 +4,6 @@ import axiosInstance from '../api/axiosInstance';
 import { 
     BellIcon, 
     BellAlertIcon, 
-    // CheckCheckIcon removed from here to resolve conflict
     InboxStackIcon,
     ClockIcon,
     ArrowRightIcon
@@ -85,7 +84,11 @@ function NotificationDropdown() {
             </button>
 
             {isOpen && (
-                <div className="absolute right-0 mt-4 w-96 bg-white dark:bg-gray-800 rounded-[2rem] shadow-2xl border border-gray-100 dark:border-gray-700 overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-200 origin-top-right">
+                /* CHANGE: Changed 'right-0' to 'left-0' or use a fixed offset 
+                   to prevent it from going into the sidebar. 
+                   Increased z-index to 100.
+                */
+                <div className="absolute left-0 md:left-auto md:right-[-10rem] mt-4 w-80 md:w-96 bg-white dark:bg-gray-800 rounded-[2rem] shadow-2xl border border-gray-100 dark:border-gray-700 overflow-hidden z-[100] animate-in fade-in zoom-in-95 duration-200 origin-top-left">
                     <header className="px-6 py-5 bg-gray-50 dark:bg-gray-900/50 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
                         <div>
                             <h3 className="text-xs font-black text-gray-900 dark:text-white uppercase tracking-[0.2em]">Deployment Alerts</h3>
@@ -159,7 +162,6 @@ function NotificationDropdown() {
     );
 }
 
-// Custom Double-Check SVG
 function CheckCheckIcon({ className }) {
     return (
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className={className}>

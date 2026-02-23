@@ -11,6 +11,7 @@ import {
     TrashIcon
 } from '@heroicons/react/24/outline';
 import { format } from 'date-fns';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 function NotificationHubPage() {
     const [notifications, setNotifications] = useState([]);
@@ -21,21 +22,33 @@ function NotificationHubPage() {
         try {
             const res = await axiosInstance.get('/notifications/?unread_only=false');
             setNotifications(res.data);
-        } catch (err) {
-            toast.error("Alert registry unavailable.");
+        } catch (error) {
+            console.error('Failed to fetch notifications:', error);
+            toast.error('Alert registry unavailable.');
         } finally {
             setIsLoading(false);
         }
     };
 
-    useEffect(() => { fetchAll(); }, []);
+    useEffect(() => {
+        fetchAll();
+    }, []);
 
     const markRead = async (id) => {
         try {
             await axiosInstance.put(`/notifications/${id}/read`);
-            setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
-        } catch (err) { toast.error("Update failed."); }
+            setNotifications(prev =>
+                prev.map(n => (n.id === id ? { ...n, is_read: true } : n))
+            );
+        } catch (error) {
+            console.error('Failed to mark notification read:', error);
+            toast.error('Update failed.');
+        }
     };
+
+    if (isLoading) {
+        return <LoadingSpinner text="Loading alert registry..." size="lg" />;
+    }
 
     return (
         <div className="container mx-auto p-6 md:p-10 max-w-5xl animate-in fade-in duration-500">

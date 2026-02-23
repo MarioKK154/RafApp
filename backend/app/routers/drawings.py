@@ -32,7 +32,6 @@ ProjectContentManagerDependency = Annotated[models.User, Depends(security.requir
 async def get_project_from_tenant(project_id: int, db: DbDependency, current_user: CurrentUserDependency) -> models.Project:
     """
     Retrieves a project while verifying tenant access.
-    Superadmins bypass the tenant restriction.
     """
     effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
     project = crud.get_project(db, project_id=project_id, tenant_id=effective_tenant_id)
@@ -42,15 +41,52 @@ async def get_project_from_tenant(project_id: int, db: DbDependency, current_use
 
 async def get_drawing_from_tenant(drawing_id: int, db: DbDependency, current_user: CurrentUserDependency) -> models.Drawing:
     """
-    Retrieves a drawing record and verifies user access via the parent project.
+    Retrieves a drawing record and verifies user access via tenant check.
     """
-    db_drawing = crud.get_drawing(db, drawing_id=drawing_id)
+    # ROADMAP #4 FIX: Pass tenant_id to CRUD
+    db_drawing = crud.get_drawing(db, drawing_id=drawing_id, tenant_id=current_user.tenant_id)
     if not db_drawing:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Drawing not found")
-    
-    # Validation logic is delegated to the project helper
-    await get_project_from_tenant(db_drawing.project_id, db, current_user)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Drawing not found or access denied.")
     return db_drawing
+
+# --- Folder Operations (Roadmap #4) ---
+
+@router.post("/folders/", response_model=schemas.DrawingFolderRead, status_code=status.HTTP_201_CREATED)
+async def create_new_directory(
+    folder_data: schemas.DrawingFolderCreate,
+    db: DbDependency,
+    current_user: ProjectContentManagerDependency
+):
+    """
+    Initializes a new directory node within a project's drawing registry.
+    Supports nested sub-folders via parent_id.
+    """
+    # 1. Verify project exists and user has access to this tenant
+    await get_project_from_tenant(folder_data.project_id, db, current_user)
+    
+    # 2. Security: Force the folder to belong to the user's tenant
+    folder_data.tenant_id = current_user.tenant_id
+    
+    return crud.create_drawing_folder(db=db, folder_data=folder_data)
+
+@router.get("/folders/project/{project_id}", response_model=List[schemas.DrawingFolderRead])
+async def get_project_directories(
+    project_id: int,
+    db: DbDependency,
+    current_user: CurrentUserDependency
+):
+    """
+    Fetches the directory tree for a specific project.
+    """
+    # Verify access
+    await get_project_from_tenant(project_id, db, current_user)
+    
+    # We fetch all folders for the project and tenant. 
+    # The frontend logic we wrote will handle the tree filtering.
+    return db.query(models.DrawingFolder).filter(
+        models.DrawingFolder.project_id == project_id,
+        models.DrawingFolder.tenant_id == current_user.tenant_id
+    ).all()    
 
 # --- Endpoints ---
 
@@ -62,42 +98,31 @@ async def upload_drawing_for_project(
     db: DbDependency,
     current_user: ProjectContentManagerDependency,
     description: Optional[str] = Form(None),
-    revision: Optional[str] = Form(None),
-    discipline: Optional[str] = Form(None),
+    revision: Optional[str] = Form("A"),  # Default to 'A'
+    discipline: Optional[str] = Form("General"),
     status: Optional[schemas.DrawingStatus] = Form(schemas.DrawingStatus.Draft),
     drawing_date: Optional[date] = Form(None),
     author: Optional[str] = Form(None),
+    folder_id: Optional[int] = Form(None), # Crucial for directory placement
     file: UploadFile = File(...)
 ):
-    """
-    Uploads a drawing file (PDF/Image/CAD) to a specific project.
-    Metadata is stored in the database, and the file is saved to disk.
-    """
-    # 1. Verify project exists and access is allowed
     project = await get_project_from_tenant(project_id, db, current_user)
     
-    # 2. Generate unique filename to prevent collisions
     file_extension = Path(file.filename).suffix
     unique_filename = f"{uuid.uuid4()}{file_extension}"
     file_location_on_disk = UPLOAD_DIRECTORY_DRAWINGS / unique_filename
-    
-    # 3. Store relative path for database consistency
     db_filepath_relative = f"static/project_drawings/{unique_filename}"
 
     try:
-        # 4. Save the file to the server filesystem
         with open(file_location_on_disk, "wb+") as file_object:
             shutil.copyfileobj(file.file, file_object)
         file_size = file_location_on_disk.stat().st_size
     except Exception as e:
-        # Cleanup if saving fails
-        if file_location_on_disk.exists():
-            os.remove(file_location_on_disk)
-        raise HTTPException(status_code=500, detail=f"Could not save file: {str(e)}")
+        if file_location_on_disk.exists(): os.remove(file_location_on_disk)
+        raise HTTPException(status_code=500, detail="Storage engine failure.")
     finally:
         await file.close()
 
-    # 5. Record metadata in database
     drawing_data = schemas.DrawingCreate(
         filename=file.filename,
         filepath=str(db_filepath_relative),
@@ -106,15 +131,16 @@ async def upload_drawing_for_project(
         size_bytes=file_size,
         project_id=project.id,
         uploader_id=current_user.id,
+        tenant_id=current_user.tenant_id,
+        folder_id=folder_id,
         revision=revision,
         discipline=discipline,
         status=status,
-        drawing_date=drawing_date,
-        author=author
+        drawing_date=drawing_date or date.today(),
+        author=author or current_user.full_name
     )
     
-    db_drawing = crud.create_drawing_metadata(db=db, drawing=drawing_data)
-    return db_drawing
+    return crud.create_drawing_metadata(db=db, drawing=drawing_data)
 
 @router.put("/{drawing_id}", response_model=schemas.DrawingRead)
 @limiter.limit("100/minute")
@@ -123,12 +149,16 @@ async def update_drawing_details(
     drawing_id: int,
     drawing_update: schemas.DrawingUpdate,
     db: DbDependency,
-    current_user: ProjectContentManagerDependency
+    current_user: ProjectContentManagerDependency # Ensure your role allows this
 ):
     """
-    Updates metadata for an existing drawing (revision number, status, etc.).
+    Updates metadata for an existing drawing node.
+    Used for bumping revisions (A -> B) and changing status.
     """
+    # 1. Fetch drawing and verify tenant access
     db_drawing = await get_drawing_from_tenant(drawing_id, db, current_user)
+    
+    # 2. Apply updates via CRUD
     return crud.update_drawing_metadata(db=db, db_drawing=db_drawing, drawing_update=drawing_update)
 
 @router.get("/project/{project_id}", response_model=List[schemas.DrawingRead])
@@ -139,11 +169,10 @@ async def get_drawings_for_project_endpoint(
     db: DbDependency,
     current_user: CurrentUserDependency
 ):
-    """
-    Lists all drawings associated with a specific project.
-    """
+    # Verify project exists first
     await get_project_from_tenant(project_id, db, current_user)
-    return crud.get_drawings_for_project(db, project_id=project_id)
+    # Pass tenant_id to CRUD for filtering
+    return crud.get_drawings_for_project(db, project_id=project_id, tenant_id=current_user.tenant_id)
 
 @router.get("/download/{drawing_id}", response_class=FileResponse)
 @limiter.limit("30/minute")
@@ -153,16 +182,11 @@ async def download_drawing_file(
     db: DbDependency,
     current_user: CurrentUserDependency
 ):
-    """
-    Downloads the physical drawing file from the server disk.
-    """
     db_drawing = await get_drawing_from_tenant(drawing_id, db, current_user)
-    
-    # Reconstruct full disk path
     full_disk_path = APP_DIR / db_drawing.filepath
     
     if not full_disk_path.is_file():
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Drawing file not found on server disk.")
+        raise HTTPException(status_code=404, detail="File missing on storage.")
     
     return FileResponse(
         path=full_disk_path, 
@@ -178,23 +202,71 @@ async def delete_drawing_metadata_endpoint(
     db: DbDependency,
     current_user: ProjectContentManagerDependency
 ):
-    """
-    Deletes the drawing metadata record and removes the file from the server disk.
-    """
     db_drawing = await get_drawing_from_tenant(drawing_id, db, current_user)
     full_disk_path = APP_DIR / db_drawing.filepath 
 
-    deleted_drawing_meta = crud.delete_drawing_metadata(db=db, drawing_id=db_drawing.id)
+    # Pass tenant_id to CRUD to ensure uploader can only delete their own tenant's data
+    deleted = crud.delete_drawing_metadata(db=db, drawing_id=db_drawing.id, tenant_id=current_user.tenant_id)
     
-    if deleted_drawing_meta:
-        # File removal attempt
+    if deleted:
         try:
             if full_disk_path.is_file():
                 os.remove(full_disk_path)
-        except OSError as e:
-            # We don't fail the request if the file deletion fails (metadata is already gone)
-            print(f"Error deleting file from disk {full_disk_path}: {e}")
-    else:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Drawing metadata could not be deleted.")
-    
+        except OSError:
+            pass # Metadata is gone, ignore disk errors
     return None
+
+@router.post("/{drawing_id}/replace", response_model=schemas.DrawingRead)
+async def replace_drawing_file(
+    drawing_id: int,
+    db: DbDependency,
+    current_user: ProjectContentManagerDependency,
+    file: UploadFile = File(...)
+):
+    """
+    Replaces the physical file of an existing drawing.
+    Automatically increments revision (A->B, B->C) and updates author/date.
+    """
+    # 1. Fetch existing record
+    db_drawing = await get_drawing_from_tenant(drawing_id, db, current_user)
+    
+    # 2. Delete old file from disk
+    old_file_path = APP_DIR / db_drawing.filepath
+    if old_file_path.is_file():
+        try:
+            os.remove(old_file_path)
+        except Exception as e:
+            print(f"Warning: Could not delete old file {old_file_path}: {e}")
+
+    # 3. Save new file
+    file_extension = Path(file.filename).suffix
+    unique_filename = f"{uuid.uuid4()}{file_extension}"
+    new_db_path = f"static/project_drawings/{unique_filename}"
+    full_disk_path = UPLOAD_DIRECTORY_DRAWINGS / unique_filename
+
+    with open(full_disk_path, "wb+") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    # 4. Logic: Bump Revision String (A -> B, etc.)
+    current_rev = db_drawing.revision or "A"
+    try:
+        # If it's a single letter, move to next letter. Otherwise default to current + 1
+        if len(current_rev) == 1 and current_rev.isalpha():
+            next_rev = chr(ord(current_rev.upper()) + 1)
+        else:
+            next_rev = str(int(current_rev) + 1) if current_rev.isdigit() else f"{current_rev}.1"
+    except:
+        next_rev = "B"
+
+    # 5. Update Database Metadata
+    db_drawing.filepath = new_db_path
+    db_drawing.filename = file.filename
+    db_drawing.revision = next_rev
+    db_drawing.author = current_user.full_name
+    db_drawing.drawing_date = date.today()
+    db_drawing.size_bytes = full_disk_path.stat().st_size
+    db_drawing.content_type = file.content_type
+
+    db.commit()
+    db.refresh(db_drawing)
+    return db_drawing

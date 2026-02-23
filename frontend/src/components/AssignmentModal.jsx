@@ -28,8 +28,8 @@ const AssignmentModal = ({ isOpen, onClose, selectedUser, selectedDate, onAssign
             try {
                 const res = await axiosInstance.get('/projects/');
                 setProjects(res.data.filter(p => p.status !== 'Completed'));
-            } catch (err) {
-                console.error("Failed to load project registry.");
+            } catch (error) {
+                console.error('Failed to load project registry.', error);
             }
         };
         if (isOpen) fetchProjects();

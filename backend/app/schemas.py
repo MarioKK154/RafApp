@@ -215,6 +215,8 @@ class ProjectRead(ProjectBase):
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
     project_manager: Optional[UserReadBasic] = None
+    drawings: List["DrawingRead"] = []
+    drawing_folders: List["DrawingFolderRead"] = []
     model_config = ConfigDict(from_attributes=True)
 
 class ProjectAssignMember(BaseModel):
@@ -359,7 +361,7 @@ class InventoryItemReadForBoQ(BaseModel):
     id: int
     name: str
     unit: Optional[str] = None
-    quantity: float
+    quantity: Optional[float] = None
     model_config = ConfigDict(from_attributes=True)
 
 class BoQItemBase(BaseModel):
@@ -440,6 +442,14 @@ class DrawingRead(DrawingBase):
 
 # --- Wiring Diagram Schemas (ROADMAP #5) ---
 
+# For creating new entries
+class WiringDiagramCreate(BaseModel):
+    title: str
+    category: TutorialCategory
+    description: Optional[str] = None
+    tutorial_text: Optional[str] = None
+
+# For reading data back (The one you have, updated)
 class WiringDiagramRead(BaseModel):
     id: int
     title: str
@@ -447,7 +457,11 @@ class WiringDiagramRead(BaseModel):
     description: Optional[str] = None
     tutorial_text: Optional[str] = None
     image_path: Optional[str] = None
+    file_path: Optional[str] = None  # Added for PDF manuals
     created_at: datetime
+    author_id: int                  # Added for tracking who wrote it
+    tenant_id: int                  # Added for security isolation
+    
     model_config = ConfigDict(from_attributes=True)
 
 # --- Time Log Schemas ---
@@ -999,4 +1013,54 @@ class AssignmentRead(AssignmentBase):
     project_name: Optional[str] = None
     project_number: Optional[str] = None
 
+    model_config = ConfigDict(from_attributes=True)
+
+# --- NEW DRAWING SCHEMAS (ROADMAP #4) ---
+
+class DrawingFolderBase(BaseModel):
+    name: str
+    project_id: int
+    parent_id: Optional[int] = None
+
+class DrawingFolderCreate(DrawingFolderBase):
+    tenant_id: int 
+
+class DrawingFolderRead(DrawingFolderBase):
+    id: int
+    tenant_id: int
+    model_config = ConfigDict(from_attributes=True)
+
+class DrawingBase(BaseModel):
+    description: Optional[str] = None
+    project_id: int
+    folder_id: Optional[int] = None
+    revision: Optional[str] = "1.0"
+    discipline: Optional[str] = "General" 
+    status: Optional[DrawingStatus] = DrawingStatus.Draft
+    drawing_date: Optional[date] = None
+    author: Optional[str] = None
+
+class DrawingCreate(DrawingBase):
+    filename: str
+    filepath: str
+    content_type: Optional[str] = None
+    size_bytes: Optional[int] = None
+    uploader_id: int
+    tenant_id: int 
+
+class DrawingRead(DrawingBase):
+    id: int
+    filename: str
+    filepath: str
+    uploaded_at: datetime
+    uploader_id: int
+    tenant_id: int
+    uploader: Optional[UserReadBasic] = None
+    
+    @computed_field
+    @property
+    def url(self) -> str:
+        # Assumes STATIC_BASE_URL is defined in your file
+        return f"{STATIC_BASE_URL}/{self.filepath}"
+    
     model_config = ConfigDict(from_attributes=True)

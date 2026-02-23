@@ -738,41 +738,87 @@ def delete_shop(db: Session, db_shop: models.Shop) -> models.Shop:
     db.delete(db_shop); db.commit(); return db_shop
 
 
-# --- Drawings & Reports & TimeLogs ---
+# --- Updated Drawing & Folder CRUD (Roadmap #4) ---
 
-def update_drawing_metadata(db: Session, db_drawing: models.Drawing, drawing_update: schemas.DrawingUpdate) -> models.Drawing:
-    update_data = drawing_update.model_dump(exclude_unset=True)
-    for key, value in update_data.items():
-        if hasattr(db_drawing, key): setattr(db_drawing, key, value)
-    db.add(db_drawing); db.commit(); db.refresh(db_drawing); return db_drawing
+def get_drawing(db: Session, drawing_id: int, tenant_id: int) -> Optional[models.Drawing]:
+    """Fetches a specific drawing metadata entry, secured by tenant_id."""
+    return db.query(models.Drawing).filter(
+        models.Drawing.id == drawing_id, 
+        models.Drawing.tenant_id == tenant_id
+    ).first()
+
+def get_drawings_for_project(
+    db: Session, 
+    project_id: int, 
+    tenant_id: int,
+    discipline: Optional[str] = None,
+    skip: int = 0, 
+    limit: int = 100
+) -> List[models.Drawing]:
+    """Fetches drawings for a project with optional discipline (category) filtering."""
+    query = db.query(models.Drawing).filter(
+        models.Drawing.project_id == project_id,
+        models.Drawing.tenant_id == tenant_id
+    )
+    if discipline:
+        query = query.filter(models.Drawing.discipline == discipline)
     
-def get_drawing(db: Session, drawing_id: int) -> Optional[models.Drawing]:
-     return db.query(models.Drawing).filter(models.Drawing.id == drawing_id).first()
-
-def get_drawings_for_project(db: Session, project_id: int, skip: int = 0, limit: int = 100) -> List[models.Drawing]:
-     return db.query(models.Drawing).filter(models.Drawing.project_id == project_id).offset(skip).limit(limit).all()
+    return query.order_by(models.Drawing.uploaded_at.desc()).offset(skip).limit(limit).all()
 
 def create_drawing_metadata(db: Session, drawing: schemas.DrawingCreate) -> models.Drawing:
-     db_drawing = models.Drawing(**drawing.model_dump()); db.add(db_drawing); db.commit(); db.refresh(db_drawing); return db_drawing
+    """Saves drawing file metadata to the database."""
+    db_drawing = models.Drawing(**drawing.model_dump())
+    db.add(db_drawing)
+    db.commit()
+    db.refresh(db_drawing)
+    return db_drawing
 
-def delete_drawing_metadata(db: Session, drawing_id: int) -> Optional[models.Drawing]:
-    db_drawing = get_drawing(db, drawing_id)
-    if not db_drawing: return None
-    db.delete(db_drawing); db.commit(); return db_drawing
+def update_drawing_metadata(
+    db: Session, 
+    db_drawing: models.Drawing, 
+    drawing_update: schemas.DrawingUpdate
+) -> models.Drawing:
+    """Updates metadata fields like revision, status, or description."""
+    update_data = drawing_update.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(db_drawing, key, value)
+    db.add(db_drawing)
+    db.commit()
+    db.refresh(db_drawing)
+    return db_drawing
 
+def delete_drawing_metadata(db: Session, drawing_id: int, tenant_id: int) -> Optional[models.Drawing]:
+    """Removes drawing metadata from DB. (Note: File cleanup happens in the router)"""
+    db_drawing = get_drawing(db, drawing_id, tenant_id)
+    if not db_drawing:
+        return None
+    db.delete(db_drawing)
+    db.commit()
+    return db_drawing
 
-# --- ROADMAP #4: Drawing Folders ---
+# --- Drawing Folders (Hierarchy Logic) ---
 
 def create_drawing_folder(db: Session, folder_data: schemas.DrawingFolderCreate) -> models.DrawingFolder:
+    """Creates a new folder or sub-folder for blueprints."""
     db_folder = models.DrawingFolder(**folder_data.model_dump())
-    db.add(db_folder); db.commit(); db.refresh(db_folder); return db_folder
+    db.add(db_folder)
+    db.commit()
+    db.refresh(db_folder)
+    return db_folder
 
-def get_drawings_hierarchy(db: Session, project_id: int) -> List[models.DrawingFolder]:
-    return db.query(models.DrawingFolder).options(joinedload(models.DrawingFolder.drawings)).filter(
+def get_drawings_hierarchy(db: Session, project_id: int, tenant_id: int) -> List[models.DrawingFolder]:
+    """
+    Fetches the top-level folders for a project. 
+    Frontend will use the 'sub_folders' relationship to traverse deeper.
+    """
+    return db.query(models.DrawingFolder).options(
+        joinedload(models.DrawingFolder.drawings),
+        joinedload(models.DrawingFolder.sub_folders)
+    ).filter(
         models.DrawingFolder.project_id == project_id, 
+        models.DrawingFolder.tenant_id == tenant_id,
         models.DrawingFolder.parent_id == None
     ).all()
-
 
 # --- Time Logs ---
 
