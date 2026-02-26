@@ -49,7 +49,8 @@ function CarDetailsPage() {
             setCar(data);
             setServiceNeeded(data.service_needed);
             setServiceNotes(data.service_notes || '');
-        } catch (err) {
+        } catch (error) {
+            console.error('Vehicle fetch failed:', error);
             toast.error("Vehicle registry access denied or not found.");
             navigate('/cars');
         } finally {
@@ -68,7 +69,10 @@ function CarDetailsPage() {
             });
             toast.success("Maintenance registry updated.");
             fetchCar();
-        } catch (err) { toast.error("Failed to update service status."); }
+        } catch (error) {
+            console.error('Service status update failed:', error);
+            toast.error("Failed to update service status.");
+        }
     };
 
     const handleCarAction = async (actionType) => {
@@ -87,8 +91,9 @@ function CarDetailsPage() {
             setOdometer(''); 
             setUsageNotes('');
             fetchCar();
-        } catch (err) { 
-            toast.error(err.response?.data?.detail || "Log submission failed."); 
+        } catch (error) {
+            console.error('Car action failed:', error);
+            toast.error(error.response?.data?.detail || "Log submission failed.");
         } finally {
             setIsActionLoading(false);
         }
@@ -106,7 +111,10 @@ function CarDetailsPage() {
             setTyreBrand(''); 
             setTyrePurchaseDate('');
             fetchCar();
-        } catch (err) { toast.error("Failed to add tyre configuration."); }
+        } catch (error) {
+            console.error('Add tyre set failed:', error);
+            toast.error("Failed to add tyre configuration.");
+        }
     };
 
     if (isLoading) return <LoadingSpinner text="Connecting to vehicle ECU..." />;
@@ -125,7 +133,7 @@ function CarDetailsPage() {
                             <TruckIcon className="h-8 w-8 text-white" />
                         </div>
                         <div>
-                            <h1 className="text-4xl font-black text-gray-900 dark:text-white leading-none uppercase tracking-tighter italic">
+                            <h1 className="text-4xl font-black text-gray-900 dark:text-white leading-none tracking-tighter italic">
                                 {car.make} {car.model}
                             </h1>
                             <div className="flex items-center gap-2 mt-2">

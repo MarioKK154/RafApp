@@ -1,6 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query, Request
 from sqlalchemy.orm import Session
 from typing import Annotated, List, Optional, Literal
+from io import BytesIO
+from datetime import datetime
+
+from fastapi.responses import StreamingResponse
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
 
 from .. import crud, models, schemas, security
 from ..database import get_db
@@ -135,6 +141,94 @@ async def read_single_project_for_tenant(
     if not db_project:
         raise HTTPException(status_code=404, detail="Project node not found.")
     return db_project
+
+
+@router.get("/{project_id}/status-report.pdf")
+@limiter.limit("30/minute")
+async def export_project_status_pdf(
+    request: Request,
+    project_id: int,
+    db: DbDependency,
+    current_user: CurrentUserDependency,
+):
+    """
+    Export a single project's status report as PDF.
+    """
+    effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
+    db_project = crud.get_project(db=db, project_id=project_id, tenant_id=effective_tenant_id)
+    if not db_project:
+        raise HTTPException(status_code=404, detail="Project node not found.")
+
+    # Fetch related tasks for simple summary
+    tasks = crud.get_tasks(db=db, project_id=project_id, skip=0, limit=1000)
+
+    buffer = BytesIO()
+    pdf = canvas.Canvas(buffer, pagesize=A4)
+    width, height = A4
+
+    def write_line(text: str, state: dict) -> None:
+        if state["y"] < 40:
+            pdf.showPage()
+            state["y"] = height - 40
+        pdf.drawString(40, state["y"], text)
+        state["y"] -= 14
+
+    y_state = {"y": height - 40}
+
+    title = "Project Status Report"
+    pdf.setFont("Helvetica-Bold", 16)
+    write_line(title, y_state)
+
+    pdf.setFont("Helvetica", 10)
+    now_str = datetime.utcnow().strftime("%Y-%m-%d %H:%M")
+    write_line(f"Generated for {current_user.full_name or current_user.email} on {now_str} UTC", y_state)
+    y_state["y"] -= 10
+
+    pdf.setFont("Helvetica-Bold", 11)
+    write_line(f"Project: {db_project.name}", y_state)
+    pdf.setFont("Helvetica", 10)
+    write_line(f"Number: {db_project.project_number or db_project.id}", y_state)
+    write_line(f"Status: {db_project.status}", y_state)
+    if getattr(db_project, "client", None):
+        write_line(f"Client: {db_project.client}", y_state)
+    if db_project.address:
+        write_line(f"Address: {db_project.address}", y_state)
+
+    if db_project.description:
+        y_state["y"] -= 6
+        pdf.setFont("Helvetica-Bold", 11)
+        write_line("Description", y_state)
+        pdf.setFont("Helvetica", 10)
+        for line in db_project.description.splitlines():
+            write_line(line, y_state)
+
+    y_state["y"] -= 6
+    pdf.setFont("Helvetica-Bold", 11)
+    write_line("Tasks Summary", y_state)
+    pdf.setFont("Helvetica", 9)
+    if tasks:
+        write_line("ID   Title                           Status        Assignee        Due", y_state)
+        for task in tasks[:100]:
+            assignee = ""
+            if task.assignee:
+                assignee = task.assignee.full_name or task.assignee.email
+            due = task.due_date.strftime("%Y-%m-%d") if getattr(task, "due_date", None) else ""
+            title_short = (task.title[:28] + "...") if len(task.title) > 31 else task.title
+            line = f"{task.id:<4} {title_short:<30} {str(task.status or ''):<12} {assignee[:14]:<14} {due}"
+            write_line(line, y_state)
+    else:
+        write_line("No tasks registered for this project.", y_state)
+
+    pdf.showPage()
+    pdf.save()
+
+    buffer.seek(0)
+    filename = f"project-{project_id}-status.pdf"
+    return StreamingResponse(
+        buffer,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename=\"{filename}\"'},
+    )
 
 @router.put("/{project_id}", response_model=schemas.ProjectRead)
 async def update_existing_project_for_tenant(

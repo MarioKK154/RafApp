@@ -51,8 +51,8 @@ function UserLicenses({ userId }) {
         try {
             const response = await axiosInstance.get(`/users/${userId}/licenses/`);
             setLicenses(response.data);
-        } catch (err) {
-            console.error("Fetch licenses error:", err);
+        } catch (error) {
+            console.error('Fetch licenses error:', error);
             setError('Failed to synchronize certification registry.');
         } finally {
             setIsLoading(false);
@@ -102,8 +102,8 @@ function UserLicenses({ userId }) {
             if (fileInput) fileInput.value = '';
             
             fetchLicenses();
-        } catch (err) {
-            toast.error(err.response?.data?.detail || 'Upload failed.');
+        } catch (error) {
+            toast.error(error.response?.data?.detail || 'Upload failed.');
         } finally {
             setIsUploading(false);
         }
@@ -120,7 +120,8 @@ function UserLicenses({ userId }) {
             await axiosInstance.delete(`/users/licenses/${licenseToDelete.id}`);
             toast.success(`Removed: ${licenseToDelete.description}`);
             fetchLicenses();
-        } catch (err) {
+        } catch (error) {
+            console.error('Delete license failed:', error);
             toast.error('Could not delete document.');
         } finally {
             setIsDeleteModalOpen(false);
@@ -142,6 +143,7 @@ function UserLicenses({ userId }) {
             link.remove();
             window.URL.revokeObjectURL(url);
         } catch (error) {
+            console.error('License download failed:', error);
             toast.error("File retrieval failed.");
         }
     };

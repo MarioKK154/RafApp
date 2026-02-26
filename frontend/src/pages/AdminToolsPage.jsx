@@ -68,8 +68,8 @@ function AdminToolsPage() {
             
             setMainAdminEmail('');
             setConfirmationInput('');
-        } catch (err) {
-            const errorMsg = err.response?.data?.detail || 'Scrub operation failed.';
+        } catch (error) {
+            const errorMsg = error.response?.data?.detail || 'Scrub operation failed.';
             setError(errorMsg);
             toast.error(errorMsg);
         } finally {
@@ -116,7 +116,11 @@ function AdminToolsPage() {
                                 <ShieldExclamationIcon className="h-5 w-5" /> {error}
                             </div>
                         )}
-
+                        {successMessage && (
+                            <div className="mb-6 p-4 bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300 rounded-2xl text-sm font-bold flex items-center gap-2">
+                                <CheckBadgeIcon className="h-5 w-5" /> {successMessage}
+                            </div>
+                        )}
                         <form onSubmit={handleCleanSlateSubmit} className="space-y-6">
                             <div>
                                 <label className="block text-[10px] font-black text-gray-400 uppercase mb-1 ml-1 tracking-widest">Admin Account to Preserve</label>

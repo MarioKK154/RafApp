@@ -8,6 +8,7 @@ import { toast } from 'react-toastify';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { 
     ClockIcon, 
+    ChartBarSquareIcon,
     BriefcaseIcon, 
     ArrowPathIcon,
     InformationCircleIcon,
@@ -16,7 +17,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 function GanttChartPage() {
-    const { t, i18n } = useTranslation();
+    const { t } = useTranslation();
     const { user, isAuthenticated, isLoading: authIsLoading } = useAuth();
     const navigate = useNavigate();
 
@@ -42,8 +43,8 @@ function GanttChartPage() {
             try {
                 const response = await axiosInstance.get('/projects/', { params: { limit: 1000 } });
                 setAllProjects(response.data);
-            } catch (err) {
-                console.error("Gantt Project Fetch Error:", err);
+            } catch (error) {
+                console.error('Gantt project fetch error:', error);
                 toast.error(t('error_loading_projects', { defaultValue: "Failed to load project registry." }));
             } finally {
                 setIsLoadingProjects(false);
@@ -67,7 +68,8 @@ function GanttChartPage() {
             try {
                 const response = await axiosInstance.get('/tasks/', { params });
                 setTasks(response.data);
-            } catch (err) {
+            } catch (error) {
+                console.error('Gantt tasks fetch error:', error);
                 setError(t('timeline_sync_failed', { defaultValue: 'Failed to synchronize task timeline.' }));
                 toast.error('Gantt data sync failed.');
             } finally {
@@ -91,6 +93,17 @@ function GanttChartPage() {
             fetchTasksForGantt();
         }
     }, [fetchTasksForGantt, isLoadingProjects, hasAccess]);
+
+    /** Only Active and Planning projects for Gantt (exclude Completed/Archived) */
+    const activeAndPlanningProjects = useMemo(() => 
+        allProjects.filter(p => p.status === 'Active' || p.status === 'Planning'),
+        [allProjects]
+    );
+    const activeProjectIds = useMemo(() => new Set(activeAndPlanningProjects.map(p => p.id)), [activeAndPlanningProjects]);
+    const ganttTasks = useMemo(() => 
+        tasks.filter(t => activeProjectIds.has(t.project_id)),
+        [tasks, activeProjectIds]
+    );
 
     /**
      * Protocol: Google Charts Selection Handler
@@ -126,14 +139,14 @@ function GanttChartPage() {
             { type: 'string', label: 'Dependencies' },
         ];
 
-        const rows = tasks
+        const rows = ganttTasks
             .filter(task => task.start_date && task.due_date) 
             .map(task => {
                 let percentComplete = 0;
                 if (task.status === 'Done' || task.status === 'Commissioned') percentComplete = 100;
                 else if (task.status === 'In Progress') percentComplete = 50;
 
-                const projectForTask = allProjects.find(p => p.id === task.project_id);
+                const projectForTask = activeAndPlanningProjects.find(p => p.id === task.project_id);
                 const resourceName = projectForTask ? projectForTask.name : 'Unassigned';
 
                 const dependencies = (task.predecessor_ids && task.predecessor_ids.length > 0)
@@ -153,7 +166,7 @@ function GanttChartPage() {
             });
 
         return [columns, ...rows];
-    }, [tasks, allProjects]);
+    }, [ganttTasks, activeAndPlanningProjects]);
 
     const dynamicHeight = chartData.length > 1 ? (chartData.length - 1) * 45 + 100 : 400;
 
@@ -184,19 +197,18 @@ function GanttChartPage() {
     return (
         <div className="container mx-auto p-4 md:p-8 max-w-7xl animate-in fade-in duration-500">
             {/* Header */}
-            <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10">
+            <header className="mb-10">
+                <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                 <div>
                     <div className="flex items-center gap-3 mb-2">
                         <div className="p-3 bg-indigo-600 rounded-2xl shadow-xl shadow-indigo-100 dark:shadow-none">
-                            <ClockIcon className="h-7 w-7 text-white" />
+                            <ChartBarSquareIcon className="h-7 w-7 text-white" />
                         </div>
-                        <h1 className="text-4xl font-black text-gray-900 dark:text-white uppercase tracking-tighter leading-none italic">
-                            Infrastructure Timeline
+                        <h1 className="text-4xl font-black text-gray-900 dark:text-white tracking-tighter leading-none italic">
+                            Gantt chart
                         </h1>
                     </div>
-                    <p className="text-gray-500 text-[10px] font-black uppercase tracking-[0.3em] ml-1">
-                        {isSuperuser ? "Global mission critical oversight" : `Operational log: ${user?.tenant?.name}`}
-                    </p>
+                </div>
                 </div>
             </header>
 
@@ -213,7 +225,7 @@ function GanttChartPage() {
                         className="block w-full pl-12 pr-4 h-14 rounded-2xl border border-gray-100 dark:bg-gray-800 dark:border-gray-700 text-xs font-black uppercase tracking-widest focus:ring-2 focus:ring-indigo-500 transition-all shadow-sm appearance-none cursor-pointer"
                     >
                         <option value="">Integrated Timeline / All Nodes</option>
-                        {allProjects.map(project => (
+                        {activeAndPlanningProjects.map(project => (
                             <option key={project.id} value={project.id}>
                                 {project.name} {isSuperuser ? `[NODE: ${project.tenant_id}]` : ''}
                             </option>
@@ -222,7 +234,7 @@ function GanttChartPage() {
                 </div>
                 <div className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl p-4 flex items-center justify-center gap-3 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 shadow-sm">
                     <AdjustmentsHorizontalIcon className="h-4 w-4 text-indigo-500" /> 
-                    {tasks.length} Interval Nodes
+                    {ganttTasks.length} Interval Nodes
                 </div>
             </div>
 

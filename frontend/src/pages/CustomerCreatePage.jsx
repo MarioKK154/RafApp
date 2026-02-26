@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import axiosInstance from '../api/axiosInstance';
 import { toast } from 'react-toastify';
 import { useAuth } from '../context/AuthContext';
@@ -20,6 +21,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 function CustomerCreatePage() {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const { user, isAuthenticated, isLoading: authIsLoading } = useAuth();
     
@@ -63,7 +65,7 @@ function CustomerCreatePage() {
         setIsSaving(true);
         try {
             await axiosInstance.post('/customers/', formData);
-            toast.success(`Customer "${formData.name}" registered in registry.`);
+            toast.success('Client added.');
             navigate('/customers');
         } catch (err) {
             console.error("Customer Create Error:", err);
@@ -79,20 +81,20 @@ function CustomerCreatePage() {
     return (
         <div className="container mx-auto p-4 md:p-8 max-w-6xl animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* Header / Breadcrumbs */}
-            <div className="mb-10">
+            <div className="mb-10 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5">
                 <Link 
                     to="/customers" 
                     className="flex items-center text-[10px] font-black text-gray-400 hover:text-indigo-600 transition mb-3 uppercase tracking-[0.2em]"
                 >
-                    <ChevronLeftIcon className="h-3 w-3 mr-1" /> Back to Customer Directory
+                    <ChevronLeftIcon className="h-3 w-3 mr-1" /> {t('back_to_customers')}
                 </Link>
                 <div className="flex items-center gap-4">
-                    <div className="p-4 bg-indigo-600 rounded-2xl shadow-xl shadow-indigo-100 dark:shadow-none">
+                    <div className="p-4 bg-indigo-600 rounded-2xl">
                         <UserGroupIcon className="h-8 w-8 text-white" />
                     </div>
                     <div>
-                        <h1 className="text-4xl font-black text-gray-900 dark:text-white leading-none uppercase tracking-tighter italic">
-                            Initialize Client Registry
+                        <h1 className="text-4xl font-black text-gray-900 dark:text-white leading-none tracking-tighter italic">
+                            {t('new_client')}
                         </h1>
                         <p className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.3em] mt-2">
                             Operational Infrastructure / CRM Node

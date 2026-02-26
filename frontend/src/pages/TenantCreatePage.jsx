@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import axiosInstance from '../api/axiosInstance';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
@@ -7,7 +8,6 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import { 
     BuildingOfficeIcon, 
     PhotoIcon, 
-    LinkIcon, 
     ShieldCheckIcon, 
     ChevronLeftIcon,
     ArrowPathIcon,
@@ -17,6 +17,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 function TenantCreatePage() {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const { user: currentUser, isAuthenticated, isLoading: authIsLoading } = useAuth();
     
@@ -25,7 +26,10 @@ function TenantCreatePage() {
         name: '',
         logo_url: '',
         background_image_url: '',
+        background_image_urls: [],
     });
+    const [logoFile, setLogoFile] = useState(null);
+    const [backgroundFiles, setBackgroundFiles] = useState([]);
     const [error, setError] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -58,18 +62,30 @@ function TenantCreatePage() {
         setError('');
         setIsSubmitting(true);
 
-        const dataToSend = {
-            name: formData.name,
-            logo_url: formData.logo_url || null,
-            background_image_url: formData.background_image_url || null,
-        };
-
         try {
-            const response = await axiosInstance.post('/tenants/', dataToSend);
+            const createPayload = { name: formData.name };
+            const response = await axiosInstance.post('/tenants/', createPayload);
+            const tenantId = response.data.id;
+
+            if (logoFile) {
+                const fd = new FormData();
+                fd.append('file', logoFile);
+                await axiosInstance.post(`/tenants/${tenantId}/upload-logo`, fd, {
+                    headers: { 'Content-Type': 'multipart/form-data' },
+                });
+            }
+            for (let i = 0; i < backgroundFiles.length; i++) {
+                const fd = new FormData();
+                fd.append('file', backgroundFiles[i]);
+                await axiosInstance.post(`/tenants/${tenantId}/upload-background`, fd, {
+                    headers: { 'Content-Type': 'multipart/form-data' },
+                });
+            }
+
             toast.success(`Infrastructure Node "${response.data.name}" online.`);
             navigate('/tenants');
         } catch (err) {
-            console.error("Tenant Creation Error:", err);
+            console.error('Tenant creation error:', err);
             const errorMsg = err.response?.data?.detail || 'Node rejection: Please verify input telemetry.';
             setError(errorMsg);
             toast.error(errorMsg);
@@ -84,20 +100,20 @@ function TenantCreatePage() {
     return (
         <div className="container mx-auto p-4 md:p-8 max-w-4xl animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* Navigation Header */}
-            <div className="mb-8">
+            <div className="mb-8 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5">
                 <Link 
                     to="/tenants" 
                     className="flex items-center text-xs font-black text-gray-400 hover:text-orange-600 transition mb-2 uppercase tracking-widest"
                 >
-                    <ChevronLeftIcon className="h-3 w-3 mr-1" /> Back to Registry
+                    <ChevronLeftIcon className="h-3 w-3 mr-1" /> {t('back_to_tenants')}
                 </Link>
                 <div className="flex items-center gap-3">
-                    <div className="p-3 bg-orange-600 rounded-2xl shadow-lg shadow-orange-100 dark:shadow-none">
+                    <div className="p-3 bg-orange-600 rounded-2xl">
                         <ShieldCheckIcon className="h-8 w-8 text-white" />
                     </div>
                     <div>
-                        <h1 className="text-3xl font-black text-gray-900 dark:text-white leading-none tracking-tight uppercase">
-                            Initialize Tenant
+                        <h1 className="text-3xl font-black text-gray-900 dark:text-white leading-none tracking-tight">
+                            {t('new_tenant')}
                         </h1>
                         <p className="text-gray-500 dark:text-gray-400 text-sm mt-1 font-medium">Create a new isolated operational environment.</p>
                     </div>
@@ -134,34 +150,43 @@ function TenantCreatePage() {
                             </h2>
                             
                             <div>
-                                <label className="block text-[10px] font-black text-gray-500 uppercase mb-1 ml-1 tracking-widest">Logo URL</label>
-                                <div className="relative group">
-                                    <LinkIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-orange-500 transition-colors" />
-                                    <input 
-                                        type="url" 
-                                        name="logo_url" 
-                                        value={formData.logo_url} 
-                                        onChange={handleChange} 
-                                        placeholder="https://brand.is/logo.svg"
-                                        disabled={isSubmitting}
-                                        className="pl-12 block w-full h-12 rounded-2xl border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-orange-500 text-sm" 
-                                    />
+                                <label className="block text-[10px] font-black text-gray-500 uppercase mb-1 ml-1 tracking-widest">Logo</label>
+                                <div className="flex flex-wrap items-center gap-3">
+                                    <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl border-2 border-dashed border-gray-200 dark:border-gray-600 hover:border-orange-500 hover:bg-orange-50/50 dark:hover:bg-orange-900/10 transition-colors">
+                                        <PhotoIcon className="h-5 w-5 text-gray-500" />
+                                        <span className="text-xs font-bold">Choose logo image</span>
+                                        <input
+                                            type="file"
+                                            accept=".png,.jpg,.jpeg,.svg,.webp"
+                                            className="sr-only"
+                                            onChange={(e) => setLogoFile(e.target.files?.[0] || null)}
+                                            disabled={isSubmitting}
+                                        />
+                                    </label>
+                                    {logoFile && <span className="text-xs text-gray-500 dark:text-gray-400">{logoFile.name}</span>}
                                 </div>
                             </div>
 
                             <div>
-                                <label className="block text-[10px] font-black text-gray-500 uppercase mb-1 ml-1 tracking-widest">Dashboard Background URL</label>
-                                <div className="relative group">
-                                    <PhotoIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-orange-500 transition-colors" />
-                                    <input 
-                                        type="url" 
-                                        name="background_image_url" 
-                                        value={formData.background_image_url} 
-                                        onChange={handleChange} 
-                                        placeholder="https://brand.is/bg.jpg"
-                                        disabled={isSubmitting}
-                                        className="pl-12 block w-full h-12 rounded-2xl border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-orange-500 text-sm" 
-                                    />
+                                <label className="block text-[10px] font-black text-gray-500 uppercase mb-1 ml-1 tracking-widest">Background photo(s)</label>
+                                <div className="flex flex-wrap items-center gap-3">
+                                    <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl border-2 border-dashed border-gray-200 dark:border-gray-600 hover:border-orange-500 hover:bg-orange-50/50 dark:hover:bg-orange-900/10 transition-colors">
+                                        <PhotoIcon className="h-5 w-5 text-gray-500" />
+                                        <span className="text-xs font-bold">Add background image(s)</span>
+                                        <input
+                                            type="file"
+                                            accept=".png,.jpg,.jpeg,.webp"
+                                            multiple
+                                            className="sr-only"
+                                            onChange={(e) => setBackgroundFiles(prev => [...prev, ...(e.target.files ? Array.from(e.target.files) : [])])}
+                                            disabled={isSubmitting}
+                                        />
+                                    </label>
+                                    {backgroundFiles.length > 0 && (
+                                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                                            {backgroundFiles.length} file(s) selected
+                                        </span>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -195,7 +220,7 @@ function TenantCreatePage() {
                         ) : (
                             <>
                                 <CheckBadgeIcon className="h-6 w-6 mr-2" />
-                                Initialize Node
+                                {t('create_tenant')}
                             </>
                         )}
                     </button>

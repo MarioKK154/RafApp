@@ -10,6 +10,7 @@ import listPlugin from '@fullcalendar/list';
 
 import axiosInstance from '../api/axiosInstance';
 import { toast } from 'react-toastify';
+import Select from 'react-select';
 import LoadingSpinner from '../components/LoadingSpinner';
 import Modal from '../components/Modal';
 
@@ -27,6 +28,7 @@ function CalendarPage() {
     const [activeFilters, setActiveFilters] = useState(['task', 'project', 'meeting', 'custom']);
 
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [modalMode, setModalMode] = useState('view'); // 'view' | 'create'
     const [formData, setFormData] = useState({
         title: '',
         event_type: 'custom',
@@ -34,19 +36,52 @@ function CalendarPage() {
         end: '',
         description: '',
         location: '',
-        attendees: [] 
+        attendeeIds: [],
     });
+
+    const [users, setUsers] = useState([]);
+    const userOptions = useMemo(
+        () =>
+            users.map((u) => ({
+                value: u.id,
+                label: u.full_name || u.email,
+            })),
+        [users]
+    );
+
+    const selectStyles = useMemo(
+        () => ({
+            control: (base, state) => ({
+                ...base,
+                borderRadius: '0.75rem',
+                borderColor: state.isFocused ? '#4f46e5' : '#e5e7eb',
+                boxShadow: state.isFocused ? '0 0 0 1px #4f46e5' : 'none',
+                minHeight: '2.5rem',
+                fontSize: '0.75rem',
+            }),
+            menu: (base) => ({
+                ...base,
+                borderRadius: '0.75rem',
+                overflow: 'hidden',
+                fontSize: '0.75rem',
+            }),
+        }),
+        []
+    );
 
     const fetchData = useCallback(async () => {
         setIsLoading(true);
         try {
-            const [tasksRes, projectsRes, eventsRes] = await Promise.all([
+            const [tasksRes, projectsRes, eventsRes, usersRes] = await Promise.all([
                 axiosInstance.get('/tasks/', { params: { limit: 1000 } }),
                 axiosInstance.get('/projects/', { params: { limit: 1000 } }),
-                axiosInstance.get('/events/', { params: { 
+                axiosInstance.get('/events/', {
+                    params: { 
                     start: new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1).toISOString(),
                     end: new Date(new Date().getFullYear(), new Date().getMonth() + 2, 1).toISOString()
-                }})
+                    },
+                }),
+                axiosInstance.get('/users/', { params: { limit: 500 } }),
             ]);
 
             const taskEvents = tasksRes.data
@@ -90,6 +125,7 @@ function CalendarPage() {
             }));
 
             setEvents([...taskEvents, ...projectEvents, ...customEvents]);
+            setUsers(Array.isArray(usersRes.data) ? usersRes.data : []);
         } catch (error) {
             // Surface a localized error while still logging details for debugging
             console.error('Calendar sync error:', error);
@@ -120,16 +156,80 @@ function CalendarPage() {
         }
 
         const evt = info.event;
+        setModalMode('view');
+        const attendeeIds = Array.isArray(props.attendees) ? props.attendees.map((a) => a.id) : (props.attendee_ids || []);
         setFormData({
-            title: evt.title.replace('[MTG] ', ''),
+            title: evt.title.replace(/^\[MTG\]\s*/, ''),
             event_type: props.type,
-            start: evt.start ? new Date(evt.start).toLocaleString() : '',
-            end: evt.end ? new Date(evt.end).toLocaleString() : '',
+            start: evt.start ? new Date(evt.start).toISOString() : '',
+            end: evt.end ? new Date(evt.end).toISOString() : '',
             description: props.description || '',
             location: props.location || '',
-            attendees: props.attendees || [] 
+            attendeeIds: Array.isArray(attendeeIds) ? attendeeIds : [],
         });
         setIsModalOpen(true);
+    };
+
+    const handleDateClick = (arg) => {
+        const start = arg.date;
+        const end = new Date(start.getTime() + 60 * 60 * 1000); // +1 hour
+        setModalMode('create');
+        setFormData({
+            title: '',
+            event_type: 'custom',
+            start: start.toISOString(),
+            end: end.toISOString(),
+            description: '',
+            location: '',
+            attendeeIds: [],
+        });
+        setIsModalOpen(true);
+    };
+
+    const handleFormChange = (e) => {
+        const { name, value } = e.target;
+        setFormData((prev) => ({
+            ...prev,
+            [name]: value,
+        }));
+    };
+
+    const handleAttendeesChange = (selected) => {
+        setFormData((prev) => ({
+            ...prev,
+            attendeeIds: (selected || []).map((opt) => opt.value),
+        }));
+    };
+
+    const handleCreateEvent = async (e) => {
+        e.preventDefault();
+        try {
+            const payload = {
+                title: formData.title,
+                description: formData.description || null,
+                event_type: formData.event_type,
+                start_time: new Date(formData.start).toISOString(),
+                end_time: new Date(formData.end).toISOString(),
+                location: formData.location || null,
+                project_id: null,
+                attendee_ids: formData.attendeeIds,
+            };
+            await axiosInstance.post('/events/', payload);
+            toast.success(
+                t('calendar_event_created', {
+                    defaultValue: 'Calendar entry created.',
+                })
+            );
+            setIsModalOpen(false);
+            fetchData();
+        } catch (error) {
+            console.error('Create event failed:', error);
+            toast.error(
+                t('calendar_event_create_failed', {
+                    defaultValue: 'Failed to create calendar entry.',
+                })
+            );
+        }
     };
 
     const toggleFilter = (filterId) => {
@@ -158,14 +258,16 @@ function CalendarPage() {
 
     return (
         <div className="container mx-auto p-4 md:p-8 max-w-7xl">
-            <header className="flex justify-between items-center mb-10">
+            <header className="mb-10">
+                <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5 flex justify-between items-center">
                 <div className="flex items-center gap-3">
-                    <div className="p-2 bg-indigo-600 rounded-xl shadow-lg text-white">
+                    <div className="p-2 bg-indigo-600 rounded-xl shadow-lg shadow-indigo-100 dark:shadow-none text-white">
                         <CalendarDaysIcon className="h-6 w-6" />
                     </div>
-                    <h1 className="text-3xl font-black text-gray-900 dark:text-white uppercase italic">
-                        Deployment Hub
+                    <h1 className="text-3xl font-black text-gray-900 dark:text-white italic">
+                        {t('calendar_title')}
                     </h1>
+                </div>
                 </div>
             </header>
 
@@ -202,6 +304,7 @@ function CalendarPage() {
                     locale={i18n.language === 'is' ? 'is' : 'en-gb'}
                     events={filteredEvents}
                     eventClick={handleEventClick}
+                    dateClick={handleDateClick}
                     headerToolbar={{
                         left: 'prev,next today',
                         center: 'title',
@@ -214,22 +317,179 @@ function CalendarPage() {
             <Modal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
-                title="Operational Detail"
+                title={
+                    modalMode === 'create'
+                        ? t('calendar_new_entry', { defaultValue: 'New Calendar Entry' })
+                        : t('calendar_entry_detail', { defaultValue: 'Operational Detail' })
+                }
             >
-                <div className="space-y-6 pt-4">
-                    <div className="flex items-center gap-3 p-4 bg-gray-50 dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700">
-                        <InformationCircleIcon className="h-5 w-5 text-indigo-500" />
-                        <p className="text-xs font-bold text-gray-500 uppercase">
-                            Read-Only Entry
-                        </p>
-                    </div>
+                {modalMode === 'create' ? (
+                    <form onSubmit={handleCreateEvent} className="space-y-5 pt-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 ml-1">
+                                    {t('title', { defaultValue: 'Title' })}
+                                </label>
+                                <input
+                                    name="title"
+                                    type="text"
+                                    value={formData.title}
+                                    onChange={handleFormChange}
+                                    required
+                                    className="modern-input h-10 text-sm"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 ml-1">
+                                    {t('type', { defaultValue: 'Type' })}
+                                </label>
+                                <select
+                                    name="event_type"
+                                    value={formData.event_type}
+                                    onChange={handleFormChange}
+                                    className="modern-input h-10 text-xs font-bold uppercase"
+                                >
+                                    <option value="custom">{t('custom', { defaultValue: 'Custom' })}</option>
+                                    <option value="meeting">{t('meeting', { defaultValue: 'Meeting' })}</option>
+                                    <option value="task">{t('task', { defaultValue: 'Task' })}</option>
+                                </select>
+                            </div>
+                        </div>
 
-                    <div>
-                        <p className="modern-input bg-gray-50 dark:bg-gray-800 flex items-center h-12 px-4 font-bold text-gray-900 dark:text-white">
-                            {formData.title}
-                        </p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 ml-1">
+                                    {t('start', { defaultValue: 'Start' })}
+                                </label>
+                                <input
+                                    type="datetime-local"
+                                    name="start"
+                                    value={formData.start ? formData.start.slice(0, 16) : ''}
+                                    onChange={handleFormChange}
+                                    className="modern-input h-10 text-xs"
+                                    required
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 ml-1">
+                                    {t('end', { defaultValue: 'End' })}
+                                </label>
+                                <input
+                                    type="datetime-local"
+                                    name="end"
+                                    value={formData.end ? formData.end.slice(0, 16) : ''}
+                                    onChange={handleFormChange}
+                                    className="modern-input h-10 text-xs"
+                                    required
+                                />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 ml-1">
+                                {t('location', { defaultValue: 'Location' })}
+                            </label>
+                            <input
+                                type="text"
+                                name="location"
+                                value={formData.location}
+                                onChange={handleFormChange}
+                                className="modern-input h-10 text-xs"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 ml-1">
+                                {t('attendees', { defaultValue: 'Attendees' })}
+                            </label>
+                            <Select
+                                isMulti
+                                options={userOptions}
+                                styles={selectStyles}
+                                value={userOptions.filter((o) => formData.attendeeIds.includes(o.value))}
+                                onChange={handleAttendeesChange}
+                                placeholder={t('select_users', { defaultValue: 'Select people…' })}
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 ml-1">
+                                {t('description', { defaultValue: 'Details' })}
+                            </label>
+                            <textarea
+                                name="description"
+                                rows={3}
+                                value={formData.description}
+                                onChange={handleFormChange}
+                                className="modern-input text-xs py-2"
+                            />
+                        </div>
+
+                        <div className="flex justify-end gap-3 pt-2">
+                            <button
+                                type="button"
+                                onClick={() => setIsModalOpen(false)}
+                                className="h-10 px-4 rounded-xl border border-gray-200 text-[10px] font-black uppercase tracking-widest text-gray-500 hover:bg-gray-50"
+                            >
+                                {t('cancel', { defaultValue: 'Cancel' })}
+                            </button>
+                            <button
+                                type="submit"
+                                className="h-10 px-5 rounded-xl bg-indigo-600 text-white text-[10px] font-black uppercase tracking-[0.2em] hover:bg-indigo-700"
+                            >
+                                {t('save', { defaultValue: 'Save' })}
+                            </button>
+                        </div>
+                    </form>
+                ) : (
+                    <div className="space-y-6 pt-4">
+                        <div className="flex items-center gap-3 p-4 bg-gray-50 dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700">
+                            <InformationCircleIcon className="h-5 w-5 text-indigo-500" />
+                            <p className="text-xs font-bold text-gray-500 uppercase">
+                                {t('read_only_entry', { defaultValue: 'Read-Only Entry' })}
+                            </p>
+                        </div>
+
+                        <div className="space-y-3">
+                            <p className="font-bold text-gray-900 dark:text-white text-sm">
+                                {formData.title}
+                            </p>
+                            {formData.event_type && (
+                                <p className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">
+                                    {formData.event_type === 'meeting' ? t('meeting', { defaultValue: 'Meeting' }) : formData.event_type}
+                                </p>
+                            )}
+                            {(formData.start || formData.end) && (
+                                <p className="text-[11px] text-gray-500 dark:text-gray-400">
+                                    {formData.start ? new Date(formData.start).toLocaleString(i18n.language === 'is' ? 'is-IS' : 'en-GB', { dateStyle: 'short', timeStyle: 'short' }) : '—'}
+                                    {formData.end ? ` → ${new Date(formData.end).toLocaleString(i18n.language === 'is' ? 'is-IS' : 'en-GB', { dateStyle: 'short', timeStyle: 'short' })}` : ''}
+                                </p>
+                            )}
+                            {formData.location && (
+                                <p className="text-[11px] text-gray-600 dark:text-gray-300">
+                                    <span className="font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400">Location:</span> {formData.location}
+                                </p>
+                            )}
+                            {formData.description && (
+                                <p className="text-[11px] text-gray-600 dark:text-gray-300">
+                                    {formData.description}
+                                </p>
+                            )}
+                            {formData.attendeeIds && formData.attendeeIds.length > 0 && (
+                                <div>
+                                    <p className="text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1">
+                                        {t('attendees', { defaultValue: 'Attendees' })}
+                                    </p>
+                                    <ul className="text-[11px] text-gray-700 dark:text-gray-300 space-y-0.5">
+                                        {userOptions.filter((o) => formData.attendeeIds.includes(o.value)).map((o) => (
+                                            <li key={o.value}>{o.label}</li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
+                        </div>
                     </div>
-                </div>
+                )}
             </Modal>
 
             {/* ===== FULL DARK CALENDAR OVERRIDE ===== */}
@@ -237,6 +497,12 @@ function CalendarPage() {
             .dark .fc {
               background-color: #111827 !important;
               color: #ffffff !important;
+            }
+
+            .fc-event,
+            .fc-daygrid-event,
+            .fc-timegrid-event {
+              cursor: pointer;
             }
 
             .dark .fc-scrollgrid,
@@ -276,6 +542,19 @@ function CalendarPage() {
             .dark .fc-toolbar-title {
               color: #ffffff !important;
               font-weight: 900 !important;
+            }
+
+            .dark .fc-toolbar.fc-header-toolbar {
+              background-color: #111827 !important;
+              border-bottom: 1px solid rgba(255,255,255,0.1) !important;
+            }
+
+            .dark .fc-daygrid-day.fc-day-today {
+              background-color: #4f46e5 !important;
+            }
+
+            .dark .fc-daygrid-day.fc-day-today .fc-daygrid-day-number {
+              color: #f9fafb !important;
             }
 
             .dark .fc-button {

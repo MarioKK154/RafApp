@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import axiosInstance from '../api/axiosInstance';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
@@ -59,7 +59,8 @@ function ReportsPage() {
         try {
             const response = await axiosInstance.get(`/reports/project-summary/${projectId}`);
             setReportData(response.data);
-        } catch (err) {
+        } catch (error) {
+            console.error('Report fetch failed:', error);
             toast.error("Telemetry failure: Could not generate project summary.");
             setReportData(null);
         } finally {
@@ -80,7 +81,8 @@ function ReportsPage() {
     return (
         <div className="container mx-auto p-4 md:p-8 max-w-7xl animate-in fade-in duration-500">
             {/* Header Section */}
-            <header className="mb-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+            <header className="mb-10">
+                <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
                 <div>
                     <div className="flex items-center gap-3 mb-1">
                         <div className="p-2 bg-indigo-600 rounded-xl shadow-lg shadow-indigo-100 dark:shadow-none">
@@ -88,9 +90,7 @@ function ReportsPage() {
                         </div>
                         <h1 className="text-3xl font-black text-gray-900 dark:text-white leading-none">Financial Analytics</h1>
                     </div>
-                    <p className="text-gray-500 dark:text-gray-400 text-sm">
-                        {isSuperuser ? "Global Fiscal Oversight" : "Project Performance & Cost Registry"}
-                    </p>
+                </div>
                 </div>
             </header>
 

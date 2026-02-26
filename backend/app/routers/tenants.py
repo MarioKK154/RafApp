@@ -1,7 +1,13 @@
 # backend/app/routers/tenants.py
-from fastapi import APIRouter, Depends, HTTPException, status, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Request, UploadFile, File
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from typing import Annotated, List
+from pathlib import Path
+import os
+import shutil
+import uuid
+import json
 
 from .. import crud, models, schemas, security
 from ..database import get_db
@@ -15,6 +21,16 @@ router = APIRouter(
 )
 
 DbDependency = Annotated[Session, Depends(get_db)]
+
+# Static directory for tenant assets (logo + backgrounds)
+APP_DIR = Path(__file__).resolve().parent.parent
+TENANT_ASSETS_DIR = APP_DIR / "static" / "tenant_assets"
+TENANT_ASSETS_DIR.mkdir(parents=True, exist_ok=True)
+
+ALLOWED_LOGO_EXTENSIONS = {".png", ".jpg", ".jpeg", ".svg", ".webp"}
+ALLOWED_BACKGROUND_EXTENSIONS = {".png", ".jpg", ".jpeg", ".webp"}
+MAX_LOGO_SIZE_MB = 5
+MAX_BACKGROUND_SIZE_MB = 10
 
 @router.post("/", response_model=schemas.TenantRead, status_code=status.HTTP_201_CREATED)
 @limiter.limit("100/minute")
@@ -124,3 +140,93 @@ async def delete_existing_tenant(request: Request, tenant_id: int, db: DbDepende
     
     crud.delete_tenant(db=db, tenant_id=tenant_id)
     return None
+
+
+@router.post("/{tenant_id}/upload-logo", response_class=JSONResponse)
+@limiter.limit("20/minute")
+async def upload_tenant_logo(
+    request: Request,
+    tenant_id: int,
+    file: UploadFile = File(...),
+    db: DbDependency = None,
+):
+    """Upload a logo image for the tenant. Replaces any existing logo. Superuser only."""
+    db_tenant = crud.get_tenant(db, tenant_id=tenant_id)
+    if not db_tenant:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tenant not found")
+
+    ext = Path(file.filename or "").suffix.lower()
+    if ext not in ALLOWED_LOGO_EXTENSIONS:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Logo must be one of: {', '.join(ALLOWED_LOGO_EXTENSIONS)}",
+        )
+    content = await file.read()
+    if len(content) > MAX_LOGO_SIZE_MB * 1024 * 1024:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Logo must be under {MAX_LOGO_SIZE_MB}MB",
+        )
+
+    tenant_dir = TENANT_ASSETS_DIR / str(tenant_id)
+    tenant_dir.mkdir(parents=True, exist_ok=True)
+    # Remove old logo files to avoid clutter
+    for f in tenant_dir.glob("logo.*"):
+        try:
+            f.unlink()
+        except OSError:
+            pass
+    logo_filename = f"logo{ext}"
+    logo_path = tenant_dir / logo_filename
+    with open(logo_path, "wb") as f:
+        f.write(content)
+    url_path = f"/static/tenant_assets/{tenant_id}/{logo_filename}"
+    # Update tenant record so logo_url is set
+    crud.update_tenant(db, db_tenant, schemas.TenantUpdate(logo_url=url_path))
+    return JSONResponse({"url": url_path})
+
+
+@router.post("/{tenant_id}/upload-background", response_class=JSONResponse)
+@limiter.limit("20/minute")
+async def upload_tenant_background(
+    request: Request,
+    tenant_id: int,
+    file: UploadFile = File(...),
+    db: DbDependency = None,
+):
+    """Upload a background image for the tenant. Can be called multiple times for multiple backgrounds. Superuser only."""
+    db_tenant = crud.get_tenant(db, tenant_id=tenant_id)
+    if not db_tenant:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tenant not found")
+
+    ext = Path(file.filename or "").suffix.lower()
+    if ext not in ALLOWED_BACKGROUND_EXTENSIONS:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Background must be one of: {', '.join(ALLOWED_BACKGROUND_EXTENSIONS)}",
+        )
+    content = await file.read()
+    if len(content) > MAX_BACKGROUND_SIZE_MB * 1024 * 1024:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Background must be under {MAX_BACKGROUND_SIZE_MB}MB",
+        )
+
+    tenant_dir = TENANT_ASSETS_DIR / str(tenant_id)
+    tenant_dir.mkdir(parents=True, exist_ok=True)
+    bg_filename = f"bg_{uuid.uuid4().hex[:12]}{ext}"
+    bg_path = tenant_dir / bg_filename
+    with open(bg_path, "wb") as f:
+        f.write(content)
+    url_path = f"/static/tenant_assets/{tenant_id}/{bg_filename}"
+
+    # Append to background_image_urls (JSON array in DB)
+    current = []
+    if db_tenant.background_image_urls:
+        try:
+            current = json.loads(db_tenant.background_image_urls)
+        except Exception:
+            pass
+    current.append(url_path)
+    crud.update_tenant(db, db_tenant, schemas.TenantUpdate(background_image_urls=current))
+    return JSONResponse({"url": url_path})

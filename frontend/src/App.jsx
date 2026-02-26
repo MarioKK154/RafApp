@@ -5,6 +5,7 @@ import 'react-toastify/dist/ReactToastify.css';
 
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Sidebar from './components/Sidebar'; 
+import { useTenantBranding } from './hooks/useTenantBranding';
 
 // --- FEATURE PAGE IMPORTS ---
 import LoginPage from './pages/LoginPage';
@@ -80,13 +81,27 @@ const ProtectedRoute = ({ children }) => {
     return isAuthenticated ? children : <Navigate to="/login" replace />;
 };
 
-function App() {
-    return (
-        <AuthProvider>
-            <div className="flex h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 font-sans selection:bg-indigo-100 selection:text-indigo-700">
-                <Sidebar />
+function AppShell() {
+    const { background } = useTenantBranding();
+    const { isAuthenticated } = useAuth();
 
-                <main className="flex-1 overflow-x-hidden overflow-y-auto scroll-smooth custom-scrollbar">
+    const style = background && isAuthenticated
+        ? {
+            backgroundImage: `url(${background})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundAttachment: 'fixed',
+          }
+        : {};
+
+    return (
+        <div
+            className="flex h-screen bg-gray-50/95 dark:bg-gray-900/95 text-gray-900 dark:text-gray-100 font-sans selection:bg-indigo-100 selection:text-indigo-700"
+            style={style}
+        >
+            <Sidebar />
+
+            <main className="flex-1 overflow-x-hidden overflow-y-auto scroll-smooth custom-scrollbar">
                     <Routes>
                         <Route path="/login" element={<LoginPage />} />
 
@@ -166,12 +181,19 @@ function App() {
                     </Routes>
                 </main>
 
-                <ToastContainer
-                    position="bottom-right"
-                    autoClose={4000}
-                    theme="colored"
-                />
-            </div>
+            <ToastContainer
+                position="bottom-right"
+                autoClose={4000}
+                theme="colored"
+            />
+        </div>
+    );
+}
+
+function App() {
+    return (
+        <AuthProvider>
+            <AppShell />
         </AuthProvider>
     );
 }

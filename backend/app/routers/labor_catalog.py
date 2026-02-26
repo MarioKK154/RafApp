@@ -25,7 +25,7 @@ def get_item_for_user(item_id: int, db: DbDependency, current_user: CurrentUserD
     Superusers bypass the tenant check.
     """
     effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
-    db_item = crud.get_labor_catalog_item(db, item_id=item_id, tenant_id=effective_tenant_id)
+    db_item = crud.get_labor_catalog_item(db, item_id=item_id)
     if not db_item:
         raise HTTPException(status_code=404, detail="Labor catalog item not found or access denied.")
     return db_item

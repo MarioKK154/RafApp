@@ -1,11 +1,12 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import axiosInstance from '../api/axiosInstance';
 import { format, startOfWeek, addDays, eachDayOfInterval } from 'date-fns';
 import { 
     ChevronLeftIcon, 
     ChevronRightIcon, 
     PlusIcon,
-    TrashIcon // Added for delete visual
+    TrashIcon,
+    Squares2X2Icon
 } from '@heroicons/react/24/outline';
 import { toast } from 'react-toastify';
 import AssignmentModal from '../components/AssignmentModal'; 
@@ -28,7 +29,7 @@ const SchedulingGridPage = () => {
         return eachDayOfInterval({ start, end: addDays(start, 13) });
     }, [viewDate]);
 
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         setIsLoading(true);
         try {
             const startStr = format(days[0], 'yyyy-MM-dd');
@@ -41,14 +42,15 @@ const SchedulingGridPage = () => {
             
             setUsers(usersRes.data);
             setAssignments(assignRes.data);
-        } catch (err) {
+        } catch (error) {
+            console.error('Scheduling grid sync failed:', error);
             toast.error("Failed to sync resource grid.");
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [days]);
 
-    useEffect(() => { fetchData(); }, [days]);
+    useEffect(() => { fetchData(); }, [fetchData]);
 
     // Handle Deletion of an Assignment Node
     const handleDeleteAssignment = async (assignmentId, projectName, userName) => {
@@ -57,7 +59,8 @@ const SchedulingGridPage = () => {
                 await axiosInstance.delete(`/assignments/${assignmentId}`);
                 toast.success("Assignment purged from registry.");
                 fetchData(); // Refresh grid
-            } catch (err) {
+            } catch (error) {
+                console.error('Delete assignment failed:', error);
                 toast.error("Failed to delete assignment.");
             }
         }
@@ -83,14 +86,22 @@ const SchedulingGridPage = () => {
 
     return (
         <div className="p-6 md:p-10 animate-in fade-in duration-500">
-            <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10">
-                <div>
-                    <h1 className="text-4xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic leading-none">
-                        Resource Matrix
+            {isLoading && (
+                <div className="fixed inset-0 bg-black/20 flex items-center justify-center z-50">
+                    <div className="bg-white dark:bg-gray-800 px-6 py-4 rounded-2xl shadow-xl text-sm font-bold text-gray-700 dark:text-gray-200">
+                        Syncing schedule...
+                    </div>
+                </div>
+            )}
+            <header className="mb-10">
+                <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                <div className="flex items-center gap-3">
+                    <div className="p-2 bg-indigo-600 rounded-xl shadow-lg shadow-indigo-100 dark:shadow-none">
+                        <Squares2X2Icon className="h-6 w-6 text-white" />
+                    </div>
+                    <h1 className="text-4xl font-black text-gray-900 dark:text-white tracking-tighter italic leading-none">
+                        Schedule
                     </h1>
-                    <p className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.3em] mt-3">
-                        Macro-Level Personnel Deployment
-                    </p>
                 </div>
 
                 <div className="flex items-center gap-4 bg-white dark:bg-gray-800 p-2 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
@@ -103,6 +114,7 @@ const SchedulingGridPage = () => {
                     <button onClick={() => setViewDate(addDays(viewDate, 7))} className="p-2.5 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-xl transition text-gray-400 hover:text-indigo-600">
                         <ChevronRightIcon className="h-5 w-5 stroke-[2.5px]" />
                     </button>
+                </div>
                 </div>
             </header>
 

@@ -45,7 +45,8 @@ function NotificationDropdown() {
         try {
             await axiosInstance.put(`/notifications/${id}/read`);
             fetchNotifications();
-        } catch (err) {
+        } catch (error) {
+            console.error('Mark notification read failed:', error);
             toast.error("Registry update failed.");
         }
     };
@@ -55,7 +56,8 @@ function NotificationDropdown() {
             await axiosInstance.put('/notifications/read-all');
             fetchNotifications();
             toast.success("All alerts cleared.");
-        } catch (err) {
+        } catch (error) {
+            console.error('Mark all read failed:', error);
             toast.error("Clear protocol failed.");
         }
     };

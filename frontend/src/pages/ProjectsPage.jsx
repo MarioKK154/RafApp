@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import axiosInstance from '../api/axiosInstance';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
@@ -35,6 +36,7 @@ function useDebounce(value, delay) {
 }
 
 const ProjectsPage = () => {
+    const { t } = useTranslation();
     const { user, isLoading: authLoading } = useAuth();
     const navigate = useNavigate();
 
@@ -66,8 +68,9 @@ const ProjectsPage = () => {
                 }
             });
             setProjects(Array.isArray(response.data) ? response.data : []);
-        } catch (err) {
-            toast.error('Registry synchronization failed.');
+        } catch (error) {
+            console.error('Projects fetch failed:', error);
+            toast.error(t('sync_registry_failed'));
         } finally {
             setIsLoading(false);
         }
@@ -113,7 +116,8 @@ const ProjectsPage = () => {
             await axiosInstance.post(`/projects/${projectId}/archive`);
             toast.success("Node Archived & Verified.");
             fetchProjects();
-        } catch (err) {
+        } catch (error) {
+            console.error('Archive failed:', error);
             toast.error("Archival protocol denied.");
         }
     };
@@ -124,8 +128,9 @@ const ProjectsPage = () => {
             await axiosInstance.delete(`/projects/${projectToDelete.id}`);
             toast.success(`Node Purged.`);
             fetchProjects();
-        } catch (err) {
-            toast.error('Purge failed.');
+        } catch (error) {
+            console.error('Delete project failed:', error);
+            toast.error(t('purge_failed'));
         } finally {
             setIsDeleteModalOpen(false);
             setProjectToDelete(null);
@@ -133,28 +138,29 @@ const ProjectsPage = () => {
     };
 
     if (authLoading || (isLoading && projects.length === 0)) {
-        return <LoadingSpinner text="Accessing Project Registry..." size="lg" />;
+        return <LoadingSpinner text={t('accessing_project_registry')} size="lg" />;
     }
 
     return (
         <div className="container mx-auto p-4 md:p-8 max-w-7xl animate-in fade-in duration-500">
-            <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-12">
+            <header className="mb-12">
+                <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
                 <div className="flex items-center gap-4">
                     <div className="p-4 bg-indigo-600 rounded-2xl shadow-xl">
                         <BriefcaseIcon className="h-8 w-8 text-white" />
                     </div>
                     <div>
-                        <h1 className="text-4xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic leading-none">Projects</h1>
-                        <p className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.3em] mt-2 italic">DEPLOYMENT MATRIX</p>
+                        <h1 className="text-4xl font-black text-gray-900 dark:text-white tracking-tighter italic leading-none">{t('projects')}</h1>
                     </div>
                 </div>
                 
                 <button 
                     onClick={() => navigate('/projects/new')}
-                    className="h-14 px-8 bg-gray-900 dark:bg-indigo-600 hover:bg-black text-white text-xs font-black uppercase tracking-widest rounded-2xl transition transform active:scale-95 shadow-xl flex items-center gap-2"
+                    className="h-14 px-8 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-700 text-white text-xs font-black uppercase tracking-widest rounded-2xl transition transform active:scale-95 shadow-xl shadow-indigo-100 dark:shadow-none flex items-center gap-2"
                 >
-                    <PlusIcon className="h-5 w-5 stroke-[3px]" /> Initialize Project
+                    <PlusIcon className="h-5 w-5 stroke-[3px]" /> {t('new_project')}
                 </button>
+                </div>
             </header>
 
             {/* Tactical Filtering Console */}
@@ -163,7 +169,7 @@ const ProjectsPage = () => {
                     <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-indigo-500 transition-colors" />
                     <input
                         type="text"
-                        placeholder="Query by Node ID, Title, or Site..."
+                        placeholder={t('query_by_node')}
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="modern-input pl-12 h-14 !rounded-[1.25rem] font-bold"
@@ -176,16 +182,16 @@ const ProjectsPage = () => {
                         onChange={e => setStatusFilter(e.target.value)} 
                         className="modern-input pl-12 h-14 !rounded-[1.25rem] text-[10px] font-black uppercase tracking-widest appearance-none cursor-pointer"
                     >
-                        <option value="Active">Active Operations</option>
-                        <option value="Planning">Planning Phase</option>
-                        <option value="Commissioned">Commissioned (Review)</option>
-                        <option value="Completed">Archived / Verified</option>
-                        <option value="All">Full Sector History</option>
+                        <option value="Active">{t('active_operations')}</option>
+                        <option value="Planning">{t('planning_phase')}</option>
+                        <option value="Commissioned">{t('commissioned_review')}</option>
+                        <option value="Completed">{t('archived_verified')}</option>
+                        <option value="All">{t('full_sector_history')}</option>
                     </select>
                 </div>
                 <div className="lg:col-span-3 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-[1.25rem] px-6 flex items-center justify-center gap-3 text-[10px] font-black uppercase tracking-widest text-gray-400 shadow-sm">
                     <ClockIcon className="h-4 w-4 text-indigo-500" /> 
-                    <span className="text-gray-900 dark:text-gray-100">{structuredProjects.length} Nodes in View</span>
+                    <span className="text-gray-900 dark:text-gray-100">{t('nodes_in_view', { count: structuredProjects.length })}</span>
                 </div>
             </div>
 
@@ -212,16 +218,16 @@ const ProjectsPage = () => {
                 )) : (
                     <div className="text-center py-32 bg-white dark:bg-gray-800 rounded-[3rem] border-2 border-dashed border-gray-100 dark:border-gray-700">
                         <ArchiveBoxIcon className="h-16 w-16 text-gray-200 dark:text-gray-700 mx-auto mb-6" />
-                        <h3 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">Sector Empty</h3>
-                        <p className="text-[10px] text-gray-400 font-black uppercase tracking-[0.2em] mt-3">Adjust filters or initialize a new node.</p>
+                        <h3 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">{t('sector_empty')}</h3>
+                        <p className="text-[10px] text-gray-400 font-black uppercase tracking-[0.2em] mt-3">{t('adjust_filters_or_new')}</p>
                     </div>
                 )}
             </div>
 
             <ConfirmationModal 
                 isOpen={isDeleteModalOpen}
-                title="Purge Protocol"
-                message={`CRITICAL: Are you sure you want to permanently delete Node ${projectToDelete?.project_number || ''}?`}
+                title={t('purge_protocol')}
+                message={t('purge_project_confirm', { node: projectToDelete?.project_number || '' })}
                 onConfirm={confirmDelete}
                 onCancel={() => setIsDeleteModalOpen(false)}
                 type="danger"
@@ -233,6 +239,14 @@ const ProjectsPage = () => {
 function ProjectCard({ project, isChild = false, isAdmin, onArchive, onDelete }) {
     const isCommissioned = project.displayStatus === 'Commissioned';
     const isCompleted = project.displayStatus === 'Completed';
+
+    const statusBadgeClass = isCompleted
+        ? 'bg-gray-900 text-white'
+        : project.displayStatus === 'Active'
+            ? 'bg-green-50 text-green-600 border-green-100'
+            : project.displayStatus === 'Commissioned'
+                ? 'bg-blue-50 text-blue-600 border-blue-100 animate-pulse'
+                : 'bg-orange-50 text-orange-600 border-orange-100';
 
     return (
         <div className={`group bg-white dark:bg-gray-800 rounded-[2rem] border shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden ${
@@ -254,12 +268,7 @@ function ProjectCard({ project, isChild = false, isAdmin, onArchive, onDelete })
                                         {project?.name}
                                     </Link>
                                 </h2>
-                                <span className={`px-3 py-0.5 text-[8px] font-black uppercase tracking-widest rounded-full border ${
-                                    project.displayStatus === 'Active' ? 'bg-green-50 text-green-600 border-green-100' :
-                                    project.displayStatus === 'Completed' ? 'bg-gray-900 text-white' :
-                                    project.displayStatus === 'Commissioned' ? 'bg-blue-50 text-blue-600 border-blue-100 animate-pulse' :
-                                    'bg-orange-50 text-orange-600 border-orange-100'
-                                }`}>
+                                <span className={`px-3 py-0.5 text-[8px] font-black uppercase tracking-widest rounded-full border ${statusBadgeClass}`}>
                                     {project.displayStatus}
                                 </span>
                             </div>

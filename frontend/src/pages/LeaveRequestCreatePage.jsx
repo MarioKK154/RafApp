@@ -7,7 +7,7 @@ import { CalendarIcon, ChatBubbleLeftEllipsisIcon } from '@heroicons/react/24/ou
 
 const LeaveRequestCreatePage = () => {
     const navigate = useNavigate();
-    const { user: currentUser } = useAuth();
+    const { user: _currentUser } = useAuth();
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const [formData, setFormData] = useState({

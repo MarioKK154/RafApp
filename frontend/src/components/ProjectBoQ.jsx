@@ -96,7 +96,8 @@ function ProjectBoQ({ projectId }) {
             await axiosInstance.delete(`/boq/items/${boqItemId}`);
             toast.success(`"${itemName}" node purged.`);
             fetchData(); 
-        } catch (err) {
+        } catch (error) {
+            console.error('Remove BoQ item failed:', error);
             toast.error('Registry Error: Could not remove node.');
         }
     };

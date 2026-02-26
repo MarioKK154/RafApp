@@ -29,7 +29,7 @@ function TaskPhotos({ taskId }) {
     // Modal State
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [photoToDelete, setPhotoToDelete] = useState(null);
-    const [downloadingPhotoId, setDownloadingPhotoId] = useState(null);
+    const [, setDownloadingPhotoId] = useState(null);
 
     // Permission Logic
     const isSuperuser = user?.is_superuser;
@@ -45,8 +45,8 @@ function TaskPhotos({ taskId }) {
         try {
             const response = await axiosInstance.get(`/task_photos/task/${taskId}`);
             setPhotos(response.data);
-        } catch (err) {
-            console.error("Fetch photos error:", err);
+        } catch (error) {
+            console.error('Fetch photos error:', error);
             setError('Unable to load photo gallery.');
         } finally {
             setIsLoading(false);
@@ -87,8 +87,8 @@ function TaskPhotos({ taskId }) {
             const fileInput = document.getElementById(`file-upload-${taskId}`);
             if (fileInput) fileInput.value = '';
             fetchPhotos();
-        } catch (err) {
-            toast.error(err.response?.data?.detail || "Upload failed.");
+        } catch (error) {
+            toast.error(error.response?.data?.detail || "Upload failed.");
         } finally {
             setIsUploading(false);
         }
@@ -108,7 +108,8 @@ function TaskPhotos({ taskId }) {
             link.click();
             link.remove();
             window.URL.revokeObjectURL(url);
-        } catch (err) {
+        } catch (error) {
+            console.error('Download failed:', error);
             toast.error("Download failed.");
         } finally {
             setDownloadingPhotoId(null);
@@ -126,7 +127,8 @@ function TaskPhotos({ taskId }) {
             await axiosInstance.delete(`/task_photos/${photoToDelete.id}`);
             toast.success("Photo removed.");
             fetchPhotos();
-        } catch (err) {
+        } catch (error) {
+            console.error('Delete photo failed:', error);
             toast.error("Delete failed.");
         } finally {
             setIsDeleteModalOpen(false);
@@ -142,8 +144,7 @@ function TaskPhotos({ taskId }) {
                 <CameraIcon className="h-6 w-6 text-indigo-600" />
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white">Evidence & Site Photos</h2>
             </div>
-
-            {/* Upload Section */}
+            {error && <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 text-xs rounded-xl">{error}</div>}
             {isAuthenticated && (
                 <div className="mb-8 p-6 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-100 dark:border-gray-700">
                     <form onSubmit={handleUpload} className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">

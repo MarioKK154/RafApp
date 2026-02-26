@@ -102,7 +102,7 @@ function ShopEditPage() {
                         <BuildingStorefrontIcon className="h-6 w-6 text-white" />
                     </div>
                     <div>
-                        <h1 className="text-2xl font-black text-gray-900 dark:text-white leading-none uppercase tracking-tight">
+                        <h1 className="text-2xl font-black text-gray-900 dark:text-white leading-none tracking-tight">
                             Edit Vendor: {formData.name}
                         </h1>
                         <div className="flex items-center gap-2 mt-2">

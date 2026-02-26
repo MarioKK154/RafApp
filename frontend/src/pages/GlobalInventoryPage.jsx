@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import axiosInstance from '../api/axiosInstance';
@@ -22,7 +22,6 @@ import {
 
 function GlobalInventoryPage() {
     const { t } = useTranslation();
-    const navigate = useNavigate();
     const { user } = useAuth();
     
     const [items, setItems] = useState([]);
@@ -42,8 +41,8 @@ function GlobalInventoryPage() {
                 params: { search: searchTerm, limit: 1000 } 
             });
             setItems(Array.isArray(response.data) ? response.data : []);
-        } catch (err) {
-            console.error("Registry Sync Failure:", err);
+        } catch (error) {
+            console.error('Registry sync failure:', error);
             toast.error(t('error_loading_inventory', { defaultValue: 'Connection to registry lost.' }));
             setItems([]);
         } finally {
@@ -60,19 +59,17 @@ function GlobalInventoryPage() {
     return (
         <div className="container mx-auto p-4 md:p-8 max-w-7xl animate-in fade-in duration-500">
             {/* Header Area */}
-            <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-12">
+            <header className="mb-12">
+                <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
                 <div>
                     <div className="flex items-center gap-4 mb-3">
                         <div className="p-4 bg-indigo-600 rounded-2xl shadow-xl shadow-indigo-100 dark:shadow-none">
                             <CircleStackIcon className="h-8 w-8 text-white" />
                         </div>
                         <div>
-                            <h1 className="text-4xl font-black text-gray-900 dark:text-white leading-none tracking-tighter uppercase italic">
+                            <h1 className="text-4xl font-black text-gray-900 dark:text-white leading-none tracking-tighter italic">
                                 {t('inventory')}
                             </h1>
-                            <p className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.3em] mt-2">
-                                CENTRALIZED LOGISTICS CLUSTER
-                            </p>
                         </div>
                     </div>
                 </div>
@@ -88,12 +85,13 @@ function GlobalInventoryPage() {
                     {canManageInventory && (
                         <Link 
                             to="/inventory/new"
-                            className="flex-1 md:flex-none h-14 px-8 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-[0.2em] rounded-2xl shadow-lg transition transform active:scale-95 flex items-center justify-center gap-2"
+                            className="flex-1 md:flex-none h-14 px-8 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-[0.2em] rounded-2xl shadow-lg shadow-indigo-100 dark:shadow-none transition transform active:scale-95 flex items-center justify-center gap-2"
                         >
                             <PlusIcon className="h-4 w-4 stroke-[3px]" /> 
                             {t('create_new')}
                         </Link>
                     )}
+                </div>
                 </div>
             </header>
 

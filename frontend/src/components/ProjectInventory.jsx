@@ -43,8 +43,8 @@ function ProjectInventory({ projectId }) {
             ]);
             setProjectInventory(Array.isArray(projectInvResponse.data) ? projectInvResponse.data : []);
             setInventoryCatalog(Array.isArray(catalogResponse.data) ? catalogResponse.data : []);
-        } catch (err) {
-            console.error("Inventory Fetch Error:", err);
+        } catch (error) {
+            console.error('Inventory fetch error:', error);
             setError('Registry Link Failure: Failed to load site stock.');
             toast.error('Could not sync project stock with warehouse.');
         } finally {
@@ -83,8 +83,8 @@ function ProjectInventory({ projectId }) {
             setLocation('');
             
             fetchData(); 
-        } catch (err) {
-            toast.error(err.response?.data?.detail || 'Allocation failure.');
+        } catch (error) {
+            toast.error(error.response?.data?.detail || 'Allocation failure.');
         } finally {
             setIsSubmitting(false);
         }
@@ -100,7 +100,8 @@ function ProjectInventory({ projectId }) {
             await axiosInstance.delete(`/project-inventory/${projectInventoryItemId}`);
             toast.success(`"${itemName}" node purged from site.`);
             fetchData();
-        } catch (err) {
+        } catch (error) {
+            console.error('Remove item failed:', error);
             toast.error('Registry Error: Failed to remove node.');
         }
     };
@@ -120,6 +121,11 @@ function ProjectInventory({ projectId }) {
 
     return (
         <div className="bg-white dark:bg-gray-800 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+            {error && (
+                <div className="p-3 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 text-xs font-medium text-center">
+                    {error}
+                </div>
+            )}
             {/* Module Header */}
             <div className="p-8 border-b border-gray-50 dark:border-gray-700 flex items-center justify-between">
                 <div className="flex items-center gap-3">

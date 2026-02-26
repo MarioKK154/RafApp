@@ -73,7 +73,8 @@ function CreateTutorialModal({ isOpen, onClose, onSuccess }) {
             
             onSuccess();
             onClose();
-        } catch (err) {
+        } catch (error) {
+            console.error('Create tutorial failed:', error);
             toast.error("Registry injection failed.");
         } finally {
             setIsSubmitting(false);

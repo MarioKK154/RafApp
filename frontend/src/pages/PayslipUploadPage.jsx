@@ -7,7 +7,7 @@ import { CloudArrowUpIcon, UserIcon, BanknotesIcon } from '@heroicons/react/24/o
 
 const PayslipUploadPage = () => {
     const navigate = useNavigate();
-    const { user: currentUser } = useAuth();
+    const { user: _currentUser } = useAuth();
     const [users, setUsers] = useState([]);
     const [loadingUsers, setLoadingUsers] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -88,9 +88,10 @@ const PayslipUploadPage = () => {
                             required
                             value={formData.user_id}
                             onChange={handleChange}
+                            disabled={loadingUsers}
                             className="w-full rounded-xl border-gray-300 dark:bg-gray-700 dark:text-white"
                         >
-                            <option value="">-- Select Employee --</option>
+                            <option value="">{loadingUsers ? 'Loading employees...' : '-- Select Employee --'}</option>
                             {users.map(u => (
                                 <option key={u.id} value={u.id}>{u.full_name || u.email} ({u.role})</option>
                             ))}

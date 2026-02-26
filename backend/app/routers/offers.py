@@ -2,6 +2,12 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
 from typing import Annotated, List
+from io import BytesIO
+from datetime import datetime
+
+from fastapi.responses import StreamingResponse
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
 
 from .. import crud, models, schemas, security
 from ..database import get_db
@@ -215,3 +221,112 @@ def remove_item_from_an_offer(
         
     crud.remove_line_item_from_offer(db, db_item=db_item)
     return None
+
+
+@router.get("/{offer_id}/pdf")
+@limiter.limit("30/minute")
+def export_offer_pdf(
+    request: Request,
+    offer_id: int,
+    db: DbDependency,
+    current_user: CurrentUserDependency,
+):
+    """
+    Export a single offer as a client-facing PDF quotation.
+    """
+    offer = get_offer_and_check_auth(offer_id, db, current_user)
+
+    buffer = BytesIO()
+    pdf = canvas.Canvas(buffer, pagesize=A4)
+    width, height = A4
+
+    def write_line(text: str, state: dict) -> None:
+        if state["y"] < 40:
+            pdf.showPage()
+            state["y"] = height - 40
+        pdf.drawString(40, state["y"], text)
+        state["y"] -= 14
+
+    y_state = {"y": height - 40}
+
+    title = "Offer / Quotation"
+    pdf.setFont("Helvetica-Bold", 18)
+    write_line(title, y_state)
+
+    pdf.setFont("Helvetica", 10)
+    now_str = datetime.utcnow().strftime("%Y-%m-%d %H:%M")
+    write_line(f"Generated on {now_str} UTC", y_state)
+    y_state["y"] -= 6
+
+    pdf.setFont("Helvetica-Bold", 11)
+    write_line(f"Offer: {offer.offer_number or offer.id}", y_state)
+    pdf.setFont("Helvetica", 10)
+    status_text = offer.status.value if isinstance(offer.status, models.OfferStatus) else offer.status or ""
+    write_line(f"Status: {status_text}", y_state)
+    write_line(f"Project ID: {offer.project_id}", y_state)
+
+    y_state["y"] -= 4
+    pdf.setFont("Helvetica-Bold", 11)
+    write_line("Client", y_state)
+    pdf.setFont("Helvetica", 10)
+    if offer.client_name:
+        write_line(offer.client_name, y_state)
+    if offer.client_address:
+        write_line(offer.client_address, y_state)
+    if offer.client_email:
+        write_line(offer.client_email, y_state)
+
+    if offer.title:
+        y_state["y"] -= 4
+        pdf.setFont("Helvetica-Bold", 11)
+        write_line("Title", y_state)
+        pdf.setFont("Helvetica", 10)
+        write_line(offer.title, y_state)
+
+    y_state["y"] -= 6
+    pdf.setFont("Helvetica-Bold", 11)
+    write_line("Line Items", y_state)
+    pdf.setFont("Helvetica", 9)
+
+    if offer.line_items:
+        write_line("#  Type   Description                    Qty   Unit   Unit price   Total", y_state)
+        for idx, item in enumerate(offer.line_items, start=1):
+            item_type = item.item_type.value if isinstance(item.item_type, models.OfferLineItemType) else (item.item_type or "")
+            desc = (item.description or "")[:28]
+
+            # Derive a simple unit label: for materials use inventory item's unit, for labor default to 'hour'
+            unit_text = ""
+            if isinstance(item.item_type, models.OfferLineItemType) and item.item_type == models.OfferLineItemType.Material:
+                unit_text = item.inventory_item.unit if item.inventory_item and getattr(item.inventory_item, "unit", None) else ""
+            elif isinstance(item.item_type, models.OfferLineItemType) and item.item_type == models.OfferLineItemType.Labor:
+                unit_text = "hour"
+
+            line = (
+                f"{idx:<2} "
+                f"{item_type[:6]:<6} "
+                f"{desc:<28} "
+                f"{item.quantity:>4} "
+                f"{unit_text:<6} "
+                f"{item.unit_price:>10.0f} "
+                f"{item.total_price:>10.0f}"
+            )
+            write_line(line, y_state)
+    else:
+        write_line("No line items.", y_state)
+
+    y_state["y"] -= 6
+    pdf.setFont("Helvetica-Bold", 11)
+    write_line("Summary", y_state)
+    pdf.setFont("Helvetica", 10)
+    write_line(f"Total amount: {offer.total_amount:.0f} kr.", y_state)
+
+    pdf.showPage()
+    pdf.save()
+
+    buffer.seek(0)
+    filename = f"offer-{offer.offer_number or offer_id}.pdf"
+    return StreamingResponse(
+        buffer,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename=\"{filename}\"'},
+    )

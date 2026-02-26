@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 
 /**
  * A flexible, general-purpose Modal component.
@@ -14,6 +15,7 @@ function Modal({
     confirmColor = "indigo", // Supports 'indigo', 'red', 'green'
     showFooter = true 
 }) {
+    const { t } = useTranslation();
     
     // Prevent scrolling of the background body when modal is open
     useEffect(() => {
@@ -95,7 +97,7 @@ function Modal({
                                 onClick={onClose}
                                 className="mt-3 w-full inline-flex justify-center rounded-xl border border-gray-300 dark:border-gray-500 shadow-sm px-5 py-2.5 bg-white dark:bg-gray-800 text-sm font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:w-auto transition-all"
                             >
-                                Cancel
+                                {t('cancel')}
                             </button>
                         </div>
                     )}

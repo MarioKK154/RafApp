@@ -9,7 +9,7 @@ import {
     BoltIcon, 
     ChartBarIcon, 
     BeakerIcon,
-    AcademicCapIcon,
+    ListBulletIcon,
     WrenchScrewdriverIcon,
     InformationCircleIcon,
     ArrowTopRightOnSquareIcon,
@@ -53,8 +53,8 @@ function TutorialsPage() {
         try {
             const res = await axiosInstance.get('/tutorials/');
             setTutorials(Array.isArray(res.data) ? res.data : []);
-        } catch (err) {
-            console.error("Knowledge base sync failed.");
+        } catch (error) {
+            console.error('Knowledge base sync failed:', error);
         }
     }, []);
 
@@ -81,15 +81,16 @@ function TutorialsPage() {
             />
 
             {/* Header Section */}
-            <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-12">
+            <header className="mb-12">
+                <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
                 <div>
                     <div className="flex items-center gap-3 mb-2">
                         <div className="p-2 bg-indigo-600 rounded-xl shadow-lg shadow-indigo-100 dark:shadow-none">
-                            <AcademicCapIcon className="h-6 w-6 text-white" />
+                            <ListBulletIcon className="h-6 w-6 text-white" />
                         </div>
-                        <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-[0.2em]">RafApp Intelligence</span>
+                        <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 tracking-[0.2em]">RafApp Intelligence</span>
                     </div>
-                    <h1 className="text-4xl font-black text-gray-900 dark:text-white leading-none mb-4 uppercase tracking-tighter italic">
+                    <h1 className="text-4xl font-black text-gray-900 dark:text-white leading-none mb-4 tracking-tighter italic">
                         Utilities & Knowledge Base
                     </h1>
                     <p className="text-gray-500 dark:text-gray-400 max-w-2xl text-sm leading-relaxed font-medium">
@@ -100,11 +101,12 @@ function TutorialsPage() {
                 {canCreate && (
                     <button 
                         onClick={() => setIsCreateModalOpen(true)}
-                        className="h-14 px-8 bg-gray-900 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] flex items-center gap-2 hover:bg-indigo-600 transition shadow-xl transform active:scale-95"
+                        className="h-14 px-8 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] flex items-center gap-2 transition shadow-xl shadow-indigo-100 dark:shadow-none transform active:scale-95"
                     >
                         <PlusIcon className="h-5 w-5 stroke-[3px]" /> Create Protocol
                     </button>
                 )}
+                </div>
             </header>
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -149,29 +151,49 @@ function TutorialsPage() {
 
                 {/* RIGHT COLUMN: Library & Tutorials (5 cols) */}
                 <div className="lg:col-span-5 space-y-8">
-                    <section className="bg-gray-900 p-8 rounded-[3rem] text-white shadow-2xl flex flex-col h-full min-h-[700px]">
+                    <section className="bg-white dark:bg-gray-800 p-8 rounded-[3rem] shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col h-full min-h-[700px]">
                         <div className="flex items-center justify-between mb-8">
                             <div className="flex items-center gap-3">
                                 <div className="p-2 bg-indigo-600 rounded-xl">
                                     <BookOpenIcon className="h-5 w-5 text-white" />
                                 </div>
-                                <h2 className="text-xl font-black uppercase tracking-tight italic">Registry</h2>
+                                <h2 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight italic">Registry</h2>
                             </div>
-                            <span className="text-[10px] font-black bg-white/10 px-3 py-1 rounded-full text-indigo-400 border border-white/5">
+                            <span className="text-[10px] font-black bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 px-3 py-1 rounded-full border border-indigo-100 dark:border-indigo-800">
                                 {filteredTutorials.length} Units
                             </span>
                         </div>
 
                         {/* Search Bar - Internal Library Style */}
-                        <div className="relative mb-6">
-                            <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+                        <div className="relative mb-4">
+                            <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                             <input 
                                 type="text"
                                 placeholder="Search schematics..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full h-12 bg-gray-800 border-none rounded-2xl pl-12 text-xs font-bold text-white focus:ring-2 focus:ring-indigo-500 transition-all placeholder:text-gray-600"
+                                className="w-full h-12 bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-700 rounded-2xl pl-12 text-xs font-bold text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500"
                             />
+                        </div>
+                        {/* Category filter */}
+                        <div className="mb-6 flex flex-wrap gap-2">
+                            <button
+                                type="button"
+                                onClick={() => setSelectedCategory('All')}
+                                className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition ${selectedCategory === 'All' ? 'bg-indigo-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'}`}
+                            >
+                                All
+                            </button>
+                            {Object.entries(CATEGORY_LABELS).slice(0, 6).map(([key, label]) => (
+                                <button
+                                    key={key}
+                                    type="button"
+                                    onClick={() => setSelectedCategory(key)}
+                                    className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition ${selectedCategory === key ? 'bg-indigo-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'}`}
+                                >
+                                    {label}
+                                </button>
+                            ))}
                         </div>
 
                         {/* Dynamic Protocol List */}
@@ -179,20 +201,20 @@ function TutorialsPage() {
                             {filteredTutorials.length > 0 ? filteredTutorials.map(tutorial => (
                                 <TutorialLink key={tutorial.id} tutorial={tutorial} />
                             )) : (
-                                <div className="py-20 text-center opacity-40">
-                                    <SparklesIcon className="h-8 w-8 mx-auto mb-4 text-gray-600" />
-                                    <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">No matching protocols found.</p>
+                                <div className="py-20 text-center text-gray-400 dark:text-gray-500">
+                                    <SparklesIcon className="h-8 w-8 mx-auto mb-4" />
+                                    <p className="text-[10px] font-black uppercase tracking-widest">No matching protocols found.</p>
                                 </div>
                             )}
                         </div>
 
                         {/* Telemetry Footer */}
-                        <div className="mt-10 pt-8 border-t border-gray-800">
+                        <div className="mt-10 pt-8 border-t border-gray-100 dark:border-gray-700">
                             <div className="flex items-center gap-2 mb-3">
-                                <WrenchScrewdriverIcon className="h-4 w-4 text-indigo-400" />
-                                <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Support Registry</span>
+                                <WrenchScrewdriverIcon className="h-4 w-4 text-indigo-500 dark:text-indigo-400" />
+                                <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">Support Registry</span>
                             </div>
-                            <p className="text-[10px] text-gray-500 leading-relaxed font-medium uppercase italic">
+                            <p className="text-[10px] text-gray-500 dark:text-gray-400 leading-relaxed font-medium uppercase italic">
                                 Knowledge base version 3.1.0 // Synced with Jan 2026 Safety Protocols.
                             </p>
                         </div>
@@ -214,14 +236,14 @@ function TutorialLink({ tutorial }) {
     };
 
     return (
-        <div className="group w-full p-5 bg-gray-800/40 rounded-3xl border border-gray-800 hover:border-indigo-400 transition-all duration-300">
+        <div className="group w-full p-5 bg-gray-50 dark:bg-gray-700/50 rounded-3xl border border-gray-100 dark:border-gray-600 hover:border-indigo-400 dark:hover:border-indigo-500 transition-all duration-300">
             <div className="flex justify-between items-start mb-2">
-                <span className="text-[8px] font-black text-indigo-400 uppercase tracking-widest bg-indigo-500/10 px-2 py-0.5 rounded">
+                <span className="text-[8px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest bg-indigo-50 dark:bg-indigo-900/30 px-2 py-0.5 rounded">
                     {CATEGORY_LABELS[tutorial.category] || tutorial.category}
                 </span>
-                <ArrowTopRightOnSquareIcon className="h-4 w-4 text-gray-600" />
+                <ArrowTopRightOnSquareIcon className="h-4 w-4 text-gray-400 dark:text-gray-500" />
             </div>
-            <p className="text-sm font-black text-gray-100 uppercase tracking-tight mb-3">
+            <p className="text-sm font-black text-gray-900 dark:text-gray-100 uppercase tracking-tight mb-3">
                 {tutorial.title}
             </p>
             
@@ -230,7 +252,7 @@ function TutorialLink({ tutorial }) {
                 {tutorial.image_path && (
                     <button 
                         onClick={() => window.open(getFullUrl(tutorial.image_path), '_blank')}
-                        className="flex-1 h-8 bg-gray-700 hover:bg-indigo-600 rounded-lg text-[8px] font-black uppercase tracking-widest transition-colors flex items-center justify-center gap-2"
+                        className="flex-1 h-8 bg-gray-200 dark:bg-gray-600 hover:bg-indigo-600 rounded-lg text-[8px] font-black uppercase tracking-widest transition-colors flex items-center justify-center gap-2 text-gray-700 dark:text-gray-200 hover:text-white"
                     >
                         <PhotoIcon className="h-3 w-3" /> Schematic
                     </button>
@@ -238,7 +260,7 @@ function TutorialLink({ tutorial }) {
                 {tutorial.file_path && (
                     <button 
                         onClick={() => window.open(getFullUrl(tutorial.file_path), '_blank')}
-                        className="flex-1 h-8 bg-red-900/20 hover:bg-red-600 rounded-lg text-[8px] font-black uppercase tracking-widest transition-colors border border-red-900/30 flex items-center justify-center gap-2"
+                        className="flex-1 h-8 bg-red-50 dark:bg-red-900/20 hover:bg-red-600 rounded-lg text-[8px] font-black uppercase tracking-widest transition-colors border border-red-100 dark:border-red-900/30 flex items-center justify-center gap-2 text-red-700 dark:text-red-300 hover:text-white"
                     >
                         <DocumentTextIcon className="h-3 w-3" /> Manual
                     </button>

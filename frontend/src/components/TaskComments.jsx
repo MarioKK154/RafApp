@@ -41,8 +41,8 @@ function TaskComments({ taskId }) {
             .then(response => {
                 setComments(response.data);
             })
-            .catch(err => {
-                console.error("Fetch comments error:", err);
+            .catch(error => {
+                console.error('Fetch comments error:', error);
                 setError('Failed to load comments registry.');
             })
             .finally(() => {
@@ -69,8 +69,8 @@ function TaskComments({ taskId }) {
             toast.success("Comment posted.");
             setNewCommentText('');
             fetchComments();
-        } catch (err) {
-            toast.error(err.response?.data?.detail || 'Failed to post comment.');
+        } catch (error) {
+            toast.error(error.response?.data?.detail || 'Failed to post comment.');
         } finally {
             setIsSubmitting(false);
         }
@@ -102,7 +102,8 @@ function TaskComments({ taskId }) {
             await axiosInstance.delete(`/comments/${commentToDelete.id}`);
             toast.success("Comment removed.");
             fetchComments();
-        } catch (err) {
+        } catch (error) {
+            console.error('Delete comment failed:', error);
             toast.error("Failed to delete comment.");
         } finally {
             setIsDeleteModalOpen(false);

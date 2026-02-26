@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axiosInstance from '../api/axiosInstance';
 import { useAuth } from '../context/AuthContext';
-import { toast } from 'react-toastify';
 import LoadingSpinner from './LoadingSpinner';
 import { 
     ClockIcon, 
@@ -33,11 +32,11 @@ function ProjectLiveClockIns({ projectId }) {
         try {
             const response = await axiosInstance.get(`/timelogs/project/${projectId}/active`);
             setActiveLogs(response.data);
-        } catch (err) {
+        } catch (error) {
             // Handle cases where the endpoint might not be available or permissions changed
-            if (err.response?.status !== 404 && err.response?.status !== 403) {
+            if (error.response?.status !== 404 && error.response?.status !== 403) {
                 setError('Live sync interrupted.');
-                console.error("Live clock-in fetch error:", err);
+                console.error('Live clock-in fetch error:', error);
             } else {
                 setActiveLogs([]); 
             }

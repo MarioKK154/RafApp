@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import axiosInstance from '../api/axiosInstance';
 import { toast } from 'react-toastify';
@@ -33,6 +34,7 @@ function useDebounce(value, delay) {
 }
 
 function InventoryCatalogPage() {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const { user } = useAuth();
     
@@ -106,11 +108,11 @@ function InventoryCatalogPage() {
             <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-12">
                 <div>
                     <div className="flex items-center gap-4 mb-3">
-                        <div className="p-4 bg-indigo-600 rounded-2xl shadow-xl shadow-indigo-100 dark:shadow-none">
+                        <div className="p-4 bg-indigo-600 rounded-2xl">
                             <CubeIcon className="h-8 w-8 text-white" />
                         </div>
                         <div>
-                            <h1 className="text-4xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic leading-none">Master Catalog</h1>
+                            <h1 className="text-4xl font-black text-gray-900 dark:text-white tracking-tighter italic leading-none">{t('global_inventory')}</h1>
                             <p className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.3em] mt-2">
                                 {isSuperuser ? "GLOBAL TECHNICAL ASSET REGISTRY" : "LOCALIZED PROCUREMENT DATABASE"}
                             </p>
@@ -124,7 +126,7 @@ function InventoryCatalogPage() {
                         className="h-14 px-8 bg-gray-900 dark:bg-gray-800 hover:bg-black text-white text-xs font-black uppercase tracking-widest rounded-2xl transition transform active:scale-95 shadow-xl shadow-gray-200 dark:shadow-none flex items-center gap-2"
                     >
                         <PlusIcon className="h-5 w-5" /> 
-                        Initialize New Material
+                        {t('new_material')}
                     </button>
                 )}
             </header>

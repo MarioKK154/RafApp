@@ -1,7 +1,9 @@
 from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import desc, asc, func, or_
+from sqlalchemy import desc, asc, func, or_, text
+from sqlalchemy.exc import OperationalError
 from typing import Optional, List, Dict, Any
 from datetime import date, datetime, timezone, timedelta
+import json
 from . import models, schemas
 from .security import get_password_hash
 
@@ -17,10 +19,12 @@ def get_tenants(db: Session, skip: int = 0, limit: int = 100) -> List[models.Ten
     return db.query(models.Tenant).order_by(models.Tenant.name).offset(skip).limit(limit).all()
 
 def create_tenant(db: Session, tenant: schemas.TenantCreate) -> models.Tenant:
+    bg_urls = tenant.background_image_urls if tenant.background_image_urls else None
     db_tenant = models.Tenant(
         name=tenant.name,
         logo_url=str(tenant.logo_url) if tenant.logo_url else None,
-        background_image_url=str(tenant.background_image_url) if tenant.background_image_url else None
+        background_image_url=str(tenant.background_image_url) if tenant.background_image_url else None,
+        background_image_urls=json.dumps(bg_urls) if bg_urls else None
     )
     db.add(db_tenant)
     db.commit()
@@ -32,6 +36,8 @@ def update_tenant(db: Session, db_tenant: models.Tenant, tenant_update: schemas.
     for key, value in update_data.items():
         if key in ['logo_url', 'background_image_url'] and value:
             setattr(db_tenant, key, str(value))
+        elif key == 'background_image_urls':
+            setattr(db_tenant, key, json.dumps(value) if value else None)
         else:
             setattr(db_tenant, key, value)
     db.add(db_tenant)
@@ -826,7 +832,7 @@ def create_timelog_entry(db: Session, timelog_data: schemas.TimeLogCreate, user_
     db_timelog = models.TimeLog(**timelog_data.model_dump(), user_id=user_id, start_time=datetime.now(timezone.utc))
     db.add(db_timelog); db.commit(); db.refresh(db_timelog); return db_timelog
 
-def update_timelog_entry(db: Session, timelog_id: int) -> Optional[models.TimeLog]:
+def update_timelog_entry(db: Session, timelog_id: int, notes: Optional[str] = None) -> Optional[models.TimeLog]:
     db_timelog = db.query(models.TimeLog).filter(models.TimeLog.id == timelog_id).first()
     if db_timelog and not db_timelog.end_time:
         now = datetime.now(timezone.utc)
@@ -835,6 +841,8 @@ def update_timelog_entry(db: Session, timelog_id: int) -> Optional[models.TimeLo
             start_time = start_time.replace(tzinfo=timezone.utc)
         db_timelog.end_time = now
         db_timelog.duration = now - start_time
+        if notes is not None:
+            db_timelog.notes = notes
         db.add(db_timelog) 
         db.commit()
         db.refresh(db_timelog)
@@ -877,6 +885,42 @@ def get_active_timelogs_by_project(db: Session, project_id: int):
         models.TimeLog.project_id == project_id,
         models.TimeLog.end_time == None
     ).all()
+
+def get_timelog_by_id(db: Session, timelog_id: int, tenant_id: Optional[int] = None) -> Optional[models.TimeLog]:
+    q = db.query(models.TimeLog).options(
+        joinedload(models.TimeLog.user), joinedload(models.TimeLog.project), joinedload(models.TimeLog.task)
+    ).filter(models.TimeLog.id == timelog_id)
+    if tenant_id is not None:
+        q = q.join(models.User).filter(models.User.tenant_id == tenant_id)
+    return q.first()
+
+def update_timelog_by_id(
+    db: Session,
+    timelog_id: int,
+    start_time: Optional[datetime] = None,
+    end_time: Optional[datetime] = None,
+    project_id: Optional[int] = None,
+    notes: Optional[str] = None,
+) -> Optional[models.TimeLog]:
+    log = db.query(models.TimeLog).filter(models.TimeLog.id == timelog_id).first()
+    if not log:
+        return None
+    if start_time is not None:
+        log.start_time = start_time.replace(tzinfo=timezone.utc) if start_time.tzinfo is None else start_time
+    if end_time is not None:
+        log.end_time = end_time.replace(tzinfo=timezone.utc) if end_time.tzinfo is None else end_time
+    if project_id is not None:
+        log.project_id = project_id
+    if notes is not None:
+        log.notes = notes
+    if log.end_time and log.start_time:
+        st = log.start_time if log.start_time.tzinfo else log.start_time.replace(tzinfo=timezone.utc)
+        et = log.end_time if log.end_time.tzinfo else log.end_time.replace(tzinfo=timezone.utc)
+        log.duration = et - st
+    db.add(log)
+    db.commit()
+    db.refresh(log)
+    return log
 
     
 def get_project_cost_summary(db: Session, project: models.Project) -> Dict[str, Any]:
@@ -926,10 +970,23 @@ def create_labor_catalog_item(db: Session, item_data: schemas.LaborCatalogItemCr
 def get_labor_catalog_item(db: Session, item_id: int) -> Optional[models.LaborCatalogItem]:
     return db.query(models.LaborCatalogItem).filter(models.LaborCatalogItem.id == item_id).first()
 
-def get_labor_catalog_items(db: Session, tenant_id: int, skip: int = 0, limit: int = 100) -> List[Dict[str, Any]]:
-    # Fetches global catalog items and injects the requesting tenant's private price
-    items = db.query(models.LaborCatalogItem).order_by(models.LaborCatalogItem.description).offset(skip).limit(limit).all()
-    tenant_prices = {tp.labor_item_id: tp.price for tp in db.query(models.TenantLaborPrice).filter(models.TenantLaborPrice.tenant_id == tenant_id).all()}
+def get_labor_catalog_items(db: Session, tenant_id: Optional[int], skip: int = 0, limit: int = 100) -> List[Dict[str, Any]]:
+    # Fetches global catalog items and injects the requesting tenant's private price (None for superuser)
+    try:
+        items = db.query(models.LaborCatalogItem).order_by(models.LaborCatalogItem.description).offset(skip).limit(limit).all()
+    except OperationalError as e:
+        msg = str(e.orig) if getattr(e, "orig", None) else str(e)
+        if "no such column: labor_catalog_items.category" in msg:
+            # Auto-migrate legacy databases that are missing the new columns.
+            db.execute(text("ALTER TABLE labor_catalog_items ADD COLUMN category TEXT"))
+            db.execute(text("ALTER TABLE labor_catalog_items ADD COLUMN recommended_item_ids TEXT"))
+            db.commit()
+            items = db.query(models.LaborCatalogItem).order_by(models.LaborCatalogItem.description).offset(skip).limit(limit).all()
+        else:
+            raise
+    tenant_prices = {}
+    if tenant_id is not None:
+        tenant_prices = {tp.labor_item_id: tp.price for tp in db.query(models.TenantLaborPrice).filter(models.TenantLaborPrice.tenant_id == tenant_id).all()}
     
     results = []
     for item in items:

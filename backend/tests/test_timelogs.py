@@ -39,7 +39,11 @@ def test_clock_in_and_clock_out(client: TestClient, authenticated_user_token: Di
     assert status_data_1["current_log"]["id"] == clock_in_data["id"]
 
     # ACT 3: Clock out
-    response_clock_out = client.post("/timelogs/clock-out", headers=headers)
+    response_clock_out = client.post(
+        "/timelogs/clock-out",
+        headers=headers,
+        json={"notes": "Finished work on time log test"},
+    )
 
     # ASSERT 3: Verify clock-out was successful
     assert response_clock_out.status_code == 200, response_clock_out.text

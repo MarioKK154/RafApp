@@ -140,6 +140,7 @@ class Tenant(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     logo_url: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     background_image_url: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    background_image_urls: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # JSON array of URLs for rotating backgrounds
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     

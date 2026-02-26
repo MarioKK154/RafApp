@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axiosInstance from '../api/axiosInstance';
 import { toast } from 'react-toastify';
@@ -64,7 +64,7 @@ function InventoryCatalogCreatePage() {
     return (
         <div className="container mx-auto p-4 md:p-8 max-w-4xl animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* Header Protocol */}
-            <div className="mb-10">
+            <div className="mb-10 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5">
                 {/* BREADCRUMB SYNC: Updated link to point to /inventory */}
                 <Link 
                     to="/inventory" 
@@ -73,12 +73,12 @@ function InventoryCatalogCreatePage() {
                     <ChevronLeftIcon className="h-3 w-3 mr-1" /> Terminate / Return to Global Inventory
                 </Link>
                 <div className="flex items-center gap-4">
-                    <div className="p-4 bg-indigo-600 rounded-2xl shadow-xl shadow-indigo-100 dark:shadow-none">
+                    <div className="p-4 bg-indigo-600 rounded-2xl">
                         <CubeIcon className="h-8 w-8 text-white" />
                     </div>
                     <div>
-                        <h1 className="text-4xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic leading-none">
-                            Material Initialization
+                        <h1 className="text-4xl font-black text-gray-900 dark:text-white tracking-tighter italic leading-none">
+                            New material
                         </h1>
                         <p className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.3em] mt-2">
                             GLOBAL LOGISTICS / REGISTRY ENTRY

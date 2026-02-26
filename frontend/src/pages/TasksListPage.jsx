@@ -16,11 +16,13 @@ import {
     CalendarIcon,
     UserIcon,
     BriefcaseIcon,
+    ClipboardDocumentListIcon,
     AdjustmentsHorizontalIcon,
     ArchiveBoxIcon,
     ShieldCheckIcon,
     NoSymbolIcon,
-    LockClosedIcon
+    LockClosedIcon,
+    DocumentTextIcon,
 } from '@heroicons/react/24/outline';
 
 /**
@@ -103,8 +105,8 @@ function TasksListPage() {
                 const initialProject = projOpts.find(p => p.value === parseInt(queryProjectId));
                 if (initialProject) setSelectedProject(initialProject);
             }
-        } catch (err) {
-            console.error("Registry metadata sync failure", err);
+        } catch (error) {
+            console.error('Registry metadata sync failure', error);
         }
     }, [query, t]);
 
@@ -137,7 +139,10 @@ function TasksListPage() {
                 setTasks(response.data);
             }
         })
-        .catch(() => setError(t('task_sync_failed', { defaultValue: 'Failed to retrieve task registry.' })))
+        .catch((error) => {
+            console.error('Task list fetch failed:', error);
+            setError(t('task_sync_failed', { defaultValue: 'Failed to retrieve task registry.' }));
+        })
         .finally(() => setIsLoading(false));
     }, [selectedProject, selectedAssignee, selectedStatus, debouncedSearchTerm, sortBy, sortDir, activeLog, t]);
 
@@ -156,7 +161,8 @@ function TasksListPage() {
             
             toast.success(`${taskTitle}: ${successMsg}`);
             fetchTasks(); 
-        } catch (err) {
+        } catch (error) {
+            console.error('Status update failed:', error);
             toast.error(t('update_failed'));
         }
     };
@@ -193,29 +199,64 @@ function TasksListPage() {
     return (
         <div className="container mx-auto p-4 md:p-8 max-w-7xl animate-in fade-in duration-500">
             {/* Header Area */}
-            <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10">
-                <div>
-                    <h1 className="text-4xl font-black text-gray-900 dark:text-white uppercase tracking-tighter leading-none mb-2 italic">
+            <header className="mb-10">
+                <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                <div className="flex items-center gap-3">
+                    <div className="p-2 bg-indigo-600 rounded-xl shadow-lg shadow-indigo-100 dark:shadow-none">
+                        <ClipboardDocumentListIcon className="h-6 w-6 text-white" />
+                    </div>
+                    <h1 className="text-4xl font-black text-gray-900 dark:text-white tracking-tighter leading-none italic">
                         {t('tasks')}
                     </h1>
-                    <p className="text-gray-500 text-[10px] font-black uppercase tracking-[0.3em]">
-                        {activeLog ? (
-                            <span className="text-indigo-600 flex items-center gap-2">
-                                <LockClosedIcon className="h-3 w-3 stroke-[3px]" /> 
-                                Context Lock: {activeLog.project?.name || 'Active Project'}
-                            </span>
-                        ) : t('workflow_registry', { defaultValue: 'Operational Registry' })}
-                    </p>
                 </div>
-                {canCreateTasks && (
-                    <button 
-                        onClick={() => navigate('/tasks/new')}
-                        className="h-12 px-8 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-[0.2em] rounded-2xl shadow-lg shadow-indigo-100 dark:shadow-none transition transform active:scale-95 flex items-center gap-2"
+                <div className="flex items-center gap-3">
+                    {canCreateTasks && (
+                        <button 
+                            onClick={() => navigate('/tasks/new')}
+                            className="h-12 px-8 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-[0.2em] rounded-2xl shadow-lg shadow-indigo-100 dark:shadow-none transition transform active:scale-95 flex items-center gap-2"
+                        >
+                            <PlusIcon className="h-4 w-4 stroke-[3px]" /> {t('create_new')}
+                        </button>
+                    )}
+                    <button
+                        onClick={async () => {
+                            try {
+                                const effectiveProjectId = activeLog?.project_id || selectedProject?.value;
+                                const response = await axiosInstance.get('/tasks/export/pdf', {
+                                    params: {
+                                        project_id: effectiveProjectId || undefined,
+                                        assignee_id: selectedAssignee?.value || undefined,
+                                        status: selectedStatus?.value || undefined,
+                                        search: debouncedSearchTerm || undefined,
+                                    },
+                                    responseType: 'blob',
+                                });
+                                const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+                                const link = document.createElement('a');
+                                link.href = url;
+                                link.download = `tasks-export-${new Date().toISOString().slice(0, 10)}.pdf`;
+                                document.body.appendChild(link);
+                                link.click();
+                                link.remove();
+                                window.URL.revokeObjectURL(url);
+                            } catch (err) {
+                                console.error('Task export failed:', err);
+                                toast.error(t('export_failed_tasks', { defaultValue: 'Failed to export tasks.' }));
+                            }
+                        }}
+                        className="h-12 px-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-200 text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition flex items-center gap-2"
                     >
-                        <PlusIcon className="h-4 w-4 stroke-[3px]" /> {t('create_new')}
+                        <DocumentTextIcon className="h-4 w-4" /> {t('export_pdf')}
                     </button>
-                )}
+                </div>
+                </div>
             </header>
+
+            {error && (
+                <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 rounded-2xl border border-red-200 dark:border-red-800 text-sm font-bold">
+                    {error}
+                </div>
+            )}
 
             {/* Tactical Control Bar */}
             <div className="mb-8 grid grid-cols-1 xl:grid-cols-12 gap-4 bg-white dark:bg-gray-800 p-6 rounded-[2.5rem] border border-gray-100 dark:border-gray-700 shadow-sm">

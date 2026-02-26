@@ -112,7 +112,7 @@ function CarCreatePage() {
     return (
         <div className="container mx-auto p-4 md:p-8 max-w-5xl animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* Navigation Header */}
-            <header className="mb-10">
+            <header className="mb-10 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5">
                 <Link 
                     to="/cars" 
                     className="flex items-center text-[10px] font-black text-gray-400 hover:text-indigo-600 transition mb-4 uppercase tracking-[0.2em]"
@@ -120,12 +120,12 @@ function CarCreatePage() {
                     <ChevronLeftIcon className="h-3 w-3 mr-1 stroke-[3px]" /> {t('cars')}
                 </Link>
                 <div className="flex items-center gap-4">
-                    <div className="p-3 bg-indigo-600 rounded-2xl shadow-xl shadow-indigo-100 dark:shadow-none">
+                    <div className="p-3 bg-indigo-600 rounded-2xl">
                         <TruckIcon className="h-8 w-8 text-white" />
                     </div>
                     <div>
-                        <h1 className="text-3xl font-black text-gray-900 dark:text-white uppercase tracking-tighter leading-none">
-                            {t('register_new_vehicle', { defaultValue: 'Register New Vehicle' })}
+                        <h1 className="text-3xl font-black text-gray-900 dark:text-white tracking-tighter leading-none">
+                            {t('register_new_vehicle', { defaultValue: 'New vehicle' })}
                         </h1>
                         <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-2">Fleet Integration Terminal</p>
                     </div>

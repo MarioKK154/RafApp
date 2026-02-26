@@ -109,17 +109,15 @@ function CarFleetPage() {
     return (
         <div className="container mx-auto p-4 md:p-8 max-w-7xl animate-in fade-in duration-500">
             {/* Fleet Header */}
-            <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-12">
+            <header className="mb-12">
+                <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
                 <div>
                     <div className="flex items-center gap-4 mb-3">
                         <div className="p-4 bg-indigo-600 rounded-2xl shadow-xl shadow-indigo-100 dark:shadow-none">
                             <TruckIcon className="h-8 w-8 text-white" />
                         </div>
                         <div>
-                            <h1 className="text-4xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic leading-none">Fleet Registry</h1>
-                            <p className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.3em] mt-2">
-                                {isSuperuser ? "GLOBAL LOGISTICS CLUSTER" : `OPERATIONAL FLEET / ${user?.tenant?.name}`}
-                            </p>
+                            <h1 className="text-4xl font-black text-gray-900 dark:text-white tracking-tighter italic leading-none">Cars</h1>
                         </div>
                     </div>
                 </div>
@@ -127,12 +125,13 @@ function CarFleetPage() {
                 {canManageFleet && (
                     <button 
                         onClick={() => navigate('/cars/new')}
-                        className="h-14 px-8 bg-gray-900 dark:bg-gray-800 hover:bg-black text-white text-xs font-black uppercase tracking-widest rounded-2xl transition transform active:scale-95 shadow-xl shadow-gray-200 dark:shadow-none flex items-center gap-2"
+                        className="h-14 px-8 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black uppercase tracking-widest rounded-2xl transition transform active:scale-95 shadow-xl shadow-indigo-100 dark:shadow-none flex items-center gap-2"
                     >
                         <PlusIcon className="h-5 w-5" /> 
                         Register New Asset
                     </button>
                 )}
+                </div>
             </header>
 
             {/* Tactical Search Terminal */}

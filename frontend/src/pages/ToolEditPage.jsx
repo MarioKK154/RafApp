@@ -124,7 +124,7 @@ function ToolEditPage() {
                         <WrenchScrewdriverIcon className="h-8 w-8 text-white" />
                     </div>
                     <div>
-                        <h1 className="text-2xl font-black text-gray-900 dark:text-white leading-none tracking-tight uppercase">
+                        <h1 className="text-2xl font-black text-gray-900 dark:text-white leading-none tracking-tight">
                             Modify Asset: {formData.name}
                         </h1>
                         <div className="flex items-center gap-2 mt-2">

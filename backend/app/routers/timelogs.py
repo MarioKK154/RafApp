@@ -17,6 +17,7 @@ router = APIRouter(
 DbDependency = Annotated[Session, Depends(get_db)]
 CurrentUserDependency = Annotated[models.User, Depends(security.get_current_active_user)]
 ManagerOrAdminDependency = Annotated[models.User, Depends(security.require_role(["admin", "project manager"]))]
+AdminOnlyDependency = Annotated[models.User, Depends(security.require_role(["admin"]))]
 
 AllowedTimeLogSortFields = Literal["start_time", "end_time", "duration"]
 AllowedSortDirections = Literal["asc", "desc"]
@@ -83,8 +84,19 @@ async def clock_in(
 
 @router.post("/clock-out", response_model=schemas.TimeLogRead)
 @limiter.limit("100/minute")
-async def clock_out(request: Request, db: DbDependency, current_user: CurrentUserDependency):
-    """Sets the end_time for the user's current open session."""
+async def clock_out(
+    request: Request,
+    payload: schemas.TimeLogClockOut,
+    db: DbDependency,
+    current_user: CurrentUserDependency,
+):
+    """Sets the end_time for the user's current open session and records a required work description."""
+    if not payload.notes or not payload.notes.strip():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Work description is required to clock out.",
+        )
+
     open_log = crud.get_open_timelog_for_user(db, user_id=current_user.id)
     if not open_log:
         raise HTTPException(
@@ -92,7 +104,7 @@ async def clock_out(request: Request, db: DbDependency, current_user: CurrentUse
             detail="No active session found to close."
         )
     
-    return crud.update_timelog_entry(db=db, timelog_id=open_log.id)
+    return crud.update_timelog_entry(db=db, timelog_id=open_log.id, notes=payload.notes.strip())
 
 @router.get("/me", response_model=List[schemas.TimeLogRead])
 @limiter.limit("100/minute")
@@ -176,3 +188,29 @@ async def read_all_timelogs(
         skip=skip, 
         limit=limit
     )
+
+@router.patch("/{timelog_id}", response_model=schemas.TimeLogRead)
+@limiter.limit("60/minute")
+async def update_timelog_admin(
+    request: Request,
+    timelog_id: int,
+    payload: schemas.TimeLogUpdate,
+    db: DbDependency,
+    current_user: AdminOnlyDependency,
+):
+    """Admin only: Edit clocked hours (start/end) or reassign to a different project."""
+    effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
+    existing = crud.get_timelog_by_id(db, timelog_id=timelog_id, tenant_id=effective_tenant_id)
+    if not existing:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Time log not found or access denied.")
+    if payload.project_id is not None:
+        await get_project_if_accessible(payload.project_id, db, current_user)
+    updated = crud.update_timelog_by_id(
+        db,
+        timelog_id=timelog_id,
+        start_time=payload.start_time,
+        end_time=payload.end_time,
+        project_id=payload.project_id,
+        notes=payload.notes,
+    )
+    return updated

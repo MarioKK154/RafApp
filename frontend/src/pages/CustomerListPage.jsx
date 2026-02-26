@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import axiosInstance from '../api/axiosInstance';
 import { toast } from 'react-toastify';
@@ -35,6 +36,7 @@ function useDebounce(value, delay) {
 }
 
 function CustomerListPage() {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const { user, isAuthenticated, isLoading: authIsLoading } = useAuth();
 
@@ -118,28 +120,27 @@ function CustomerListPage() {
     return (
         <div className="container mx-auto p-4 md:p-8 max-w-7xl animate-in fade-in duration-500">
             {/* Header Protocol */}
-            <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-12">
+            <header className="mb-12">
+                <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
                 <div>
                     <div className="flex items-center gap-4 mb-3">
                         <div className="p-4 bg-indigo-600 rounded-2xl shadow-xl shadow-indigo-100 dark:shadow-none">
                             <UserGroupIcon className="h-8 w-8 text-white" />
                         </div>
                         <div>
-                            <h1 className="text-4xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic leading-none">Customer Directory</h1>
-                            <p className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.3em] mt-2">
-                                {isSuperuser ? "GLOBAL CLIENT CLUSTER" : `VERIFIED CRM ENTITIES / ${user?.tenant?.name}`}
-                            </p>
+                            <h1 className="text-4xl font-black text-gray-900 dark:text-white tracking-tighter italic leading-none">{t('customer_directory')}</h1>
                         </div>
                     </div>
                 </div>
 
                 <button 
                     onClick={() => navigate('/customers/new')}
-                    className="h-14 px-8 bg-gray-900 dark:bg-gray-800 hover:bg-black text-white text-xs font-black uppercase tracking-widest rounded-2xl transition transform active:scale-95 shadow-xl shadow-gray-200 dark:shadow-none flex items-center gap-2"
+                    className="h-14 px-8 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black uppercase tracking-widest rounded-2xl transition transform active:scale-95 shadow-xl shadow-indigo-100 dark:shadow-none flex items-center gap-2"
                 >
                     <PlusIcon className="h-5 w-5" /> 
-                    Register New Client
+                    {t('new_client')}
                 </button>
+                </div>
             </header>
 
             {/* Tactical Search Terminal */}
@@ -148,7 +149,7 @@ function CustomerListPage() {
                     <MagnifyingGlassIcon className="h-5 w-5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2 group-focus-within:text-indigo-500 transition-colors" />
                     <input
                         type="text"
-                        placeholder="Filter by Entity Name, Tax ID, Personnel or Email..."
+                        placeholder={t('filter_by_entity')}
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="modern-input pl-12 h-14 !rounded-[1.25rem]"
@@ -156,7 +157,7 @@ function CustomerListPage() {
                 </div>
                 <div className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-[1.25rem] p-4 flex items-center justify-center gap-3 text-[10px] font-black uppercase tracking-widest shadow-sm">
                     <IdentificationIcon className="h-4 w-4 text-indigo-500" />
-                    <span className="text-gray-900 dark:text-gray-100">{filteredCustomers.length} Verified Records</span>
+                    <span className="text-gray-900 dark:text-gray-100">{t('verified_records', { count: filteredCustomers.length })}</span>
                 </div>
             </div>
 
@@ -255,7 +256,7 @@ function CustomerListPage() {
                 isOpen={isDeleteModalOpen}
                 onClose={() => setIsDeleteModalOpen(false)}
                 onConfirm={confirmDelete}
-                title="Purge Customer Registry"
+                title={t('purge_customer_registry')}
                 message={`CRITICAL: Are you sure you want to permanently delete "${customerToDelete?.name}"? This will terminate all active project associations for this entity.`}
                 confirmText="PURGE RECORD"
                 type="danger"

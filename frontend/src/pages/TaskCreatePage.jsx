@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import axiosInstance from '../api/axiosInstance';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
@@ -18,6 +19,7 @@ import {
 const ASSIGNABLE_ROLES = ['admin', 'project manager', 'team leader', 'electrician'];
 
 function TaskCreatePage() {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const { search } = useLocation();
     const { user: currentUser, isAuthenticated, isLoading: authIsLoading } = useAuth();
@@ -89,16 +91,22 @@ function TaskCreatePage() {
 
             } catch (err) {
                 console.error("Registry Sync Error:", err);
-                toast.error("Failed to load project or staff registries.");
+                toast.error(t('task_prereq_failed', { defaultValue: 'Failed to load project or staff registries.' }));
             } finally {
                 setIsLoadingPrerequisites(false);
             }
         }
-    }, [isAuthenticated, authIsLoading, canManageTasks, search]);
+    }, [authIsLoading, canManageTasks, isAuthenticated, search, t]);
 
     useEffect(() => {
+        if (!authIsLoading && isAuthenticated && !canManageTasks) {
+            toast.error(t('access_denied_tasks', { defaultValue: 'You do not have permission to create tasks.' }));
+            setIsLoadingPrerequisites(false);
+            navigate('/tasks', { replace: true });
+            return;
+        }
         fetchPrerequisites();
-    }, [fetchPrerequisites]);
+    }, [authIsLoading, canManageTasks, fetchPrerequisites, isAuthenticated, navigate, t]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -130,19 +138,19 @@ function TaskCreatePage() {
         }
     };
 
-    if (authIsLoading || isLoadingPrerequisites) return <LoadingSpinner text="Synchronizing requirements..." />;
+    if (authIsLoading || isLoadingPrerequisites) return <LoadingSpinner text={t('syncing')} />;
 
     return (
         <div className="container mx-auto p-4 md:p-8 max-w-4xl animate-in fade-in duration-500">
-            <header className="mb-8">
+            <header className="mb-8 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5">
                 <button onClick={() => navigate(-1)} className="flex items-center text-sm font-bold text-gray-400 hover:text-indigo-600 transition mb-2 uppercase tracking-widest">
-                    <ChevronLeftIcon className="h-4 w-4 mr-1 stroke-[3px]" /> Cancel Operation
+                    <ChevronLeftIcon className="h-4 w-4 mr-1 stroke-[3px]" /> {t('cancel_operation')}
                 </button>
                 <div className="flex items-center gap-3">
-                    <div className="p-3 bg-indigo-600 rounded-2xl shadow-xl shadow-indigo-100">
+                    <div className="p-3 bg-indigo-600 rounded-2xl">
                         <ClipboardDocumentCheckIcon className="h-8 w-8 text-white" />
                     </div>
-                    <h1 className="text-3xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">Initialize Work Node</h1>
+                    <h1 className="text-3xl font-black text-gray-900 dark:text-white tracking-tighter italic">{t('new_task')}</h1>
                 </div>
             </header>
 
@@ -264,9 +272,9 @@ function TaskCreatePage() {
                     <button 
                         type="submit" 
                         disabled={isSubmitting} 
-                        className="w-full py-5 bg-indigo-600 hover:bg-indigo-700 text-white font-black uppercase text-[11px] tracking-[0.2em] rounded-[1.5rem] shadow-xl shadow-indigo-100 transition transform active:scale-95 disabled:opacity-50"
+                        className="w-full py-5 bg-indigo-600 hover:bg-indigo-700 text-white font-black uppercase text-[11px] tracking-[0.2em] rounded-[1.5rem] transition transform active:scale-95 disabled:opacity-50"
                     >
-                        {isSubmitting ? 'Initializing Node...' : 'Commit Work to Site'}
+                        {isSubmitting ? t('saving') : t('create_task')}
                     </button>
                 </div>
             </form>

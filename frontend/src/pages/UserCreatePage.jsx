@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import axiosInstance from '../api/axiosInstance';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
@@ -24,6 +25,7 @@ import {
 const ROLES_LIST = ['admin', 'project manager', 'team leader', 'electrician', 'accountant'];
 
 function UserCreatePage() {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const { user: currentUser, isAuthenticated, isLoading: authIsLoading } = useAuth();
     
@@ -35,6 +37,7 @@ function UserCreatePage() {
         employee_id: '',
         kennitala: '',
         phone_number: '',
+        hourly_rate: '',
         city: '', // ROADMAP: Standardized for multi-city scheduling
         role: ROLES_LIST[3], // Default to Electrician
         is_active: true,
@@ -54,7 +57,8 @@ function UserCreatePage() {
             try {
                 const response = await axiosInstance.get('/tenants/');
                 setTenants(response.data);
-            } catch (err) {
+            } catch (error) {
+                console.error('Fetch tenants failed:', error);
                 toast.error("Failed to load infrastructure nodes (tenants).");
             }
         }
@@ -91,14 +95,15 @@ function UserCreatePage() {
         const payload = {
             ...formData,
             tenant_id: isSuperuser && formData.tenant_id ? parseInt(formData.tenant_id, 10) : null,
+            hourly_rate: formData.hourly_rate === '' ? null : parseFloat(formData.hourly_rate),
         };
 
         try {
             const response = await axiosInstance.post('/users/', payload);
-            toast.success(`User Node "${response.data.full_name || response.data.email}" Initialized.`);
+            toast.success('User created.');
             navigate('/users');
-        } catch (err) {
-            const errorMsg = err.response?.data?.detail || 'Failed to initialize user node.';
+        } catch (error) {
+            const errorMsg = error.response?.data?.detail || 'Failed to initialize user node.';
             setError(errorMsg);
             toast.error(errorMsg);
         } finally {
@@ -111,17 +116,17 @@ function UserCreatePage() {
     return (
         <div className="container mx-auto p-4 md:p-8 max-w-5xl animate-in fade-in duration-500">
             {/* Header Protocol */}
-            <header className="mb-12">
+            <header className="mb-12 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5">
                 <Link to="/users" className="flex items-center text-[10px] font-black text-gray-400 hover:text-indigo-600 transition mb-3 uppercase tracking-[0.2em]">
                     <ChevronLeftIcon className="h-3 w-3 mr-1 stroke-[3px]" /> Terminate / Return to Registry
                 </Link>
                 <div className="flex items-center gap-5">
-                    <div className="p-4 bg-indigo-600 rounded-2xl shadow-xl shadow-indigo-100 dark:shadow-none">
+                    <div className="p-4 bg-indigo-600 rounded-2xl">
                         <PlusIcon className="h-8 w-8 text-white stroke-[2.5px]" />
                     </div>
                     <div>
-                        <h1 className="text-4xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic leading-none">
-                            Initialize User
+                        <h1 className="text-4xl font-black text-gray-900 dark:text-white tracking-tighter italic leading-none">
+                            {t('new_user')}
                         </h1>
                         <p className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.3em] mt-2">
                             Workforce Infrastructure / Node Setup
@@ -175,6 +180,12 @@ function UserCreatePage() {
                             </Field>
                             <Field label="Employee Identifier" icon={<IdentificationIcon />}>
                                 <input type="text" name="employee_id" value={formData.employee_id} onChange={handleChange} disabled={isSubmitting} className="modern-input h-14 font-bold" placeholder="EMP-000" />
+                            </Field>
+                            <Field label={t('phone_optional')} icon={<PhoneIcon />}>
+                                <input type="tel" name="phone_number" value={formData.phone_number} onChange={handleChange} disabled={isSubmitting} className="modern-input h-14" placeholder="e.g. +354..." />
+                            </Field>
+                            <Field label={t('hourly_rate_optional')} icon={<BanknotesIcon />}>
+                                <input type="number" name="hourly_rate" value={formData.hourly_rate} onChange={handleChange} disabled={isSubmitting} className="modern-input h-14 font-mono" placeholder="0" step="any" min="0" />
                             </Field>
                         </div>
                     </section>

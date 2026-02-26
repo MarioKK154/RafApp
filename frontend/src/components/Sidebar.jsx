@@ -3,6 +3,7 @@ import { Link, NavLink } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import defaultLogo from '../assets/logo.png';
+import axiosInstance from '../api/axiosInstance';
 import NotificationDropdown from './NotificationDropdown';
 import {
     HomeIcon,
@@ -44,7 +45,7 @@ function Sidebar() {
     const isManagement = isAdmin || isManager;
 
     const logoToDisplay = isAuthenticated && currentUser?.tenant?.logo_url
-        ? currentUser.tenant.logo_url
+        ? (currentUser.tenant.logo_url.startsWith('http') ? currentUser.tenant.logo_url : `${(axiosInstance.defaults.baseURL || '').replace(/\/$/, '')}${currentUser.tenant.logo_url}`)
         : defaultLogo;
 
     const tenantName = isAuthenticated && currentUser?.tenant?.name
@@ -101,13 +102,13 @@ function Sidebar() {
                         <NavItem to="/" icon={<HomeIcon />} label={t('dashboard')} collapsed={isCollapsed} end />
                         <NavItem to="/notifications" icon={<BellIcon />} label="Notifications" collapsed={isCollapsed} />
                         {isManagement && (
-                            <NavItem to="/scheduling" icon={<Squares2X2Icon />} label="Resource Grid" collapsed={isCollapsed} />
+                            <NavItem to="/scheduling" icon={<Squares2X2Icon />} label="Schedule" collapsed={isCollapsed} />
                         )}
                         <NavItem to="/projects" icon={<BriefcaseIcon />} label={t('projects')} collapsed={isCollapsed} />
                         <NavItem to="/tasks" icon={<ClipboardDocumentListIcon />} label={t('tasks')} collapsed={isCollapsed} />
                         <NavItem to="/calendar" icon={<CalendarDaysIcon />} label={t('calendar')} collapsed={isCollapsed} />
                         {isManagement && (
-                            <NavItem to="/gantt" icon={<ChartBarSquareIcon />} label={t('timeline')} collapsed={isCollapsed} />
+                            <NavItem to="/gantt" icon={<ChartBarSquareIcon />} label="Gantt chart" collapsed={isCollapsed} />
                         )}
                     </div>
                 </div>

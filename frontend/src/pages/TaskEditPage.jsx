@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import axiosInstance from '../api/axiosInstance';
 import { useAuth } from '../context/AuthContext';
@@ -30,7 +30,7 @@ const formatDateForInput = (dateString) => {
     try {
         const d = new Date(dateString);
         return isNaN(d.getTime()) ? '' : d.toISOString().split('T')[0];
-    } catch (e) { return ''; }
+    } catch { return ''; }
 };
 
 const ASSIGNABLE_ROLES = ['admin', 'project manager', 'team leader', 'electrician'];
@@ -39,7 +39,6 @@ const EDITABLE_TASK_STATUSES = ["To Do", "In Progress", "Done", "Blocked"];
 function TaskEditPage() {
     const { t, i18n } = useTranslation();
     const { taskId } = useParams();
-    const navigate = useNavigate();
     const { user: currentUser, isAuthenticated, isLoading: authIsLoading } = useAuth();
 
     // Registry Data States
@@ -110,8 +109,8 @@ function TaskEditPage() {
                         predecessors: selectedPreds,
                     });
                 }
-            } catch (err) {
-                setError(err.response?.status === 404 ? t('no_data') : t('sync_error'));
+            } catch (error) {
+                setError(error.response?.status === 404 ? t('no_data') : t('sync_error'));
             } finally {
                 setIsLoadingData(false);
             }
@@ -167,10 +166,9 @@ function TaskEditPage() {
 
             toast.success(t('save_changes', { defaultValue: 'Work details synchronized.' }));
             fetchPageData();
-        } catch (err) {
-            console.error("Update failed:", err);
-            // Enhanced error reporting
-            const serverDetail = err.response?.data?.detail;
+        } catch (error) {
+            console.error('Task update failed:', error);
+            const serverDetail = error.response?.data?.detail;
             toast.error(typeof serverDetail === 'string' ? serverDetail : t('update_failed'));
         } finally {
             setIsSubmitting(false);
@@ -187,7 +185,8 @@ function TaskEditPage() {
             await axiosInstance.post(`/tasks/${taskId}/commission`);
             toast.success(t('task_archived'));
             fetchPageData();
-        } catch (err) { 
+        } catch (error) {
+            console.error('Commission failed:', error);
             toast.error(t('commission_failed'));
         } finally { 
             setIsCommissioning(false); 
@@ -213,17 +212,17 @@ function TaskEditPage() {
     return (
         <div className="container mx-auto p-4 md:p-8 max-w-7xl animate-in fade-in duration-500">
             {/* Header Area */}
-            <div className="mb-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+            <div className="mb-10 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                 <div>
                     <Link to="/tasks" className="flex items-center text-[10px] font-black text-gray-400 hover:text-indigo-600 transition mb-4 uppercase tracking-[0.2em]">
                         <ChevronLeftIcon className="h-3 w-3 mr-1 stroke-[3px]" /> {t('tasks')}
                     </Link>
                     <div className="flex items-center gap-4">
-                        <div className="p-3 bg-indigo-600 rounded-2xl shadow-xl shadow-indigo-100 dark:shadow-none">
+                        <div className="p-3 bg-indigo-600 rounded-2xl">
                             <ClipboardDocumentCheckIcon className="h-8 w-8 text-white" />
                         </div>
                         <div>
-                            <h1 className="text-3xl font-black text-gray-900 dark:text-white uppercase tracking-tighter leading-none">
+                            <h1 className="text-3xl font-black text-gray-900 dark:text-white tracking-tighter leading-none">
                                 {taskData?.title}
                             </h1>
                             <div className="flex items-center gap-3 mt-2">
@@ -242,11 +241,38 @@ function TaskEditPage() {
                     </div>
                 </div>
 
+                <div className="flex items-center gap-3">
+                    <button
+                        type="button"
+                        onClick={async () => {
+                            try {
+                                const response = await axiosInstance.get(`/tasks/${taskId}/export/pdf`, {
+                                    responseType: 'blob',
+                                });
+                                const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+                                const link = document.createElement('a');
+                                link.href = url;
+                                link.download = `task-${taskId}.pdf`;
+                                document.body.appendChild(link);
+                                link.click();
+                                link.remove();
+                                window.URL.revokeObjectURL(url);
+                            } catch (err) {
+                                console.error('Task export failed:', err);
+                                toast.error(t('export_failed_task', { defaultValue: 'Failed to export task.' }));
+                            }
+                        }}
+                        className="inline-flex items-center px-5 h-10 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-200 text-[10px] font-black uppercase tracking-[0.2em] rounded-xl shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition"
+                    >
+                        <DocumentTextIcon className="h-4 w-4 mr-1.5" /> {t('export_pdf')}
+                    </button>
+                </div>
+
                 {canCommissionTask && taskData?.status === "Done" && !isLocked && (
                     <button 
                         onClick={handleCommissionTask} 
                         disabled={isCommissioning}
-                        className="inline-flex items-center px-10 h-14 bg-teal-600 hover:bg-teal-700 text-white font-black text-xs uppercase tracking-[0.2em] rounded-2xl shadow-xl shadow-teal-100 dark:shadow-none transition transform active:scale-95 disabled:opacity-50"
+                        className="inline-flex items-center px-10 h-14 bg-teal-600 hover:bg-teal-700 text-white font-black text-xs uppercase tracking-[0.2em] rounded-2xl transition transform active:scale-95 disabled:opacity-50"
                     >
                         {isCommissioning ? <ArrowPathIcon className="h-5 w-5 animate-spin mr-3" /> : <ShieldCheckIcon className="h-5 w-5 mr-3" />}
                         {t('commission_task')}
@@ -352,23 +378,23 @@ function TaskEditPage() {
                     </form>
                 </div>
 
-                {/* Fingerprint Sidebar */}
+                {/* Fingerprint Sidebar - light in light mode, dark in dark mode */}
                 <div className="lg:col-span-4 space-y-8">
-                    <section className="bg-gray-900 rounded-[2.5rem] p-8 text-white shadow-2xl relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                            <ClipboardDocumentCheckIcon className="h-24 w-24" />
+                    <section className="bg-gray-100 dark:bg-gray-900 rounded-[2.5rem] p-8 text-gray-900 dark:text-white shadow-sm border border-gray-200 dark:border-gray-700 relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 p-4 opacity-10 dark:opacity-5 group-hover:opacity-20 dark:group-hover:opacity-10 transition-opacity">
+                            <ClipboardDocumentCheckIcon className="h-24 w-24 text-indigo-400 dark:text-white" />
                         </div>
-                        <h3 className="text-xs font-black uppercase tracking-[0.3em] text-indigo-400 mb-8 flex items-center gap-2">
+                        <h3 className="text-xs font-black uppercase tracking-[0.3em] text-indigo-600 dark:text-indigo-400 mb-8 flex items-center gap-2">
                             <ShieldCheckIcon className="h-4 w-4" /> {t('system_root', { defaultValue: 'Task Telemetry' })}
                         </h3>
                         <div className="space-y-6">
                             <div>
-                                <p className="text-[8px] text-gray-500 uppercase font-black tracking-widest mb-1">{t('sku', { defaultValue: 'Internal ID' })}</p>
-                                <p className="font-mono text-sm font-bold text-indigo-200">#TSK-{taskId}</p>
+                                <p className="text-[8px] text-gray-500 dark:text-gray-400 uppercase font-black tracking-widest mb-1">{t('sku', { defaultValue: 'Internal ID' })}</p>
+                                <p className="font-mono text-sm font-bold text-indigo-600 dark:text-indigo-200">#TSK-{taskId}</p>
                             </div>
                             <div>
-                                <p className="text-[8px] text-gray-500 uppercase font-black tracking-widest mb-1">{t('created_at', { defaultValue: 'Initialized' })}</p>
-                                <p className="text-xs font-bold text-gray-100 tracking-tight">
+                                <p className="text-[8px] text-gray-500 dark:text-gray-400 uppercase font-black tracking-widest mb-1">{t('created_at', { defaultValue: 'Created' })}</p>
+                                <p className="text-xs font-bold text-gray-700 dark:text-gray-100 tracking-tight">
                                     {taskData?.created_at ? new Date(taskData.created_at).toLocaleString(i18n.language === 'is' ? 'is-IS' : 'en-GB') : '---'}
                                 </p>
                             </div>
@@ -377,10 +403,10 @@ function TaskEditPage() {
                 </div>
             </div>
 
-            {/* Sub-components */}
+            {/* Sub-components with background containers */}
             <div className="mt-16 space-y-16 pb-20 animate-in slide-in-from-bottom-6 duration-700 delay-200">
-                <section><TaskComments taskId={taskId} /></section>
-                <section><TaskPhotos taskId={taskId} /></section>
+                <section className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden p-6"><TaskComments taskId={taskId} /></section>
+                <section className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden p-6"><TaskPhotos taskId={taskId} /></section>
             </div>
         </div>
     );

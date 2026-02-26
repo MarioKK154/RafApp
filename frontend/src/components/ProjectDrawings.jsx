@@ -56,11 +56,6 @@ function ProjectDrawings({ projectId }) {
     // --- MODALS STATE ---
     const [isFolderModalOpen, setIsFolderModalOpen] = useState(false);
     const [newFolderName, setNewFolderName] = useState('');
-    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-    const [editingDrawing, setEditingDrawing] = useState(null);
-    const [editFormData, setEditFormData] = useState({
-        description: '', revision: '', discipline: '', status: 'Draft', drawing_date: '', author: ''
-    });
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [drawingToDelete, setDrawingToDelete] = useState(null);
 
@@ -87,7 +82,8 @@ function ProjectDrawings({ projectId }) {
 
             setDrawings(rawDrawings.filter(d => d.folder_id === currentFolderId));
             setFolders(rawFolders.filter(f => f.parent_id === currentFolderId));
-        } catch (err) {
+        } catch (error) {
+            console.error('Drawings sync failed:', error);
             toast.error('Failed to sync drawing registry.');
         } finally {
             setIsLoading(false);
@@ -124,7 +120,8 @@ function ProjectDrawings({ projectId }) {
             await axiosInstance.post(`/drawings/${activeDrawingForReplace.id}/replace`, formData);
             toast.success(`Drawing promoted to next revision.`);
             fetchContent();
-        } catch (err) {
+        } catch (error) {
+            console.error('Drawing version update failed:', error);
             toast.error("Version update failed.");
         } finally {
             setIsUploading(false);
@@ -148,7 +145,8 @@ function ProjectDrawings({ projectId }) {
             setSelectedFile(null);
             setUploadData(prev => ({ ...prev, description: '' }));
             fetchContent();
-        } catch (err) {
+        } catch (error) {
+            console.error('Drawing upload failed:', error);
             toast.error('Upload protocol failed.');
         } finally {
             setIsUploading(false);
@@ -185,7 +183,8 @@ function ProjectDrawings({ projectId }) {
             setNewFolderName('');
             setIsFolderModalOpen(false);
             fetchContent();
-        } catch (err) {
+        } catch (error) {
+            console.error('Folder creation failed:', error);
             toast.error("Folder creation failed.");
         }
     };
@@ -386,7 +385,10 @@ function ProjectDrawings({ projectId }) {
                     toast.success("Asset purged.");
                     setIsDeleteModalOpen(false);
                     fetchContent();
-                } catch (err) { toast.error("Purge failed."); }
+                } catch (error) {
+                    console.error('Drawing delete failed:', error);
+                    toast.error("Purge failed.");
+                }
             }} title="Purge Node" message={`CRITICAL: Permanently delete drawing "${drawingToDelete?.filename}"?`} confirmText="Delete Asset" type="danger" />
         </div>
     );

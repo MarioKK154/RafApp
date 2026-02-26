@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import axiosInstance from '../api/axiosInstance';
 import { useAuth } from '../context/AuthContext';
+import { isPast, isToday, parseISO } from 'date-fns';
 
 // COMPONENTS
 import ProjectDrawings from '../components/ProjectDrawings';
@@ -26,7 +27,8 @@ import {
     HashtagIcon,
     ShieldCheckIcon,
     CheckBadgeIcon,
-    UserIcon
+    UserIcon,
+    DocumentTextIcon,
 } from '@heroicons/react/24/outline';
 
 const formatDateForInput = (dateString) => {
@@ -34,13 +36,12 @@ const formatDateForInput = (dateString) => {
     try {
         const date = new Date(dateString);
         return isNaN(date.getTime()) ? '' : date.toISOString().split('T')[0];
-    } catch (e) { return ''; }
+    } catch { return ''; }
 };
 
 function ProjectEditPage() {
     const { t } = useTranslation();
     const { projectId } = useParams();
-    const navigate = useNavigate();
     const { user: currentUser, isAuthenticated, isLoading: authIsLoading } = useAuth();
     
     const [formData, setFormData] = useState({
@@ -94,7 +95,8 @@ function ProjectEditPage() {
                     (u.role === 'project manager' || u.role === 'admin') &&
                     (isSuperuser || u.tenant_id === project.tenant_id)
                 ));
-            } catch (err) {
+            } catch (error) {
+                console.error('Project fetch failed:', error);
                 setError(t('sync_error'));
             } finally {
                 setIsLoadingData(false);
@@ -112,7 +114,8 @@ function ProjectEditPage() {
             const res = await axiosInstance.put(`/projects/${projectId}`, cleanedPayload);
             toast.success(t('update_success'));
             setInitialProjectData(res.data);
-        } catch (err) {
+        } catch (error) {
+            console.error('Project update failed:', error);
             toast.error(t('update_failed'));
         } finally {
             setIsSaving(false);
@@ -131,7 +134,8 @@ function ProjectEditPage() {
             setInitialProjectData(res.data);
             setFormData(prev => ({ ...prev, status: res.data.status }));
             toast.success("Status Updated");
-        } catch (err) {
+        } catch (error) {
+            console.error('Status update failed:', error);
             toast.error('Status transition failed.');
         } finally {
             setIsSaving(false);
@@ -140,11 +144,39 @@ function ProjectEditPage() {
 
     if (authIsLoading || isLoadingData) return <LoadingSpinner text="Synchronizing Project Node..." size="lg" />;
 
+    const computeDisplayStatus = () => {
+        if (!initialProjectData) return '';
+        const rawStatus = initialProjectData.status || 'Planning';
+        const startDate = initialProjectData.start_date ? parseISO(initialProjectData.start_date) : null;
+        const isStarted = startDate && (isPast(startDate) || isToday(startDate));
+
+        if (['Planning', 'Active'].includes(rawStatus)) {
+            return isStarted ? 'Active' : 'Planning';
+        }
+        return rawStatus;
+    };
+
+    const displayStatus = computeDisplayStatus();
+
+    const headerStatusClasses =
+        displayStatus === 'Completed'
+            ? 'bg-green-50 text-green-700'
+            : displayStatus === 'Active'
+                ? 'bg-emerald-50 text-emerald-600'
+                : displayStatus === 'Commissioned'
+                    ? 'bg-blue-50 text-blue-700'
+                    : 'bg-orange-50 text-orange-700';
+
     return (
         <div className="container mx-auto p-4 md:p-8 max-w-7xl animate-in fade-in duration-500">
-            <header className="mb-10">
+            {error && (
+                <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 text-sm rounded-xl">
+                    {error}
+                </div>
+            )}
+            <header className="mb-10 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5">
                 <Link to="/projects" className="flex items-center text-[10px] font-black text-gray-400 hover:text-indigo-600 transition mb-4 uppercase tracking-[0.2em]">
-                    <ChevronLeftIcon className="h-3 w-3 mr-1 stroke-[3px]" /> Back to Project Registry
+                    <ChevronLeftIcon className="h-3 w-3 mr-1 stroke-[3px]" /> {t('back_to_registry')}
                 </Link>
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                     <div className="flex items-center gap-5">
@@ -153,13 +185,13 @@ function ProjectEditPage() {
                         </div>
                         <div>
                             <div className="flex items-center gap-3 mb-1">
-                                <h1 className="text-4xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic leading-none">
+                                <h1 className="text-4xl font-black text-gray-900 dark:text-white tracking-tighter italic leading-none">
                                     {initialProjectData?.name}
                                 </h1>
-                                <span className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border ${
-                                    initialProjectData?.status === 'Completed' ? 'bg-green-50 text-green-700' : 'bg-orange-50 text-orange-700'
-                                }`}>
-                                    {initialProjectData?.status}
+                                <span
+                                    className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border ${headerStatusClasses}`}
+                                >
+                                    {displayStatus}
                                 </span>
                             </div>
                             <div className="flex items-center gap-3 mt-2">
@@ -169,6 +201,32 @@ function ProjectEditPage() {
                                 </span>
                             </div>
                         </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <button
+                            type="button"
+                            onClick={async () => {
+                                try {
+                                    const response = await axiosInstance.get(`/projects/${projectId}/status-report.pdf`, {
+                                        responseType: 'blob',
+                                    });
+                                    const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+                                    const link = document.createElement('a');
+                                    link.href = url;
+                                    link.download = `project-${projectId}-status.pdf`;
+                                    document.body.appendChild(link);
+                                    link.click();
+                                    link.remove();
+                                    window.URL.revokeObjectURL(url);
+                                } catch (err) {
+                                    console.error('Project status export failed:', err);
+                                    toast.error(t('export_failed_project', { defaultValue: 'Failed to export project status.' }));
+                                }
+                            }}
+                            className="h-10 px-5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-200 text-[10px] font-black uppercase tracking-[0.2em] rounded-xl shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition flex items-center gap-2"
+                        >
+                            <DocumentTextIcon className="h-4 w-4" /> {t('export_pdf')}
+                        </button>
                     </div>
                 </div>
             </header>
@@ -191,6 +249,14 @@ function ProjectEditPage() {
                                 <div className="md:col-span-2 space-y-1">
                                     <label className="text-[10px] font-black text-gray-400 uppercase ml-1">Site Address</label>
                                     <input type="text" name="address" disabled={!canEditParameters} value={formData.address} onChange={(e) => setFormData({...formData, address: e.target.value})} className="modern-input h-14" />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-black text-gray-400 uppercase ml-1">Start date</label>
+                                    <input type="date" name="start_date" disabled={!isAdmin} value={formData.start_date} onChange={(e) => setFormData({...formData, start_date: e.target.value})} className="modern-input h-14" />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-black text-gray-400 uppercase ml-1">End date</label>
+                                    <input type="date" name="end_date" disabled={!isAdmin} value={formData.end_date} onChange={(e) => setFormData({...formData, end_date: e.target.value})} className="modern-input h-14" />
                                 </div>
                                 <div className="space-y-1">
                                     <label className="text-[10px] font-black text-gray-400 uppercase ml-1">Assigned PM</label>
@@ -234,29 +300,29 @@ function ProjectEditPage() {
                 </div>
             </div>
 
-            {/* INTEGRATED MODULES - REMOVED NESTED WRAPPERS TO PREVENT DOUBLE CARDS */}
+            {/* INTEGRATED MODULES - section background containers */}
             <div className="space-y-16">
-                <div id="tasks-section">
+                <div id="tasks-section" className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
                     <ProjectTasks projectId={projectId} />
                 </div>
 
-                <div id="boq-section">
+                <div id="boq-section" className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
                     <ProjectBoQ projectId={projectId} />
                 </div>
 
-                <div id="inventory-section">
+                <div id="inventory-section" className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
                     <ProjectInventory projectId={projectId} />
                 </div>
 
-                <div id="drawings-section">
+                <div id="drawings-section" className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
                     <ProjectDrawings projectId={projectId} />
                 </div>
 
-                <div id="offers-section">
+                <div id="offers-section" className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
                     <ProjectOffers projectId={projectId} />
                 </div>
 
-                <div id="personnel-section" className="pb-20">
+                <div id="personnel-section" className="pb-20 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
                     <ProjectMembers projectId={projectId} />
                 </div>
             </div>

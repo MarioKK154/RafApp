@@ -78,9 +78,9 @@ function UserBulkImportPage() {
             });
             setUploadResult(response.data);
             toast.success(`Ingestion Complete: ${response.data.created_count} users initialized.`);
-        } catch (err) {
-            console.error("CSV Ingestion Error:", err);
-            const errorMsg = err.response?.data?.detail || 'Ingestion protocol failed. Verify CSV integrity.';
+        } catch (error) {
+            console.error('CSV ingestion error:', error);
+            const errorMsg = error.response?.data?.detail || 'Ingestion protocol failed. Verify CSV integrity.';
             setUploadError(errorMsg);
             toast.error(errorMsg);
         } finally {
@@ -106,7 +106,7 @@ function UserBulkImportPage() {
                         <div className="p-2 bg-indigo-600 rounded-xl shadow-lg shadow-indigo-100 dark:shadow-none">
                             <CloudArrowUpIcon className="h-6 w-6 text-white" />
                         </div>
-                        <h1 className="text-3xl font-black text-gray-900 dark:text-white leading-none tracking-tight uppercase">Bulk Ingestion</h1>
+                        <h1 className="text-3xl font-black text-gray-900 dark:text-white leading-none tracking-tight">Bulk Ingestion</h1>
                     </div>
                 </div>
             </header>
@@ -117,6 +117,11 @@ function UserBulkImportPage() {
                     
                     {/* Upload Card */}
                     <section className="bg-white dark:bg-gray-800 p-8 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-700">
+                        {uploadError && (
+                            <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 rounded-2xl text-sm font-medium flex items-center gap-2">
+                                <ExclamationTriangleIcon className="h-5 w-5 shrink-0" /> {uploadError}
+                            </div>
+                        )}
                         <div className="mb-6">
                             <h2 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">Source Deployment</h2>
                             <p className="text-sm text-gray-500 font-medium">Select a standardized CSV file to populate the user database.</p>

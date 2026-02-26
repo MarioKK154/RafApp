@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import axiosInstance from '../api/axiosInstance';
 import { toast } from 'react-toastify';
 import { 
@@ -51,19 +52,19 @@ function LaborCatalogCreatePage() {
     return (
         <div className="container mx-auto p-4 md:p-8 max-w-2xl animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* Navigation Header */}
-            <div className="mb-8">
+            <div className="mb-8 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5">
                 <Link 
                     to="/labor-catalog" 
                     className="flex items-center text-xs font-black text-gray-400 hover:text-indigo-600 transition mb-2 uppercase tracking-widest"
                 >
-                    <ChevronLeftIcon className="h-3 w-3 mr-1" /> Back to Catalog
+                    <ChevronLeftIcon className="h-3 w-3 mr-1" /> {t('back_to_catalog')}
                 </Link>
                 <div className="flex items-center gap-3">
-                    <div className="p-3 bg-indigo-600 rounded-2xl shadow-lg shadow-indigo-100 dark:shadow-none">
+                    <div className="p-3 bg-indigo-600 rounded-2xl">
                         <WrenchScrewdriverIcon className="h-6 w-6 text-white" />
                     </div>
                     <h1 className="text-2xl font-black text-gray-900 dark:text-white leading-none">
-                        Register Service
+                        {t('new_service')}
                     </h1>
                 </div>
             </div>
@@ -136,7 +137,7 @@ function LaborCatalogCreatePage() {
                     <button 
                         type="submit" 
                         disabled={isSaving} 
-                        className="inline-flex items-center px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-2xl shadow-lg shadow-indigo-100 dark:shadow-none transition transform active:scale-95 disabled:opacity-50"
+                        className="inline-flex items-center px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-2xl transition transform active:scale-95 disabled:opacity-50"
                     >
                         {isSaving ? (
                             <>

@@ -46,11 +46,12 @@ function LawsPage() {
         <div className="container mx-auto p-4 md:p-8 max-w-7xl animate-in fade-in duration-500">
             {/* Header Section */}
             <header className="mb-10">
+                <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5">
                 <div className="flex items-center gap-3 mb-2">
                     <div className="p-2 bg-indigo-600 rounded-xl shadow-lg shadow-indigo-100 dark:shadow-none">
-                        <ScaleIcon className="h-6 w-6 text-white" />
+                        <BookOpenIcon className="h-6 w-6 text-white" />
                     </div>
-                    <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-[0.2em]">Compliance Registry</span>
+                    <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 tracking-[0.2em]">Compliance Registry</span>
                 </div>
                 <h1 className="text-4xl font-black text-gray-900 dark:text-white leading-none mb-4">
                     Icelandic Electrical Laws & Standards <span className="inline-block ml-2">🇮🇸</span>
@@ -59,6 +60,7 @@ function LawsPage() {
                     Access critical legal frameworks and technical regulations mandatory for all RafApp deployments. 
                     Ensure all site work complies with <strong className="text-gray-900 dark:text-white">HMS (Húsnæðis- og mannvirkjastofnun)</strong> requirements.
                 </p>
+                </div>
             </header>
 
             {/* Warning Note */}

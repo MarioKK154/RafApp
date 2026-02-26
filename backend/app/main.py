@@ -54,7 +54,8 @@ subdirs = [
     "project_drawings", 
     "task_photos", 
     "payslips", 
-    "licenses"
+    "licenses",
+    "tenant_assets"
 ]
 for folder in subdirs:
     (STATIC_DIR / folder).mkdir(parents=True, exist_ok=True)

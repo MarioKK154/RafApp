@@ -1,7 +1,8 @@
-from pydantic import BaseModel, EmailStr, Field, HttpUrl, ConfigDict
+from pydantic import BaseModel, EmailStr, Field, HttpUrl, ConfigDict, field_validator
 from typing import Optional, List, Literal, Any, Union
 from datetime import datetime, date, timedelta
 from os import environ
+import json
 from pydantic import computed_field
 
 # SYNC: All Enums imported from models including new Roadmap Categories
@@ -19,7 +20,18 @@ class TenantReadBasic(BaseModel):
     name: str
     logo_url: Optional[str] = None
     background_image_url: Optional[str] = None
+    background_image_urls: Optional[List[str]] = None
     model_config = ConfigDict(from_attributes=True)
+
+    @field_validator('background_image_urls', mode='before')
+    @classmethod
+    def parse_background_urls(cls, v):
+        if v is None: return None
+        if isinstance(v, list): return v
+        if isinstance(v, str):
+            try: return json.loads(v) if v.strip() else []
+            except Exception: return []
+        return []
 
 class ProjectReadBasic(BaseModel):
     id: int
@@ -80,6 +92,17 @@ class TenantBase(BaseModel):
     name: str = Field(..., min_length=1)
     logo_url: Optional[HttpUrl | str] = None
     background_image_url: Optional[HttpUrl | str] = None
+    background_image_urls: Optional[List[str]] = None
+
+    @field_validator('background_image_urls', mode='before')
+    @classmethod
+    def parse_background_urls_base(cls, v):
+        if v is None: return None
+        if isinstance(v, list): return v
+        if isinstance(v, str):
+            try: return json.loads(v) if v.strip() else []
+            except Exception: return []
+        return []
 
 class TenantCreate(TenantBase):
     pass
@@ -88,6 +111,7 @@ class TenantUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=1)
     logo_url: Optional[HttpUrl | str | None] = None
     background_image_url: Optional[HttpUrl | str | None] = None
+    background_image_urls: Optional[List[str]] = None
 
 class TenantRead(TenantBase):
     id: int
@@ -495,6 +519,16 @@ class TimeLogRead(TimeLogBase):
 class TimeLogStatus(BaseModel):
     is_clocked_in: bool
     current_log: Optional[TimeLogRead] = None
+
+class TimeLogClockOut(BaseModel):
+    notes: str
+
+class TimeLogUpdate(BaseModel):
+    """Admin-only: adjust clocked hours or reassign project."""
+    start_time: Optional[datetime] = None
+    end_time: Optional[datetime] = None
+    project_id: Optional[int] = None
+    notes: Optional[str] = None
 
 # --- Asset Schemas (Tools) ---
 

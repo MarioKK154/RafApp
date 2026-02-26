@@ -78,6 +78,7 @@ function AccountingPage() {
             link.click();
             link.remove();
         } catch (error) {
+            console.error('Payslip download failed:', error);
             toast.error(t('download_failed'));
         }
     };
@@ -92,6 +93,7 @@ function AccountingPage() {
             toast.success(t('request_updated', { status: capitalizedStatus }));
             fetchAccountingData(); 
         } catch (error) {
+            console.error('Leave request review failed:', error);
             toast.error(t('review_failed'));
         }
     };
@@ -103,14 +105,15 @@ function AccountingPage() {
     return (
         <div className="container mx-auto p-4 md:p-8 max-w-7xl animate-in fade-in duration-500">
             {/* Main Header */}
-            <header className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 mb-10">
-                <div>
-                    <h1 className="text-3xl font-black text-gray-900 dark:text-white uppercase tracking-tight leading-none mb-2 italic">
+            <header className="mb-10">
+                <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+                <div className="flex items-center gap-3">
+                    <div className="p-2 bg-indigo-600 rounded-xl shadow-lg shadow-indigo-100 dark:shadow-none">
+                        <BanknotesIcon className="h-6 w-6 text-white" />
+                    </div>
+                    <h1 className="text-3xl font-black text-gray-900 dark:text-white tracking-tight leading-none italic">
                         {t('hr_payroll')}
                     </h1>
-                    <p className="text-gray-500 text-[10px] font-black uppercase tracking-[0.2em]">
-                        {t('financial_telemetry')}
-                    </p>
                 </div>
 
                 <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
@@ -141,6 +144,7 @@ function AccountingPage() {
                     >
                         <PlusIcon className="h-4 w-4 stroke-[3px]" /> {t('new_request')}
                     </Link>
+                </div>
                 </div>
             </header>
 

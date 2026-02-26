@@ -129,6 +129,11 @@ function CableSizingCalculator() {
     return (
         <div className="max-w-6xl mx-auto space-y-8">
             <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
+                {error && (
+                    <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 text-sm rounded-xl">
+                        {error}
+                    </div>
+                )}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                     {/* Load Params */}
                     <div className="space-y-4">

@@ -23,7 +23,7 @@ import {
     CheckBadgeIcon,
     NoSymbolIcon,
     ReceiptPercentIcon,
-    PaperAirplaneIcon
+    PaperAirplaneIcon,
 } from '@heroicons/react/24/outline';
 
 /**
@@ -45,7 +45,7 @@ const formatDateForInput = (dateString) => {
      try {
         const date = new Date(dateString);
         return isNaN(date.getTime()) ? '' : date.toISOString().split('T')[0];
-     } catch (e) { return ''; }
+     } catch { return ''; }
 };
 
 /**
@@ -91,7 +91,7 @@ function OfferPage() {
         try {
             const [offerRes, invRes, laborRes] = await Promise.all([
                 axiosInstance.get(`/offers/${offerId}`),
-                axiosInstance.get('/inventory/', { params: { limit: 1000 } }),
+                axiosInstance.get('/inventory/catalog', { params: { limit: 1000 } }),
                 axiosInstance.get('/labor-catalog/')
             ]);
             
@@ -105,7 +105,8 @@ function OfferPage() {
             });
             setInventoryCatalog(invRes.data);
             setLaborCatalog(laborRes.data);
-        } catch (err) {
+        } catch (error) {
+            console.error('Offer fetch failed:', error);
             setError('Commercial telemetry sync failed.');
             toast.error('Financial database connection unstable.');
         } finally {
@@ -124,7 +125,10 @@ function OfferPage() {
             setOffer(response.data);
             setIsEditingHeader(false);
             toast.success('Commercial metadata updated.');
-        } catch (err) { toast.error('Metadata update failed.'); }
+        } catch (error) {
+            console.error('Header save failed:', error);
+            toast.error('Metadata update failed.');
+        }
     };
 
     const handleStatusChange = async (newStatus) => {
@@ -132,7 +136,10 @@ function OfferPage() {
             const response = await axiosInstance.put(`/offers/${offerId}`, { status: newStatus });
             setOffer(response.data);
             toast.success(`Bid transition: ${newStatus}`);
-        } catch (err) { toast.error('State transition rejected.'); }
+        } catch (error) {
+            console.error('Status change failed:', error);
+            toast.error('State transition rejected.');
+        }
     };
 
     const handleLaborCatalogChange = (e) => {
@@ -155,6 +162,7 @@ function OfferPage() {
             description: newItemDesc,
             quantity: parseFloat(newItemQty),
             unit_price: parseFloat(newItemPrice),
+            unit: newItemUnit,
             inventory_item_id: newItemType === 'Material' ? parseInt(newItemInventoryId) : null,
         };
 
@@ -164,7 +172,10 @@ function OfferPage() {
             setNewItemDesc(''); setNewItemQty(1); setNewItemPrice(''); 
             setNewItemInventoryId(''); setSelectedLaborCatalogId('');
             fetchOfferAndCatalogs();
-        } catch (err) { toast.error('Failed to append line item.'); }
+        } catch (error) {
+            console.error('Add line item failed:', error);
+            toast.error('Failed to append line item.');
+        }
     };
 
     const handleRemoveLineItem = async (itemId) => {
@@ -172,7 +183,10 @@ function OfferPage() {
             await axiosInstance.delete(`/offers/items/${itemId}`);
             toast.success('Item purged from bid.');
             fetchOfferAndCatalogs();
-        } catch (err) { toast.error('Removal failed.'); }
+        } catch (error) {
+            console.error('Remove line item failed:', error);
+            toast.error('Removal failed.');
+        }
     };
 
     const confirmDeleteOffer = async () => {
@@ -180,7 +194,10 @@ function OfferPage() {
             await axiosInstance.delete(`/offers/${offerId}`);
             toast.success(`Proposal ${offer?.offer_number} decommissioned.`);
             navigate(`/projects/edit/${offer?.project_id}`);
-        } catch (err) { toast.error("Purge protocol failed."); }
+        } catch (error) {
+            console.error('Delete offer failed:', error);
+            toast.error("Purge protocol failed.");
+        }
     };
 
     // Derived analytics
@@ -193,6 +210,11 @@ function OfferPage() {
     return (
         <div className="container mx-auto p-4 md:p-8 max-w-7xl animate-in fade-in duration-500">
             {/* Header: Identity & Navigation */}
+            {error && (
+                <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 text-sm rounded-2xl">
+                    {error}
+                </div>
+            )}
             <header className="mb-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
                 <div>
                     <Link to={`/projects/edit/${offer.project_id}`} className="flex items-center text-xs font-black text-gray-400 hover:text-indigo-600 transition mb-2 uppercase tracking-widest">
@@ -203,7 +225,7 @@ function OfferPage() {
                             <BanknotesIcon className="h-8 w-8 text-white" />
                         </div>
                         <div>
-                            <h1 className="text-3xl font-black text-gray-900 dark:text-white leading-none uppercase tracking-tighter">
+                            <h1 className="text-3xl font-black text-gray-900 dark:text-white leading-none tracking-tighter">
                                 {offer.offer_number}
                             </h1>
                             <p className="text-gray-500 font-bold uppercase tracking-widest text-[10px] mt-2 italic">Commercial Proposal: {offer.title}</p>
@@ -223,6 +245,30 @@ function OfferPage() {
                         <CalendarDaysIcon className="h-4 w-4" />
                         Issued: {formatDate(offer.issue_date)}
                     </div>
+                    <button
+                        type="button"
+                        onClick={async () => {
+                            try {
+                                const response = await axiosInstance.get(`/offers/${offerId}/pdf`, {
+                                    responseType: 'blob',
+                                });
+                                const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+                                const link = document.createElement('a');
+                                link.href = url;
+                                link.download = `offer-${offer.offer_number || offerId}.pdf`;
+                                document.body.appendChild(link);
+                                link.click();
+                                link.remove();
+                                window.URL.revokeObjectURL(url);
+                            } catch (err) {
+                                console.error('Offer export failed:', err);
+                                toast.error('Failed to export offer.');
+                            }
+                        }}
+                        className="mt-2 inline-flex items-center gap-2 px-4 py-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] text-gray-600 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition"
+                    >
+                        <DocumentTextIcon className="h-4 w-4" /> Export PDF
+                    </button>
                 </div>
             </header>
 

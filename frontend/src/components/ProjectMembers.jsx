@@ -32,7 +32,8 @@ function ProjectMembers({ projectId }) {
     const [memberToRemove, setMemberToRemove] = useState(null);
 
     const isSuperuser = currentUser?.is_superuser;
-    const canManageMembers = currentUser && (['admin', 'project manager'].includes(currentUser.role) || isSuperuser);
+    const isAdminOrPM = currentUser && (['admin', 'project manager'].includes(currentUser.role) || isSuperuser);
+    const canManageMembers = isAdminOrPM;
 
     /**
      * Protocol: Sync Personnel Telemetry
@@ -48,8 +49,8 @@ function ProjectMembers({ projectId }) {
             setMembers(membersRes.data);
             setActiveLogs(activeLogsRes.data);
             setAllUsers(usersRes.data);
-        } catch (err) {
-            console.error("Personnel Sync Error:", err);
+        } catch (error) {
+            console.error('Personnel sync error:', error);
             setError('Operational telemetry partially synced.');
         }
     }, [projectId]);
@@ -74,8 +75,9 @@ function ProjectMembers({ projectId }) {
             toast.success("Personnel deployed to site node.");
             setSelectedUserId('');
             fetchData();
-        } catch (err) {
-            toast.error(err.response?.data?.detail || "Deployment failed.");
+        } catch (error) {
+            console.error('Add member failed:', error);
+            toast.error(error.response?.data?.detail || "Deployment failed.");
         } finally {
             setIsSubmitting(false);
         }
@@ -87,7 +89,8 @@ function ProjectMembers({ projectId }) {
             await axiosInstance.delete(`/projects/${projectId}/members/${memberToRemove.id}`);
             toast.success(`Access revoked for ${memberToRemove.full_name || 'Personnel'}.`);
             fetchData();
-        } catch (err) {
+        } catch (error) {
+            console.error('Revoke member failed:', error);
             toast.error("Protocol failure: Could not revoke access.");
         } finally {
             setIsRemoveModalOpen(false);
@@ -101,6 +104,11 @@ function ProjectMembers({ projectId }) {
 
     return (
         <div className="mt-6">
+            {error && (
+                <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 text-xs font-medium rounded-2xl">
+                    {error}
+                </div>
+            )}
             <header className="flex justify-between items-center mb-8 px-4">
                 <div className="flex items-center gap-3">
                     <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
@@ -189,10 +197,12 @@ function ProjectMembers({ projectId }) {
                                             {member.full_name || 'System Asset'}
                                         </h3>
                                         <div className="flex flex-col gap-1">
-                                            <div className="flex items-center gap-1.5 text-[9px] font-black text-indigo-500 uppercase tracking-widest">
-                                                <ShieldCheckIcon className="h-3 w-3" />
-                                                {member.role?.replace('_', ' ') || 'Technician'}
-                                            </div>
+                                            {isAdminOrPM && (
+                                                <div className="flex items-center gap-1.5 text-[9px] font-black text-indigo-500 uppercase tracking-widest">
+                                                    <ShieldCheckIcon className="h-3 w-3" />
+                                                    {member.role?.replace('_', ' ') || 'Technician'}
+                                                </div>
+                                            )}
                                             {activeSession ? (
                                                 <div className="flex items-center gap-1.5 text-[9px] font-black text-green-600 dark:text-green-400 uppercase tracking-tighter animate-pulse">
                                                     <ClockIcon className="h-3 w-3" />

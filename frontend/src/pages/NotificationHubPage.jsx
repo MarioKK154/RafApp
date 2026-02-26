@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import axiosInstance from '../api/axiosInstance';
 import { toast } from 'react-toastify';
 import { 
+    BellIcon,
     BellAlertIcon, 
     ClockIcon, 
     ArrowRightIcon, 
@@ -24,7 +25,7 @@ function NotificationHubPage() {
             setNotifications(res.data);
         } catch (error) {
             console.error('Failed to fetch notifications:', error);
-            toast.error('Alert registry unavailable.');
+            toast.error('Notifications unavailable.');
         } finally {
             setIsLoading(false);
         }
@@ -47,22 +48,24 @@ function NotificationHubPage() {
     };
 
     if (isLoading) {
-        return <LoadingSpinner text="Loading alert registry..." size="lg" />;
+        return <LoadingSpinner text="Loading notifications..." size="lg" />;
     }
 
     return (
         <div className="container mx-auto p-6 md:p-10 max-w-5xl animate-in fade-in duration-500">
-            <header className="mb-12 flex justify-between items-end">
-                <div>
-                    <h1 className="text-4xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic leading-none">
-                        Alert Registry
+            <header className="mb-12">
+                <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5 flex justify-between items-end">
+                <div className="flex items-center gap-3">
+                    <div className="p-2 bg-indigo-600 rounded-xl shadow-lg shadow-indigo-100 dark:shadow-none">
+                        <BellIcon className="h-6 w-6 text-white" />
+                    </div>
+                    <h1 className="text-4xl font-black text-gray-900 dark:text-white tracking-tighter italic leading-none">
+                        Notifications
                     </h1>
-                    <p className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.3em] mt-3">
-                        Operational Deployment History
-                    </p>
                 </div>
-                <div className="px-6 py-3 bg-gray-100 dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 text-[10px] font-black uppercase tracking-widest text-gray-500">
-                    {notifications.length} Total Nodes
+                <div className="px-6 py-3 bg-gray-100 dark:bg-gray-700 rounded-2xl border border-gray-200 dark:border-gray-600 text-[10px] font-black tracking-widest text-gray-600 dark:text-gray-300">
+                    {notifications.length} Total
+                </div>
                 </div>
             </header>
 
@@ -110,9 +113,8 @@ function NotificationHubPage() {
                     </div>
                 )) : (
                     <div className="py-40 text-center bg-white dark:bg-gray-800 rounded-[3rem] border-2 border-dashed border-gray-100 dark:border-gray-700">
-                        <InboxStackIcon className="h-16 w-16 text-gray-200 mx-auto mb-6" />
-                        <h3 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">Registry Null</h3>
-                        <p className="text-[10px] text-gray-400 font-black uppercase tracking-[0.2em] mt-2">No historical alerts found in local sector</p>
+                        <InboxStackIcon className="h-16 w-16 text-gray-200 dark:text-gray-600 mx-auto mb-6" />
+                        <h3 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">No notifications</h3>
                     </div>
                 )}
             </div>

@@ -2,6 +2,13 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query, Request
 from sqlalchemy.orm import Session
 from typing import Annotated, List, Optional, Literal
 import logging
+from io import BytesIO
+from datetime import datetime
+from textwrap import wrap
+
+from fastapi.responses import StreamingResponse
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
 
 from .. import crud, models, schemas, security
 from ..database import get_db
@@ -224,3 +231,195 @@ async def read_comments_for_task(
     """Telemetry: Retrieve all communication logs for a task node."""
     db_task = await get_task_and_verify_tenant(task_id=task_id, db=db, current_user=current_user)
     return crud.get_comments_for_task(db=db, task_id=db_task.id, skip=skip, limit=limit)
+
+
+@router.get("/export/pdf")
+@limiter.limit("30/minute")
+async def export_tasks_pdf(
+    request: Request,
+    db: DbDependency,
+    current_user: CurrentUserDependency,
+    project_id: Optional[int] = Query(None),
+    assignee_id: Optional[int] = Query(None),
+    status: Optional[schemas.TaskStatusLiteral] = Query(None),
+    search: Optional[str] = Query(None, description="Filter by title identifier"),
+):
+    """
+    Export a filtered set of tasks to PDF using the 'detail pack' layout.
+    """
+    # Reuse the same visibility rules as read_all_tasks
+    if project_id:
+        effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
+        project = crud.get_project(db, project_id=project_id, tenant_id=effective_tenant_id)
+        if not project:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found or not accessible.")
+
+    tasks = crud.get_tasks(
+        db=db,
+        project_id=project_id,
+        assignee_id=assignee_id,
+        status=status,
+        search=search,
+        sort_by="id",
+        sort_dir="asc",
+        skip=0,
+        limit=1000,
+    )
+
+    if not current_user.is_superuser:
+        tasks = [task for task in tasks if task.project.tenant_id == current_user.tenant_id]
+
+    # Mirror UI semantics: when no explicit status filter, exclude commissioned tasks
+    if status is None:
+        tasks = [task for task in tasks if task.status != "Commissioned"]
+
+    buffer = BytesIO()
+    pdf = canvas.Canvas(buffer, pagesize=A4)
+    width, height = A4
+
+    def write_line(text: str, state: dict) -> None:
+        # Simple line writer with pagination
+        if state["y"] < 40:
+            pdf.showPage()
+            state["y"] = height - 40
+        pdf.drawString(40, state["y"], text)
+        state["y"] -= 14
+
+    y_state = {"y": height - 40}
+
+    header = "Task Brief"
+    pdf.setFont("Helvetica-Bold", 16)
+    write_line(header, y_state)
+
+    pdf.setFont("Helvetica", 9)
+    meta = f"Generated for {current_user.full_name or current_user.email} on {datetime.utcnow().strftime('%Y-%m-%d %H:%M')} UTC"
+    write_line(meta, y_state)
+    y_state["y"] -= 10
+
+    status_counts: dict[str, int] = {}
+
+    for task in tasks:
+        status_text = task.status or "Unknown"
+        status_counts[status_text] = status_counts.get(status_text, 0) + 1
+
+        pdf.setFont("Helvetica-Bold", 11)
+        write_line(f"#{task.id} – {task.title}", y_state)
+
+        pdf.setFont("Helvetica", 9)
+        project_name = task.project.name if task.project else "-"
+        assignee_name = (task.assignee.full_name or task.assignee.email) if task.assignee else "Unassigned"
+        created = task.created_at.strftime("%Y-%m-%d") if getattr(task, "created_at", None) else "-"
+        start_date = task.start_date.strftime("%Y-%m-%d") if getattr(task, "start_date", None) else "-"
+        due_date = task.due_date.strftime("%Y-%m-%d") if getattr(task, "due_date", None) else "-"
+
+        write_line(f"Status: {status_text} | Priority: {task.priority or '-'}", y_state)
+        write_line(
+            f"Project: {project_name} | Assignee: {assignee_name} | Created: {created} | Start: {start_date} | Due: {due_date}",
+            y_state,
+        )
+
+        if task.description:
+            desc_lines = wrap(task.description, 95)
+            for line in desc_lines:
+                write_line(f"  {line}", y_state)
+
+        y_state["y"] -= 6
+
+    # Summary
+    pdf.setFont("Helvetica-Bold", 10)
+    total = len(tasks)
+    summary_parts = [f"Total tasks: {total}"] + [f"{k}: {v}" for k, v in status_counts.items()]
+    write_line(" | ".join(summary_parts), y_state)
+
+    pdf.showPage()
+    pdf.save()
+
+    buffer.seek(0)
+    filename = "tasks-export.pdf"
+    return StreamingResponse(
+        buffer,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename=\"{filename}\"'},
+    )
+
+
+@router.get("/{task_id}/export/pdf")
+@limiter.limit("30/minute")
+async def export_single_task_pdf(
+    request: Request,
+    task_id: int,
+    db: DbDependency,
+    current_user: CurrentUserDependency,
+):
+    """
+    Export a single task with extended details and recent comments.
+    """
+    task = await get_task_and_verify_tenant(task_id=task_id, db=db, current_user=current_user)
+    comments = crud.get_comments_for_task(db=db, task_id=task.id, skip=0, limit=10)
+
+    buffer = BytesIO()
+    pdf = canvas.Canvas(buffer, pagesize=A4)
+    width, height = A4
+
+    def write_line(text: str, state: dict) -> None:
+        if state["y"] < 40:
+            pdf.showPage()
+            state["y"] = height - 40
+        pdf.drawString(40, state["y"], text)
+        state["y"] -= 14
+
+    y_state = {"y": height - 40}
+
+    pdf.setFont("Helvetica-Bold", 16)
+    write_line("Task Detail", y_state)
+
+    pdf.setFont("Helvetica", 10)
+    meta = f"Generated for {current_user.full_name or current_user.email} on {datetime.utcnow().strftime('%Y-%m-%d %H:%M')} UTC"
+    write_line(meta, y_state)
+    y_state["y"] -= 10
+
+    pdf.setFont("Helvetica-Bold", 11)
+    write_line(f"#{task.id} – {task.title}", y_state)
+
+    pdf.setFont("Helvetica", 10)
+    project_name = task.project.name if task.project else "-"
+    assignee_name = (task.assignee.full_name or task.assignee.email) if task.assignee else "Unassigned"
+    created = task.created_at.strftime("%Y-%m-%d %H:%M") if getattr(task, "created_at", None) else "-"
+    start_date = task.start_date.strftime("%Y-%m-%d") if getattr(task, "start_date", None) else "-"
+    due_date = task.due_date.strftime("%Y-%m-%d") if getattr(task, "due_date", None) else "-"
+
+    write_line(f"Project: {project_name}", y_state)
+    write_line(f"Status: {task.status or '-'} | Priority: {task.priority or '-'}", y_state)
+    write_line(f"Assignee: {assignee_name}", y_state)
+    write_line(f"Created: {created} | Start: {start_date} | Due: {due_date}", y_state)
+
+    if task.description:
+        y_state["y"] -= 6
+        pdf.setFont("Helvetica-Bold", 11)
+        write_line("Description", y_state)
+        pdf.setFont("Helvetica", 10)
+        for line in wrap(task.description, 95):
+            write_line(line, y_state)
+
+    if comments:
+        y_state["y"] -= 6
+        pdf.setFont("Helvetica-Bold", 11)
+        write_line("Recent Comments", y_state)
+        pdf.setFont("Helvetica", 9)
+        for c in comments:
+            author = c.author.full_name or c.author.email if c.author else f"User {c.author_id}"
+            ts = c.created_at.strftime("%Y-%m-%d %H:%M")
+            write_line(f"- {author} @ {ts}", y_state)
+            for line in wrap(c.content, 95):
+                write_line(f"  {line}", y_state)
+
+    pdf.showPage()
+    pdf.save()
+
+    buffer.seek(0)
+    filename = f"task-{task.id}.pdf"
+    return StreamingResponse(
+        buffer,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename=\"{filename}\"'},
+    )

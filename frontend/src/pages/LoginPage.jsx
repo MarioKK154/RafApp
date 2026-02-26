@@ -73,7 +73,7 @@ function LoginPage() {
                     </div>
                     
                     {/* Primary Identifier */}
-                    <h1 className="text-5xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic leading-none">
+                    <h1 className="text-5xl font-black text-gray-900 dark:text-white tracking-tighter italic leading-none">
                         RafApp
                     </h1>
                     

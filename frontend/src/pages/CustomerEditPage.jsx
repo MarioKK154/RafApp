@@ -132,7 +132,7 @@ function CustomerEditPage() {
                             <UserGroupIcon className="h-8 w-8 text-white" />
                         </div>
                         <div>
-                            <h1 className="text-4xl font-black text-gray-900 dark:text-white leading-none uppercase tracking-tighter italic">
+                            <h1 className="text-4xl font-black text-gray-900 dark:text-white leading-none tracking-tighter italic">
                                 Modify Client Node
                             </h1>
                             <div className="flex items-center gap-3 mt-2">

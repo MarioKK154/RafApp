@@ -75,7 +75,7 @@ function ToolDetailsPage() {
                         <div className="p-2 bg-indigo-600 rounded-xl shadow-lg shadow-indigo-100 dark:shadow-none">
                             <WrenchScrewdriverIcon className="h-6 w-6 text-white" />
                         </div>
-                        <h1 className="text-3xl font-black text-gray-900 dark:text-white leading-none tracking-tight uppercase">
+                        <h1 className="text-3xl font-black text-gray-900 dark:text-white leading-none tracking-tight">
                             {tool.name}
                         </h1>
                     </div>

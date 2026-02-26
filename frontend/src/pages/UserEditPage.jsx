@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import axiosInstance from '../api/axiosInstance';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
@@ -30,8 +31,8 @@ import {
 const ROLES_LIST = ['admin', 'project manager', 'team leader', 'electrician', 'accountant'];
 
 function UserEditPage() {
+    const { t } = useTranslation();
     const { userId } = useParams();
-    const navigate = useNavigate();
     const { user: currentUser, isAuthenticated, isLoading: authIsLoading } = useAuth();
 
     // Registry Data States
@@ -115,14 +116,14 @@ function UserEditPage() {
                         if (res.data.some(m => m.id === parseInt(userId, 10))) {
                             currentAssignments.add(proj.id);
                         }
-                    } catch (e) { console.error(`Membership check failed for project ${proj.id}`); }
+                    } catch { console.error(`Membership check failed for project ${proj.id}`); }
                 }));
 
                 setAssignedProjectIds(currentAssignments);
                 setProjectDataLoading(false);
 
-            } catch (err) {
-                console.error("Registry Sync Failure:", err);
+            } catch (error) {
+                console.error('Registry sync failure:', error);
                 setError('Personnel registry connection timed out.');
                 setIsLoadingData(false);
             }
@@ -151,8 +152,9 @@ function UserEditPage() {
             const res = await axiosInstance.put(`/users/${userId}`, updatePayload);
             toast.success(`Personnel node updated: ${res.data.email}`);
             setInitialUserData(res.data);
-        } catch (err) {
-            toast.error(err.response?.data?.detail || 'Failed to commit updates.');
+        } catch (error) {
+            console.error('User details update failed:', error);
+            toast.error(error.response?.data?.detail || 'Failed to commit updates.');
         } finally {
             setIsSubmittingUserDetails(false);
         }
@@ -170,7 +172,8 @@ function UserEditPage() {
             toast.success("Security override successful.");
             setNewPasswordByAdmin(''); 
             setConfirmNewPasswordByAdmin('');
-        } catch (err) {
+        } catch (error) {
+            console.error('Password override failed:', error);
             toast.error("Override denied by security policy.");
         } finally {
             setIsSubmittingNewPassword(false);
@@ -193,7 +196,8 @@ function UserEditPage() {
                 await axiosInstance.delete(`/projects/${projectId}/members/${userId}`);
                 toast.success("Deployment Node Severed");
             }
-        } catch (err) {
+        } catch (error) {
+            console.error('Deployment adjustment failed:', error);
             setAssignedProjectIds(original);
             toast.error("Deployment adjustment failed.");
         }
@@ -204,24 +208,24 @@ function UserEditPage() {
 
     return (
         <div className="container mx-auto p-4 md:p-8 max-w-7xl animate-in fade-in duration-500">
-            <header className="mb-12">
+            <header className="mb-12 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5">
                 <Link to="/users" className="flex items-center text-[10px] font-black text-gray-400 hover:text-indigo-600 transition mb-3 uppercase tracking-[0.2em]">
-                    <ChevronLeftIcon className="h-3 w-3 mr-1 stroke-[3px]" /> Personnel Registry
+                    <ChevronLeftIcon className="h-3 w-3 mr-1 stroke-[3px]" /> {t('personnel_registry')}
                 </Link>
                 <div className="flex items-center gap-5">
-                    <div className="p-4 bg-indigo-600 rounded-2xl shadow-xl shadow-indigo-100 dark:shadow-none">
+                    <div className="p-4 bg-indigo-600 rounded-2xl">
                         <UserIcon className="h-8 w-8 text-white" />
                     </div>
                     <div>
-                        <h1 className="text-4xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic leading-none">
-                            {initialUserData?.full_name || 'Anonymous Node'}
+                        <h1 className="text-4xl font-black text-gray-900 dark:text-white tracking-tighter italic leading-none">
+                            {initialUserData?.full_name || t('anonymous_node')}
                         </h1>
                         <div className="flex items-center gap-4 mt-3">
                             <span className="text-[10px] font-mono font-black text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
                                 <FingerPrintIcon className="h-3.5 w-3.5 text-indigo-500" /> REG-ID: {userId.toString().padStart(4, '0')}
                             </span>
                             <span className={`text-[9px] font-black uppercase px-3 py-1 rounded-full border shadow-sm ${initialUserData?.is_active ? 'bg-green-50 text-green-600 border-green-100' : 'bg-red-50 text-red-600 border-red-100'}`}>
-                                {initialUserData?.is_active ? 'Operational' : 'Suspended'}
+                                {initialUserData?.is_active ? t('operational') : t('suspended')}
                             </span>
                         </div>
                     </div>
@@ -234,7 +238,7 @@ function UserEditPage() {
                         <div className="flex items-center justify-between border-b border-gray-50 dark:border-gray-700 pb-6">
                             <div className="flex items-center gap-3">
                                 <IdentificationIcon className="h-6 w-6 text-indigo-500" />
-                                <h2 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-[0.2em]">Operational Profile</h2>
+                                <h2 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-[0.2em]">{t('operational_profile')}</h2>
                             </div>
                         </div>
 
@@ -289,13 +293,15 @@ function UserEditPage() {
                             <div className="flex justify-end gap-4 pt-10 border-t border-gray-50 dark:border-gray-700">
                                 <button type="submit" disabled={isSubmittingUserDetails} className="px-12 h-16 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-[0.2em] rounded-2xl shadow-xl transition-all active:scale-95 disabled:opacity-50 flex items-center gap-3">
                                     {isSubmittingUserDetails ? <ArrowPathIcon className="h-5 w-5 animate-spin" /> : <CloudArrowUpIcon className="h-5 w-5 stroke-[2.5px]" />}
-                                    Commit Registry Updates
+                                    {t('commit_registry_updates')}
                                 </button>
                             </div>
                         )}
                     </form>
 
-                    <UserLicenses userId={userId} />
+                    <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+                        <UserLicenses userId={userId} />
+                    </div>
                 </div>
 
                 <div className="lg:col-span-4 space-y-10">
@@ -304,7 +310,7 @@ function UserEditPage() {
                             <div className="p-2 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl">
                                 <CheckBadgeIcon className="h-5 w-5 text-indigo-600" />
                             </div>
-                            <h2 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">Active Deployments</h2>
+                            <h2 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">{t('active_deployments')}</h2>
                         </div>
                         
                         {projectDataLoading ? (
@@ -335,12 +341,12 @@ function UserEditPage() {
                     </section>
 
                     {canSaveChanges && currentUser.id !== parseInt(userId, 10) && (
-                        <section className="bg-gray-900 p-8 rounded-[2.5rem] shadow-2xl text-white">
+                        <section className="bg-gray-100 dark:bg-gray-900 p-8 rounded-[2.5rem] shadow-sm border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white">
                             <div className="flex items-center gap-3 mb-6">
                                 <div className="p-2 bg-orange-600 rounded-xl">
                                     <KeyIcon className="h-5 w-5 text-white" />
                                 </div>
-                                <h2 className="text-lg font-black uppercase tracking-tight">Security Reset</h2>
+                                <h2 className="text-lg font-black uppercase tracking-tight">{t('security_reset')}</h2>
                             </div>
                             
                             <form onSubmit={handlePasswordOverride} className="space-y-4">
@@ -349,21 +355,21 @@ function UserEditPage() {
                                     placeholder="NEW SECURITY KEY" 
                                     value={newPasswordByAdmin}
                                     onChange={(e) => setNewPasswordByAdmin(e.target.value)}
-                                    className="w-full h-14 pl-6 pr-4 bg-gray-800 border border-gray-700 rounded-2xl text-xs font-black placeholder-gray-600 focus:ring-1 focus:ring-orange-500 transition-all uppercase"
+                                    className="w-full h-14 pl-6 pr-4 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-2xl text-xs font-black text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-500 focus:ring-1 focus:ring-orange-500 transition-all uppercase"
                                 />
                                 <input 
                                     type="password" 
                                     placeholder="CONFIRM KEY" 
                                     value={confirmNewPasswordByAdmin}
                                     onChange={(e) => setConfirmNewPasswordByAdmin(e.target.value)}
-                                    className="w-full h-14 pl-6 pr-4 bg-gray-800 border border-gray-700 rounded-2xl text-xs font-black placeholder-gray-600 focus:ring-1 focus:ring-orange-500 transition-all uppercase"
+                                    className="w-full h-14 pl-6 pr-4 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-2xl text-xs font-black text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-500 focus:ring-1 focus:ring-orange-500 transition-all uppercase"
                                 />
                                 <button 
                                     type="submit" 
                                     disabled={isSubmittingNewPassword || !newPasswordByAdmin}
                                     className="w-full h-14 bg-orange-600 text-white font-black text-[10px] uppercase tracking-[0.2em] rounded-2xl hover:bg-orange-500 transition transform active:scale-95 disabled:opacity-50 flex items-center justify-center gap-3"
                                 >
-                                    {isSubmittingNewPassword ? <ArrowPathIcon className="h-5 w-5 animate-spin" /> : "Execute Override"}
+                                    {isSubmittingNewPassword ? <ArrowPathIcon className="h-5 w-5 animate-spin" /> : t('execute_override')}
                                 </button>
                             </form>
                         </section>

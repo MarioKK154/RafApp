@@ -11,7 +11,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 function ProjectTasks({ projectId }) {
-    const { t, i18n } = useTranslation();
+    const { t } = useTranslation();
     const [tasks, setTasks] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -54,9 +54,9 @@ function ProjectTasks({ projectId }) {
                 </span>
                 <Link 
                     to={`/tasks/new?project_id=${projectId}`}
-                    className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all transform active:scale-95 shadow-lg shadow-indigo-100 dark:shadow-none"
+                    className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all transform active:scale-95"
                 >
-                    <PlusIcon className="h-3.5 w-3.5 stroke-[3px]" /> Initialize Work Node
+                    <PlusIcon className="h-3.5 w-3.5 stroke-[3px]" /> {t('new_task')}
                 </Link>
             </div>
 
@@ -78,7 +78,7 @@ function ProjectTasks({ projectId }) {
                                         {task.status}
                                     </span>
                                     <span className="text-[9px] font-bold text-gray-500 dark:text-gray-400 italic">
-                                        Lead: {task.assignee?.full_name || 'Unassigned'}
+                                        Lead: {task.assignee?.full_name || t('unassigned')}
                                     </span>
                                 </div>
                             </div>
@@ -96,9 +96,7 @@ function ProjectTasks({ projectId }) {
                     <div className="py-20 text-center flex flex-col items-center justify-center">
                         <ArchiveBoxIcon className="h-10 w-10 text-gray-100 dark:text-gray-800 mb-4" />
                         <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] italic">
-                            {t('project_tasks_empty', {
-                                defaultValue: 'No active work nodes registered for this site',
-                            })}
+                            {t('project_tasks_empty')}
                         </p>
                     </div>
                 )}

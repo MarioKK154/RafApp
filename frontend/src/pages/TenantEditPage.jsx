@@ -7,7 +7,6 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import { 
     BuildingOfficeIcon, 
     PhotoIcon, 
-    LinkIcon, 
     ShieldCheckIcon, 
     ChevronLeftIcon,
     ArrowPathIcon,
@@ -27,6 +26,7 @@ function TenantEditPage() {
         name: '',
         logo_url: '',
         background_image_url: '',
+        background_image_urls: [],
     });
     const [initialTenantData, setInitialTenantData] = useState(null);
     const [isLoadingData, setIsLoadingData] = useState(true);
@@ -50,6 +50,7 @@ function TenantEditPage() {
                     name: tenant.name ?? '',
                     logo_url: tenant.logo_url ?? '',
                     background_image_url: tenant.background_image_url ?? '',
+                    background_image_urls: Array.isArray(tenant.background_image_urls) ? tenant.background_image_urls : [],
                 });
             } catch (err) {
                 console.error("Infrastructure Sync Error:", err);
@@ -87,6 +88,8 @@ function TenantEditPage() {
         if (formData.name !== initialTenantData.name) updatePayload.name = formData.name;
         if (formData.logo_url !== (initialTenantData.logo_url ?? '')) updatePayload.logo_url = formData.logo_url || null;
         if (formData.background_image_url !== (initialTenantData.background_image_url ?? '')) updatePayload.background_image_url = formData.background_image_url || null;
+        const initialBgUrls = Array.isArray(initialTenantData.background_image_urls) ? initialTenantData.background_image_urls : [];
+        if (JSON.stringify(formData.background_image_urls || []) !== JSON.stringify(initialBgUrls)) updatePayload.background_image_urls = formData.background_image_urls || [];
 
         if (Object.keys(updatePayload).length === 0) {
             toast.info("No modifications detected. Synchronization bypassed.");
@@ -128,7 +131,7 @@ function TenantEditPage() {
                         <ShieldCheckIcon className="h-8 w-8 text-white" />
                     </div>
                     <div>
-                        <h1 className="text-3xl font-black text-gray-900 dark:text-white leading-none tracking-tight uppercase">
+                        <h1 className="text-3xl font-black text-gray-900 dark:text-white leading-none tracking-tight">
                             Configure Node: {initialTenantData?.name}
                         </h1>
                         <div className="flex items-center gap-1.5 mt-2 text-[10px] font-bold text-gray-400 uppercase tracking-tighter">
@@ -167,32 +170,106 @@ function TenantEditPage() {
                             </h2>
                             
                             <div>
-                                <label className="block text-[10px] font-black text-gray-500 uppercase mb-1 ml-1 tracking-widest">Logo URL</label>
-                                <div className="relative group">
-                                    <LinkIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-orange-500 transition-colors" />
-                                    <input 
-                                        type="url" 
-                                        name="logo_url" 
-                                        value={formData.logo_url} 
-                                        onChange={handleChange} 
-                                        disabled={isSubmitting}
-                                        className="pl-12 block w-full h-12 rounded-2xl border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-orange-500 text-sm" 
-                                    />
+                                <label className="block text-[10px] font-black text-gray-500 uppercase mb-1 ml-1 tracking-widest">Logo</label>
+                                <div className="flex flex-wrap items-center gap-4">
+                                    {formData.logo_url && (
+                                        <div className="relative">
+                                            <img
+                                                src={formData.logo_url.startsWith('http') ? formData.logo_url : `${axiosInstance.defaults.baseURL || ''}${formData.logo_url}`}
+                                                alt="Logo"
+                                                className="h-16 w-16 object-contain rounded-xl border border-gray-200 dark:border-gray-600"
+                                                onError={(e) => { e.target.style.display = 'none'; }}
+                                            />
+                                        </div>
+                                    )}
+                                    <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl border-2 border-dashed border-gray-200 dark:border-gray-600 hover:border-orange-500 hover:bg-orange-50/50 dark:hover:bg-orange-900/10 transition-colors">
+                                        <PhotoIcon className="h-5 w-5 text-gray-500" />
+                                        <span className="text-xs font-bold">{formData.logo_url ? 'Replace logo' : 'Upload logo'}</span>
+                                        <input
+                                            type="file"
+                                            accept=".png,.jpg,.jpeg,.svg,.webp"
+                                            className="sr-only"
+                                            onChange={async (e) => {
+                                                const file = e.target.files?.[0];
+                                                if (!file || !tenantId) return;
+                                                try {
+                                                    const fd = new FormData();
+                                                    fd.append('file', file);
+                                                    const res = await axiosInstance.post(`/tenants/${tenantId}/upload-logo`, fd, {
+                                                        headers: { 'Content-Type': 'multipart/form-data' },
+                                                    });
+                                                    if (res.data?.url) setFormData(prev => ({ ...prev, logo_url: res.data.url }));
+                                                } catch (err) {
+                                                    console.error('Logo upload failed:', err);
+                                                    toast.error(err.response?.data?.detail || 'Logo upload failed.');
+                                                }
+                                                e.target.value = '';
+                                            }}
+                                            disabled={isSubmitting}
+                                        />
+                                    </label>
                                 </div>
                             </div>
 
                             <div>
-                                <label className="block text-[10px] font-black text-gray-500 uppercase mb-1 ml-1 tracking-widest">Dashboard Hero Background</label>
-                                <div className="relative group">
-                                    <PhotoIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-orange-500 transition-colors" />
-                                    <input 
-                                        type="url" 
-                                        name="background_image_url" 
-                                        value={formData.background_image_url} 
-                                        onChange={handleChange} 
-                                        disabled={isSubmitting}
-                                        className="pl-12 block w-full h-12 rounded-2xl border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-orange-500 text-sm" 
-                                    />
+                                <label className="block text-[10px] font-black text-gray-500 uppercase mb-1 ml-1 tracking-widest">Background photo(s)</label>
+                                <div className="space-y-3">
+                                    {(formData.background_image_urls || []).length > 0 && (
+                                        <div className="flex flex-wrap gap-2">
+                                            {formData.background_image_urls.map((url, idx) => (
+                                                <div key={idx} className="relative group">
+                                                    <img
+                                                        src={url.startsWith('http') ? url : `${axiosInstance.defaults.baseURL || ''}${url}`}
+                                                        alt=""
+                                                        className="h-20 w-28 object-cover rounded-xl border border-gray-200 dark:border-gray-600"
+                                                        onError={(e) => { e.target.style.display = 'none'; }}
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setFormData(prev => ({
+                                                            ...prev,
+                                                            background_image_urls: (prev.background_image_urls || []).filter((_, i) => i !== idx),
+                                                        }))}
+                                                        className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                                        title="Remove"
+                                                    >
+                                                        <span className="text-xs">×</span>
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                    <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl border-2 border-dashed border-gray-200 dark:border-gray-600 hover:border-orange-500 hover:bg-orange-50/50 dark:hover:bg-orange-900/10 transition-colors">
+                                        <PhotoIcon className="h-5 w-5 text-gray-500" />
+                                        <span className="text-xs font-bold">Add background image(s)</span>
+                                        <input
+                                            type="file"
+                                            accept=".png,.jpg,.jpeg,.webp"
+                                            multiple
+                                            className="sr-only"
+                                            onChange={async (e) => {
+                                                const files = e.target.files ? Array.from(e.target.files) : [];
+                                                for (const file of files) {
+                                                    try {
+                                                        const fd = new FormData();
+                                                        fd.append('file', file);
+                                                        const res = await axiosInstance.post(`/tenants/${tenantId}/upload-background`, fd, {
+                                                            headers: { 'Content-Type': 'multipart/form-data' },
+                                                        });
+                                                        if (res.data?.url) setFormData(prev => ({
+                                                            ...prev,
+                                                            background_image_urls: [...(prev.background_image_urls || []), res.data.url],
+                                                        }));
+                                                    } catch (err) {
+                                                        console.error('Background upload failed:', err);
+                                                        toast.error(err.response?.data?.detail || 'Background upload failed.');
+                                                    }
+                                                }
+                                                e.target.value = '';
+                                            }}
+                                            disabled={isSubmitting}
+                                        />
+                                    </label>
                                 </div>
                             </div>
                         </div>
@@ -205,12 +282,25 @@ function TenantEditPage() {
                     <section className="bg-gray-900 p-6 rounded-[2.5rem] border border-gray-800 space-y-4 overflow-hidden shadow-2xl">
                         <h3 className="text-[10px] font-black text-orange-500 uppercase tracking-widest text-center">Live Asset Preview</h3>
                         <div className="relative h-40 rounded-2xl bg-gray-800 border border-gray-700 flex flex-col items-center justify-center overflow-hidden">
-                            {formData.background_image_url && (
-                                <img src={formData.background_image_url} alt="" className="absolute inset-0 w-full h-full object-cover opacity-30" />
+                            {(formData.background_image_urls?.length > 0 ? formData.background_image_urls[0] : formData.background_image_url) && (
+                                <img
+                                    src={formData.background_image_urls?.length > 0
+                                        ? (formData.background_image_urls[0].startsWith('http') ? formData.background_image_urls[0] : `${axiosInstance.defaults.baseURL || ''}${formData.background_image_urls[0]}`)
+                                        : formData.background_image_url
+                                    }
+                                    alt=""
+                                    className="absolute inset-0 w-full h-full object-cover opacity-30"
+                                    onError={(e) => { e.target.style.display = 'none'; }}
+                                />
                             )}
                             <div className="relative z-10 p-4 bg-white/10 backdrop-blur-md rounded-xl border border-white/20">
                                 {formData.logo_url ? (
-                                    <img src={formData.logo_url} alt="Logo Preview" className="h-12 object-contain" />
+                                    <img
+                                        src={formData.logo_url.startsWith('http') ? formData.logo_url : `${axiosInstance.defaults.baseURL || ''}${formData.logo_url}`}
+                                        alt="Logo Preview"
+                                        className="h-12 object-contain"
+                                        onError={(e) => { e.target.style.display = 'none'; }}
+                                    />
                                 ) : (
                                     <BuildingOfficeIcon className="h-12 w-12 text-gray-600" />
                                 )}

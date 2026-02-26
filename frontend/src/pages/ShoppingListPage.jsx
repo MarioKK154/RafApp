@@ -102,11 +102,8 @@ function ShoppingListPage() {
                         <div className="p-2 bg-indigo-600 rounded-xl shadow-lg shadow-indigo-100 dark:shadow-none">
                             <ShoppingCartIcon className="h-6 w-6 text-white" />
                         </div>
-                        <h1 className="text-3xl font-black text-gray-900 dark:text-white leading-none tracking-tight uppercase">Procurement List</h1>
+                        <h1 className="text-3xl font-black text-gray-900 dark:text-white leading-none tracking-tight">Procurement List</h1>
                     </div>
-                    <p className="text-gray-500 dark:text-gray-400 text-sm">
-                        {isSuperuser ? "Global Inventory Delta Analysis" : "Project specific material requirements"}
-                    </p>
                 </div>
                 
                 {selectedProjectId && shoppingList.length > 0 && (
