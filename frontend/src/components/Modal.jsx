@@ -88,14 +88,14 @@ function Modal({
                             <button
                                 type="button"
                                 onClick={onConfirm}
-                                className={`w-full inline-flex justify-center rounded-xl border border-transparent shadow-sm px-5 py-2.5 text-sm font-bold text-white transition-all sm:ml-0 sm:w-auto ${selectedColorClass} focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-800`}
+                                className={`w-full inline-flex justify-center rounded-xl border border-transparent shadow-sm px-5 py-2.5 text-sm font-bold text-white transition-all duration-150 ease-out sm:ml-0 sm:w-auto ${selectedColorClass} hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800`}
                             >
                                 {confirmText}
                             </button>
                             <button
                                 type="button"
                                 onClick={onClose}
-                                className="mt-3 w-full inline-flex justify-center rounded-xl border border-gray-300 dark:border-gray-500 shadow-sm px-5 py-2.5 bg-white dark:bg-gray-800 text-sm font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:w-auto transition-all"
+                                className="mt-3 w-full inline-flex justify-center rounded-xl border border-gray-300 dark:border-gray-500 shadow-sm px-5 py-2.5 bg-white dark:bg-gray-800 text-sm font-semibold text-gray-700 dark:text-gray-200 transition-all duration-150 ease-out hover:bg-gray-50 dark:hover:bg-gray-700 hover:-translate-y-0.5 hover:shadow-md sm:mt-0 sm:w-auto focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-500"
                             >
                                 {t('cancel')}
                             </button>

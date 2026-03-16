@@ -10,7 +10,7 @@ import {
     ChevronRightIcon 
 } from '@heroicons/react/24/outline';
 
-function ProjectTasks({ projectId }) {
+function ProjectTasks({ projectId, canCreateTask = false }) {
     const { t } = useTranslation();
     const [tasks, setTasks] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -46,19 +46,23 @@ function ProjectTasks({ projectId }) {
     }
 
     return (
-        <div className="space-y-4">
-            {/* Header / Action Bar */}
-            <div className="px-6 py-4 flex justify-between items-center bg-gray-50/50 dark:bg-gray-900/20 border-b border-gray-100 dark:border-gray-800">
-                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                    {t('project_tasks_header', { defaultValue: 'Site Task Registry' })}
-                </span>
-                <Link 
-                    to={`/tasks/new?project_id=${projectId}`}
-                    className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all transform active:scale-95"
-                >
-                    <PlusIcon className="h-3.5 w-3.5 stroke-[3px]" /> {t('new_task')}
-                </Link>
-            </div>
+        <div className="mt-6 space-y-4">
+            <header className="flex justify-between items-center mb-8 px-4">
+                <div className="flex items-center gap-3">
+                    <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
+                        <ClipboardDocumentCheckIcon className="h-6 w-6 text-indigo-600" />
+                    </div>
+                    <h2 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">{t('tasks')}</h2>
+                </div>
+                {canCreateTask && (
+                    <Link 
+                        to={`/tasks/new?project_id=${projectId}`}
+                        className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition transform active:scale-95"
+                    >
+                        <PlusIcon className="h-5 w-5" /> {t('new_task')}
+                    </Link>
+                )}
+            </header>
 
             <div className="divide-y divide-gray-50 dark:divide-gray-700/50">
                 {tasks.length > 0 ? tasks.map(task => (

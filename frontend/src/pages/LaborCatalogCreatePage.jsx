@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '../context/AuthContext';
 import axiosInstance from '../api/axiosInstance';
 import { toast } from 'react-toastify';
 import { 
@@ -13,7 +14,14 @@ import {
 } from '@heroicons/react/24/outline';
 
 function LaborCatalogCreatePage() {
+    const { t } = useTranslation();
     const navigate = useNavigate();
+    const { user } = useAuth();
+    useEffect(() => {
+        if (user && !user.is_superuser) {
+            navigate('/labor-catalog', { replace: true });
+        }
+    }, [user, navigate]);
     const [formData, setFormData] = useState({
         description: '',
         default_unit_price: '',
@@ -60,12 +68,10 @@ function LaborCatalogCreatePage() {
                     <ChevronLeftIcon className="h-3 w-3 mr-1" /> {t('back_to_catalog')}
                 </Link>
                 <div className="flex items-center gap-3">
-                    <div className="p-3 bg-indigo-600 rounded-2xl">
-                        <WrenchScrewdriverIcon className="h-6 w-6 text-white" />
+                    <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
+                        <WrenchScrewdriverIcon className="h-6 w-6 text-indigo-600" />
                     </div>
-                    <h1 className="text-2xl font-black text-gray-900 dark:text-white leading-none">
-                        {t('new_service')}
-                    </h1>
+                    <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">{t('new_service')}</h1>
                 </div>
             </div>
 
@@ -134,21 +140,15 @@ function LaborCatalogCreatePage() {
                     >
                         Cancel
                     </Link>
-                    <button 
-                        type="submit" 
-                        disabled={isSaving} 
-                        className="inline-flex items-center px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-2xl transition transform active:scale-95 disabled:opacity-50"
+                    <button
+                        type="submit"
+                        disabled={isSaving}
+                        className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition transform active:scale-95 disabled:opacity-50"
                     >
                         {isSaving ? (
-                            <>
-                                <ArrowPathIcon className="h-5 w-5 mr-2 animate-spin" />
-                                Syncing...
-                            </>
+                            <><ArrowPathIcon className="h-5 w-5 animate-spin" /> {t('syncing')}</>
                         ) : (
-                            <>
-                                <CheckBadgeIcon className="h-5 w-5 mr-2" />
-                                Commit to Catalog
-                            </>
+                            <><CheckBadgeIcon className="h-5 w-5" /> {t('commit_to_catalog', { defaultValue: 'Commit to Catalog' })}</>
                         )}
                     </button>
                 </div>

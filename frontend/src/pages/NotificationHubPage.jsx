@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import axiosInstance from '../api/axiosInstance';
 import { toast } from 'react-toastify';
@@ -15,6 +16,7 @@ import { format } from 'date-fns';
 import LoadingSpinner from '../components/LoadingSpinner';
 
 function NotificationHubPage() {
+    const { t } = useTranslation();
     const [notifications, setNotifications] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -48,24 +50,22 @@ function NotificationHubPage() {
     };
 
     if (isLoading) {
-        return <LoadingSpinner text="Loading notifications..." size="lg" />;
+        return <LoadingSpinner text={t('loading_notifications')} size="lg" />;
     }
 
     return (
         <div className="container mx-auto p-6 md:p-10 max-w-5xl animate-in fade-in duration-500">
             <header className="mb-12">
-                <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5 flex justify-between items-end">
-                <div className="flex items-center gap-3">
-                    <div className="p-2 bg-indigo-600 rounded-xl shadow-lg shadow-indigo-100 dark:shadow-none">
-                        <BellIcon className="h-6 w-6 text-white" />
+                <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5 flex justify-between items-center gap-6">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
+                            <BellIcon className="h-6 w-6 text-indigo-600" />
+                        </div>
+                        <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">{t('notifications', { defaultValue: 'Notifications' })}</h1>
                     </div>
-                    <h1 className="text-4xl font-black text-gray-900 dark:text-white tracking-tighter italic leading-none">
-                        Notifications
-                    </h1>
-                </div>
-                <div className="px-6 py-3 bg-gray-100 dark:bg-gray-700 rounded-2xl border border-gray-200 dark:border-gray-600 text-[10px] font-black tracking-widest text-gray-600 dark:text-gray-300">
-                    {notifications.length} Total
-                </div>
+                    <div className="px-6 py-3 bg-gray-100 dark:bg-gray-700 rounded-2xl border border-gray-200 dark:border-gray-600 text-[10px] font-black tracking-widest text-gray-600 dark:text-gray-300">
+                        {notifications.length} {t('total', { defaultValue: 'Total' })}
+                    </div>
                 </div>
             </header>
 
@@ -114,7 +114,7 @@ function NotificationHubPage() {
                 )) : (
                     <div className="py-40 text-center bg-white dark:bg-gray-800 rounded-[3rem] border-2 border-dashed border-gray-100 dark:border-gray-700">
                         <InboxStackIcon className="h-16 w-16 text-gray-200 dark:text-gray-600 mx-auto mb-6" />
-                        <h3 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">No notifications</h3>
+                        <h3 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">{t('no_notifications')}</h3>
                     </div>
                 )}
             </div>

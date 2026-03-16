@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import axiosInstance from '../api/axiosInstance';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
@@ -13,6 +14,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 function ProjectInventory({ projectId }) {
+    const { t } = useTranslation();
     const [projectInventory, setProjectInventory] = useState([]);
     const [inventoryCatalog, setInventoryCatalog] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -25,8 +27,15 @@ function ProjectInventory({ projectId }) {
     const [location, setLocation] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    // Material Request Form State
+    const [selectedRequestItemId, setSelectedRequestItemId] = useState('');
+    const [quantityToRequest, setQuantityToRequest] = useState(1);
+    const [requestNote, setRequestNote] = useState('');
+    const [isRequestSubmitting, setIsRequestSubmitting] = useState(false);
+
     // Authorization Clearance
     const canManageInventory = user && (['admin', 'project manager'].includes(user.role) || user.is_superuser);
+    const canRequestMaterials = user && (['admin', 'project manager', 'team leader'].includes(user.role) || user.is_superuser);
 
     /**
      * Protocol: Synchronize Site Stock with Global Catalog
@@ -90,6 +99,39 @@ function ProjectInventory({ projectId }) {
         }
     };
 
+    const handleCreateRequest = async (e) => {
+        e.preventDefault();
+        if (!selectedRequestItemId) {
+            toast.warn('Select a material from catalog to request.');
+            return;
+        }
+        if (!quantityToRequest || Number(quantityToRequest) <= 0) {
+            toast.warn('Enter a valid quantity to request.');
+            return;
+        }
+
+        setIsRequestSubmitting(true);
+        try {
+            const payload = {
+                project_id: parseInt(projectId, 10),
+                inventory_item_id: parseInt(selectedRequestItemId, 10),
+                quantity: parseFloat(quantityToRequest),
+                note: requestNote || null,
+            };
+            await axiosInstance.post('/shopping-list/requests', payload);
+            toast.success('Material request sent to procurement list.');
+
+            setSelectedRequestItemId('');
+            setQuantityToRequest(1);
+            setRequestNote('');
+        } catch (error) {
+            console.error('Material request failed:', error);
+            toast.error(error.response?.data?.detail || 'Failed to submit material request.');
+        } finally {
+            setIsRequestSubmitting(false);
+        }
+    };
+
     /**
      * Protocol: Registry Deletion Handler
      */
@@ -120,24 +162,27 @@ function ProjectInventory({ projectId }) {
     );
 
     return (
-        <div className="bg-white dark:bg-gray-800 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+        <div className="mt-6">
             {error && (
-                <div className="p-3 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 text-xs font-medium text-center">
+                <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 text-xs font-medium rounded-2xl">
                     {error}
                 </div>
             )}
-            {/* Module Header */}
-            <div className="p-8 border-b border-gray-50 dark:border-gray-700 flex items-center justify-between">
+            <header className="flex justify-between items-center mb-8 px-4">
                 <div className="flex items-center gap-3">
-                    <CubeIcon className="h-5 w-5 text-indigo-500" />
-                    <h2 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-widest italic">
-                        {user?.is_superuser ? 'Global Site Stock' : 'Project Local Stock'}
+                    <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
+                        <InboxStackIcon className="h-6 w-6 text-indigo-600" />
+                    </div>
+                    <h2 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">
+                        {t('local_stock')}
                     </h2>
                 </div>
-                <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest bg-gray-50 dark:bg-gray-900 px-3 py-1 rounded-full border border-gray-100 dark:border-gray-700">
-                    Registry Nodes: {projectInventory.length}
-                </span>
-            </div>
+                <div className="flex items-center gap-3 px-4 py-2 bg-gray-50 dark:bg-gray-900 rounded-full border border-gray-100 dark:border-gray-800">
+                    <span className="text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest leading-none">
+                        {projectInventory.length} {t('registry_nodes', { defaultValue: 'items' })}
+                    </span>
+                </div>
+            </header>
 
             <div className="p-8">
                 {/* Deployment Console (Allocation Form) */}
@@ -145,7 +190,7 @@ function ProjectInventory({ projectId }) {
                     <div className="mb-10 p-6 bg-gray-50/50 dark:bg-gray-900/40 rounded-[2rem] border border-gray-100 dark:border-gray-700 shadow-inner">
                         <div className="flex items-center gap-2 mb-6 ml-1">
                             <PlusIcon className="h-4 w-4 text-emerald-500 stroke-[3px]" />
-                            <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Allocate Node to Site</h3>
+                            <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">{t('allocate_node_to_site')}</h3>
                         </div>
                         <form onSubmit={handleAddItem} className="grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
                             <div className="space-y-2">
@@ -173,7 +218,7 @@ function ProjectInventory({ projectId }) {
                                 />
                             </div>
                             <div className="space-y-2">
-                                <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Deployment Zone</label>
+                                <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">{t('deployment_zone', { defaultValue: 'Deployment Zone' })}</label>
                                 <div className="relative">
                                     <MapPinIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                                     <input 
@@ -188,10 +233,78 @@ function ProjectInventory({ projectId }) {
                             <button 
                                 type="submit" 
                                 disabled={isSubmitting}
-                                className="h-12 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-[0.2em] rounded-xl shadow-lg shadow-indigo-100 dark:shadow-none transition transform active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+                                className="h-12 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-[0.2em] rounded-xl transition transform active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
                             >
                                 {isSubmitting ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <PlusIcon className="h-4 w-4 stroke-[3px]" />}
-                                Deploy to Site
+                                {t('deploy_to_site')}
+                            </button>
+                        </form>
+                    </div>
+                )}
+
+                {/* Material Request Console (Team Leaders & Above) */}
+                {canRequestMaterials && (
+                    <div className="mb-10 p-6 bg-amber-50/60 dark:bg-amber-900/20 rounded-[2rem] border border-amber-100 dark:border-amber-800 shadow-inner">
+                        <div className="flex items-center gap-2 mb-6 ml-1">
+                            <PlusIcon className="h-4 w-4 text-amber-500 stroke-[3px]" />
+                            <h3 className="text-[10px] font-black text-amber-700 dark:text-amber-200 uppercase tracking-[0.2em]">
+                                Request Materials from Procurement
+                            </h3>
+                        </div>
+                        <form onSubmit={handleCreateRequest} className="grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
+                            <div className="space-y-2">
+                                <label className="block text-[9px] font-black text-amber-700 uppercase tracking-widest ml-1">
+                                    Material SKU
+                                </label>
+                                <select
+                                    value={selectedRequestItemId}
+                                    onChange={e => setSelectedRequestItemId(e.target.value)}
+                                    className="modern-input h-12 text-xs font-bold"
+                                >
+                                    <option value="">-- SELECT SKU --</option>
+                                    {inventoryCatalog.map(item => (
+                                        <option key={item.id} value={item.id}>
+                                            {item.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="space-y-2">
+                                <label className="block text-[9px] font-black text-amber-700 uppercase tracking-widest ml-1">
+                                    Requested Quantity
+                                </label>
+                                <input
+                                    type="number"
+                                    value={quantityToRequest}
+                                    onChange={e => setQuantityToRequest(e.target.value)}
+                                    min="0.01"
+                                    step="any"
+                                    className="modern-input h-12 text-xs font-bold"
+                                />
+                            </div>
+                            <div className="space-y-2 md:col-span-2">
+                                <label className="block text-[9px] font-black text-amber-700 uppercase tracking-widest ml-1">
+                                    Context / Notes (optional)
+                                </label>
+                                <textarea
+                                    value={requestNote}
+                                    onChange={e => setRequestNote(e.target.value)}
+                                    rows={2}
+                                    placeholder="Where and when is this needed?"
+                                    className="modern-input h-12 text-xs font-bold resize-none"
+                                />
+                            </div>
+                            <button
+                                type="submit"
+                                disabled={isRequestSubmitting}
+                                className="h-12 bg-amber-600 hover:bg-amber-700 text-white font-black text-[10px] uppercase tracking-[0.2em] rounded-xl shadow-lg shadow-amber-100 dark:shadow-none transition transform active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+                            >
+                                {isRequestSubmitting ? (
+                                    <ArrowPathIcon className="h-4 w-4 animate-spin" />
+                                ) : (
+                                    <PlusIcon className="h-4 w-4 stroke-[3px]" />
+                                )}
+                                {t('submit_request')}
                             </button>
                         </form>
                     </div>
@@ -202,11 +315,11 @@ function ProjectInventory({ projectId }) {
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-700">
-                                <th className="py-5 px-8 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Material Identifier</th>
-                                <th className="py-5 px-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] text-right">Site Quantity</th>
-                                <th className="py-5 px-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Unit</th>
-                                <th className="py-5 px-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Specific Zone</th>
-                                {canManageInventory && <th className="py-5 px-8 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] text-center">Protocol</th>}
+                                <th className="py-5 px-8 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">{t('material_identifier', { defaultValue: 'Material Identifier' })}</th>
+                                <th className="py-5 px-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] text-right">{t('site_quantity')}</th>
+                                <th className="py-5 px-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">{t('unit')}</th>
+                                <th className="py-5 px-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">{t('specific_zone')}</th>
+                                {canManageInventory && <th className="py-5 px-8 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] text-center">{t('protocol')}</th>}
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-50 dark:divide-gray-700">

@@ -16,6 +16,7 @@ router = APIRouter(
 DbDependency = Annotated[Session, Depends(get_db)]
 ManagerOrAdminDependency = Annotated[models.User, Depends(security.require_role(["admin", "project manager"]))]
 CurrentUserDependency = Annotated[models.User, Depends(security.get_current_active_user)]
+TeamLeaderOrHigherDependency = Annotated[models.User, Depends(security.require_role(["admin", "project manager", "team leader"]))]
 
 
 @router.get("/project/{project_id}", response_model=List[schemas.ShoppingListItem])
@@ -48,5 +49,73 @@ async def read_project_shopping_list(
     # 3. Calculate and return the shortfall (shopping list)
     # The calculation logic resides in crud.py to keep the router clean
     shopping_list_items = crud.get_shopping_list_for_project(db, project_id=project_id)
-    
     return shopping_list_items
+
+
+@router.post("/requests", response_model=schemas.MaterialRequestRead, status_code=status.HTTP_201_CREATED)
+@limiter.limit("60/minute")
+async def create_material_request(
+    request: Request,
+    payload: schemas.MaterialRequestCreate,
+    db: DbDependency,
+    current_user: TeamLeaderOrHigherDependency,
+):
+    effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
+
+    project = crud.get_project(db, project_id=payload.project_id, tenant_id=effective_tenant_id)
+    if not project:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Project not found or not accessible.",
+        )
+
+    inventory_item = crud.get_inventory_item(db, item_id=payload.inventory_item_id)
+    if not inventory_item:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Inventory item not found.",
+        )
+
+    if payload.quantity <= 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Requested quantity must be greater than zero.",
+        )
+
+    db_request = crud.create_material_request(
+        db=db,
+        project_id=payload.project_id,
+        inventory_item_id=payload.inventory_item_id,
+        requested_by_id=current_user.id,
+        quantity=payload.quantity,
+        note=payload.note,
+    )
+    return db_request
+
+
+@router.get(
+    "/project/{project_id}/requests",
+    response_model=List[schemas.MaterialRequestRead],
+)
+@limiter.limit("100/minute")
+async def read_project_material_requests(
+    request: Request,
+    project_id: int,
+    db: DbDependency,
+    current_user: ManagerOrAdminDependency,
+    include_resolved: bool = False,
+):
+    effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
+
+    project = crud.get_project(db, project_id=project_id, tenant_id=effective_tenant_id)
+    if not project:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Project not found or not accessible.",
+        )
+
+    return crud.get_material_requests_for_project(
+        db=db,
+        project_id=project_id,
+        include_resolved=include_resolved,
+    )

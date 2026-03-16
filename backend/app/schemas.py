@@ -117,6 +117,10 @@ class TenantRead(TenantBase):
     id: int
     created_at: datetime
     updated_at: Optional[datetime] = None
+    user_count: Optional[int] = None
+    has_overdue_invoices: Optional[bool] = None
+    overdue_amount: Optional[float] = None
+    discount_percent: Optional[float] = None
     model_config = ConfigDict(from_attributes=True)
 
 # --- User Schemas ---
@@ -137,6 +141,8 @@ class UserCreateAdmin(UserBase):
     is_active: Optional[bool] = True
     is_superuser: Optional[bool] = False
     hourly_rate: Optional[float] = None
+    # Optional per-user granular permissions, e.g. ["offers.manage", "inventory.manage"]
+    extra_permissions: Optional[List[str]] = None
 
 class UserRead(UserBase):
     id: int
@@ -149,7 +155,10 @@ class UserRead(UserBase):
     updated_at: Optional[datetime] = None
     assigned_projects: List[ProjectReadBasic] = []
     profile_picture_path: Optional[str] = None
-    
+    impersonated_by_email: Optional[str] = None
+    impersonation_log_id: Optional[int] = None
+    extra_permissions: Optional[List[str]] = None
+
     @computed_field
     @property
     def profile_picture_url(self) -> Optional[str]:
@@ -157,6 +166,27 @@ class UserRead(UserBase):
             return f"{STATIC_BASE_URL}/{self.profile_picture_path}"
         return None
     model_config = ConfigDict(from_attributes=True)
+
+    @field_validator("extra_permissions", mode="before")
+    @classmethod
+    def parse_extra_permissions(cls, v):
+        """
+        Allow DB to store permissions as JSON string or NULL, but expose as list[str] in API.
+        """
+        if v is None:
+            return None
+        if isinstance(v, list):
+            return v
+        if isinstance(v, str):
+            v = v.strip()
+            if not v:
+                return None
+            try:
+                return json.loads(v)
+            except Exception:
+                # Fallback: treat as single comma-separated string
+                return [p.strip() for p in v.split(",") if p.strip()]
+        return None
 
 class UserReadAdmin(UserRead):
     hourly_rate: Optional[float] = None
@@ -174,6 +204,7 @@ class UserUpdateAdmin(BaseModel):
     is_superuser: Optional[bool] = None
     role: Optional[str] = None
     tenant_id: Optional[int] = None
+    extra_permissions: Optional[List[str]] = None
 
 class UserChangePassword(BaseModel):
     current_password: str
@@ -214,6 +245,7 @@ class ProjectBase(BaseModel):
     end_date: Optional[datetime] = None
     project_manager_id: Optional[int] = None
     budget: Optional[float] = Field(None, ge=0)
+    work_load_ratio_codes: Optional[str] = None  # JSON array of work load ratio codes e.g. ["3020","6013"]
 
 class ProjectCreate(ProjectBase):
     tenant_id: Optional[int] = None 
@@ -228,6 +260,7 @@ class ProjectUpdate(BaseModel):
     end_date: Optional[datetime] = None
     project_manager_id: Optional[int] = None
     budget: Optional[float] = Field(None, ge=0)
+    work_load_ratio_codes: Optional[str] = None  # JSON array of work load ratio codes
 
 class ProjectRead(ProjectBase):
     id: int
@@ -331,6 +364,73 @@ class TaskAssignUser(BaseModel):
 class TaskDependencyCreate(BaseModel):
     predecessor_id: int
 
+
+# --- Risk Assessment Schemas ---
+
+RiskLikelihoodLiteral = Literal["Low", "Medium", "High"]
+RiskImpactLiteral = Literal["Low", "Medium", "High"]
+RiskStatusLiteral = Literal["Open", "Monitoring", "Closed"]
+
+
+class RiskItemBase(BaseModel):
+    project_id: int
+    title: str
+    description: Optional[str] = None
+    likelihood: RiskLikelihoodLiteral = "Medium"
+    impact: RiskImpactLiteral = "Medium"
+    mitigation: Optional[str] = None
+    status: RiskStatusLiteral = "Open"
+
+
+class RiskItemCreate(RiskItemBase):
+    pass
+
+
+class RiskItemUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    likelihood: Optional[RiskLikelihoodLiteral] = None
+    impact: Optional[RiskImpactLiteral] = None
+    mitigation: Optional[str] = None
+    status: Optional[RiskStatusLiteral] = None
+
+
+class RiskItemRead(RiskItemBase):
+    id: int
+    created_at: datetime
+    model_config = ConfigDict(from_attributes=True)
+
+
+class RiskTemplateBase(BaseModel):
+    category: Optional[str] = None
+    title: str
+    description: Optional[str] = None
+    default_likelihood: RiskLikelihoodLiteral = "Medium"
+    default_impact: RiskImpactLiteral = "Medium"
+    default_mitigation: Optional[str] = None
+    default_status: RiskStatusLiteral = "Open"
+    is_active: bool = True
+
+
+class RiskTemplateCreate(RiskTemplateBase):
+    pass
+
+
+class RiskTemplateUpdate(BaseModel):
+    category: Optional[str] = None
+    title: Optional[str] = None
+    description: Optional[str] = None
+    default_likelihood: Optional[RiskLikelihoodLiteral] = None
+    default_impact: Optional[RiskImpactLiteral] = None
+    default_mitigation: Optional[str] = None
+    default_status: Optional[RiskStatusLiteral] = None
+    is_active: Optional[bool] = None
+
+
+class RiskTemplateRead(RiskTemplateBase):
+    id: int
+    model_config = ConfigDict(from_attributes=True)
+
 # --- Inventory & BoQ Schemas ---
 
 class InventoryItemBase(BaseModel):
@@ -362,6 +462,30 @@ class InventoryItemUpdate(BaseModel):
 
 class InventoryItemRead(InventoryItemBase):
     id: int
+    model_config = ConfigDict(from_attributes=True)
+
+
+class MaterialRequestBase(BaseModel):
+    project_id: int
+    inventory_item_id: int
+    quantity: float = Field(..., gt=0)
+    note: Optional[str] = None
+
+
+class MaterialRequestCreate(MaterialRequestBase):
+    pass
+
+
+MaterialRequestStatusLiteral = Literal["Pending", "Approved", "Rejected", "Fulfilled"]
+
+
+class MaterialRequestRead(MaterialRequestBase):
+    id: int
+    status: MaterialRequestStatusLiteral = "Pending"
+    requested_by: Optional[UserReadBasic] = None
+    created_at: datetime
+    resolved_at: Optional[datetime] = None
+    inventory_item: InventoryItemRead
     model_config = ConfigDict(from_attributes=True)
 
 class ProjectInventoryItemBase(BaseModel):
@@ -483,8 +607,8 @@ class WiringDiagramRead(BaseModel):
     image_path: Optional[str] = None
     file_path: Optional[str] = None  # Added for PDF manuals
     created_at: datetime
-    author_id: int                  # Added for tracking who wrote it
-    tenant_id: int                  # Added for security isolation
+    author_id: Optional[int] = None                  # Global tutorials may not have a specific author
+    tenant_id: Optional[int] = None                  # Global tutorials have tenant_id = None
     
     model_config = ConfigDict(from_attributes=True)
 
@@ -702,6 +826,40 @@ class DashboardStats(BaseModel):
     active_users: int
     weekly_hours: float
 
+
+class TenantHeatmapItem(BaseModel):
+    tenant_id: int
+    tenant_name: str
+    active_projects: int
+    total_users: int
+    hours_last_30d: float
+
+
+class TenantHeatmap(BaseModel):
+    items: List[TenantHeatmapItem]
+
+
+class SystemLoadStats(BaseModel):
+    db_ok: bool
+    db_latency_ms: float
+    total_tenants: int
+    total_users: int
+    total_projects: int
+
+
+class PlatformGrowthMetrics(BaseModel):
+    total_tenants: int
+    total_users: int
+    total_projects: int
+    new_projects_today: int
+    total_hours_all_time: float
+    total_hours_last_30d: float
+
+
+class SystemStatus(BaseModel):
+    maintenance: bool
+    message: Optional[str] = None
+
 class ReportTimeLogEntry(BaseModel):
     user_name: str
     duration_hours: float
@@ -734,9 +892,14 @@ class ShoppingListItem(BaseModel):
 
 class LaborCatalogItemBase(BaseModel):
     description: str = Field(..., min_length=1)
-    category: Optional[str] = None # ROADMAP: Hierarchy support
+    category: Optional[str] = None
     unit: Optional[str] = "hour"
-    recommended_item_ids: Optional[str] = None # Roadmap: Estimator Linkage
+    recommended_item_ids: Optional[str] = None
+    main_category: Optional[str] = None   # ar.is Aðalflokkur
+    sub_category: Optional[str] = None   # ar.is Flokkur
+    conditions: Optional[str] = None      # ar.is Aðstæður
+    reference_price: Optional[float] = None  # ar.is Eining (unit cost)
+    units_per_hour: Optional[float] = None  # ar.is Eining time: 4=15min/unit, 2=30min, 1=1hr, 0=hourly rate
 
 class LaborCatalogItemCreate(LaborCatalogItemBase):
     default_unit_price: float = Field(..., ge=0)
@@ -747,6 +910,11 @@ class LaborCatalogItemUpdate(BaseModel):
     default_unit_price: Optional[float] = Field(None, ge=0)
     unit: Optional[str] = None
     recommended_item_ids: Optional[str] = None
+    main_category: Optional[str] = None
+    sub_category: Optional[str] = None
+    conditions: Optional[str] = None
+    reference_price: Optional[float] = Field(None, ge=0)
+    units_per_hour: Optional[float] = Field(None, ge=0)
 
 class TenantLaborPriceRead(BaseModel):
     id: int
@@ -756,8 +924,38 @@ class TenantLaborPriceRead(BaseModel):
 
 class LaborCatalogItemRead(LaborCatalogItemBase):
     id: int
-    # Pricing is injected dynamically based on tenant in CRUD
+    tenant_price: Optional[float] = None  # Injected per tenant by CRUD
     model_config = ConfigDict(from_attributes=True)
+
+
+class WorkLoadRatioRead(BaseModel):
+    id: int
+    code: str
+    description: str
+    ratio: float
+    ratio_type: Optional[int] = None
+    is_active: bool
+    model_config = ConfigDict(from_attributes=True)
+
+
+class LaborMainCategoryRefRead(BaseModel):
+    id: int
+    code: str
+    name: str
+    model_config = ConfigDict(from_attributes=True)
+
+
+class LaborCatalogItemConditionRead(BaseModel):
+    """ar.is drill-down: one row per condition with its own Eining (units_per_hour)."""
+    id: int
+    labor_catalog_item_id: int
+    code: str
+    condition_description: str
+    units_per_hour: Optional[float] = None
+    effective_date: Optional[str] = None
+    end_date: Optional[str] = None
+    model_config = ConfigDict(from_attributes=True)
+
 
 class PayslipCreate(BaseModel):
     user_id: int
@@ -774,6 +972,22 @@ class PayslipRead(BaseModel):
     filename: str
     user: Optional[UserReadBasic] = None
     model_config = ConfigDict(from_attributes=True)
+
+
+class PayslipGenerate(BaseModel):
+    user_id: int
+    issue_date: date
+    amount_brutto: float
+    amount_netto: float
+    period_from: Optional[date] = None
+    period_to: Optional[date] = None
+    regular_hours: Optional[float] = None
+    overtime1_hours: Optional[float] = None
+    overtime2_hours: Optional[float] = None
+    bonuses: Optional[float] = None
+    bonus_description: Optional[str] = None
+    other_deductions: Optional[float] = None
+    deductions_description: Optional[str] = None
 
 class LeaveRequestCreate(BaseModel):
     start_date: date
@@ -805,6 +1019,86 @@ class LeaveRequestRead(BaseModel):
 class LeaveRequestReview(BaseModel):
     status: LeaveStatus
     manager_comment: Optional[str] = None
+
+
+MoneyFlowLiteral = Literal["in", "out"]
+ExpenseCategoryLiteral = Literal["project", "car", "tool", "repair", "clothing", "other"]
+
+
+class ExpenseBase(BaseModel):
+    date: date
+    amount: float = Field(..., gt=0)
+    flow_type: MoneyFlowLiteral = "out"
+    category: Optional[ExpenseCategoryLiteral] = "other"
+    description: Optional[str] = None
+    reference: Optional[str] = None
+    project_id: Optional[int] = None
+
+
+class ExpenseCreate(ExpenseBase):
+    pass
+
+
+class ExpenseRead(ExpenseBase):
+    id: int
+    tenant_id: int
+    created_at: datetime
+    model_config = ConfigDict(from_attributes=True)
+
+
+class MonthlyMoneySummary(BaseModel):
+    month: int
+    total_in: float
+    total_out: float
+
+
+class CategoryMoneySummary(BaseModel):
+    category: ExpenseCategoryLiteral
+    total_in: float
+    total_out: float
+
+
+class YearlyMoneyOverview(BaseModel):
+    year: int
+    total_in: float
+    total_out: float
+    net: float
+    by_month: List[MonthlyMoneySummary]
+    by_category: List[CategoryMoneySummary]
+
+
+BillingStatusLiteral = Literal["Pending", "Paid", "Overdue"]
+BillingProviderLiteral = Literal["manual", "stripe", "bokun"]
+
+
+class BillingInvoiceBase(BaseModel):
+    tenant_id: int
+    amount: float = Field(..., gt=0)
+    currency: str = "ISK"
+    due_date: date
+    status: BillingStatusLiteral = "Pending"
+    provider: BillingProviderLiteral = "manual"
+    external_invoice_id: Optional[str] = None
+    description: Optional[str] = None
+
+
+class BillingInvoiceCreate(BillingInvoiceBase):
+    pass
+
+
+class BillingInvoiceRead(BillingInvoiceBase):
+    id: int
+    created_at: datetime
+    updated_at: datetime
+    paid_at: Optional[datetime] = None
+    model_config = ConfigDict(from_attributes=True)
+
+
+class BillingOverdueTenantSummary(BaseModel):
+    tenant_id: int
+    tenant_name: str
+    overdue_count: int
+    overdue_total: float
 
 # --- Offer Schemas ---
 
@@ -838,6 +1132,7 @@ class OfferBase(BaseModel):
     client_address: Optional[str] = None
     client_email: Optional[EmailStr] = None
     expiry_date: Optional[date] = None
+    work_load_ratio_codes: Optional[str] = None  # JSON array of work load ratio codes; applied when adding labor
 
 class OfferCreate(OfferBase):
     project_id: int
@@ -845,6 +1140,7 @@ class OfferCreate(OfferBase):
 class OfferUpdate(OfferBase):
     title: Optional[str] = None
     status: Optional[OfferStatus] = None
+    work_load_ratio_codes: Optional[str] = None
 
 class OfferRead(OfferBase):
     id: int
@@ -947,6 +1243,72 @@ class CleanSlateSummary(BaseModel):
     projects_pm_cleared: int = 0
     tasks_unassigned: int = 0
     message: Optional[str] = None
+
+
+class ImpersonateRequest(BaseModel):
+    user_id: int
+
+
+class ImpersonationLogRead(BaseModel):
+    id: int
+    superuser_id: int
+    target_user_id: int
+    started_at: datetime
+    ended_at: Optional[datetime] = None
+    superuser_email: Optional[str] = None
+    target_user_email: Optional[str] = None
+    target_user_name: Optional[str] = None
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ImpersonationStartResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    impersonated_user: UserRead
+    original_token: str
+    impersonation_log_id: int
+
+
+class ImpersonationEndRequest(BaseModel):
+    impersonation_log_id: int
+
+
+class AuditLogRead(BaseModel):
+    id: int
+    action_type: str
+    actor_user_id: Optional[int] = None
+    actor_email: Optional[str] = None
+    tenant_id: Optional[int] = None
+    target_ref: Optional[str] = None
+    details: Optional[str] = None
+    created_at: datetime
+    model_config = ConfigDict(from_attributes=True)
+
+
+class GlobalBannerRead(BaseModel):
+    id: int
+    message: str
+    is_active: bool
+    created_at: datetime
+    starts_at: Optional[datetime] = None
+    ends_at: Optional[datetime] = None
+    model_config = ConfigDict(from_attributes=True)
+
+
+class GlobalBannerCreate(BaseModel):
+    message: str
+    starts_at: Optional[datetime] = None
+    ends_at: Optional[datetime] = None
+
+
+class TenantHealthItem(BaseModel):
+    tenant_id: int
+    tenant_name: str
+    last_login_at: Optional[str] = None
+    hours_this_week: float
+    hours_avg_previous_4_weeks: float
+    churn_risk: str  # none, medium, high
+
 
 class CleanSlateResponse(BaseModel):
     message: str

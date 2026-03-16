@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import axiosInstance from '../api/axiosInstance';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
@@ -29,6 +30,7 @@ const DISCIPLINES = ["General", "Electrical", "Lighting", "Fire Alarm", "Data/Ne
 const formatDate = (dateString) => dateString ? new Date(dateString).toLocaleDateString() : 'N/A';
 
 function ProjectDrawings({ projectId }) {
+    const { t } = useTranslation();
     const { user } = useAuth();
     const [isLoading, setIsLoading] = useState(true);
     const [drawings, setDrawings] = useState([]);
@@ -192,23 +194,20 @@ function ProjectDrawings({ projectId }) {
     if (isLoading && drawings.length === 0 && folders.length === 0) return <LoadingSpinner />;
 
     return (
-        <div className="mt-10 pt-8 border-t border-gray-200 dark:border-gray-700">
+        <div className="mt-6">
             {/* Hidden Input for Updates */}
             <input type="file" ref={fileReplaceInputRef} onChange={handleUpdateUpload} className="hidden" accept=".pdf,.dwg,.jpg,.png" />
 
-            <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+            <header className="flex justify-between items-center mb-8 px-4">
                 <div className="flex items-center gap-3">
-                    <div className="p-2.5 bg-indigo-600 rounded-2xl shadow-xl">
-                        <DocumentTextIcon className="h-6 w-6 text-white" />
+                    <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
+                        <DocumentTextIcon className="h-6 w-6 text-indigo-600" />
                     </div>
-                    <div>
-                        <h2 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">Structural Database</h2>
-                        <p className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.3em] leading-none mt-1">Managed Asset Registry</p>
-                    </div>
+                    <h2 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">{t('structural_database')}</h2>
                 </div>
                 {canManage && (
-                    <button onClick={() => setIsFolderModalOpen(true)} className="h-12 px-6 bg-gray-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-black transition flex items-center gap-2">
-                        <FolderPlusIcon className="h-5 w-5" /> New Directory
+                    <button onClick={() => setIsFolderModalOpen(true)} className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition transform active:scale-95">
+                        <FolderPlusIcon className="h-5 w-5" /> {t('new_directory')}
                     </button>
                 )}
             </header>
@@ -231,11 +230,11 @@ function ProjectDrawings({ projectId }) {
             {/* Detailed Upload Console */}
             {canManage && (
                 <div className="mb-10 bg-white dark:bg-gray-800 p-8 rounded-[2.5rem] border border-gray-100 dark:border-gray-700 shadow-sm">
-                    <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-6 border-b pb-4">New Asset Ingestion</h3>
+                    <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-6 border-b pb-4">{t('new_asset_ingestion')}</h3>
                     <form onSubmit={handleUpload} className="space-y-6">
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                             <div className="space-y-1.5">
-                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Document Title</label>
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">{t('document_title')}</label>
                                 <input type="text" value={uploadData.description} onChange={e => setUploadData({...uploadData, description: e.target.value})} placeholder="e.g., Main Distribution Board Schematic" className="modern-input h-14 font-bold" required />
                             </div>
                             <div className="space-y-1.5">
@@ -269,8 +268,8 @@ function ProjectDrawings({ projectId }) {
                                 <input type="text" value={uploadData.author} readOnly className="modern-input h-12 bg-gray-50 dark:bg-gray-900/40 text-gray-400 font-bold text-xs" />
                             </div>
                         </div>
-                        <button type="submit" disabled={isUploading} className="w-full h-14 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black uppercase tracking-[0.2em] transition shadow-lg shadow-indigo-100 flex items-center justify-center gap-3">
-                            <CloudArrowUpIcon className="h-5 w-5" /> {isUploading ? 'Transferring Assets...' : 'Commit to Site Database'}
+                        <button type="submit" disabled={isUploading} className="w-full h-14 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black uppercase tracking-[0.2em] transition flex items-center justify-center gap-3">
+                            <CloudArrowUpIcon className="h-5 w-5" /> {isUploading ? t('transferring_assets') : t('commit_to_site_database')}
                         </button>
                     </form>
                 </div>
@@ -364,7 +363,7 @@ function ProjectDrawings({ projectId }) {
                                     </td>
                                 </tr>
                             )) : (
-                                <tr><td colSpan="6" className="py-20 text-center text-[10px] font-black text-gray-400 uppercase tracking-[0.4em] italic">No assets in directory node.</td></tr>
+                                <tr><td colSpan="6" className="py-20 text-center text-[10px] font-black text-gray-400 uppercase tracking-[0.4em] italic">{t('no_assets_in_directory')}</td></tr>
                             )}
                         </tbody>
                     </table>
@@ -374,7 +373,7 @@ function ProjectDrawings({ projectId }) {
             {/* Modals */}
             <Modal isOpen={isFolderModalOpen} onClose={() => setIsFolderModalOpen(false)} onConfirm={handleCreateFolder} title="New Directory" confirmText="Create Folder">
                 <div className="py-4">
-                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Directory Name</label>
+                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">{t('directory_name')}</label>
                     <input type="text" value={newFolderName} onChange={e => setNewFolderName(e.target.value)} placeholder="e.g., Electrical Ground Floor" className="modern-input h-14 font-black uppercase text-xs" />
                 </div>
             </Modal>

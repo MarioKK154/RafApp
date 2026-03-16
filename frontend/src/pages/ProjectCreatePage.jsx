@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import axiosInstance from '../api/axiosInstance';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
@@ -25,6 +26,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 function ProjectCreatePage() {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const { user: currentUser, isAuthenticated, isLoading: authIsLoading } = useAuth();
     
@@ -130,6 +132,13 @@ function ProjectCreatePage() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        // Require a client for every project (main, sub, extra)
+        if (!formData.customer_id) {
+            toast.error('Client association is required before creating a project.');
+            return;
+        }
+
         setIsSubmitting(true);
 
         const payload = {
@@ -164,17 +173,12 @@ function ProjectCreatePage() {
                     <ChevronLeftIcon className="h-3 w-3 mr-1 stroke-[3px]" /> Return to Registry
                 </Link>
                 <div className="flex items-center gap-5">
-                    <div className="p-4 bg-indigo-600 rounded-2xl shadow-xl shadow-indigo-100 dark:shadow-none">
-                        <PlusIcon className="h-8 w-8 text-white stroke-[2.5px]" />
+                    <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
+                        <PlusIcon className="h-6 w-6 text-indigo-600" />
                     </div>
-                    <div>
-                        <h1 className="text-4xl font-black text-gray-900 dark:text-white tracking-tighter italic leading-none">
-                            New project
-                        </h1>
-                        <p className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.3em] mt-2">
-                            Deployment Tier: {projectType === 'main' ? 'Primary Infrastructure' : projectType.toUpperCase() + ' NODE'}
-                        </p>
-                    </div>
+                    <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">
+                        {t('new_project_page_title')}
+                    </h1>
                 </div>
             </div>
 
@@ -232,11 +236,26 @@ function ProjectCreatePage() {
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Client Association</label>
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 flex items-center justify-between">
+                                    <span>Client Association*</span>
+                                    <button
+                                        type="button"
+                                        onClick={() => navigate('/customers/new')}
+                                        className="inline-flex items-center gap-1 text-[9px] font-black text-indigo-600 hover:text-indigo-800 uppercase tracking-[0.2em]"
+                                    >
+                                        <PlusIcon className="h-3 w-3" /> New client
+                                    </button>
+                                </label>
                                 <div className="relative">
                                     <UserGroupIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                                    <select name="customer_id" value={formData.customer_id} onChange={handleChange} className="modern-input h-14 pl-12 font-bold">
-                                        <option value="">-- Internal Node --</option>
+                                    <select
+                                        name="customer_id"
+                                        required
+                                        value={formData.customer_id}
+                                        onChange={handleChange}
+                                        className="modern-input h-14 pl-12 font-bold"
+                                    >
+                                        <option value="">-- Select client --</option>
                                         {customers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                                     </select>
                                 </div>
@@ -307,7 +326,7 @@ function ProjectCreatePage() {
                     <button 
                         type="submit" 
                         disabled={isSubmitting} 
-                        className="w-full h-20 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-[2rem] shadow-2xl transition transform active:scale-95 disabled:opacity-50 flex items-center justify-center gap-3 uppercase text-xs tracking-[0.3em]"
+                        className="w-full h-20 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-[2rem] transition transform active:scale-95 disabled:opacity-50 flex items-center justify-center gap-3 uppercase text-xs tracking-[0.3em]"
                     >
                         {isSubmitting ? (
                             <><ArrowPathIcon className="h-6 w-6 animate-spin" /> Syncing Node...</>

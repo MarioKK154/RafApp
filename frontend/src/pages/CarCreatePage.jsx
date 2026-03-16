@@ -119,16 +119,11 @@ function CarCreatePage() {
                 >
                     <ChevronLeftIcon className="h-3 w-3 mr-1 stroke-[3px]" /> {t('cars')}
                 </Link>
-                <div className="flex items-center gap-4">
-                    <div className="p-3 bg-indigo-600 rounded-2xl">
-                        <TruckIcon className="h-8 w-8 text-white" />
+                <div className="flex items-center gap-3">
+                    <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
+                        <TruckIcon className="h-6 w-6 text-indigo-600" />
                     </div>
-                    <div>
-                        <h1 className="text-3xl font-black text-gray-900 dark:text-white tracking-tighter leading-none">
-                            {t('register_new_vehicle', { defaultValue: 'New vehicle' })}
-                        </h1>
-                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-2">Fleet Integration Terminal</p>
-                    </div>
+                    <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">{t('register_new_vehicle', { defaultValue: 'New vehicle' })}</h1>
                 </div>
             </header>
 
@@ -240,21 +235,15 @@ function CarCreatePage() {
                         </div>
                     </section>
 
-                    <button 
-                        type="submit" 
-                        disabled={isSaving} 
-                        className="w-full inline-flex justify-center items-center h-16 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-[2rem] shadow-xl shadow-indigo-100 dark:shadow-none transition transform active:scale-95 disabled:opacity-50"
+                    <button
+                        type="submit"
+                        disabled={isSaving}
+                        className="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition transform active:scale-95 disabled:opacity-50"
                     >
                         {isSaving ? (
-                            <>
-                                <ArrowPathIcon className="h-6 w-6 mr-3 animate-spin" /> 
-                                {t('syncing')}
-                            </>
+                            <><ArrowPathIcon className="h-5 w-5 animate-spin" /> {t('syncing')}</>
                         ) : (
-                            <>
-                                <CheckBadgeIcon className="h-6 w-6 mr-3" />
-                                {t('commit_to_fleet', { defaultValue: 'Commit to Fleet Registry' })}
-                            </>
+                            <><CheckBadgeIcon className="h-5 w-5" /> {t('commit_to_fleet', { defaultValue: 'Commit to Fleet Registry' })}</>
                         )}
                     </button>
 

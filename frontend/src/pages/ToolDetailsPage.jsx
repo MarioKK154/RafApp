@@ -63,36 +63,38 @@ function ToolDetailsPage() {
     return (
         <div className="container mx-auto p-4 md:p-8 max-w-7xl animate-in fade-in duration-500">
             {/* Header / Breadcrumbs */}
-            <header className="mb-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
-                <div>
-                    <Link 
-                        to="/tools" 
-                        className="flex items-center text-xs font-black text-gray-400 hover:text-indigo-600 transition mb-2 uppercase tracking-widest"
-                    >
-                        <ChevronLeftIcon className="h-3 w-3 mr-1" /> Hardware Registry
-                    </Link>
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-indigo-600 rounded-xl shadow-lg shadow-indigo-100 dark:shadow-none">
-                            <WrenchScrewdriverIcon className="h-6 w-6 text-white" />
+            <header className="mb-10">
+                <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+                    <div>
+                        <Link 
+                            to="/tools" 
+                            className="flex items-center text-xs font-black text-gray-400 hover:text-indigo-600 transition mb-2 uppercase tracking-widest"
+                        >
+                            <ChevronLeftIcon className="h-3 w-3 mr-1" /> Hardware Registry
+                        </Link>
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
+                                <WrenchScrewdriverIcon className="h-6 w-6 text-indigo-600" />
+                            </div>
+                            <h1 className="text-3xl font-black text-gray-900 dark:text-white leading-none tracking-tight">
+                                {tool.name}
+                            </h1>
                         </div>
-                        <h1 className="text-3xl font-black text-gray-900 dark:text-white leading-none tracking-tight">
-                            {tool.name}
-                        </h1>
+                        <p className="text-gray-500 dark:text-gray-400 text-sm mt-2 font-bold uppercase tracking-widest">
+                            {tool.brand || 'Generic'} • {tool.model || 'Standard Edition'}
+                        </p>
                     </div>
-                    <p className="text-gray-500 dark:text-gray-400 text-sm mt-2 font-bold uppercase tracking-widest">
-                        {tool.brand || 'Generic'} • {tool.model || 'Standard Edition'}
-                    </p>
-                </div>
 
-                {canManageTools && (
-                    <Link 
-                        to={`/tools/edit/${tool.id}`} 
-                        className="inline-flex items-center px-6 py-2.5 bg-gray-900 text-white font-black rounded-xl shadow-lg hover:bg-black transition transform active:scale-95"
-                    >
-                        <PencilSquareIcon className="h-5 w-5 mr-1.5" /> 
-                        Modify Specs
-                    </Link>
-                )}
+                    {canManageTools && (
+                        <Link 
+                            to={`/tools/edit/${tool.id}`} 
+                            className="inline-flex items-center px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-xl shadow-lg transition-all duration-150 ease-out hover:-translate-y-0.5 active:translate-y-0 active:shadow-md"
+                        >
+                            <PencilSquareIcon className="h-5 w-5 mr-1.5" /> 
+                            Modify Specs
+                        </Link>
+                    )}
+                </div>
             </header>
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">

@@ -123,34 +123,39 @@ function CarDetailsPage() {
     return (
         <div className="container mx-auto p-4 md:p-8 max-w-7xl animate-in fade-in duration-500">
             {/* Header Protocol */}
-            <div className="mb-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
-                <div>
-                    <Link to="/cars" className="flex items-center text-[10px] font-black text-gray-400 hover:text-indigo-600 transition mb-3 uppercase tracking-[0.2em]">
-                        <ChevronLeftIcon className="h-3 w-3 mr-1" /> Back to Fleet Registry
-                    </Link>
-                    <div className="flex items-center gap-4">
-                        <div className="p-4 bg-indigo-600 rounded-2xl shadow-xl shadow-indigo-100 dark:shadow-none">
-                            <TruckIcon className="h-8 w-8 text-white" />
-                        </div>
-                        <div>
-                            <h1 className="text-4xl font-black text-gray-900 dark:text-white leading-none tracking-tighter italic">
-                                {car.make} {car.model}
-                            </h1>
-                            <div className="flex items-center gap-2 mt-2">
-                                <HashtagIcon className="h-3 w-3 text-indigo-500" />
-                                <p className="text-indigo-600 dark:text-indigo-400 font-mono font-black tracking-widest text-sm">
-                                    {car.license_plate}
-                                </p>
+            <header className="mb-10">
+                <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+                    <div>
+                        <Link to="/cars" className="flex items-center text-[10px] font-black text-gray-400 hover:text-indigo-600 transition mb-3 uppercase tracking-[0.2em]">
+                            <ChevronLeftIcon className="h-3 w-3 mr-1" /> Back to Fleet Registry
+                        </Link>
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
+                                <TruckIcon className="h-6 w-6 text-indigo-600" />
+                            </div>
+                            <div>
+                                <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">
+                                    {car.make} {car.model}
+                                </h1>
+                                <div className="flex items-center gap-2 mt-2">
+                                    <HashtagIcon className="h-3 w-3 text-indigo-500" />
+                                    <p className="text-indigo-600 dark:text-indigo-400 font-mono font-black tracking-widest text-sm">
+                                        {car.license_plate}
+                                    </p>
+                                </div>
                             </div>
                         </div>
                     </div>
+                    {isAdmin && (
+                        <Link
+                            to={`/cars/edit/${car.id}`}
+                            className="inline-flex items-center px-8 h-14 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black uppercase tracking-widest rounded-2xl transition-all duration-150 ease-out hover:-translate-y-0.5 shadow-xl shadow-indigo-200 active:translate-y-0"
+                        >
+                            <PencilIcon className="h-4 w-4 mr-2" /> Edit Asset
+                        </Link>
+                    )}
                 </div>
-                {isAdmin && (
-                    <Link to={`/cars/edit/${car.id}`} className="inline-flex items-center px-8 h-14 bg-gray-900 dark:bg-gray-800 text-white text-xs font-black uppercase tracking-widest rounded-2xl hover:bg-black transition transform active:scale-95 shadow-xl shadow-gray-200 dark:shadow-none">
-                        <PencilIcon className="h-4 w-4 mr-2" /> Edit Asset
-                    </Link>
-                )}
-            </div>
+            </header>
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                 {/* Left Column: Asset Identity */}
@@ -263,7 +268,10 @@ function CarDetailsPage() {
                                     placeholder="Log mechanical updates or noted defects..."
                                 ></textarea>
                                 <div className="flex justify-end">
-                                    <button type="submit" className="px-10 h-12 bg-gray-900 dark:bg-gray-700 text-white text-xs font-black uppercase tracking-widest rounded-xl hover:bg-black transition shadow-lg">
+                                    <button
+                                        type="submit"
+                                        className="px-10 h-12 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black uppercase tracking-widest rounded-xl transition-all duration-150 ease-out shadow-lg shadow-indigo-200 dark:shadow-none hover:-translate-y-0.5 active:translate-y-0"
+                                    >
                                         Synchronize
                                     </button>
                                 </div>

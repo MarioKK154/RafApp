@@ -25,10 +25,33 @@ import {
     CheckBadgeIcon,
     PowerIcon,
     MapIcon,
-    HashtagIcon
+    HashtagIcon,
+    XMarkIcon,
 } from '@heroicons/react/24/outline';
 
-const ROLES_LIST = ['admin', 'project manager', 'team leader', 'electrician', 'accountant'];
+const ROLES_LIST = ['admin', 'project manager', 'team leader', 'electrician', 'accountant', 'subcontractor'];
+
+// Central catalog of granular permissions that can be assigned via UI
+const PERMISSION_OPTIONS = [
+    { value: 'offers.manage', label: 'Offers – create & edit' },
+    { value: 'offers.view_all', label: 'Offers – view all' },
+
+    { value: 'inventory.manage', label: 'Inventory – create & edit' },
+    { value: 'inventory.view_all', label: 'Inventory – view all' },
+
+    { value: 'projects.manage', label: 'Projects – manage all' },
+    { value: 'tasks.manage', label: 'Tasks – manage all' },
+
+    { value: 'timelogs.manage', label: 'Time logs – adjust entries' },
+
+    { value: 'accounting.view', label: 'Accounting – view only' },
+    { value: 'accounting.manage', label: 'Accounting – full access' },
+
+    { value: 'risk.manage', label: 'Risk library – manage templates' },
+    { value: 'tutorials.manage', label: 'Tutorials – manage content' },
+
+    { value: 'handover.generate', label: 'Client handover – generate packages' },
+];
 
 function UserEditPage() {
     const { t } = useTranslation();
@@ -48,6 +71,7 @@ function UserEditPage() {
         is_superuser: false,
         hourly_rate: '',
         tenant_id: '',
+        extra_permissions: [],
     });
 
     const [initialUserData, setInitialUserData] = useState(null);
@@ -69,6 +93,7 @@ function UserEditPage() {
     const [allTenants, setAllTenants] = useState([]);
     const [assignedProjectIds, setAssignedProjectIds] = useState(new Set());
     const [projectDataLoading, setProjectDataLoading] = useState(false);
+    const [newPermission, setNewPermission] = useState('');
 
     const fetchPageData = useCallback(async () => {
         if (!authIsLoading && isAuthenticated && canViewPage && userId) {
@@ -92,6 +117,7 @@ function UserEditPage() {
                     is_superuser: fetchedUser.is_superuser ?? false,
                     hourly_rate: fetchedUser.hourly_rate ?? '',
                     tenant_id: fetchedUser.tenant_id ?? '',
+                    extra_permissions: fetchedUser.extra_permissions ?? [],
                 });
 
                 setIsLoadingData(false);
@@ -145,7 +171,8 @@ function UserEditPage() {
         const updatePayload = {
             ...formData,
             hourly_rate: formData.hourly_rate === '' ? null : parseFloat(formData.hourly_rate),
-            tenant_id: formData.tenant_id || null
+            tenant_id: formData.tenant_id || null,
+            extra_permissions: formData.extra_permissions || [],
         };
 
         try {
@@ -180,6 +207,31 @@ function UserEditPage() {
         }
     };
 
+    const handleAddPermission = (code) => {
+        const trimmed = code.trim();
+        if (!trimmed) return;
+        setFormData(prev => {
+            const current = prev.extra_permissions || [];
+            if (current.includes(trimmed)) return prev;
+            return { ...prev, extra_permissions: [...current, trimmed] };
+        });
+        setNewPermission('');
+    };
+
+    const handlePermissionKeyDown = (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            handleAddPermission(newPermission);
+        }
+    };
+
+    const handleRemovePermission = (code) => {
+        setFormData(prev => ({
+            ...prev,
+            extra_permissions: (prev.extra_permissions || []).filter(p => p !== code),
+        }));
+    };
+
     const toggleProjectAssignment = async (projectId, isAssigned) => {
         const original = new Set(assignedProjectIds);
         setAssignedProjectIds(prev => {
@@ -212,12 +264,12 @@ function UserEditPage() {
                 <Link to="/users" className="flex items-center text-[10px] font-black text-gray-400 hover:text-indigo-600 transition mb-3 uppercase tracking-[0.2em]">
                     <ChevronLeftIcon className="h-3 w-3 mr-1 stroke-[3px]" /> {t('personnel_registry')}
                 </Link>
-                <div className="flex items-center gap-5">
-                    <div className="p-4 bg-indigo-600 rounded-2xl">
-                        <UserIcon className="h-8 w-8 text-white" />
+                <div className="flex items-center gap-3">
+                    <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
+                        <UserIcon className="h-6 w-6 text-indigo-600" />
                     </div>
                     <div>
-                        <h1 className="text-4xl font-black text-gray-900 dark:text-white tracking-tighter italic leading-none">
+                        <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">
                             {initialUserData?.full_name || t('anonymous_node')}
                         </h1>
                         <div className="flex items-center gap-4 mt-3">
@@ -281,6 +333,68 @@ function UserEditPage() {
                                 </Field>
                             </div>
                         )}
+
+                        <div className="pt-8 border-t border-gray-50 dark:border-gray-700">
+                            <Field label="Granular Permissions Overrides" icon={<ShieldCheckIcon />}>
+                                <div className="space-y-3">
+                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.18em]">
+                                        Optional fine-grained permissions in addition to the primary role. Examples:{' '}
+                                        <span className="text-indigo-500">offers.manage</span>,{' '}
+                                        <span className="text-indigo-500">inventory.manage</span>.
+                                    </p>
+                                    <div className="flex flex-wrap gap-2">
+                                        {(formData.extra_permissions && formData.extra_permissions.length > 0) ? (
+                                            formData.extra_permissions.map(code => (
+                                                <span
+                                                    key={code}
+                                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-900 text-white text-[9px] font-black uppercase tracking-[0.18em] shadow-sm"
+                                                >
+                                                    {code}
+                                                    {canSaveChanges && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleRemovePermission(code)}
+                                                            className="ml-1 text-gray-300 hover:text-white"
+                                                        >
+                                                            <XMarkIcon className="h-3 w-3" />
+                                                        </button>
+                                                    )}
+                                                </span>
+                                            ))
+                                        ) : (
+                                            <span className="inline-flex items-center px-3 py-1.5 rounded-full bg-gray-50 dark:bg-gray-900 text-[9px] font-black text-gray-400 uppercase tracking-[0.18em] border border-dashed border-gray-200 dark:border-gray-700">
+                                                No overrides configured
+                                            </span>
+                                        )}
+                                    </div>
+                                    {canSaveChanges && (
+                                        <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                                            <select
+                                                value={newPermission}
+                                                onChange={(e) => {
+                                                    const value = e.target.value;
+                                                    setNewPermission(value);
+                                                    if (value) {
+                                                        handleAddPermission(value);
+                                                    }
+                                                }}
+                                                onKeyDown={handlePermissionKeyDown}
+                                                className="flex-1 h-12 pl-4 pr-4 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl text-[11px] font-black text-gray-900 dark:text-white placeholder-gray-400 uppercase tracking-[0.18em] focus:ring-1 focus:ring-indigo-500 appearance-none"
+                                            >
+                                                <option value="">
+                                                    Select permission…
+                                                </option>
+                                                {PERMISSION_OPTIONS.map(opt => (
+                                                    <option key={opt.value} value={opt.value}>
+                                                        {opt.label}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    )}
+                                </div>
+                            </Field>
+                        </div>
 
                         <div className="flex flex-wrap gap-4 pt-4 border-t dark:border-gray-700">
                             <StatusCheckbox name="is_active" label="Node Enabled" checked={formData.is_active} onChange={handleChange} disabled={!canSaveChanges} />

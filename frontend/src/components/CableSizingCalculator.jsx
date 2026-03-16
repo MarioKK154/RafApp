@@ -278,7 +278,7 @@ function CableSizingCalculator() {
                 )}
 
                 <div className="mt-8 flex justify-end">
-                    <button type="submit" disabled={isSubmitting} className="inline-flex items-center px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-xl shadow-lg shadow-indigo-200 dark:shadow-none transition transform active:scale-95 disabled:opacity-50">
+                    <button type="submit" disabled={isSubmitting} className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition transform active:scale-95 disabled:opacity-50">
                         {isSubmitting ? <LoadingSpinner text="Computing..." size="sm" /> : (
                             <><CalculatorIcon className="h-5 w-5 mr-2" /> Calculate Compliance</>
                         )}

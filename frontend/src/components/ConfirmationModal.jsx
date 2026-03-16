@@ -93,18 +93,18 @@ export default function ConfirmationModal({
                 <div className="bg-gray-50 dark:bg-gray-700/50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6 gap-2">
                   <button
                     type="button"
-                    className={`inline-flex w-full justify-center rounded-xl px-4 py-2 text-sm font-bold text-white shadow-sm transition-all sm:w-auto ${
+                    className={`inline-flex w-full justify-center rounded-xl px-4 py-2 text-sm font-bold text-white shadow-sm transition-all duration-150 ease-out sm:w-auto hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:shadow-md ${
                       type === 'danger'
-                      ? 'bg-red-600 hover:bg-red-700 focus:ring-red-500'
-                      : 'bg-yellow-600 hover:bg-yellow-700 focus:ring-yellow-500'
-                    } focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-800`}
+                      ? 'bg-red-600 hover:bg-red-700 focus-visible:ring-red-500'
+                      : 'bg-yellow-600 hover:bg-yellow-700 focus-visible:ring-yellow-500'
+                    } focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800`}
                     onClick={onConfirm}
                   >
                     {confirmText}
                   </button>
                   <button
                     type="button"
-                    className="mt-3 inline-flex w-full justify-center rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-200 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-all sm:mt-0 sm:w-auto"
+                    className="mt-3 inline-flex w-full justify-center rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-200 shadow-sm transition-all duration-150 ease-out hover:bg-gray-50 dark:hover:bg-gray-700 hover:-translate-y-0.5 hover:shadow-md sm:mt-0 sm:w-auto focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-500"
                     onClick={handleCancel}
                   >
                     {cancelText}

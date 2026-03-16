@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import axiosInstance from '../api/axiosInstance';
 import { useAuth } from '../context/AuthContext';
 import ConfirmationModal from './ConfirmationModal';
@@ -15,6 +16,7 @@ import {
 const COMMENT_MODERATOR_ROLES = ["admin", "project manager", "team leader"];
 
 function TaskComments({ taskId }) {
+    const { t } = useTranslation();
     const [comments, setComments] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
@@ -43,7 +45,7 @@ function TaskComments({ taskId }) {
             })
             .catch(error => {
                 console.error('Fetch comments error:', error);
-                setError('Failed to load comments registry.');
+                setError(t('failed_load_comments'));
             })
             .finally(() => {
                 setIsLoading(false);
@@ -59,18 +61,18 @@ function TaskComments({ taskId }) {
         const trimmedText = newCommentText.trim();
         
         if (!trimmedText) {
-            toast.warn("Empty comments are not allowed.");
+            toast.warn(t('empty_comments_not_allowed'));
             return;
         }
 
         setIsSubmitting(true);
         try {
             await axiosInstance.post(`/tasks/${taskId}/comments/`, { content: trimmedText });
-            toast.success("Comment posted.");
+            toast.success(t('comment_posted'));
             setNewCommentText('');
             fetchComments();
         } catch (error) {
-            toast.error(error.response?.data?.detail || 'Failed to post comment.');
+            toast.error(error.response?.data?.detail || t('failed_post_comment'));
         } finally {
             setIsSubmitting(false);
         }
@@ -100,11 +102,11 @@ function TaskComments({ taskId }) {
         if (!commentToDelete) return;
         try {
             await axiosInstance.delete(`/comments/${commentToDelete.id}`);
-            toast.success("Comment removed.");
+            toast.success(t('comment_removed'));
             fetchComments();
         } catch (error) {
             console.error('Delete comment failed:', error);
-            toast.error("Failed to delete comment.");
+            toast.error(t('failed_delete_comment'));
         } finally {
             setIsDeleteModalOpen(false);
             setCommentToDelete(null);
@@ -112,7 +114,7 @@ function TaskComments({ taskId }) {
     };
 
     if (isLoading) {
-        return <LoadingSpinner text="Syncing discussion..." size="sm" />;
+        return <LoadingSpinner text={t('syncing_discussion')} size="sm" />;
     }
 
     return (
@@ -134,7 +136,7 @@ function TaskComments({ taskId }) {
                             onChange={(e) => setNewCommentText(e.target.value)}
                             disabled={isSubmitting}
                             className="block w-full p-4 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 transition-all resize-none shadow-sm"
-                            placeholder="Add a progress update or internal note..."
+                            placeholder={t('add_comment_placeholder')}
                         ></textarea>
                         <div className="absolute right-3 bottom-3">
                             <button
@@ -142,9 +144,9 @@ function TaskComments({ taskId }) {
                                 disabled={isSubmitting || !newCommentText.trim()}
                                 className="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-md transition transform active:scale-95 disabled:opacity-50"
                             >
-                                {isSubmitting ? 'Posting...' : (
+                                {isSubmitting ? t('posting') : (
                                     <>
-                                        Post <PaperAirplaneIcon className="h-4 w-4 ml-2" />
+                                        {t('post')} <PaperAirplaneIcon className="h-4 w-4 ml-2" />
                                     </>
                                 )}
                             </button>
@@ -157,7 +159,7 @@ function TaskComments({ taskId }) {
             <div className="space-y-4">
                 {comments.length === 0 ? (
                     <div className="py-8 text-center bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-dashed border-gray-200 dark:border-gray-700">
-                        <p className="text-sm text-gray-500 italic">No notes have been added to this task yet.</p>
+                        <p className="text-sm text-gray-500 italic">{t('no_notes_yet')}</p>
                     </div>
                 ) : (
                     comments.map(comment => (
@@ -200,7 +202,7 @@ function TaskComments({ taskId }) {
                                             <button
                                                 onClick={() => triggerDelete(comment)}
                                                 className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-red-600 transition"
-                                                title="Delete note"
+                                                title={t('delete_note')}
                                             >
                                                 <TrashIcon className="h-4 w-4" />
                                             </button>
@@ -221,9 +223,9 @@ function TaskComments({ taskId }) {
                 isOpen={isDeleteModalOpen}
                 onClose={() => { setIsDeleteModalOpen(false); setCommentToDelete(null); }}
                 onConfirm={confirmDeleteComment}
-                title="Remove Comment"
-                message="Are you sure you want to permanently delete this comment? This action cannot be undone."
-                confirmText="Delete Note"
+                title={t('remove_comment')}
+                message={t('delete_note_confirm')}
+                confirmText={t('delete_note')}
                 type="danger"
             />
         </div>

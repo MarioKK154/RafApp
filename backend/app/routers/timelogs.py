@@ -16,7 +16,7 @@ router = APIRouter(
 # Type Aliases for cleaner signatures
 DbDependency = Annotated[Session, Depends(get_db)]
 CurrentUserDependency = Annotated[models.User, Depends(security.get_current_active_user)]
-ManagerOrAdminDependency = Annotated[models.User, Depends(security.require_role(["admin", "project manager"]))]
+ManagerOrAdminDependency = Annotated[models.User, Depends(security.require_role(["admin", "project manager", "accountant"]))]
 AdminOnlyDependency = Annotated[models.User, Depends(security.require_role(["admin"]))]
 
 AllowedTimeLogSortFields = Literal["start_time", "end_time", "duration"]

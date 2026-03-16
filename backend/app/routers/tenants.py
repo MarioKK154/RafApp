@@ -2,7 +2,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query, Request, UploadFile, File
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
-from typing import Annotated, List
+from typing import Annotated, List, Optional
 from pathlib import Path
 import os
 import shutil
@@ -21,6 +21,7 @@ router = APIRouter(
 )
 
 DbDependency = Annotated[Session, Depends(get_db)]
+CurrentUserDependency = Annotated[models.User, Depends(security.require_superuser)]
 
 # Static directory for tenant assets (logo + backgrounds)
 APP_DIR = Path(__file__).resolve().parent.parent
@@ -81,8 +82,24 @@ async def read_all_tenants(
     skip: int = Query(0, ge=0), 
     limit: int = Query(100, ge=1, le=200)
 ):
-    """Retrieves a list of all tenants in the system."""
-    return crud.get_tenants(db=db, skip=skip, limit=limit)
+    """Retrieves a list of all tenants in the system, enriched with basic stats."""
+    tenants = crud.get_tenants(db=db, skip=skip, limit=limit)
+    # Map overdue billing by tenant
+    overdue_map = {item["tenant_id"]: item for item in crud.get_overdue_billing_by_tenant(db=db)}
+    # Enrich each tenant object with dynamic attributes
+    for tenant in tenants:
+        user_count = db.query(models.User).filter(models.User.tenant_id == tenant.id).count()
+        setattr(tenant, "user_count", user_count)
+        overdue_info = overdue_map.get(tenant.id)
+        if overdue_info:
+            setattr(tenant, "has_overdue_invoices", True)
+            setattr(tenant, "overdue_amount", float(overdue_info["overdue_total"]))
+        else:
+            setattr(tenant, "has_overdue_invoices", False)
+            setattr(tenant, "overdue_amount", 0.0)
+        discount = crud.get_tenant_discount_percent(db=db, tenant_id=tenant.id)
+        setattr(tenant, "discount_percent", discount)
+    return tenants
 
 @router.get("/{tenant_id}", response_model=schemas.TenantRead)
 @limiter.limit("100/minute")
@@ -119,25 +136,33 @@ async def update_existing_tenant(
 
 @router.delete("/{tenant_id}", status_code=status.HTTP_204_NO_CONTENT)
 @limiter.limit("100/minute")
-async def delete_existing_tenant(request: Request, tenant_id: int, db: DbDependency):
+async def delete_existing_tenant(request: Request, tenant_id: int, db: DbDependency, current_user: CurrentUserDependency):
     """
-    Deletes a tenant. Safety check: prevents deletion if users or 
-    projects are still associated with the tenant.
+    Deletes a tenant. Safety check: prevents deletion if users or
+    projects are still associated with the tenant. Logged to audit.
     """
     db_tenant = crud.get_tenant(db, tenant_id=tenant_id)
     if not db_tenant:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tenant not found")
-    
+
+    tenant_name = db_tenant.name
+
     # Prevent orphaned data: Check for associated entities
     user_count = db.query(models.User).filter(models.User.tenant_id == tenant_id).count()
     project_count = db.query(models.Project).filter(models.Project.tenant_id == tenant_id).count()
-    
+
     if user_count > 0 or project_count > 0:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, 
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Cannot delete tenant. It has {user_count} user(s) and {project_count} project(s) associated."
         )
-    
+
+    crud.create_audit_log(
+        db, action_type="tenant_deletion",
+        actor_user_id=current_user.id, actor_email=current_user.email,
+        tenant_id=tenant_id, target_ref=f"tenant:{tenant_id}",
+        details=f"Tenant deleted: {tenant_name}",
+    )
     crud.delete_tenant(db=db, tenant_id=tenant_id)
     return None
 

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import axiosInstance from '../api/axiosInstance';
 import { toast } from 'react-toastify';
@@ -22,6 +23,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 function CustomerEditPage() {
+    const { t } = useTranslation();
     const { customerId } = useParams();
     const navigate = useNavigate();
     const { user, isAuthenticated, isLoading: authIsLoading } = useAuth();
@@ -126,21 +128,17 @@ function CustomerEditPage() {
                     <ChevronLeftIcon className="h-3 w-3 mr-1" /> Terminate Edit / Return to Directory
                 </Link>
                 
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                    <div className="flex items-center gap-4">
-                        <div className="p-4 bg-indigo-600 rounded-2xl shadow-xl shadow-indigo-100 dark:shadow-none">
-                            <UserGroupIcon className="h-8 w-8 text-white" />
-                        </div>
-                        <div>
-                            <h1 className="text-4xl font-black text-gray-900 dark:text-white leading-none tracking-tighter italic">
-                                Modify Client Node
-                            </h1>
-                            <div className="flex items-center gap-3 mt-2">
-                                <FingerPrintIcon className="h-3 w-3 text-indigo-500" />
-                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                                    Registry ID: <span className="text-indigo-600 dark:text-indigo-400 font-mono text-sm tracking-normal">{customerId}</span>
-                                </span>
-                            </div>
+                <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5 flex items-center gap-4">
+                    <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
+                        <UserGroupIcon className="h-6 w-6 text-indigo-600" />
+                    </div>
+                    <div>
+                        <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">{t('modify_client', { defaultValue: 'Modify Client' })}</h1>
+                        <div className="flex items-center gap-3 mt-1">
+                            <FingerPrintIcon className="h-3 w-3 text-indigo-500" />
+                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                                {t('registry_id', { defaultValue: 'Registry ID' })}: <span className="text-indigo-600 dark:text-indigo-400 font-mono text-sm tracking-normal">{customerId}</span>
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -267,15 +265,15 @@ function CustomerEditPage() {
                         ></textarea>
                     </section>
 
-                    <button 
-                        type="submit" 
-                        disabled={isSaving} 
-                        className="w-full h-16 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-[1.5rem] shadow-xl shadow-indigo-100 dark:shadow-none transition transform active:scale-95 disabled:opacity-50 flex items-center justify-center gap-3 uppercase text-xs tracking-[0.2em]"
+                    <button
+                        type="submit"
+                        disabled={isSaving}
+                        className="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition transform active:scale-95 disabled:opacity-50"
                     >
                         {isSaving ? (
-                            <><ArrowPathIcon className="h-5 w-5 animate-spin" /> Syncing Registry...</>
+                            <><ArrowPathIcon className="h-5 w-5 animate-spin" /> {t('syncing', { defaultValue: 'Syncing...' })}</>
                         ) : (
-                            <><CloudArrowUpIcon className="h-5 w-5" /> Commit Changes</>
+                            <><CloudArrowUpIcon className="h-5 w-5" /> {t('save_changes')}</>
                         )}
                     </button>
 

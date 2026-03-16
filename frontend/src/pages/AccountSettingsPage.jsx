@@ -200,7 +200,7 @@ function AccountSettingsPage() {
                                 <button 
                                     type="submit" 
                                     disabled={isSubmittingPassword} 
-                                    className="inline-flex items-center px-10 h-14 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs uppercase tracking-[0.2em] rounded-2xl shadow-lg shadow-indigo-100 dark:shadow-none transition transform active:scale-95 disabled:opacity-50"
+                                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition transform active:scale-95 disabled:opacity-50"
                                 >
                                     {isSubmittingPassword ? (
                                         <><ArrowPathIcon className="h-5 w-5 animate-spin mr-3" /> {t('syncing')}</>

@@ -20,7 +20,8 @@ import {
     UserMinusIcon,
     CheckBadgeIcon,
     ShieldCheckIcon,
-    HashtagIcon
+    HashtagIcon,
+    ArrowRightOnRectangleIcon
 } from '@heroicons/react/24/outline';
 
 function useDebounce(value, delay) {
@@ -34,7 +35,7 @@ function useDebounce(value, delay) {
 
 function UserListPage() {
     const { t } = useTranslation();
-    const { user: currentUser } = useAuth();
+    const { user: currentUser, startImpersonation } = useAuth();
     const navigate = useNavigate();
     
     // Registry States
@@ -106,41 +107,51 @@ function UserListPage() {
         }
     };
 
+    const handleImpersonate = async (targetUser) => {
+        if (targetUser.id === currentUser?.id) return;
+        if (!targetUser.is_active) {
+            toast.error(t('cannot_impersonate_inactive') || 'Cannot impersonate an inactive user.');
+            return;
+        }
+        try {
+            const { data } = await axiosInstance.post('/admin/impersonate', { user_id: targetUser.id });
+            startImpersonation(data);
+            navigate('/');
+        } catch (err) {
+            console.error('Impersonate failed:', err);
+            toast.error(err.response?.data?.detail || (t('impersonate_failed') || 'Impersonation failed.'));
+        }
+    };
+
     if (isLoading && users.length === 0) return <LoadingSpinner text={t('syncing_workforce')} />;
 
     return (
         <div className="container mx-auto p-4 md:p-8 max-w-7xl animate-in fade-in duration-500">
             {/* Header Protocol */}
             <header className="mb-12">
-                <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
-                <div>
-                    <div className="flex items-center gap-4 mb-3">
-                        <div className="p-4 bg-indigo-600 rounded-2xl shadow-xl shadow-indigo-100 dark:shadow-none">
-                            <UsersIcon className="h-8 w-8 text-white" />
+                <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5 flex justify-between items-center gap-6">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
+                            <UsersIcon className="h-6 w-6 text-indigo-600" />
                         </div>
-                        <div>
-                            <h1 className="text-4xl font-black text-gray-900 dark:text-white tracking-tighter italic leading-none">{t('users')}</h1>
+                        <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">{t('users')}</h1>
+                    </div>
+                    {isAdmin && (
+                        <div className="flex items-center gap-3">
+                            <button
+                                onClick={() => navigate('/users/import')}
+                                className="inline-flex items-center gap-2 px-5 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-200 font-black text-[10px] uppercase tracking-widest rounded-xl transition hover:bg-gray-50 dark:hover:bg-gray-700"
+                            >
+                                <ArrowDownTrayIcon className="h-5 w-5" /> {t('import')}
+                            </button>
+                            <button
+                                onClick={() => navigate('/users/new')}
+                                className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition transform active:scale-95"
+                            >
+                                <PlusIcon className="h-5 w-5" /> {t('add_user')}
+                            </button>
                         </div>
-                    </div>
-                </div>
-
-                {isAdmin && (
-                    <div className="flex gap-4 w-full md:w-auto">
-                        <button 
-                            onClick={() => navigate('/users/import')}
-                            className="flex-1 md:flex-none h-14 px-6 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 text-gray-500 hover:text-indigo-600 rounded-2xl flex items-center justify-center gap-2 shadow-sm transition transform active:scale-95"
-                        >
-                            <ArrowDownTrayIcon className="h-5 w-5" />
-                            <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">{t('import')}</span>
-                        </button>
-                        <button 
-                            onClick={() => navigate('/users/new')}
-                            className="flex-1 md:flex-none h-14 px-8 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black uppercase tracking-widest rounded-2xl transition transform active:scale-95 shadow-xl shadow-indigo-100 dark:shadow-none flex items-center gap-2"
-                        >
-                            <PlusIcon className="h-5 w-5" /> {t('add_user')}
-                        </button>
-                    </div>
-                )}
+                    )}
                 </div>
             </header>
 
@@ -228,14 +239,24 @@ function UserListPage() {
 
                         {/* Operational Control Terminal */}
                         {isAdmin && (
-                            <div className="px-8 py-6 bg-gray-50 dark:bg-gray-700/30 flex items-center justify-between border-t border-gray-50 dark:border-gray-700/50">
-                                <button 
-                                    onClick={() => navigate(`/users/edit/${u.id}`)}
-                                    className="flex items-center gap-2 text-[10px] font-black text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 uppercase tracking-[0.2em] transition-all"
-                                >
-                                    <PencilIcon className="h-4 w-4" /> {t('edit_profile')}
-                                </button>
-                                
+                            <div className="px-8 py-6 bg-gray-50 dark:bg-gray-700/30 flex flex-wrap items-center justify-between gap-2 border-t border-gray-50 dark:border-gray-700/50">
+                                <div className="flex items-center gap-3">
+                                    <button 
+                                        onClick={() => navigate(`/users/edit/${u.id}`)}
+                                        className="flex items-center gap-2 text-[10px] font-black text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 uppercase tracking-[0.2em] transition-all"
+                                    >
+                                        <PencilIcon className="h-4 w-4" /> {t('edit_profile')}
+                                    </button>
+                                    {isSuperuser && u.id !== currentUser?.id && u.is_active && !u.is_superuser && (
+                                        <button 
+                                            onClick={() => handleImpersonate(u)}
+                                            className="flex items-center gap-2 text-[10px] font-black text-amber-600 hover:text-amber-700 dark:text-amber-400 uppercase tracking-[0.2em] transition-all"
+                                            title={t('log_in_as') || 'Log in as this user'}
+                                        >
+                                            <ArrowRightOnRectangleIcon className="h-4 w-4" /> {t('log_in_as') || 'Log in as…'}
+                                        </button>
+                                    )}
+                                </div>
                                 {!u.is_superuser && (
                                     <button 
                                         onClick={() => handleToggleActiveStatus(u)}

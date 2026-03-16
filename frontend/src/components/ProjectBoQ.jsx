@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import axiosInstance from '../api/axiosInstance';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
@@ -13,6 +14,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 function ProjectBoQ({ projectId }) {
+    const { t } = useTranslation();
     const [boq, setBoq] = useState(null);
     const [inventoryItems, setInventoryItems] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -105,7 +107,7 @@ function ProjectBoQ({ projectId }) {
     if (isLoading) {
         return (
             <div className="py-12 flex justify-center">
-                <LoadingSpinner text="Calculating shortfall and requirements..." size="md" />
+                <LoadingSpinner text={t('calculating_shortfall')} size="md" />
             </div>
         );
     }
@@ -125,18 +127,21 @@ function ProjectBoQ({ projectId }) {
     );
 
     return (
-        <div className="bg-white dark:bg-gray-800 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
-            {/* Module Header */}
-            <div className="p-8 border-b border-gray-50 dark:border-gray-700 flex items-center justify-between">
+        <div className="mt-6">
+            <header className="flex justify-between items-center mb-8 px-4">
                 <div className="flex items-center gap-3">
-                    <ArchiveBoxIcon className="h-5 w-5 text-indigo-500" />
-                    <h2 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-widest italic">Bill of Quantities (BoQ)</h2>
+                    <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
+                        <ArchiveBoxIcon className="h-6 w-6 text-indigo-600" />
+                    </div>
+                    <h2 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">{t('bill_of_quantities')}</h2>
                 </div>
-                <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest bg-gray-50 dark:bg-gray-900 px-3 py-1 rounded-full border border-gray-100 dark:border-gray-700">
-                    Project Node: {projectId}
-                </span>
-            </div>
-            
+                <div className="flex items-center gap-3 px-4 py-2 bg-gray-50 dark:bg-gray-900 rounded-full border border-gray-100 dark:border-gray-800">
+                    <span className="text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest leading-none">
+                        {t('project_node', { defaultValue: 'Project' })}: {projectId}
+                    </span>
+                </div>
+            </header>
+
             <div className="p-8">
                 {/* Deployment Console (Requirement Form) */}
                 {canManageBoQ && (
@@ -174,10 +179,10 @@ function ProjectBoQ({ projectId }) {
                                 <button 
                                     type="submit" 
                                     disabled={isSubmitting}
-                                    className="w-full h-12 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-[0.2em] rounded-xl shadow-lg shadow-indigo-100 dark:shadow-none transition transform active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+                                    className="w-full h-12 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-[0.2em] rounded-xl transition transform active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
                                 >
                                     {isSubmitting ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <PlusIcon className="h-4 w-4 stroke-[3px]" />}
-                                    Commit to BoQ
+                                    {t('commit_to_boq')}
                                 </button>
                             </div>
                         </form>

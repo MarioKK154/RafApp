@@ -13,7 +13,7 @@ from ..limiter import limiter
 router = APIRouter(
     prefix="/cars",
     tags=["Car Fleet"],
-    dependencies=[Depends(security.get_current_active_user)]
+    dependencies=[Depends(security.block_subcontractor)]
 )
 
 DbDependency = Annotated[Session, Depends(get_db)]

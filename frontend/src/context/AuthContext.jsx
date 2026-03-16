@@ -4,6 +4,9 @@ import { toast } from 'react-toastify';
 
 const AuthContext = createContext(null);
 
+const IMPERSONATION_ORIGINAL_TOKEN = 'impersonationOriginalToken';
+const IMPERSONATION_LOG_ID = 'impersonationLogId';
+
 export const AuthProvider = ({ children }) => {
     const [token, setToken] = useState(() => localStorage.getItem('accessToken'));
     const [user, setUser] = useState(null);
@@ -21,6 +24,8 @@ export const AuthProvider = ({ children }) => {
             setIsAuthenticated(false);
             setIsLoading(false);
             localStorage.removeItem('accessToken');
+            sessionStorage.removeItem(IMPERSONATION_ORIGINAL_TOKEN);
+            sessionStorage.removeItem(IMPERSONATION_LOG_ID);
             return;
         }
 
@@ -76,10 +81,58 @@ export const AuthProvider = ({ children }) => {
      */
     const logout = useCallback(() => {
         localStorage.removeItem('accessToken');
+        sessionStorage.removeItem(IMPERSONATION_ORIGINAL_TOKEN);
+        sessionStorage.removeItem(IMPERSONATION_LOG_ID);
         setToken(null);
         setUser(null);
         setIsAuthenticated(false);
         toast.info("You have been logged out.");
+    }, []);
+
+    /**
+     * Start impersonating another user (superuser only). Stores original token for restore.
+     */
+    const startImpersonation = useCallback((response) => {
+        const { access_token, original_token, impersonation_log_id } = response;
+        if (!access_token || !original_token || impersonation_log_id == null) return;
+        sessionStorage.setItem(IMPERSONATION_ORIGINAL_TOKEN, original_token);
+        sessionStorage.setItem(IMPERSONATION_LOG_ID, String(impersonation_log_id));
+        localStorage.setItem('accessToken', access_token);
+        setIsLoading(true);
+        setToken(access_token);
+        toast.info(`Now viewing as ${response.impersonated_user?.full_name || response.impersonated_user?.email}.`);
+    }, []);
+
+    /**
+     * End impersonation: notify backend, restore superuser token, refetch.
+     */
+    const stopImpersonation = useCallback(async () => {
+        const originalToken = sessionStorage.getItem(IMPERSONATION_ORIGINAL_TOKEN);
+        const logId = sessionStorage.getItem(IMPERSONATION_LOG_ID);
+        if (!originalToken || !logId) {
+            sessionStorage.removeItem(IMPERSONATION_ORIGINAL_TOKEN);
+            sessionStorage.removeItem(IMPERSONATION_LOG_ID);
+            if (originalToken) {
+                localStorage.setItem('accessToken', originalToken);
+                setIsLoading(true);
+                setToken(originalToken);
+            }
+            return;
+        }
+        try {
+            await axiosInstance.post('/admin/impersonation/end', { impersonation_log_id: parseInt(logId, 10) }, {
+                headers: { Authorization: `Bearer ${originalToken}` },
+            });
+        } catch (err) {
+            console.error('End impersonation failed:', err);
+            toast.error(err.response?.data?.detail || 'Failed to end impersonation.');
+        }
+        sessionStorage.removeItem(IMPERSONATION_ORIGINAL_TOKEN);
+        sessionStorage.removeItem(IMPERSONATION_LOG_ID);
+        localStorage.setItem('accessToken', originalToken);
+        setIsLoading(true);
+        setToken(originalToken);
+        toast.info('Impersonation ended. Restored to your account.');
     }, []);
 
     /**
@@ -97,7 +150,10 @@ export const AuthProvider = ({ children }) => {
         isLoading, 
         login, 
         logout, 
-        updateUser 
+        updateUser,
+        startImpersonation,
+        stopImpersonation,
+        isImpersonating: !!(user?.impersonated_by_email),
     };
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

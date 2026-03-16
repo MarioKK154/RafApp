@@ -6,7 +6,6 @@ import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
-import listPlugin from '@fullcalendar/list';
 
 import axiosInstance from '../api/axiosInstance';
 import { toast } from 'react-toastify';
@@ -25,7 +24,7 @@ function CalendarPage() {
     
     const [events, setEvents] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [activeFilters, setActiveFilters] = useState(['task', 'project', 'meeting', 'custom']);
+    const [activeFilters, setActiveFilters] = useState(['task', 'meeting', 'custom']); // project off by default to avoid calendar dominated by green
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalMode, setModalMode] = useState('view'); // 'view' | 'create'
@@ -260,18 +259,16 @@ function CalendarPage() {
         <div className="container mx-auto p-4 md:p-8 max-w-7xl">
             <header className="mb-10">
                 <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5 flex justify-between items-center">
-                <div className="flex items-center gap-3">
-                    <div className="p-2 bg-indigo-600 rounded-xl shadow-lg shadow-indigo-100 dark:shadow-none text-white">
-                        <CalendarDaysIcon className="h-6 w-6" />
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
+                            <CalendarDaysIcon className="h-6 w-6 text-indigo-600" />
+                        </div>
+                        <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">{t('calendar_title')}</h1>
                     </div>
-                    <h1 className="text-3xl font-black text-gray-900 dark:text-white italic">
-                        {t('calendar_title')}
-                    </h1>
-                </div>
                 </div>
             </header>
 
-            <section className="bg-white dark:bg-gray-900 p-6 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-800">
+            <section className="bg-white dark:bg-gray-900 p-6 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden">
                 {/* Filter controls */}
                 <div className="flex flex-wrap gap-2 mb-4">
                     {[
@@ -298,20 +295,23 @@ function CalendarPage() {
                     })}
                 </div>
 
-                <FullCalendar
-                    plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
-                    initialView="dayGridMonth"
-                    locale={i18n.language === 'is' ? 'is' : 'en-gb'}
-                    events={filteredEvents}
-                    eventClick={handleEventClick}
-                    dateClick={handleDateClick}
-                    headerToolbar={{
-                        left: 'prev,next today',
-                        center: 'title',
-                        right: 'dayGridMonth,timeGridWeek,listMonth'
-                    }}
-                    height="auto"
-                />
+                {/* FullCalendar: month, week, day. Wrapper avoids collapse/flicker. */}
+                <div className="calendar-fc-wrapper min-h-[480px] w-full">
+                    <FullCalendar
+                        plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+                        initialView="dayGridMonth"
+                        locale={i18n.language === 'is' ? 'is' : 'en-gb'}
+                        events={filteredEvents}
+                        eventClick={handleEventClick}
+                        dateClick={handleDateClick}
+                        headerToolbar={{
+                            left: 'prev,next today',
+                            center: 'title',
+                            right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                        }}
+                        contentHeight={480}
+                    />
+                </div>
             </section>
 
             <Modal
@@ -492,11 +492,14 @@ function CalendarPage() {
                 )}
             </Modal>
 
-            {/* ===== FULL DARK CALENDAR OVERRIDE ===== */}
+            {/* ===== FULL CALENDAR: layout + full dark theme ===== */}
             <style>{`
-            .dark .fc {
-              background-color: #111827 !important;
-              color: #ffffff !important;
+            .calendar-fc-wrapper {
+              overflow: hidden;
+            }
+            .calendar-fc-wrapper .fc .fc-scrollgrid-section-body table,
+            .calendar-fc-wrapper .fc .fc-view-harness {
+              overflow: hidden;
             }
 
             .fc-event,
@@ -505,73 +508,134 @@ function CalendarPage() {
               cursor: pointer;
             }
 
-            .dark .fc-scrollgrid,
-            .dark .fc-view-harness,
-            .dark .fc-scroller {
+            /* ---- Dark theme: base and structure ---- */
+            .dark .fc {
               background-color: #111827 !important;
+              color: #e5e7eb !important;
             }
 
-            .dark .fc-col-header,
-            .dark .fc-col-header-cell,
-            .dark .fc-col-header-cell-cushion {
+            .dark .fc .fc-theme-standard td,
+            .dark .fc .fc-theme-standard th,
+            .dark .fc .fc-scrollgrid,
+            .dark .fc .fc-scrollgrid td,
+            .dark .fc .fc-scrollgrid th,
+            .dark .fc .fc-timegrid-axis,
+            .dark .fc .fc-timegrid-divider {
+              border-color: rgba(255,255,255,0.12) !important;
+            }
+
+            .dark .fc .fc-scrollgrid,
+            .dark .fc .fc-view-harness,
+            .dark .fc .fc-scroller,
+            .dark .fc .fc-scroller-liquid,
+            .dark .fc .fc-daygrid-body,
+            .dark .fc .fc-timegrid-body,
+            .dark .fc .fc-timegrid-axis,
+            .dark .fc .fc-timegrid-slots,
+            .dark .fc .fc-timegrid-slot,
+            .dark .fc .fc-timegrid-slot-label,
+            .dark .fc .fc-timegrid-col,
+            .dark .fc .fc-daygrid-day-frame,
+            .dark .fc .fc-daygrid-day,
+            .dark .fc .fc-daygrid-day-top,
+            .dark .fc .fc-scrollgrid-sync-table,
+            .dark .fc .fc-scrollgrid-sync-inner,
+            .dark .fc table {
+              background-color: #111827 !important;
+              color: #e5e7eb !important;
+            }
+
+            .dark .fc .fc-col-header,
+            .dark .fc .fc-col-header-cell,
+            .dark .fc .fc-col-header-cell-cushion {
               background-color: #1f2937 !important;
-              color: #ffffff !important;
+              color: #f3f4f6 !important;
               font-weight: 800 !important;
               text-transform: uppercase;
             }
 
-            .dark .fc-daygrid-day,
-            .dark .fc-timegrid-slot,
-            .dark .fc-timegrid-col {
-              background-color: #111827 !important;
+            .dark .fc .fc-daygrid-day-number,
+            .dark .fc .fc-timegrid-slot-label-cushion {
+              color: #e5e7eb !important;
             }
 
-            .dark .fc-daygrid-day-number {
-              color: #ffffff !important;
+            .dark .fc .fc-daygrid-day.fc-day-today {
+              background-color: rgba(79, 70, 229, 0.25) !important;
+            }
+
+            .dark .fc .fc-daygrid-day.fc-day-today .fc-daygrid-day-number {
+              color: #c7d2fe !important;
               font-weight: 700;
             }
 
-            .dark .fc-theme-standard td,
-            .dark .fc-theme-standard th,
-            .dark .fc-scrollgrid,
-            .dark .fc-scrollgrid td,
-            .dark .fc-scrollgrid th {
-              border: 1px solid rgba(255,255,255,0.25) !important;
+            .dark .fc .fc-toolbar,
+            .dark .fc .fc-toolbar.fc-header-toolbar {
+              background-color: #111827 !important;
+              border-color: rgba(255,255,255,0.1) !important;
             }
 
-            .dark .fc-toolbar-title {
-              color: #ffffff !important;
+            .dark .fc .fc-toolbar-title {
+              color: #f9fafb !important;
               font-weight: 900 !important;
             }
 
-            .dark .fc-toolbar.fc-header-toolbar {
-              background-color: #111827 !important;
-              border-bottom: 1px solid rgba(255,255,255,0.1) !important;
+            .dark .fc .fc-button {
+              background-color: #374151 !important;
+              border: 1px solid #4b5563 !important;
+              color: #f9fafb !important;
+              font-weight: 700 !important;
             }
 
-            .dark .fc-daygrid-day.fc-day-today {
+            .dark .fc .fc-button:hover {
+              background-color: #4b5563 !important;
+              border-color: #6b7280 !important;
+              color: #fff !important;
+            }
+
+            .dark .fc .fc-button-active,
+            .dark .fc .fc-button:focus {
               background-color: #4f46e5 !important;
+              border-color: #4f46e5 !important;
+              color: #fff !important;
             }
 
-            .dark .fc-daygrid-day.fc-day-today .fc-daygrid-day-number {
+            .dark .fc a.fc-col-header-cell-cushion,
+            .dark .fc a.fc-daygrid-day-number,
+            .dark .fc a {
+              color: #e5e7eb !important;
+              text-decoration: none !important;
+            }
+
+            .dark .fc .fc-daygrid-more-link {
+              color: #93c5fd !important;
+              background: transparent !important;
+            }
+
+            /* More-events popover */
+            .dark .fc .fc-popover,
+            .dark .fc .fc-more-popover,
+            .dark .fc .fc-popover-header,
+            .dark .fc .fc-popover-body {
+              background-color: #1f2937 !important;
+              border-color: rgba(255,255,255,0.2) !important;
+              color: #e5e7eb !important;
+            }
+
+            .dark .fc .fc-popover .fc-popover-title {
               color: #f9fafb !important;
             }
 
-            .dark .fc-button {
-              background-color: #1f2937 !important;
-              border: 1px solid #374151 !important;
-              color: white !important;
-              font-weight: 800 !important;
+            .dark .fc .fc-popover .fc-event {
+              border-color: rgba(255,255,255,0.3) !important;
             }
 
-            .dark .fc-button-active {
-              background-color: #4f46e5 !important;
-              border-color: #4f46e5 !important;
+            /* Now indicator line */
+            .dark .fc .fc-timegrid-now-indicator-line {
+              border-color: #ef4444 !important;
             }
 
-            .dark .fc a {
-              color: white !important;
-              text-decoration: none !important;
+            .dark .fc .fc-timegrid-now-indicator-arrow {
+              border-color: #ef4444 !important;
             }
             `}</style>
         </div>

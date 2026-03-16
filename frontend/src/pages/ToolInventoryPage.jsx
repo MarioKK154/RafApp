@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import axiosInstance from '../api/axiosInstance';
 import { toast } from 'react-toastify';
 import LoadingSpinner from '../components/LoadingSpinner';
+import SuperTenantSelector from '../components/SuperTenantSelector';
 import ConfirmationModal from '../components/ConfirmationModal';
 import { 
     PlusIcon, 
@@ -34,6 +36,7 @@ function useDebounce(value, delay) {
 }
 
 function ToolInventoryPage() {
+    const { t } = useTranslation();
     const { user } = useAuth();
     const navigate = useNavigate();
     
@@ -45,6 +48,7 @@ function ToolInventoryPage() {
     // Filter & UI States
     const [searchTerm, setSearchTerm] = useState('');
     const debouncedSearch = useDebounce(searchTerm, 300);
+    const [selectedTenantId, setSelectedTenantId] = useState(null);
     const [toolToDelete, setToolToDelete] = useState(null);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
@@ -59,7 +63,11 @@ function ToolInventoryPage() {
         setError('');
         try {
             const response = await axiosInstance.get('/tools/', { params: { limit: 1000 } });
-            setTools(response.data);
+            const allTools = Array.isArray(response.data) ? response.data : [];
+            const scoped = isSuperuser && selectedTenantId
+                ? allTools.filter(tl => tl.tenant_id === selectedTenantId)
+                : allTools;
+            setTools(scoped);
         } catch (err) {
             console.error("Asset Registry Error:", err);
             setError('Hardware registry synchronization failed.');
@@ -67,7 +75,7 @@ function ToolInventoryPage() {
         } finally {
             setIsLoading(false);
         }
-    }, []);
+    }, [isSuperuser, selectedTenantId]);
 
     useEffect(() => { fetchTools(); }, [fetchTools]);
 
@@ -142,25 +150,29 @@ function ToolInventoryPage() {
         <div className="container mx-auto p-4 md:p-8 max-w-7xl animate-in fade-in duration-500">
             {/* Header */}
             <header className="mb-10">
-                <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div>
-                    <div className="flex items-center gap-3 mb-1">
-                        <div className="p-2 bg-indigo-600 rounded-xl shadow-lg shadow-indigo-100 dark:shadow-none">
-                            <WrenchScrewdriverIcon className="h-6 w-6 text-white" />
+                <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5 flex justify-between items-center gap-6">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
+                            <WrenchScrewdriverIcon className="h-6 w-6 text-indigo-600" />
                         </div>
-                        <h1 className="text-3xl font-black text-gray-900 dark:text-white leading-none tracking-tight">Tools</h1>
+                        <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">{t('tools', { defaultValue: 'Tools' })}</h1>
                     </div>
-                </div>
-
-                {canManageTools && (
-                    <button 
-                        onClick={() => navigate('/tools/new')}
-                        className="inline-flex items-center px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-xl shadow-lg shadow-indigo-100 dark:shadow-none transition transform active:scale-95"
-                    >
-                        <PlusIcon className="h-5 w-5 mr-1.5" /> 
-                        Register Asset
-                    </button>
-                )}
+                    <div className="flex items-center gap-4">
+                        {isSuperuser && (
+                            <SuperTenantSelector
+                                selectedTenantId={selectedTenantId}
+                                onChange={setSelectedTenantId}
+                            />
+                        )}
+                        {canManageTools && (
+                            <button
+                                onClick={() => navigate('/tools/new')}
+                                className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition transform active:scale-95"
+                            >
+                                <PlusIcon className="h-5 w-5" /> {t('register_new_asset')}
+                            </button>
+                        )}
+                    </div>
                 </div>
             </header>
 
@@ -186,7 +198,11 @@ function ToolInventoryPage() {
             {/* Main Asset Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredTools.length > 0 ? filteredTools.map(tool => (
-                    <div key={tool.id} className="group bg-white dark:bg-gray-800 rounded-[2rem] border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col overflow-hidden">
+                    <div
+                        key={tool.id}
+                        onClick={() => navigate(`/tools/${tool.id}`)}
+                        className="group bg-white dark:bg-gray-800 rounded-[2rem] border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 flex flex-col overflow-hidden cursor-pointer"
+                    >
                         
                         {/* Tool Identity Header */}
                         <div className="p-6 pb-4 border-b border-gray-50 dark:border-gray-700">
@@ -244,7 +260,7 @@ function ToolInventoryPage() {
                                 ) : tool.status === 'In Use' && tool.current_user?.id === user.id ? (
                                     <button 
                                         onClick={() => handleCheckin(tool.id)}
-                                        className="w-full flex items-center justify-center gap-2 h-11 bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-xl transition shadow-lg shadow-indigo-100 dark:shadow-none"
+                                        className="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition"
                                     >
                                         <ArrowDownOnSquareIcon className="h-4 w-4" /> End Assignment
                                     </button>
@@ -258,29 +274,24 @@ function ToolInventoryPage() {
 
                         {/* Admin Overrides */}
                         {canManageTools && (
-                            <div className="px-6 py-4 bg-gray-50 dark:bg-gray-700/30 border-t border-gray-50 dark:border-gray-700 flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                    <button 
-                                        onClick={() => navigate(`/tools/edit/${tool.id}`)} 
-                                        className="p-2 bg-white dark:bg-gray-800 text-gray-400 hover:text-indigo-600 rounded-xl shadow-sm border border-gray-100 dark:border-gray-600 transition"
-                                        title="Modify Specs"
-                                    >
-                                        <PencilIcon className="h-5 w-5" />
-                                    </button>
-                                    <button 
-                                        onClick={() => triggerDelete(tool)} 
-                                        className="p-2 bg-white dark:bg-gray-800 text-gray-400 hover:text-red-600 rounded-xl shadow-sm border border-gray-100 dark:border-gray-600 transition"
-                                        title="Purge Record"
-                                    >
-                                        <TrashIcon className="h-5 w-5" />
-                                    </button>
-                                </div>
-                                <Link 
-                                    to={`/tools/${tool.id}`}
-                                    className="flex items-center gap-1 text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-indigo-600 transition-colors"
+                            <div
+                                className="px-6 py-4 bg-gray-50 dark:bg-gray-700/30 border-t border-gray-50 dark:border-gray-700 flex items-center justify-start gap-2"
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                <button 
+                                    onClick={() => navigate(`/tools/edit/${tool.id}`)} 
+                                    className="p-2 bg-white dark:bg-gray-800 text-gray-400 hover:text-indigo-600 rounded-xl shadow-sm border border-gray-100 dark:border-gray-600 transition"
+                                    title="Modify Specs"
                                 >
-                                    Audit <ChevronRightIcon className="h-3 w-3" />
-                                </Link>
+                                    <PencilIcon className="h-5 w-5" />
+                                </button>
+                                <button 
+                                    onClick={() => triggerDelete(tool)} 
+                                    className="p-2 bg-white dark:bg-gray-800 text-gray-400 hover:text-red-600 rounded-xl shadow-sm border border-gray-100 dark:border-gray-600 transition"
+                                    title="Purge Record"
+                                >
+                                    <TrashIcon className="h-5 w-5" />
+                                </button>
                             </div>
                         )}
                     </div>

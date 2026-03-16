@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import axiosInstance from '../api/axiosInstance';
 import { toast } from 'react-toastify';
@@ -20,6 +21,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 function ShopEditPage() {
+    const { t } = useTranslation();
     const { shopId } = useParams();
     const navigate = useNavigate();
     const { user } = useAuth();
@@ -98,12 +100,12 @@ function ShopEditPage() {
                     <ChevronLeftIcon className="h-3 w-3 mr-1" /> Supply Chain Directory
                 </Link>
                 <div className="flex items-center gap-3">
-                    <div className="p-3 bg-indigo-600 rounded-2xl shadow-lg shadow-indigo-100 dark:shadow-none">
-                        <BuildingStorefrontIcon className="h-6 w-6 text-white" />
+                    <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
+                        <BuildingStorefrontIcon className="h-6 w-6 text-indigo-600" />
                     </div>
                     <div>
-                        <h1 className="text-2xl font-black text-gray-900 dark:text-white leading-none tracking-tight">
-                            Edit Vendor: {formData.name}
+                        <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">
+                            {t('edit_vendor', { defaultValue: 'Edit Vendor' })}: {formData.name}
                         </h1>
                         <div className="flex items-center gap-2 mt-2">
                             <span className="text-[10px] font-bold text-gray-400 uppercase flex items-center gap-1">
@@ -207,20 +209,20 @@ function ShopEditPage() {
                         ></textarea>
                     </section>
 
-                    <button 
-                        type="submit" 
+                    <button
+                        type="submit"
                         disabled={isSaving || !canManageShops}
-                        className="w-full inline-flex justify-center items-center h-14 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-2xl shadow-lg shadow-indigo-100 dark:shadow-none transition transform active:scale-95 disabled:opacity-50"
+                        className="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition transform active:scale-95 disabled:opacity-50"
                     >
                         {isSaving ? (
                             <>
-                                <ArrowPathIcon className="h-6 w-6 mr-2 animate-spin" />
-                                Syncing Registry...
+                                <ArrowPathIcon className="h-5 w-5 animate-spin" />
+                                {t('syncing', { defaultValue: 'Syncing...' })}
                             </>
                         ) : (
                             <>
-                                <CloudArrowUpIcon className="h-6 w-6 mr-2" />
-                                Commit Updates
+                                <CloudArrowUpIcon className="h-5 w-5" />
+                                {t('save_changes')}
                             </>
                         )}
                     </button>

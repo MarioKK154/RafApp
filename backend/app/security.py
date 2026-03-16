@@ -1,7 +1,7 @@
 # backend/app/security.py
 # ABSOLUTELY FINAL Meticulously Checked Uncondensed Version
 from datetime import datetime, timedelta, timezone
-from typing import Annotated, Optional, List 
+from typing import Annotated, Optional, List, Iterable
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
@@ -50,6 +50,14 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
+
+def decode_token_payload(token: str) -> Optional[dict]:
+    """Decode JWT and return payload dict, or None if invalid."""
+    try:
+        return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+    except JWTError:
+        return None
+
 async def get_current_user(
     token: Annotated[str, Depends(oauth2_scheme)],
     db: Annotated[Session, Depends(get_db)]
@@ -88,7 +96,67 @@ async def get_current_active_user(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Inactive user")
     return current_user
 
-# --- Role-Based Access Control (RBAC) Dependencies ---
+
+def is_subcontractor(user: models.User) -> bool:
+    """
+    Helper to determine if a user is a limited-access subcontractor node.
+    We use a simple convention: role string equals 'subcontractor'.
+    """
+    return (user.role or "").lower() == "subcontractor" and not user.is_superuser
+
+
+async def block_subcontractor(
+    current_user: Annotated[models.User, Depends(get_current_active_user)]
+) -> models.User:
+    """
+    Dependency that blocks subcontractors from accessing certain routers entirely.
+    Superusers bypass this check.
+    """
+    if is_subcontractor(current_user):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Limited-access subcontractor accounts cannot access this resource.",
+        )
+    return current_user
+
+# --- Role- & Permission-Based Access Control (RBAC/PBAC) ---
+
+def _normalize_permissions(raw: Optional[str | Iterable[str]]) -> List[str]:
+    """
+    Helper to normalize the stored extra_permissions field to a list of strings.
+    DB stores JSON string or NULL; API may already have a list.
+    """
+    if raw is None:
+        return []
+    if isinstance(raw, list) or isinstance(raw, tuple):
+        return [str(p) for p in raw]
+    if isinstance(raw, str):
+        raw = raw.strip()
+        if not raw:
+            return []
+        try:
+            parsed = json.loads(raw)
+            if isinstance(parsed, list):
+                return [str(p) for p in parsed]
+        except Exception:
+            # Fallback: comma-separated string
+            return [p.strip() for p in raw.split(",") if p.strip()]
+    return []
+
+
+def user_has_permission(user: models.User, permission: str, allowed_roles: Optional[List[str]] = None) -> bool:
+    """
+    Check if a user has a given permission, either via:
+    - superuser flag,
+    - allowed role,
+    - explicit granular permission in extra_permissions.
+    """
+    if user.is_superuser:
+        return True
+    if allowed_roles and user.role in allowed_roles:
+        return True
+    extra = _normalize_permissions(getattr(user, "extra_permissions", None))
+    return permission in extra
 
 def require_role(allowed_roles: List[str]):
     """
@@ -107,6 +175,29 @@ def require_role(allowed_roles: List[str]):
             )
         return current_user
     return role_checker
+
+
+def require_permission(permission: str, allowed_roles: Optional[List[str]] = None):
+    """
+    Dependency factory that checks a named permission.
+    - Superusers always allowed.
+    - Users with role in allowed_roles are allowed.
+    - Users whose extra_permissions contains permission are allowed.
+    """
+    if allowed_roles is None:
+        allowed_roles = []
+
+    async def permission_checker(
+        current_user: Annotated[models.User, Depends(get_current_active_user)]
+    ) -> models.User:
+        if not user_has_permission(current_user, permission, allowed_roles=allowed_roles):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Operation not permitted. Requires permission '{permission}' or roles: {', '.join(allowed_roles) if allowed_roles else 'none'}",
+            )
+        return current_user
+
+    return permission_checker
 
 async def require_admin(
     current_user: Annotated[models.User, Depends(require_role(["admin"]))]

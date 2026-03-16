@@ -182,7 +182,7 @@ function GanttChartPage() {
                     <p className="text-gray-500 text-[10px] font-black uppercase tracking-[0.2em] mb-8 leading-relaxed">
                         {t('gantt_restriction_msg', { defaultValue: 'Timeline telemetry is restricted to management and administrative personnel.' })}
                     </p>
-                    <Link to="/dashboard" className="inline-flex h-12 px-8 bg-indigo-600 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl items-center hover:bg-indigo-700 transition shadow-lg shadow-indigo-100 dark:shadow-none">
+                    <Link to="/dashboard" className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition">
                         {t('return_to_base', { defaultValue: 'Return to Dashboard' })}
                     </Link>
                 </div>
@@ -198,17 +198,13 @@ function GanttChartPage() {
         <div className="container mx-auto p-4 md:p-8 max-w-7xl animate-in fade-in duration-500">
             {/* Header */}
             <header className="mb-10">
-                <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                <div>
-                    <div className="flex items-center gap-3 mb-2">
-                        <div className="p-3 bg-indigo-600 rounded-2xl shadow-xl shadow-indigo-100 dark:shadow-none">
-                            <ChartBarSquareIcon className="h-7 w-7 text-white" />
+                <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5 flex justify-between items-center gap-6">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
+                            <ChartBarSquareIcon className="h-6 w-6 text-indigo-600" />
                         </div>
-                        <h1 className="text-4xl font-black text-gray-900 dark:text-white tracking-tighter leading-none italic">
-                            Gantt chart
-                        </h1>
+                        <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">{t('gantt_chart', { defaultValue: 'Gantt chart' })}</h1>
                     </div>
-                </div>
                 </div>
             </header>
 

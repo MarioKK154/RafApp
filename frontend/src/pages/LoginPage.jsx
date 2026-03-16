@@ -67,7 +67,7 @@ function LoginPage() {
                 
                 {/* Protocol: Amplified Identity Header */}
                 <div className="text-center mb-10">
-                    <div className="inline-flex p-6 bg-white dark:bg-gray-800 rounded-[2.5rem] shadow-2xl shadow-indigo-200 dark:shadow-none border border-gray-100 dark:border-gray-800 mb-6 transition-transform hover:scale-105 duration-500">
+                    <div className="inline-flex p-6 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-800 mb-6">
                         {/* Increased Logo Scale */}
                         <img src={defaultLogo} alt="Logo" className="h-28 w-28 object-contain" />
                     </div>
@@ -120,10 +120,10 @@ function LoginPage() {
                         </div>
 
                         {/* Submission Action */}
-                        <button 
-                            type="submit" 
-                            disabled={isLoading} 
-                            className="w-full h-16 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-[1.5rem] shadow-lg shadow-indigo-100 dark:shadow-none transition transform active:scale-95 disabled:opacity-50 flex items-center justify-center gap-3 uppercase text-xs tracking-[0.2em]"
+                        <button
+                            type="submit"
+                            disabled={isLoading}
+                            className="w-full h-14 inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition transform active:scale-95 disabled:opacity-50"
                         >
                             {isLoading ? (
                                 <>

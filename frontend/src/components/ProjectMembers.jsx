@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import axiosInstance from '../api/axiosInstance';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
@@ -17,6 +18,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 function ProjectMembers({ projectId }) {
+    const { t } = useTranslation();
     const [members, setMembers] = useState([]);
     const [activeLogs, setActiveLogs] = useState([]); 
     const [allUsers, setAllUsers] = useState([]);
@@ -114,7 +116,7 @@ function ProjectMembers({ projectId }) {
                     <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
                         <UserGroupIcon className="h-6 w-6 text-indigo-600" />
                     </div>
-                    <h2 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">Personnel Deployment</h2>
+                    <h2 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">{t('personnel_deployment')}</h2>
                 </div>
                 <div className="flex items-center gap-3 px-4 py-2 bg-gray-50 dark:bg-gray-900 rounded-full border border-gray-100 dark:border-gray-800">
                     <span className="relative flex h-2 w-2">
@@ -155,7 +157,7 @@ function ProjectMembers({ projectId }) {
                         <button
                             type="submit"
                             disabled={!selectedUserId || isSubmitting}
-                            className="h-14 px-10 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-[0.2em] rounded-2xl shadow-xl shadow-indigo-100 dark:shadow-none transition transform active:scale-95 disabled:opacity-50 flex items-center justify-center gap-3"
+                            className="h-14 px-10 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-[0.2em] rounded-2xl transition transform active:scale-95 disabled:opacity-50 flex items-center justify-center gap-3"
                         >
                             {isSubmitting ? <ArrowPathIcon className="h-5 w-5 animate-spin" /> : <UserPlusIcon className="h-5 w-5 stroke-[2.5px]" />}
                             Deploy to Node

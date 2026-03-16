@@ -75,15 +75,10 @@ function ShopCreatePage() {
                     <ChevronLeftIcon className="h-3 w-3 mr-1" /> {t('supply_chain_directory')}
                 </Link>
                 <div className="flex items-center gap-3">
-                    <div className="p-3 bg-indigo-600 rounded-2xl">
-                        <BuildingStorefrontIcon className="h-8 w-8 text-white" />
+                    <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
+                        <BuildingStorefrontIcon className="h-6 w-6 text-indigo-600" />
                     </div>
-                    <div>
-                        <h1 className="text-3xl font-black text-gray-900 dark:text-white leading-none tracking-tight">
-                            {t('new_vendor')}
-                        </h1>
-                        <p className="text-gray-500 dark:text-gray-400 text-sm mt-1 font-medium">{t('new_vendor_subtitle')}</p>
-                    </div>
+                    <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">{t('new_vendor')}</h1>
                 </div>
             </div>
 
@@ -182,10 +177,10 @@ function ShopCreatePage() {
                         ></textarea>
                     </section>
 
-                    <button 
-                        type="submit" 
+                    <button
+                        type="submit"
                         disabled={isSaving || !canManageShops}
-                        className="w-full inline-flex justify-center items-center h-14 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-2xl shadow-lg shadow-indigo-100 dark:shadow-none transition transform active:scale-95 disabled:opacity-50"
+                        className="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition transform active:scale-95 disabled:opacity-50"
                     >
                         {isSaving ? (
                             <>

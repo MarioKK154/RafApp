@@ -5,6 +5,7 @@ import axiosInstance from '../api/axiosInstance';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
 import LoadingSpinner from '../components/LoadingSpinner';
+import SuperTenantSelector from '../components/SuperTenantSelector';
 import Select from 'react-select';
 import { 
     PlusIcon, 
@@ -66,6 +67,7 @@ function TasksListPage() {
     const [sortDir, setSortDir] = useState({ value: 'desc', label: 'DESC' });
     const [searchTerm, setSearchTerm] = useState('');
     const debouncedSearchTerm = useDebounce(searchTerm, 300);
+    const [selectedTenantId, setSelectedTenantId] = useState(null);
 
     // Permission Matrix
     const isSuperuser = user?.is_superuser;
@@ -129,7 +131,8 @@ function TasksListPage() {
                 search: debouncedSearchTerm || undefined,
                 sort_by: sortBy?.value || 'id',
                 sort_dir: sortDir?.value || 'desc',
-                limit: 500
+                limit: 500,
+                tenant_id: isSuperuser ? selectedTenantId || undefined : undefined,
             }
         })
         .then(response => {
@@ -144,7 +147,7 @@ function TasksListPage() {
             setError(t('task_sync_failed', { defaultValue: 'Failed to retrieve task registry.' }));
         })
         .finally(() => setIsLoading(false));
-    }, [selectedProject, selectedAssignee, selectedStatus, debouncedSearchTerm, sortBy, sortDir, activeLog, t]);
+    }, [selectedProject, selectedAssignee, selectedStatus, debouncedSearchTerm, sortBy, sortDir, activeLog, t, isSuperuser, selectedTenantId]);
 
     useEffect(() => { fetchFilters(); }, [fetchFilters]);
     useEffect(() => { fetchTasks(); }, [fetchTasks]);
@@ -200,55 +203,59 @@ function TasksListPage() {
         <div className="container mx-auto p-4 md:p-8 max-w-7xl animate-in fade-in duration-500">
             {/* Header Area */}
             <header className="mb-10">
-                <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                <div className="flex items-center gap-3">
-                    <div className="p-2 bg-indigo-600 rounded-xl shadow-lg shadow-indigo-100 dark:shadow-none">
-                        <ClipboardDocumentListIcon className="h-6 w-6 text-white" />
+                <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5 flex justify-between items-center gap-6">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
+                            <ClipboardDocumentListIcon className="h-6 w-6 text-indigo-600" />
+                        </div>
+                        <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">{t('tasks')}</h1>
                     </div>
-                    <h1 className="text-4xl font-black text-gray-900 dark:text-white tracking-tighter leading-none italic">
-                        {t('tasks')}
-                    </h1>
-                </div>
-                <div className="flex items-center gap-3">
-                    {canCreateTasks && (
-                        <button 
-                            onClick={() => navigate('/tasks/new')}
-                            className="h-12 px-8 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-[0.2em] rounded-2xl shadow-lg shadow-indigo-100 dark:shadow-none transition transform active:scale-95 flex items-center gap-2"
+                    <div className="flex items-center gap-3">
+                        {isSuperuser && (
+                            <SuperTenantSelector
+                                selectedTenantId={selectedTenantId}
+                                onChange={setSelectedTenantId}
+                            />
+                        )}
+                        {canCreateTasks && (
+                            <button
+                                onClick={() => navigate('/tasks/new')}
+                                className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition-all duration-150 ease-out transform hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-500"
+                            >
+                                <PlusIcon className="h-5 w-5" /> {t('new_task')}
+                            </button>
+                        )}
+                        <button
+                            onClick={async () => {
+                                try {
+                                    const effectiveProjectId = activeLog?.project_id || selectedProject?.value;
+                                    const response = await axiosInstance.get('/tasks/export/pdf', {
+                                        params: {
+                                            project_id: effectiveProjectId || undefined,
+                                            assignee_id: selectedAssignee?.value || undefined,
+                                            status: selectedStatus?.value || undefined,
+                                            search: debouncedSearchTerm || undefined,
+                                        },
+                                        responseType: 'blob',
+                                    });
+                                    const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+                                    const link = document.createElement('a');
+                                    link.href = url;
+                                    link.download = `tasks-export-${new Date().toISOString().slice(0, 10)}.pdf`;
+                                    document.body.appendChild(link);
+                                    link.click();
+                                    link.remove();
+                                    window.URL.revokeObjectURL(url);
+                                } catch (err) {
+                                    console.error('Task export failed:', err);
+                                    toast.error(t('export_failed_tasks', { defaultValue: 'Failed to export tasks.' }));
+                                }
+                            }}
+                            className="inline-flex items-center gap-2 px-5 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-200 font-black text-[10px] uppercase tracking-widest rounded-xl transition-all duration-150 ease-out hover:bg-gray-50 dark:hover:bg-gray-700 hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-500"
                         >
-                            <PlusIcon className="h-4 w-4 stroke-[3px]" /> {t('create_new')}
+                            <DocumentTextIcon className="h-5 w-5" /> {t('export_pdf')}
                         </button>
-                    )}
-                    <button
-                        onClick={async () => {
-                            try {
-                                const effectiveProjectId = activeLog?.project_id || selectedProject?.value;
-                                const response = await axiosInstance.get('/tasks/export/pdf', {
-                                    params: {
-                                        project_id: effectiveProjectId || undefined,
-                                        assignee_id: selectedAssignee?.value || undefined,
-                                        status: selectedStatus?.value || undefined,
-                                        search: debouncedSearchTerm || undefined,
-                                    },
-                                    responseType: 'blob',
-                                });
-                                const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
-                                const link = document.createElement('a');
-                                link.href = url;
-                                link.download = `tasks-export-${new Date().toISOString().slice(0, 10)}.pdf`;
-                                document.body.appendChild(link);
-                                link.click();
-                                link.remove();
-                                window.URL.revokeObjectURL(url);
-                            } catch (err) {
-                                console.error('Task export failed:', err);
-                                toast.error(t('export_failed_tasks', { defaultValue: 'Failed to export tasks.' }));
-                            }
-                        }}
-                        className="h-12 px-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-200 text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition flex items-center gap-2"
-                    >
-                        <DocumentTextIcon className="h-4 w-4" /> {t('export_pdf')}
-                    </button>
-                </div>
+                    </div>
                 </div>
             </header>
 
@@ -297,7 +304,7 @@ function TasksListPage() {
             ) : (
                 <div className="grid grid-cols-1 gap-4">
                     {tasks.length > 0 ? tasks.map(task => (
-                        <div key={task.id} className="group bg-white dark:bg-gray-800 rounded-[2rem] border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden">
+                        <div key={task.id} className="group bg-white dark:bg-gray-800 rounded-[2rem] border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 ease-out overflow-hidden">
                             <div className="p-6 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8">
                                 
                                 <div className="flex-grow min-w-0">
@@ -333,7 +340,7 @@ function TasksListPage() {
                                         <CommandButton onClick={() => handleUpdateStatus(task.id, 'Commissioned', task.title)} icon={<ShieldCheckIcon className="h-4 w-4" />} label={t('commission_task')} variant="indigo" />
                                     )}
                                     
-                                    <Link to={`/tasks/${task.id}`} className="flex-1 lg:flex-none flex items-center justify-center h-12 px-6 bg-gray-50 dark:bg-gray-700 text-gray-400 hover:text-indigo-600 rounded-2xl transition-all shadow-sm">
+                                    <Link to={`/tasks/${task.id}`} className="flex-1 lg:flex-none flex items-center justify-center h-12 px-6 bg-gray-50 dark:bg-gray-700 text-gray-400 hover:text-indigo-600 rounded-2xl transition-all duration-150 ease-out hover:-translate-y-0.5 hover:shadow-md active:translate-y-0">
                                         <AdjustmentsHorizontalIcon className="h-5 w-5" />
                                     </Link>
                                 </div>
@@ -384,7 +391,7 @@ function CommandButton({ onClick, icon, label, variant }) {
     };
 
     return (
-        <button onClick={onClick} className={`flex-1 lg:flex-none flex items-center justify-center gap-2 h-12 px-6 rounded-2xl font-black text-[10px] uppercase tracking-widest transition transform active:scale-95 shadow-lg ${variants[variant] || variants.gray}`}>
+        <button onClick={onClick} className={`flex-1 lg:flex-none flex items-center justify-center gap-2 h-12 px-6 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all duration-150 ease-out transform hover:-translate-y-0.5 hover:shadow-xl active:translate-y-0 active:shadow-md ${variants[variant] || variants.gray}`}>
             {icon}
             <span>{label}</span>
         </button>

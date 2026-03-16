@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import axiosInstance from '../api/axiosInstance';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
@@ -24,6 +25,7 @@ const formatCurrencyISK = (value) => {
 };
 
 function ProjectOffers({ projectId }) {
+    const { t } = useTranslation();
     const [offers, setOffers] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
@@ -58,7 +60,7 @@ function ProjectOffers({ projectId }) {
         try {
             // Backend will associate the offer with the user's tenant automatically
             const response = await axiosInstance.post('/offers/', { project_id: projectId });
-            toast.success('New draft offer generated!');
+            toast.success(t('new_offer_draft_success'));
             navigate(`/offers/${response.data.id}`);
         } catch (err) {
             toast.error(err.response?.data?.detail || 'Failed to create offer.');
@@ -77,26 +79,30 @@ function ProjectOffers({ projectId }) {
         }
     };
 
-    if (isLoading) return <LoadingSpinner text="Retrieving financial documents..." size="sm" />;
+    if (isLoading) return <LoadingSpinner text={t('retrieving_financial_documents')} size="sm" />;
 
     return (
-        <div className="mt-10 pt-8 border-t border-gray-200 dark:border-gray-700">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-                <div className="flex items-center gap-2">
-                    <BanknotesIcon className="h-6 w-6 text-indigo-600" />
-                    <h2 className="text-xl font-bold text-gray-900 dark:text-white">Commercial Offers</h2>
+        <div className="mt-6">
+            <header className="mb-6">
+                <div className="flex justify-between items-center px-4 py-4 bg-white/95 dark:bg-gray-800/95 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
+                            <BanknotesIcon className="h-6 w-6 text-indigo-600" />
+                        </div>
+                        <h2 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">
+                            {t('commercial_offers')}
+                        </h2>
+                    </div>
+                    {canManageOffers && (
+                        <button
+                            onClick={handleCreateOffer}
+                            className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition-all duration-150 ease-out hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:shadow-md"
+                        >
+                            <PlusIcon className="h-5 w-5" /> {t('create_new_offer')}
+                        </button>
+                    )}
                 </div>
-                
-                {canManageOffers && (
-                    <button
-                        onClick={handleCreateOffer}
-                        className="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-sm transition transform active:scale-95"
-                    >
-                        <PlusIcon className="h-5 w-5 mr-1.5" /> 
-                        Create New Offer
-                    </button>
-                )}
-            </div>
+            </header>
 
             {error && (
                 <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm font-medium">
@@ -110,12 +116,12 @@ function ProjectOffers({ projectId }) {
                     <table className="w-full text-sm text-left min-w-[700px]">
                         <thead className="text-xs text-gray-500 uppercase bg-gray-50 dark:bg-gray-700/50 font-bold">
                             <tr>
-                                <th className="py-4 px-6">Offer #</th>
-                                <th className="py-4 px-6">Description</th>
-                                <th className="py-4 px-6">Status</th>
-                                <th className="py-4 px-6">Issue Date</th>
-                                <th className="py-4 px-6 text-right">Net Amount</th>
-                                <th className="py-4 px-6 text-center">Action</th>
+                                <th className="py-4 px-6">{t('offer_number')}</th>
+                                <th className="py-4 px-6">{t('description')}</th>
+                                <th className="py-4 px-6">{t('status')}</th>
+                                <th className="py-4 px-6">{t('issue_date')}</th>
+                                <th className="py-4 px-6 text-right">{t('net_amount')}</th>
+                                <th className="py-4 px-6 text-center">{t('action')}</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
@@ -125,11 +131,11 @@ function ProjectOffers({ projectId }) {
                                         {offer.offer_number || `OFFER-${offer.id}`}
                                     </td>
                                     <td className="py-4 px-6 font-medium text-gray-900 dark:text-white">
-                                        {offer.title || 'Untitled Proposal'}
+                                        {offer.title || t('untitled_proposal')}
                                     </td>
                                     <td className="py-4 px-6">
                                         <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest ${getStatusStyle(offer.status)}`}>
-                                            {offer.status || 'Draft'}
+                                            {offer.status || t('draft')}
                                         </span>
                                     </td>
                                     <td className="py-4 px-6 text-gray-500">
@@ -143,7 +149,7 @@ function ProjectOffers({ projectId }) {
                                             to={`/offers/${offer.id}`} 
                                             className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 hover:text-indigo-800 transition"
                                         >
-                                            Manage <ArrowTopRightOnSquareIcon className="h-4 w-4" />
+                                            {t('manage')} <ArrowTopRightOnSquareIcon className="h-4 w-4" />
                                         </Link>
                                     </td>
                                 </tr>
@@ -152,7 +158,7 @@ function ProjectOffers({ projectId }) {
                                     <td colSpan="6" className="py-12 text-center">
                                         <div className="flex flex-col items-center">
                                             <DocumentTextIcon className="h-10 w-10 text-gray-200 mb-2" />
-                                            <p className="text-sm text-gray-500 italic">No commercial proposals registered.</p>
+                                            <p className="text-sm text-gray-500 italic">{t('no_commercial_proposals')}</p>
                                         </div>
                                     </td>
                                 </tr>

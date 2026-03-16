@@ -11,7 +11,7 @@ from ..limiter import limiter
 router = APIRouter(
     prefix="/inventory",
     tags=["Inventory Catalog"],
-    dependencies=[Depends(security.get_current_active_user)]
+    dependencies=[Depends(security.block_subcontractor)]
 )
 
 # Technical Dependencies

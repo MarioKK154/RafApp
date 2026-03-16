@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import axiosInstance from '../api/axiosInstance';
 import { toast } from 'react-toastify';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { Link } from 'react-router-dom';
 import { 
     ShoppingCartIcon, 
     BriefcaseIcon, 
@@ -15,10 +17,13 @@ import {
 } from '@heroicons/react/24/outline';
 
 function ShoppingListPage() {
+    const { t } = useTranslation();
     const [shoppingList, setShoppingList] = useState([]);
+    const [materialRequests, setMaterialRequests] = useState([]);
     const [projects, setProjects] = useState([]);
     const [selectedProjectId, setSelectedProjectId] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [isRequestsLoading, setIsRequestsLoading] = useState(false);
     const [isProjectsLoading, setIsProjectsLoading] = useState(true);
     const [error, setError] = useState('');
     
@@ -60,6 +65,7 @@ function ShoppingListPage() {
     const fetchShoppingList = useCallback(async (projectId) => {
         if (!projectId) {
             setShoppingList([]);
+            setMaterialRequests([]);
             setError('');
             return;
         }
@@ -77,9 +83,27 @@ function ShoppingListPage() {
         }
     }, []);
 
+    const fetchMaterialRequests = useCallback(async (projectId) => {
+        if (!projectId) {
+            setMaterialRequests([]);
+            return;
+        }
+        setIsRequestsLoading(true);
+        try {
+            const response = await axiosInstance.get(`/shopping-list/project/${projectId}/requests`);
+            setMaterialRequests(response.data);
+        } catch (err) {
+            console.error('Material requests fetch error:', err);
+            toast.error('Failed to load manual material requests.');
+        } finally {
+            setIsRequestsLoading(false);
+        }
+    }, []);
+
     useEffect(() => {
         fetchShoppingList(selectedProjectId);
-    }, [selectedProjectId, fetchShoppingList]);
+        fetchMaterialRequests(selectedProjectId);
+    }, [selectedProjectId, fetchShoppingList, fetchMaterialRequests]);
 
     if (isProjectsLoading) return <LoadingSpinner text="Accessing procurement telemetry..." size="lg" />;
 
@@ -96,24 +120,23 @@ function ShoppingListPage() {
     return (
         <div className="container mx-auto p-4 md:p-8 max-w-7xl animate-in fade-in duration-500">
             {/* Header Section */}
-            <header className="mb-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
-                <div>
-                    <div className="flex items-center gap-3 mb-1">
-                        <div className="p-2 bg-indigo-600 rounded-xl shadow-lg shadow-indigo-100 dark:shadow-none">
-                            <ShoppingCartIcon className="h-6 w-6 text-white" />
+            <header className="mb-10">
+                <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5 flex justify-between items-center gap-6">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
+                            <ShoppingCartIcon className="h-6 w-6 text-indigo-600" />
                         </div>
-                        <h1 className="text-3xl font-black text-gray-900 dark:text-white leading-none tracking-tight">Procurement List</h1>
+                        <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">{t('shopping_list', { defaultValue: 'Procurement List' })}</h1>
                     </div>
+                    {selectedProjectId && shoppingList.length > 0 && (
+                        <button
+                            onClick={() => window.print()}
+                            className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition"
+                        >
+                            <PrinterIcon className="h-5 w-5" /> {t('export_pdf')}
+                        </button>
+                    )}
                 </div>
-                
-                {selectedProjectId && shoppingList.length > 0 && (
-                    <button 
-                        onClick={() => window.print()}
-                        className="inline-flex items-center px-6 py-2.5 bg-gray-900 text-white font-bold rounded-xl hover:bg-black transition shadow-lg"
-                    >
-                        <PrinterIcon className="h-4 w-4 mr-2" /> Export to PDF
-                    </button>
-                )}
             </header>
 
             {/* Project Selection Card */}
@@ -222,6 +245,107 @@ function ShoppingListPage() {
                             </table>
                         </div>
                     </div>
+
+                    {/* Manual Material Requests (Team Leader Inputs) */}
+                    {isRequestsLoading ? (
+                        <div className="py-10">
+                            <LoadingSpinner text="Loading manual material requests..." />
+                        </div>
+                    ) : (
+                        <div className="bg-white dark:bg-gray-800 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+                            <div className="p-8 border-b border-gray-50 dark:border-gray-700 flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 bg-amber-100 dark:bg-amber-900/40 rounded-xl">
+                                        <ClipboardDocumentCheckIcon className="h-5 w-5 text-amber-600" />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-tight">
+                                            Manual Requests from Site
+                                        </h2>
+                                        <p className="text-[11px] text-gray-500 dark:text-gray-400 font-medium mt-1">
+                                            Team leader submissions that should be cross-checked against warehouse and other deployments before ordering.
+                                        </p>
+                                    </div>
+                                </div>
+                                <span className="text-[10px] font-black text-amber-600 uppercase tracking-[0.2em] bg-amber-50 dark:bg-amber-900/20 px-4 py-1 rounded-full border border-amber-100 dark:border-amber-700">
+                                    Open Requests: {materialRequests.length}
+                                </span>
+                            </div>
+
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-sm text-left">
+                                    <thead className="text-[10px] text-gray-400 uppercase font-black bg-gray-50 dark:bg-gray-700/50">
+                                        <tr>
+                                            <th className="py-5 px-8">Material</th>
+                                            <th className="py-5 px-6 text-right">Requested Qty</th>
+                                            <th className="py-5 px-6">Requested By</th>
+                                            <th className="py-5 px-6">Status</th>
+                                            <th className="py-5 px-8 text-right">Requested At</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-50 dark:divide-gray-700">
+                                        {materialRequests.length > 0 ? (
+                                            materialRequests.map(req => (
+                                                <tr key={req.id} className="group hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
+                                                    <td className="py-5 px-8">
+                                                <Link
+                                                    to={req.inventory_item ? `/inventory/edit/${req.inventory_item.id}` : '#'}
+                                                    className={`font-bold text-gray-900 dark:text-white hover:text-indigo-600 transition-colors ${!req.inventory_item ? 'pointer-events-none cursor-default opacity-60' : ''}`}
+                                                >
+                                                    {req.inventory_item?.name || 'Unknown material'}
+                                                </Link>
+                                                <div className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mt-1">
+                                                    ID: {req.inventory_item?.id ?? '—'}
+                                                </div>
+                                                        {req.note && (
+                                                            <p className="mt-2 text-xs text-gray-500 dark:text-gray-400 line-clamp-2">
+                                                                {req.note}
+                                                            </p>
+                                                        )}
+                                                    </td>
+                                                    <td className="py-5 px-6 text-right font-medium text-gray-700 dark:text-gray-200">
+                                                        {req.quantity}
+                                                    </td>
+                                                    <td className="py-5 px-6 text-sm text-gray-600 dark:text-gray-300">
+                                                        {req.requested_by
+                                                            ? `${req.requested_by.first_name || ''} ${req.requested_by.last_name || ''}`.trim() ||
+                                                              req.requested_by.email
+                                                            : 'Unknown'}
+                                                    </td>
+                                                    <td className="py-5 px-6">
+                                                        <span
+                                                            className={`inline-flex items-center px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-[0.18em] ${
+                                                                req.status === 'Pending'
+                                                                    ? 'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-200 border border-amber-100 dark:border-amber-700'
+                                                                    : req.status === 'Approved'
+                                                                    ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200 border border-emerald-100 dark:border-emerald-700'
+                                                                    : req.status === 'Rejected'
+                                                                    ? 'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-200 border border-red-100 dark:border-red-700'
+                                                                    : 'bg-gray-50 text-gray-600 dark:bg-gray-800/40 dark:text-gray-300 border border-gray-100 dark:border-gray-700'
+                                                            }`}
+                                                        >
+                                                            {req.status}
+                                                        </span>
+                                                    </td>
+                                                    <td className="py-5 px-8 text-right text-xs text-gray-500 dark:text-gray-400">
+                                                        {req.created_at
+                                                            ? new Date(req.created_at).toLocaleString()
+                                                            : '-'}
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        ) : (
+                                            <tr>
+                                                <td colSpan="5" className="py-16 text-center text-gray-400 italic text-sm">
+                                                    No manual material requests logged for this deployment yet.
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
                 </div>
             )}
         </div>

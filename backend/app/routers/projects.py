@@ -15,7 +15,7 @@ from ..limiter import limiter
 router = APIRouter(
     prefix="/projects",
     tags=["Projects"],
-    dependencies=[Depends(security.get_current_active_user)]
+    dependencies=[Depends(security.block_subcontractor)]
 )
 
 DbDependency = Annotated[Session, Depends(get_db)]
@@ -91,9 +91,13 @@ async def read_all_projects_for_tenant(
     sort_by: Optional[AllowedProjectSortFields] = Query('name'),
     sort_dir: Optional[AllowedSortDirections] = Query('asc'),
     skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=1000)
+    limit: int = Query(100, ge=1, le=1000),
+    tenant_id: Optional[int] = Query(None, description="Superadmin-only tenant scope filter"),
 ):
     effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
+    # Superadmins can scope by tenant_id if explicitly provided
+    if current_user.is_superuser and tenant_id is not None:
+        effective_tenant_id = tenant_id
     return crud.get_projects(
         db=db, 
         tenant_id=effective_tenant_id, 
@@ -223,6 +227,12 @@ async def export_project_status_pdf(
     pdf.save()
 
     buffer.seek(0)
+    crud.create_audit_log(
+        db, action_type="data_export",
+        actor_user_id=current_user.id, actor_email=current_user.email,
+        tenant_id=getattr(db_project, "tenant_id", current_user.tenant_id), target_ref=f"project:{project_id}",
+        details=f"Project status report PDF export: {db_project.name}",
+    )
     filename = f"project-{project_id}-status.pdf"
     return StreamingResponse(
         buffer,

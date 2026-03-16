@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import axiosInstance from '../api/axiosInstance';
 import { toast } from 'react-toastify';
 import LoadingSpinner from '../components/LoadingSpinner';
+import SuperTenantSelector from '../components/SuperTenantSelector';
 import ConfirmationModal from '../components/ConfirmationModal';
 import { 
     PlusIcon, 
@@ -33,6 +35,7 @@ function useDebounce(value, delay) {
 }
 
 function CarFleetPage() {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const { user } = useAuth();
 
@@ -43,6 +46,7 @@ function CarFleetPage() {
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const debouncedSearchTerm = useDebounce(searchTerm, 300);
+    const [selectedTenantId, setSelectedTenantId] = useState(null);
 
     const isSuperuser = user?.is_superuser;
     const canManageFleet = user && (user.role === 'admin' || isSuperuser);
@@ -52,7 +56,12 @@ function CarFleetPage() {
         setError('');
         try {
             const response = await axiosInstance.get('/cars/', { params: { limit: 500 } });
-            setCars(response.data);
+            const allCars = Array.isArray(response.data) ? response.data : [];
+            // Superadmin: optionally scope by tenant after retrieval
+            const scoped = isSuperuser && selectedTenantId
+                ? allCars.filter(c => c.tenant_id === selectedTenantId)
+                : allCars;
+            setCars(scoped);
         } catch (err) {
             console.error("Fleet sync error:", err);
             setError('Operational Error: Failed to synchronize with fleet registry.');
@@ -60,7 +69,7 @@ function CarFleetPage() {
         } finally {
             setIsLoading(false);
         }
-    }, []);
+    }, [isSuperuser, selectedTenantId]);
 
     useEffect(() => { fetchCars(); }, [fetchCars]);
 
@@ -110,27 +119,29 @@ function CarFleetPage() {
         <div className="container mx-auto p-4 md:p-8 max-w-7xl animate-in fade-in duration-500">
             {/* Fleet Header */}
             <header className="mb-12">
-                <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
-                <div>
-                    <div className="flex items-center gap-4 mb-3">
-                        <div className="p-4 bg-indigo-600 rounded-2xl shadow-xl shadow-indigo-100 dark:shadow-none">
-                            <TruckIcon className="h-8 w-8 text-white" />
+                <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5 flex justify-between items-center gap-6">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
+                            <TruckIcon className="h-6 w-6 text-indigo-600" />
                         </div>
-                        <div>
-                            <h1 className="text-4xl font-black text-gray-900 dark:text-white tracking-tighter italic leading-none">Cars</h1>
-                        </div>
+                        <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">{t('cars')}</h1>
                     </div>
-                </div>
-
-                {canManageFleet && (
-                    <button 
-                        onClick={() => navigate('/cars/new')}
-                        className="h-14 px-8 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black uppercase tracking-widest rounded-2xl transition transform active:scale-95 shadow-xl shadow-indigo-100 dark:shadow-none flex items-center gap-2"
-                    >
-                        <PlusIcon className="h-5 w-5" /> 
-                        Register New Asset
-                    </button>
-                )}
+                    <div className="flex items-center gap-4">
+                        {isSuperuser && (
+                            <SuperTenantSelector
+                                selectedTenantId={selectedTenantId}
+                                onChange={setSelectedTenantId}
+                            />
+                        )}
+                        {canManageFleet && (
+                            <button
+                                onClick={() => navigate('/cars/new')}
+                                className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition transform active:scale-95"
+                            >
+                                <PlusIcon className="h-5 w-5" /> {t('register_new_asset')}
+                            </button>
+                        )}
+                    </div>
                 </div>
             </header>
 
@@ -269,7 +280,7 @@ function CarFleetPage() {
                     <div className="col-span-full py-32 text-center bg-white dark:bg-gray-800 rounded-[3rem] border-2 border-dashed border-gray-100 dark:border-gray-700">
                         <TruckIcon className="h-16 w-16 text-gray-200 dark:text-gray-700 mx-auto mb-6" />
                         <h3 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">No vehicles detected in sector</h3>
-                        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-2">Adjust search filters or register a new vehicle asset.</p>
+                        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-2">{t('adjust_filters_or_new_vehicle')}</p>
                     </div>
                 )}
             </div>

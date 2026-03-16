@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import axiosInstance from '../api/axiosInstance';
 import { toast } from 'react-toastify';
@@ -30,6 +31,7 @@ const formatDate = (dateString) => {
 };
 
 function CarEditPage() {
+    const { t } = useTranslation();
     const { carId } = useParams();
     const navigate = useNavigate();
     const { user: currentUser } = useAuth();
@@ -145,13 +147,13 @@ function CarEditPage() {
                     <Link to={carId ? `/cars/${carId}` : "/cars"} className="flex items-center text-[10px] font-black text-gray-400 hover:text-indigo-600 transition mb-3 uppercase tracking-[0.2em]">
                         <ChevronLeftIcon className="h-3 w-3 mr-1" /> Terminate Edit / Return
                     </Link>
-                    <div className="flex items-center gap-4">
-                        <div className="p-4 bg-indigo-600 rounded-2xl shadow-xl shadow-indigo-100 dark:shadow-none">
-                            <PencilSquareIcon className="h-8 w-8 text-white" />
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
+                            <PencilSquareIcon className="h-6 w-6 text-indigo-600" />
                         </div>
                         <div>
-                            <h1 className="text-4xl font-black text-gray-900 dark:text-white leading-none tracking-tighter italic">
-                                Edit Asset Node
+                            <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">
+                                {t('edit_asset', { defaultValue: 'Edit Asset' })}
                             </h1>
                             <div className="flex items-center gap-3 mt-2">
                                 <HashtagIcon className="h-3 w-3 text-indigo-500" />
@@ -283,15 +285,15 @@ function CarEditPage() {
                         </div>
                     </section>
 
-                    <button 
-                        type="submit" 
+                    <button
+                        type="submit"
                         disabled={isSaving || !canManageFleet}
-                        className="w-full h-16 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-[1.5rem] shadow-xl shadow-indigo-100 dark:shadow-none transition transform active:scale-95 disabled:opacity-50 uppercase text-xs tracking-[0.2em] flex items-center justify-center gap-3"
+                        className="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition transform active:scale-95 disabled:opacity-50"
                     >
                         {isSaving ? (
-                            <><ArrowPathIcon className="h-5 w-5 animate-spin" /> Syncing...</>
+                            <><ArrowPathIcon className="h-5 w-5 animate-spin" /> {t('syncing')}</>
                         ) : (
-                            <><ShieldCheckIcon className="h-5 w-5" /> Commit Updates</>
+                            <><ShieldCheckIcon className="h-5 w-5" /> {t('save_changes')}</>
                         )}
                     </button>
 

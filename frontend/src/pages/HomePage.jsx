@@ -217,7 +217,7 @@ function HomePage() {
                             {t('system_status_online')}
                         </p>
                     </div>
-                    <h1 className="text-4xl font-black text-gray-900 dark:text-white tracking-tighter leading-none italic">
+                    <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">
                         {getGreeting()},{" "}
                         <span className="text-indigo-600 dark:text-indigo-400">
                             {user?.full_name?.split(' ')[0] || t('user')}
@@ -239,10 +239,10 @@ function HomePage() {
                                         <option key={p.id} value={p.id}>{p.name}</option>
                                     ))}
                                 </select>
-                                <button 
-                                    onClick={handleClockIn} 
-                                    disabled={isClocking || !selectedProjectId} 
-                                    className="flex items-center gap-3 px-8 h-12 bg-indigo-600 hover:bg-indigo-700 text-white rounded-[1.5rem] transition transform active:scale-95 disabled:opacity-50 shadow-lg shadow-indigo-100 dark:shadow-none"
+                                <button
+                                    onClick={handleClockIn}
+                                    disabled={isClocking || !selectedProjectId}
+                                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition transform active:scale-95 disabled:opacity-50"
                                 >
                                     <PlayIcon className="h-4 w-4 fill-current" />
                                     <span className="text-[10px] font-black uppercase tracking-widest">
@@ -266,10 +266,10 @@ function HomePage() {
                                         </p>
                                     </div>
                                 </div>
-                                <button 
-                                    onClick={handleClockOut} 
-                                    disabled={isClocking} 
-                                    className="h-10 px-6 bg-red-600 hover:bg-red-700 text-white text-[10px] font-black uppercase rounded-xl transition shadow-lg shadow-red-100 dark:shadow-none"
+                                <button
+                                    onClick={handleClockOut}
+                                    disabled={isClocking}
+                                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition"
                                 >
                                     {t('clock_out')}
                                 </button>
@@ -280,7 +280,7 @@ function HomePage() {
                 </div>
             </header>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-                <StatCard title={t('active_projects', { defaultValue: 'Active Projects' })} value={stats?.active_projects || 0} icon={<BriefcaseIcon />} color="indigo" />
+                <StatCard title={t('active_projects')} value={stats?.active_projects || 0} icon={<BriefcaseIcon />} color="indigo" />
                 <StatCard title={t('pending_work')} value={stats?.pending_tasks || 0} icon={<ClipboardDocumentListIcon />} color="emerald" />
                 <StatCard title={t('weekly_hours')} value={stats?.weekly_hours || 0} icon={<ClockIcon />} color="amber" unit="h" />
                 <StatCard title={t('active_personnel')} value={stats?.active_users || 0} icon={<UserGroupIcon />} color="rose" />
@@ -294,7 +294,7 @@ function HomePage() {
                             <h2 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-[0.2em]">
                                 {t('managed_projects')}
                             </h2>
-                            <Link to="/projects" className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest hover:underline">View Registry</Link>
+                            <Link to="/projects" className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest hover:underline">{t('view_registry')}</Link>
                         </div>
 
                         <div className="grid grid-cols-1 gap-4">
@@ -336,13 +336,13 @@ function HomePage() {
                         <div className="flex items-center gap-3 mb-8">
                             <CalendarIcon className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
                             <h3 className="text-xs font-black text-gray-900 dark:text-white uppercase tracking-widest">
-                                {t('personnel_schedule')}
+                                {t('calendar_overview', { defaultValue: 'Calendar – Upcoming Events' })}
                             </h3>
                         </div>
                         <p className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase italic tracking-widest leading-relaxed mb-8">
                             {t('registry_synchronized')}
                         </p>
-                        <Link to="/calendar" className="flex items-center justify-center gap-2 w-full py-4 bg-indigo-600 hover:bg-indigo-500 rounded-[1.25rem] text-[10px] font-black uppercase tracking-[0.2em] transition transform active:scale-95 shadow-lg shadow-indigo-100 dark:shadow-indigo-900/20 text-white">
+                        <Link to="/calendar" className="flex items-center justify-center gap-2 w-full px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition transform active:scale-95">
                             {t('open_calendar')} <ChevronRightIcon className="h-3 w-3" />
                         </Link>
                     </div>

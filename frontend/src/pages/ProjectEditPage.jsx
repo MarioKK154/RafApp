@@ -75,7 +75,7 @@ function ProjectEditPage() {
             try {
                 const [projectRes, usersRes] = await Promise.all([
                     axiosInstance.get(`/projects/${projectId}`),
-                    axiosInstance.get('/users/', { params: { limit: 1000 } })
+                    axiosInstance.get('/users/', { params: { limit: 1000 } }),
                 ]);
 
                 const project = projectRes.data;
@@ -180,12 +180,12 @@ function ProjectEditPage() {
                 </Link>
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                     <div className="flex items-center gap-5">
-                        <div className="p-4 bg-indigo-600 rounded-[1.5rem] shadow-xl">
-                            <BriefcaseIcon className="h-8 w-8 text-white" />
+                        <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
+                            <BriefcaseIcon className="h-6 w-6 text-indigo-600" />
                         </div>
                         <div>
                             <div className="flex items-center gap-3 mb-1">
-                                <h1 className="text-4xl font-black text-gray-900 dark:text-white tracking-tighter italic leading-none">
+                                <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">
                                     {initialProjectData?.name}
                                 </h1>
                                 <span
@@ -203,6 +203,12 @@ function ProjectEditPage() {
                         </div>
                     </div>
                     <div className="flex items-center gap-3">
+                        <Link
+                            to={`/projects/${projectId}/risk-assessment`}
+                            className="h-10 px-4 bg-amber-50 text-amber-700 border border-amber-100 text-[10px] font-black uppercase tracking-[0.2em] rounded-xl shadow-sm hover:bg-amber-100 transition flex items-center gap-2"
+                        >
+                            <ShieldCheckIcon className="h-4 w-4" /> Risk Assessment
+                        </Link>
                         <button
                             type="button"
                             onClick={async () => {
@@ -303,12 +309,14 @@ function ProjectEditPage() {
             {/* INTEGRATED MODULES - section background containers */}
             <div className="space-y-16">
                 <div id="tasks-section" className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
-                    <ProjectTasks projectId={projectId} />
+                    <ProjectTasks projectId={projectId} canCreateTask={canEditParameters} />
                 </div>
 
-                <div id="boq-section" className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
-                    <ProjectBoQ projectId={projectId} />
-                </div>
+                {(isAdmin || isPM) && (
+                    <div id="boq-section" className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+                        <ProjectBoQ projectId={projectId} />
+                    </div>
+                )}
 
                 <div id="inventory-section" className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
                     <ProjectInventory projectId={projectId} />
@@ -318,9 +326,11 @@ function ProjectEditPage() {
                     <ProjectDrawings projectId={projectId} />
                 </div>
 
-                <div id="offers-section" className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
-                    <ProjectOffers projectId={projectId} />
-                </div>
+                {(isAdmin || isPM) && (
+                    <div id="offers-section" className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+                        <ProjectOffers projectId={projectId} />
+                    </div>
+                )}
 
                 <div id="personnel-section" className="pb-20 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
                     <ProjectMembers projectId={projectId} />

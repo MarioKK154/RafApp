@@ -24,7 +24,10 @@ UPLOAD_DIRECTORY_TASK_PHOTOS.mkdir(parents=True, exist_ok=True)
 
 DbDependency = Annotated[Session, Depends(get_db)]
 CurrentUserDependency = Annotated[models.User, Depends(security.get_current_active_user)]
-TaskContentContributorDependency = Annotated[models.User, Depends(security.require_role(["admin", "project manager", "team leader", "electrician"]))]
+TaskContentContributorDependency = Annotated[
+    models.User,
+    Depends(security.require_role(["admin", "project manager", "team leader", "electrician", "subcontractor"]))
+]
 
 async def get_task_and_verify_tenant_from_photos_router(
     task_id: int, db: DbDependency, current_user: CurrentUserDependency

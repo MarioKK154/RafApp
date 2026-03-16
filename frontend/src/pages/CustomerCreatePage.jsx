@@ -88,18 +88,11 @@ function CustomerCreatePage() {
                 >
                     <ChevronLeftIcon className="h-3 w-3 mr-1" /> {t('back_to_customers')}
                 </Link>
-                <div className="flex items-center gap-4">
-                    <div className="p-4 bg-indigo-600 rounded-2xl">
-                        <UserGroupIcon className="h-8 w-8 text-white" />
+                <div className="flex items-center gap-3">
+                    <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
+                        <UserGroupIcon className="h-6 w-6 text-indigo-600" />
                     </div>
-                    <div>
-                        <h1 className="text-4xl font-black text-gray-900 dark:text-white leading-none tracking-tighter italic">
-                            {t('new_client')}
-                        </h1>
-                        <p className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.3em] mt-2">
-                            Operational Infrastructure / CRM Node
-                        </p>
-                    </div>
+                    <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">{t('new_client')}</h1>
                 </div>
             </div>
 
@@ -230,21 +223,15 @@ function CustomerCreatePage() {
                         ></textarea>
                     </section>
 
-                    <button 
-                        type="submit" 
-                        disabled={isSaving} 
-                        className="w-full h-16 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-[1.5rem] shadow-xl shadow-indigo-100 dark:shadow-none transition transform active:scale-95 disabled:opacity-50 flex items-center justify-center gap-3 uppercase text-xs tracking-[0.2em]"
+                    <button
+                        type="submit"
+                        disabled={isSaving}
+                        className="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition transform active:scale-95 disabled:opacity-50"
                     >
                         {isSaving ? (
-                            <>
-                                <ArrowPathIcon className="h-5 w-5 animate-spin" />
-                                Processing Registry...
-                            </>
+                            <><ArrowPathIcon className="h-5 w-5 animate-spin" /> {t('processing_registry', { defaultValue: 'Processing...' })}</>
                         ) : (
-                            <>
-                                <CheckBadgeIcon className="h-5 w-5" />
-                                Commit New Profile
-                            </>
+                            <><CheckBadgeIcon className="h-5 w-5" /> {t('commit_new_profile', { defaultValue: 'Commit New Profile' })}</>
                         )}
                     </button>
 

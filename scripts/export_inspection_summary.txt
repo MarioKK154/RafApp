@@ -1,0 +1,574 @@
+================================================================================
+FILE: _export_1772304267679.xlsx  (Export 1)
+================================================================================
+
+  Sheet: data  (rows: 2665)
+  Headers: Aðalflokkur | Flokkur | Liður | Aðstæður | Tók gildi | Eining
+  Sample rows (first 10):
+    1: (None, None, None, '-', '01.01.2018', 0)
+    2: ('ALMENNT', 'Aðstöðusköpun', 'Fjarlæging verkbús og lokahreinsun', 'heildarverð', '01.01.2020', 0)
+    3: ('ALMENNT', 'Aðstöðusköpun', 'ÖHU&V kröfur', 'heildarverð', '01.01.2020', 0)
+    4: ('ALMENNT', 'Aðstöðusköpun', 'Rekstur verkbús', 'heildarverð', '01.01.2020', 0)
+    5: ('ALMENNT', 'Aðstöðusköpun', 'Samkvæmt verklýsingu', 'heildarverð', '01.07.2024', 0)
+    6: ('ALMENNT', 'Aðstöðusköpun', 'Uppsetning verkbús', 'heildarverð', '01.01.2020', 0)
+    7: ('ALMENNT', 'Almennt fyrir kerfi', 'Forritun', 'heildarverð', '01.10.2024', 0)
+    8: ('ALMENNT', 'Almennt fyrir kerfi', 'Gangsetning', 'heildarverð', '30.06.2026', 0)
+    9: ('ALMENNT', 'Almennt fyrir kerfi', 'Handbók', 'heildarverð', '30.06.2026', 0)
+    10: ('ALMENNT', 'Almennt fyrir kerfi', 'Hönnun', 'heildarverð', '30.06.2026', 0)
+    11: ('LÁGSPENNUKERFI', 'Hreyflar og mótorar', 'Tengdir hreyflar/mótor, 3 fasa', '<-110 KW,  50-70q', '01.12.2007', 15.55)
+    12: ('LÁGSPENNUKERFI', 'Hreyflar og mótorar', 'Tengdir hreyflar/mótor, 3 fasa', '<-160 KW,  95-120q', '01.12.2007', 23)
+    13: ('SÉR- OG STJÓRNKERFI', 'Tölvu- og símalagnir og netbúnaður', 'Spennufæðing fyrir fjarskiptalagnakerfi', 'f/IR', '15.07.2010', 0.8)
+    14: ('SÉR- OG STJÓRNKERFI', 'Tölvu- og símalagnir og netbúnaður', 'Tenging á streng inná krosstengibretti', 'cat. 6 skermaður', '15.07.2010', 1.84)
+    15: ('SÉR- OG STJÓRNKERFI', 'Tölvu- og símalagnir og netbúnaður', 'Tenging á streng inná krosstengibretti', 'cat5 og cat 6 óskermaður', '15.07.2010', 1.69)
+
+================================================================================
+FILE: _export_1772304296699.xlsx  (Export 2)
+================================================================================
+
+  Sheet: data  (rows: 1492)
+  Headers: Aðalflokkur | Lýsing aðalflokks | Flokkur | Lýsing flokks | Númer | Lýsing | Efni | Virkar aðstæður | 
+  Sample rows (first 10):
+    1: ('00', 'ALMENNT', '10', 'Samskipti', '01', 'Samráð við lóðarverktaka vegna raflagna', False, 1, None)
+    2: ('00', 'ALMENNT', '20', 'Aðstöðusköpun', '10', 'Uppsetning verkbús', False, 1, None)
+    3: ('00', 'ALMENNT', '20', 'Aðstöðusköpun', '20', 'Rekstur verkbús', False, 1, None)
+    4: ('00', 'ALMENNT', '20', 'Aðstöðusköpun', '30', 'Fjarlæging verkbús og lokahreinsun', False, 1, None)
+    5: ('00', 'ALMENNT', '20', 'Aðstöðusköpun', '40', 'ÖHU&V kröfur', False, 1, None)
+    6: ('00', 'ALMENNT', '20', 'Aðstöðusköpun', '99', 'Samkvæmt verklýsingu', True, 1, None)
+    7: ('00', 'ALMENNT', '30', 'Tímagjöld fyrir aukavinnu', '01', 'Iðnaðarmaður', False, 1, None)
+    8: ('00', 'ALMENNT', '30', 'Tímagjöld fyrir aukavinnu', '02', 'Verkamaður', False, 1, None)
+    9: ('00', 'ALMENNT', '30', 'Tímagjöld fyrir aukavinnu', '03', 'Verkstjóri', False, 1, None)
+    10: ('00', 'ALMENNT', '30', 'Tímagjöld fyrir aukavinnu', '05', 'Bílstjóri', False, 1, None)
+    11: ('02', 'LÁGSPENNUKERFI', '16', 'Spólurofar, stýriliðar og snertur', '701', 'Fjarrofi a.o.m. 16 A 1f', True, 1, None)
+    12: ('02', 'LÁGSPENNUKERFI', '16', 'Spólurofar, stýriliðar og snertur', '702', 'Fjarrofi a.o.m. 16 A 2f', True, 1, None)
+    13: ('04', 'SÉR- OG STJÓRNKERFI', '74', 'Loftstýrikerfi', '004', 'Loftstýripípa, 4-6 mm', True, 3, None)
+    14: ('04', 'SÉR- OG STJÓRNKERFI', '74', 'Loftstýrikerfi', '005', 'Loftstýripípa, 8-10 mm', True, 3, None)
+    15: ('04', 'SÉR- OG STJÓRNKERFI', '74', 'Loftstýrikerfi', '006', 'Loftstýripípa, 12-14 mm', True, 3, None)
+
+
+================================================================================
+CATEGORY / LABOR STRUCTURE (from Export 1)
+================================================================================
+
+  ALMENNT
+    -> Almennt fyrir kerfi  (11 items)
+        - Forritun
+        - Gangsetning
+        - Handbók
+        - Hönnun
+        - Kennsla
+        ... and 6 more
+    -> Aðstöðusköpun  (5 items)
+        - Fjarlæging verkbús og lokahreinsun
+        - ÖHU&V kröfur
+        - Rekstur verkbús
+        - Samkvæmt verklýsingu
+        - Uppsetning verkbús
+    -> Samskipti  (1 items)
+        - Samráð við lóðarverktaka vegna raflagna
+    -> Stál  (1 items)
+        - Stál fyrir undirstöður rafbúnaðar
+    -> Tækjagjöld  (9 items)
+        - Beltavél
+        - Flutningabíll
+        - Malarflutningabíll
+        - Mini grafa
+        - Sendibíll
+        ... and 4 more
+    -> Tímagjöld fyrir aukavinnu  (8 items)
+        - Bílstjóri
+        - Erlendur sérfræðingur M.Sc. eða B.Sc.
+        - Forritari
+        - Iðnaðarmaður
+        - Innlendur sérfræðingur M.Sc. eða B.Sc.
+        ... and 3 more
+    -> Óskilgreindir safnliðir  (1 items)
+        - óskilgreindur safnliður
+
+  LAGNALEIÐIR
+    -> Beygjur fyrir rör  (21 items)
+        - Beygja hituð 110 mm
+        - Beygja hituð 25 mm
+        - Beygja hituð 32 mm
+        - Beygja hituð 40 mm
+        - Beygja hituð 50 mm
+        ... and 16 more
+    -> Beygjur, T, krossar og festingar fyrir strengstiga og bakka  (31 items)
+        - Beygja í stiga 101-200 mm
+        - Beygja í stiga 201-300 mm
+        - Beygja í stiga 301-400 mm
+        - Beygja í stiga 401-500 mm
+        - Beygja í stiga 501-600 mm
+        ... and 26 more
+    -> Borgöt, raufar og brotvinna  (36 items)
+        - Álag: v. múrhúðunar
+        - Borað (og lokkað) í málm þykkt <= 4 mm
+        - Borað (og lokkað) í málm þykkt 4 - 6 mm
+        - Borað (og lokkað) í málm þykkt 7 - 10 mm
+        - Borað í forsteypta plötu
+        ... and 31 more
+    -> Brunaþéttingar  (19 items)
+        - Brunaþétting  0,01 m² (t.d. 100x100 mm)
+        - Brunaþétting 0,02 m² (t.d. 200x100 mm)
+        - Brunaþétting 0,03 m² (t.d. 200x150 mm eða 300x100 mm)
+        - Brunaþétting 0,04 m² (t.d. 400x100 mm eða 200x200 mm)
+        - Brunaþétting 0,05 m² (t.d. 500x100 mm eða 250x200 mm)
+        ... and 14 more
+    -> Dósir og innfelldir kassar  (26 items)
+        - Bjöllu / tenglaplata
+        - Blindlok á gólfkassa
+        - Framlengingahringur á dós
+        - Gat í loftaplötu
+        - Gólfkassi með stillirörum múrboltum og götum
+        ... and 21 more
+    -> Greiningar, krossar, horn o.fl. fyrir streng- og tenglarennur  (16 items)
+        - Endaplata á rennu
+        - Greining á R/T rennu ál m/jarðb.
+        - Greining á R/T rennu plast
+        - Greining á strengrennu 101-200 mm
+        - Greining á strengrennu 201-300 mm
+        ... and 11 more
+    -> Hljóðþéttingar, gegnumtök og rakaþéttingar  (20 items)
+        - Fyllt upp gegnumtak með klossa og hert að (plast eða timbur)
+        - Gegnumtak í léttan vegg fyrir R/T rennu
+        - Gegnumtök < 25 mm í veggi með hlífðarpípu
+        - Gegnumtök > 25 mm í veggi með hlífðarpípu
+        - Hljóðþétting 0,01 m² (t.d. 100x100 mm)
+        ... and 15 more
+    -> Inntaksrör, lóðarlagnir og brunnar  (32 items)
+        - Fylling í strengskurð með aðfluttu efni
+        - Fylling í strengskurð með uppgröfnu efni
+        - Ídráttarbrunnur með stálloki ~ø600 mm, ~700 mm djúpur
+        - Inntaksrör  PE <=25 mm
+        - Inntaksrör PE 032 mm
+        ... and 27 more
+    -> Rör og barkar  (56 items)
+        - Álrör 16 mm
+        - Álrör 20 mm
+        - Álrör 25 mm
+        - Álrör 32 mm
+        - Álrör 40 mm
+        ... and 51 more
+    -> Streng- og tenglarennur  (30 items)
+        - Dós f. búnað í rennur
+        - Gólfrenna 15-25 cm
+        - Gólfrenna 30-35 cm
+        - Gólfrenna 40-60 cm
+        - R/T og gólflistarenna plast einf
+        ... and 25 more
+    -> Strengstigar og bakkar  (35 items)
+        - Hornplata
+        - Kapalbakki 100 mm
+        - Kapalbakki 150 mm
+        - Kapalbakki 200 mm
+        - Kapalbakki 300 mm
+        ... and 30 more
+
+  LÁGSPENNUKERFI
+    -> Afl- og mótorrofar  (42 items)
+        - Aflrofi  25 A
+        - Aflrofi <= 16 A
+        - Aflrofi 100 A
+        - Aflrofi 1200 A
+        - Aflrofi 125 A
+        ... and 37 more
+    -> Aflstrengir Al  (25 items)
+        - 3x120q Al
+        - 3x25q Al
+        - 3x35q Al
+        - 3x50q Al
+        - 3x70q Al
+        ... and 20 more
+    -> Aflstrengir Cu  (25 items)
+        - 3x1,5q Cu
+        - 3x10q Cu
+        - 3x2,5q Cu
+        - 3x4q Cu
+        - 3x6q Cu
+        ... and 20 more
+    -> Bræðivarbúnaður  (84 items)
+        - Álagsvarrofi  100 A
+        - Álagsvarrofi  125 A
+        - Álagsvarrofi  160 A
+        - Álagsvarrofi  2000 A
+        - Álagsvarrofi  500A
+        ... and 79 more
+    -> Burðarstrengir  (7 items)
+        - Burðarstrengur (t.d. reldy)
+        - Dós á burðarstreng
+        - Endafesti f. burðarstreng
+        - Millifesti f. burðarstreng
+        - Strekkjari f. burðarstreng
+        ... and 2 more
+    -> Einangraður vír og einleiðarar  (16 items)
+        - 1,5q Cu
+        - 10q Cu
+        - 120q Cu
+        - 150q Cu
+        - 16q Cu
+        ... and 11 more
+    -> Heimtaugar og orkumæling  (3 items)
+        - Heimtaug með orkumælingu
+        - Skammhlaupsbretti fyrir veitumælingu
+        - Umsókn um heimtaug
+    -> Hleðslustöðvar rafbíla  (3 items)
+        - Álagsstýringarstöð
+        - Hleðslustöð 1 fasa
+        - Hleðslustöð 3 fasa
+    -> Hreyflar og mótorar  (28 items)
+        - Enda- og neyðarstoppsrofi
+        - Hjálparsnerta
+        - Nándarskynjari
+        - Öryggisskilrofi <-125 A
+        - Öryggisskilrofi <-200 A
+        ... and 23 more
+    -> Jarðtengingar og spennujöfnun  (26 items)
+        - Boltaðar tengingar
+        - Cadweld suða
+        - Jarðklemma á vatnsrör
+        - Jarðklemma/grunntengi á baðkar/sturtubotn
+        - Jarðklemmufesting á strengstiga
+        ... and 21 more
+    -> Mælingar  (19 items)
+        - Dregið út f. mælum 1x63 A
+        - Dregið út f. mælum 3x120 A
+        - Dregið út f. mælum 3x63-100 A
+        - Mælakassi f. sumarhús
+        - Mælar 3x630 A. 300q+straumsp.
+        ... and 14 more
+    -> Raðtengi  (26 items)
+        - Endaplata á raðtengi
+        - Endastopp á raðtengi
+        - Raðtengi 1 x tengi, 2,5q
+        - Raðtengi 1 x tengi, 4-6q
+        - Raðtengi 1x tengi, 10-16q
+        ... and 21 more
+    -> Rofar og skynjarar  (20 items)
+        - Blindlok
+        - Dimmer a.o.m. 1500 W innfelldur
+        - Dimmer a.o.m. 1500 W utanáliggjandi
+        - Dimmer a.o.m. 600 W innfelldur
+        - Dimmer a.o.m. 600 W utanáliggjandi
+        ... and 15 more
+    -> Sjálfvör og bilunarstraumsrofar  (70 items)
+        - Bilunarstraums-/lekaliðasjálfvar 2x10 A
+        - Bilunarstraums-/lekaliðasjálfvar 2x13 A
+        - Bilunarstraums-/lekaliðasjálfvar 2x16 A
+        - Bilunarstraums-/lekaliðasjálfvar 2x20 A
+        - Bilunarstraums-/lekaliðasjálfvar 2x25 A
+        ... and 65 more
+    -> Skilrofar  (12 items)
+        - Álagsskilrofi 1x35 A
+        - Álagsskilrofi 3x200 A
+        - Álagsskilrofi 3x63 A
+        - Skilrofi/töflurofi 1x10-20 A
+        - Skilrofi/töflurofi 1x25-32 A
+        ... and 7 more
+    -> Skinnur  (15 items)
+        - Dinskinna
+        - Jarðklossi á dinskinnu
+        - Jarðskinna að og með 50q
+        - Núllklossi á dinskinnu
+        - Núllskinna að og með 50q
+        ... and 10 more
+    -> Spólurofar, stýriliðar og snertur  (49 items)
+        - Fjarrofar a.o.m. 16 A 3f
+        - Fjarrofi a.o.m. 16 A 1f
+        - Fjarrofi a.o.m. 16 A 2f
+        - Fjarrofi a.o.m. 16 A 4f
+        - Hjálparsnerta á lekastraumsrofa
+        ... and 44 more
+    -> Strengfestingar og lausataugar  (19 items)
+        - Burðarstálvír
+        - Girði
+        - Krókspenna (upphengi)
+        - Lausataug 0,75-2,5q
+        - Lausataug 10-16q
+        ... and 14 more
+    -> Tengingar á leiðurum  (34 items)
+        - Endabúnaður,merking gildleiki víra 4-6q
+        - Endabúnaður,merking, gildleiki víra 10-16q
+        - Endabúnaður,merking, gildleiki víra 150-185q
+        - Endabúnaður,merking, gildleiki víra 240-300q
+        - Endabúnaður,merking, gildleiki víra 25-35q
+        ... and 29 more
+    -> Tengingar í skápum og töflum  (3 items)
+        - Samsett verð, tengingar á strengjum inná rafm.dreifiskápa og tengikassa
+        - Tengiklossi/kubbur (t.d. HLAK)
+        - Tengingar
+    -> Tenglar, klær og hulsur  (58 items)
+        - Hulsa 3 pinna 125 A
+        - Hulsa 3 pinna 16 A
+        - Hulsa 3 pinna 32 A
+        - Hulsa 3 pinna 63 A
+        - Hulsa 5 pinna 125 A
+        ... and 53 more
+    -> Tæki  (19 items)
+        - Bekjuvélar (sótthreinsitæki)
+        - Einföld rafdrifin hurð
+        - Eldavél
+        - Háfur, gufugleypir
+        - Helluborð
+        ... and 14 more
+    -> Töflur, skápar og kassar  (38 items)
+        - Aðaltafla
+        - Gólfskápur 2 m hár með sökkli, 0,3 - 0,4 m djúpur
+        - Gólfskápur 2 m hár með sökkli, 0,5 - 0,6 m djúpur
+        - Gólfskápur 2 m hár með sökkli, 0,7 - 0,8 m djúpur
+        - Greinitafla
+        ... and 33 more
+    -> Varaafl  (3 items)
+        - Stjórnkerfi vararafstöðvar
+        - UPS varaaflgjafi og rafhlöður
+        - Vararafstöð
+    -> Vinnurafmagn, bráðbirgðalögn  (13 items)
+        - Tenging vinnukrana
+        - Tenglakassi 0,2 m²
+        - Tenglakassi 0,6 m²
+        - Tenglakassi 1,0 m²
+        - Tenglakassi 1,5 m²
+        ... and 8 more
+    -> Íhlutir fyrir skápa og töflur  (36 items)
+        - Ádrag/gormádrag 10 mm
+        - Ádrag/gormádrag 20 mm
+        - Ádrag/gormádrag 50 mm
+        - Ádrag/gormádrag 70 mm
+        - Gaumljós í töflu
+        ... and 31 more
+
+  LÝSINGARKERFI
+    -> Innfelld lýsing  (13 items)
+        - Festijárn á lampa í kerfislofti
+        - Flúrlampi í kerfisloft 0,20 m²  60x30
+        - Flúrlampi í kerfisloft 0,40 m²   60x60  -  30x120
+        - Flúrlampi í kerfisloft 0,70 m²   120x60
+        - Gat í kerfisloftaplötu fyrir lampa
+        ... and 8 more
+    -> LED borðar  (9 items)
+        - Álprófíll fyrir LED lýsingu,  tvöf. með ljóshlíf
+        - Álprófíll fyrir LED lýsingu, <= 20x20mm með ljóshlíf
+        - Álprófíll fyrir LED lýsingu, breidd <=  50mm með ljóshlíf
+        - Álprófíll fyrir LED lýsingu, breidd >= 50mm með ljóshlíf
+        - LED borði límdur í prófíl
+        ... and 4 more
+    -> Lampabrautir  (9 items)
+        - Greining á lampabraut
+        - Lampabraut með samtengi-, enda- og undirstykki
+        - Lampi í braut ~1500 mm
+        - Lítill kastari/spotljós á braut eða víraupphengi
+        - Skorin lampabraut
+        ... and 4 more
+    -> Loft- og vegglampar  (23 items)
+        - Flúrlampi utanáliggjandi < 130 cm, 3 eða 4 perur
+        - Flúrlampi utanáliggjandi < 130cm, 1 eða 2 perur
+        - Flúrlampi utanáliggjandi < 160 cm, 1 eða 2 perur.
+        - Flúrlampi utanáliggjandi < 160 cm, 3 eða 4 perur
+        - Flúrlampi utanáliggjandi < 60cm, 3 eða 4 perur
+        ... and 18 more
+    -> Lýsingarstjórnkerfiseiningar  (15 items)
+        - Dali eining 2 inn 2 út
+        - Dali eining 2 inn 3 út
+        - Dali eining 2 inn 4 út
+        - Dali eining 2 inn 5 út
+        - Dali eining 2 inn 6 út
+        ... and 10 more
+    -> Neyðarlýsing  (5 items)
+        - Innfelldur neyðarlampi
+        - Límmiði á útljós
+        - Neyðarlýsingarbúnaður í lampa, endurvírun
+        - Utanáliggjandi neyðarlampi
+        - Útljós
+    -> Perur, íhlutir o.fl.  (14 items)
+        - Endurvírun flúrlampa
+        - Flúr-, spar-, halogen-, LED eða úrhleðslupera
+        - Flúrpípa 125W
+        - Flúrpípa 17 W
+        - Flúrpípa 36-58W
+        ... and 9 more
+    -> Spennar og straumfestur  (9 items)
+        - Rafeindastraumfesta í flúrlampa
+        - Spennir fyrir lampa <165 V.A
+        - Spennir fyrir lampa <50 VA
+        - Spennir fyrir lampa >170-300 VA
+        - Spennir/driver 230V/24V <165 VA
+        ... and 4 more
+    -> Útilýsing  (15 items)
+        - Armur fyrir stauralampa
+        - Kassi í veggi/jörðu í gat/holu <10 cm
+        - Kassi í veggi/jörðu í gat/holu <20 cm
+        - Kassi í veggi/jörðu í gat/holu <40  cm
+        - Lampi í jörðu eða hleðslu <10 cm
+        ... and 10 more
+
+  SÉR- OG STJÓRNKERFI
+    -> Aðgangs- og öryggiskerfi  (27 items)
+        - 1. hurða eining
+        - 2 hurða eining
+        - 4 hurða eining
+        - 8 rása stækkun
+        - Aflgjafi fyrir innbrotaviðvörunar- og aðgangskerfi
+        ... and 22 more
+    -> Boðgjafar fyrir númerað brunaviðvörunarkerfi  (3 items)
+        - Aðvörunarljós
+        - Brunabjalla
+        - Hljóðgjafi með og án ljósgjafa
+    -> Boðgjafar fyrir rásaskipt brunaviðvörunarkerfi  (3 items)
+        - Aðvörunarljós
+        - Brunabjalla
+        - Strobeljós rautt
+    -> Brunastrengir  (5 items)
+        - Bruna/hitaskynjarastrengur
+        - Brunastrengur 1x2x0,8q
+        - Brunastrengur 2x1,5q
+        - Brunastrengur 2x2x0,8q
+        - Brunastrengur 4x1,5q
+    -> Brunastöðvar fyrir númerað kerfi  (7 items)
+        - Aflgjafi
+        - Rafhlaða í sér kassa
+        - Server/vinnustöð fyrir skjákerfi
+        - Skjákerfi
+        - Útstöð
+        ... and 2 more
+    -> Brunastöðvar fyrir rásaskipt kerfi  (4 items)
+        - Brunastöð 2 rásir
+        - Brunastöð 4 rásir
+        - Brunastöð 8 rásir
+        - Undirstöð
+    -> Dyrasíma- og bjöllukerfi  (34 items)
+        - Bjölluhnappur
+        - Bjölluspennir
+        - Borðtæki
+        - Deilibox fyrir dyrasímatengingar
+        - Deilidós
+        ... and 29 more
+    -> Fjarskiptaskápar  (13 items)
+        - Smáspennuskápur 1-6U
+        - Smáspennuskápur 13-18U
+        - Smáspennuskápur 19-24U
+        - Smáspennuskápur 25-30U
+        - Smáspennuskápur 31-36U
+        ... and 8 more
+    -> Fjarskiptastrengir  (22 items)
+        - Bus strengur
+        - Cat5 tölvu- og símastrengur
+        - Cat6 tölvu- og símastrengur
+        - Cat6 tölvu- og símastrengur skermaður
+        - Coax strengur 10 mm RG-11
+        ... and 17 more
+    -> Fjarskiptatenglar  (7 items)
+        - RJ45 tengi (moli)
+        - RJ45 tengill Cat5e eða Cat6
+        - RJ45 tengill Cat5e eða Cat6 tvöfaldur
+        - RJ45 tengill Cat6 skermaður
+        - RJ45 tengill Cat6 skermaður tvöfaldur
+        ... and 2 more
+    -> Handboðar fyrir númerað brunaviðvörunarkerfi  (1 items)
+        - Handboði
+    -> Handboðar fyrir rásaskipt brunaviðvörunarkerfi  (2 items)
+        - Brotrofi
+        - Handboði
+    -> Hitablásarar, ofnar og hitakútar  (7 items)
+        - Þilofn 1000 W
+        - Þilofn 1200 W
+        - Þilofn 1500 W
+        - Þilofn 300 W
+        - Þilofn 400 W
+        ... and 2 more
+    -> Hitastrengir og mottur  (1 items)
+        - Hitastrengur
+    -> Hljóð- og myndkerfi  (4 items)
+        - Hátalarakló 2 pinna
+        - Hátalaratengill
+        - Hátalari, lítill
+        - Hljóðmagnari  ATH!
+    -> Hurðarpumpur og spennugjafar í númeruðu brunaviðvörunarkerfi  (1 items)
+        - Hurðarsegull
+    -> Hurðarpumpur og spennugjafar í rásaskiptu brunaviðvörunarkerfi  (1 items)
+        - Hurðarsegulgrip (segull og mótstykki)
+    -> Hússtjórnarkerfi  (45 items)
+        - 2 Faldur rofliði á loft
+        - 24V DC/4f.gardínuliði 6A
+        - Alhliða ljósdeyfir 1x500W
+        - Alhliða ljósdeyfir 2x300W.
+        - Alhliða ljósdeyfir 50-315 W
+        ... and 40 more
+    -> I/O einingar fyrir númerað brunaviðvörunarkerfi  (2 items)
+        - Inngangs / útgangseining (IO)
+        - Slaufukort í vistfangsbrunastöð
+    -> Kallkerfi  (3 items)
+        - Kallkerfisstöð
+        - Línur í kallkerfi
+        - Undirstöð í kallkerfi, ein lína
+    -> Klukkukerfi  (3 items)
+        - Stimpilklukka
+        - Stjórnklukka
+        - Undirklukka
+    -> Krosstengibretti og ljósleiðaraskúffur  (4 items)
+        - 19 tommu fjöltengi
+        - 19 tommu skipuleggjari
+        - Krosstengibretti
+        - Ljósleiðaraskúffa
+    -> Ljósleiðarakerfi  (2 items)
+        - Tenging/splæsing á ljósleiðara blástursstrengur
+        - Tenging/splæsing á ljósleiðara jarðstrengur
+    -> Loftnetskerfi  (12 items)
+        - Greiða á loftnetsmastur
+        - Infrarauður sendir/móttakari
+        - Loftnetskló
+        - Loftnetsmastur
+        - Magnari í loftnetskerfi
+        ... and 7 more
+    -> Loftræsikerfi  (24 items)
+        - Blásari
+        - Brunaloka
+        - Brunalokustöð fyrir 16 lokur
+        - Brunalokustöð fyrir 4 lokur
+        - Brunalokustöð fyrir 8 lokur
+        ... and 19 more
+    -> Loftstýrikerfi  (3 items)
+        - Loftstýripípa, 12-14 mm
+        - Loftstýripípa, 4-6 mm
+        - Loftstýripípa, 8-10 mm
+    -> Myndeftirlitskerfi  (5 items)
+        - Inni kúlumyndavél m. myndstillingu
+        - Inni myndavél, linsa/fótur m. myndstillingu
+        - Loftfesting fyrir kúlumyndavél
+        - Úti kúlumyndavél m. myndstillingu
+        - Úti myndavél, linsa/fótur m. myndstillingu
+    -> Reyklosunarkerfi  (3 items)
+        - Reykloka
+        - Rofi fyrir reyklosunarkerfi
+        - Stjórnstöð reykloka
+    -> Reyksogskerfi  (4 items)
+        - Beygja í reyksogskerfi
+        - Reyksogsrör
+        - Stjórnstöð reyksogskerfis ein pípa
+        - Stjórnstöð reyksogskerfis tvær pípur
+    -> Samskiptakerfi fyrir biðsvæði fatlaðra  (2 items)
+        - Handboði
+        - Stjórnstöð handboðakerfis
+    -> Skynjarar fyrir númerað brunaviðvörunarkerfi  (14 items)
+        - CO skynjari
+        - Fjölskynjari með sökkli
+        - Fjölskynjari með sökkli og ljósi
+        - Fjölskynjari með sökkli og sírenu
+        - Fjölskynjari með sökkli, ljósi og sírenu
+        ... and 9 more
+    -> Skynjarar fyrir rásaskipt brunaviðvörunarkerfi  (4 items)
+        - Hitaskynjari með sökkli
+        - Ljósdíóða gaumljós f. Skynjara
+        - Reykskynjari með sökkli
+        - Vinkill undir skynjara
+    -> Stýristrengir  (41 items)
+        - 12x0,75q óskermaður
+        - 12x1,0q óskermaður
+        - 12x1,0q Skermaður
+        - 12x1,5q óskermaður
+        - 12x1,5q Skermaður
+        ... and 36 more
+    -> Tölvu- og símalagnir og netbúnaður  (15 items)
+        - Access point
+        - Breytir RJ45 - coax
+        - Breytir RJ45 - infrarautt
+        - Breytir RJ45-hljóð
+        - Breytistykki stillanlegt
+        ... and 10 more

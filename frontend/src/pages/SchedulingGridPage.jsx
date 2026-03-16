@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import axiosInstance from '../api/axiosInstance';
 import { format, startOfWeek, addDays, eachDayOfInterval } from 'date-fns';
 import { 
@@ -12,6 +13,7 @@ import { toast } from 'react-toastify';
 import AssignmentModal from '../components/AssignmentModal'; 
 
 const SchedulingGridPage = () => {
+    const { t } = useTranslation();
     const [viewDate, setViewDate] = useState(new Date());
     const [users, setUsers] = useState([]);
     const [assignments, setAssignments] = useState([]);
@@ -94,24 +96,22 @@ const SchedulingGridPage = () => {
                 </div>
             )}
             <header className="mb-10">
-                <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                <div className="flex items-center gap-3">
-                    <div className="p-2 bg-indigo-600 rounded-xl shadow-lg shadow-indigo-100 dark:shadow-none">
-                        <Squares2X2Icon className="h-6 w-6 text-white" />
+                <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5 flex justify-between items-center gap-6">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
+                            <Squares2X2Icon className="h-6 w-6 text-indigo-600" />
+                        </div>
+                        <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">{t('schedule', { defaultValue: 'Schedule' })}</h1>
                     </div>
-                    <h1 className="text-4xl font-black text-gray-900 dark:text-white tracking-tighter italic leading-none">
-                        Schedule
-                    </h1>
-                </div>
 
-                <div className="flex items-center gap-4 bg-white dark:bg-gray-800 p-2 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
-                    <button onClick={() => setViewDate(addDays(viewDate, -7))} className="p-2.5 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-xl transition text-gray-400 hover:text-indigo-600">
+                    <div className="flex items-center gap-4 bg-white dark:bg-gray-800 p-2 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
+                    <button onClick={() => setViewDate(addDays(viewDate, -7))} className="p-2.5 rounded-xl transition-all duration-150 ease-out text-gray-400 hover:text-indigo-600 hover:bg-gray-50 dark:hover:bg-gray-700 active:scale-95">
                         <ChevronLeftIcon className="h-5 w-5 stroke-[2.5px]" />
                     </button>
                     <span className="text-[10px] font-black uppercase tracking-widest px-4 text-gray-600 dark:text-gray-300">
                         {format(days[0], 'MMM dd')} — {format(days[13], 'MMM dd, yyyy')}
                     </span>
-                    <button onClick={() => setViewDate(addDays(viewDate, 7))} className="p-2.5 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-xl transition text-gray-400 hover:text-indigo-600">
+                    <button onClick={() => setViewDate(addDays(viewDate, 7))} className="p-2.5 rounded-xl transition-all duration-150 ease-out text-gray-400 hover:text-indigo-600 hover:bg-gray-50 dark:hover:bg-gray-700 active:scale-95">
                         <ChevronRightIcon className="h-5 w-5 stroke-[2.5px]" />
                     </button>
                 </div>
@@ -122,7 +122,7 @@ const SchedulingGridPage = () => {
                 {cities.map(city => {
                     const count = city === 'All' ? users.length : city === 'Unassigned' ? users.filter(u => !u.city).length : users.filter(u => u.city === city).length;
                     return (
-                        <button key={city} onClick={() => setSelectedCity(city)} className={`px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-[0.15em] border transition-all flex items-center gap-3 ${selectedCity === city ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg' : 'bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700 text-gray-400 hover:text-indigo-600'}`}>
+                        <button key={city} onClick={() => setSelectedCity(city)} className={`px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-[0.15em] border transition-all duration-150 ease-out flex items-center gap-3 ${selectedCity === city ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-300 hover:shadow-indigo-400 hover:-translate-y-0.5' : 'bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700 text-gray-400 hover:text-indigo-600 hover:-translate-y-0.5 hover:shadow-md active:translate-y-0'}`}>
                             {city} <span className={`px-2 py-0.5 rounded-lg text-[9px] ${selectedCity === city ? 'bg-indigo-500 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-500'}`}>{count}</span>
                         </button>
                     );

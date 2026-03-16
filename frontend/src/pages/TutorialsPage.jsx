@@ -1,7 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import axiosInstance from '../api/axiosInstance';
 import { useAuth } from '../context/AuthContext';
 import CableSizingCalculator from '../components/CableSizingCalculator';
+import ConduitFillCalculator from '../components/ConduitFillCalculator';
+import PhaseBalancingCalculator from '../components/PhaseBalancingCalculator';
+import VoltageDropCalculator from '../components/VoltageDropCalculator';
+import ShortCircuitCalculator from '../components/ShortCircuitCalculator';
 import CreateTutorialModal from '../components/CreateTutorialModal';
 import { 
     CalculatorIcon, 
@@ -18,7 +23,8 @@ import {
     MagnifyingGlassIcon,
     PlusIcon,
     PhotoIcon,
-    DocumentTextIcon
+    DocumentTextIcon,
+    XMarkIcon,
 } from '@heroicons/react/24/outline';
 
 const CATEGORY_LABELS = {
@@ -37,11 +43,13 @@ const CATEGORY_LABELS = {
 };
 
 function TutorialsPage() {
+    const { t } = useTranslation();
     const { user } = useAuth();
     const [tutorials, setTutorials] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('All');
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [activeTutorial, setActiveTutorial] = useState(null);
 
     // Permission Check
     const canCreate = user && (['admin', 'project manager', 'team leader'].includes(user.role) || user.is_superuser);
@@ -80,32 +88,75 @@ function TutorialsPage() {
                 onSuccess={fetchTutorials}
             />
 
+            {/* Tutorial detail overlay */}
+            {activeTutorial && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+                    <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl border border-gray-100 dark:border-gray-700 max-w-2xl w-full mx-4 max-h-[85vh] overflow-hidden flex flex-col">
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-700">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-xl">
+                                    <BookOpenIcon className="h-5 w-5 text-indigo-600" />
+                                </div>
+                                <div>
+                                    <p className="text-[9px] font-black text-indigo-500 uppercase tracking-[0.2em]">
+                                        {CATEGORY_LABELS[activeTutorial.category] || activeTutorial.category}
+                                    </p>
+                                    <h2 className="text-sm md:text-base font-black text-gray-900 dark:text-white uppercase tracking-tight mt-1">
+                                        {activeTutorial.title}
+                                    </h2>
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setActiveTutorial(null)}
+                                className="h-8 w-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-gray-900 dark:hover:text-white"
+                            >
+                                <XMarkIcon className="h-4 w-4" />
+                            </button>
+                        </div>
+                        <div className="px-6 py-4 overflow-y-auto custom-scrollbar space-y-4 text-sm text-gray-700 dark:text-gray-200">
+                            {activeTutorial.description && (
+                                <p className="font-semibold text-[11px] uppercase tracking-[0.18em] text-gray-500 dark:text-gray-400">
+                                    {activeTutorial.description}
+                                </p>
+                            )}
+                            {activeTutorial.tutorial_text ? (
+                                <p className="whitespace-pre-line leading-relaxed text-[13px]">
+                                    {activeTutorial.tutorial_text}
+                                </p>
+                            ) : (
+                                <p className="text-[12px] text-gray-500 italic">
+                                    No detailed text stored for this entry yet. Use the schematic/manual buttons if available.
+                                </p>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Header Section */}
             <header className="mb-12">
-                <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
-                <div>
-                    <div className="flex items-center gap-3 mb-2">
-                        <div className="p-2 bg-indigo-600 rounded-xl shadow-lg shadow-indigo-100 dark:shadow-none">
-                            <ListBulletIcon className="h-6 w-6 text-white" />
+                <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                    <div>
+                        <div className="flex items-center gap-3 mb-2">
+                            <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
+                                <ListBulletIcon className="h-6 w-6 text-indigo-600" />
+                            </div>
+                            <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">{t('utilities_knowledge_base', { defaultValue: 'Utilities & Knowledge Base' })}</h1>
                         </div>
-                        <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 tracking-[0.2em]">RafApp Intelligence</span>
+                        <p className="text-gray-500 dark:text-gray-400 max-w-2xl text-sm leading-relaxed font-medium mt-2">
+                            {t('utilities_knowledge_base_desc', { defaultValue: 'Standardized technical schematics, regulatory protocols, and standard engineering calculators for field deployment.' })}
+                        </p>
                     </div>
-                    <h1 className="text-4xl font-black text-gray-900 dark:text-white leading-none mb-4 tracking-tighter italic">
-                        Utilities & Knowledge Base
-                    </h1>
-                    <p className="text-gray-500 dark:text-gray-400 max-w-2xl text-sm leading-relaxed font-medium">
-                        Standardized technical schematics, regulatory protocols, and standard engineering calculators for field deployment.
-                    </p>
-                </div>
 
-                {canCreate && (
-                    <button 
-                        onClick={() => setIsCreateModalOpen(true)}
-                        className="h-14 px-8 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] flex items-center gap-2 transition shadow-xl shadow-indigo-100 dark:shadow-none transform active:scale-95"
-                    >
-                        <PlusIcon className="h-5 w-5 stroke-[3px]" /> Create Protocol
-                    </button>
-                )}
+                    {canCreate && (
+                        <button
+                            onClick={() => setIsCreateModalOpen(true)}
+                            className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition transform active:scale-95"
+                        >
+                            <PlusIcon className="h-5 w-5" /> {t('create_protocol', { defaultValue: 'Create Protocol' })}
+                        </button>
+                    )}
                 </div>
             </header>
 
@@ -142,11 +193,77 @@ function TutorialsPage() {
                         </div>
                     </section>
 
-                    {/* Future Modules Skeleton */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <DummyTool icon={<ChartBarIcon />} title="Voltage Drop" />
-                        <DummyTool icon={<BeakerIcon />} title="Circuit Analysis" />
-                    </div>
+                    {/* Conduit Fill Module */}
+                    <section className="bg-white dark:bg-gray-800 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+                        <div className="p-8 border-b border-gray-50 dark:border-gray-700 bg-gray-50/30 dark:bg-gray-700/30">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl">
+                                    <BeakerIcon className="h-5 w-5 text-indigo-600" />
+                                </div>
+                                <div>
+                                    <h2 className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-tight italic">Conduit Fill Calculator</h2>
+                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Indicative fill based on conductor diameters</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="p-8 bg-gray-50 dark:bg-gray-900/40">
+                            <ConduitFillCalculator />
+                        </div>
+                    </section>
+
+                    {/* Phase Balancing Module */}
+                    <section className="bg-white dark:bg-gray-800 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+                        <div className="p-8 border-b border-gray-50 dark:border-gray-700 bg-gray-50/30 dark:bg-gray-700/30">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl">
+                                    <ChartBarIcon className="h-5 w-5 text-indigo-600" />
+                                </div>
+                                <div>
+                                    <h2 className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-tight italic">Phase Balance Analyzer</h2>
+                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Visualize three-phase loading by circuit</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="p-8 bg-gray-50 dark:bg-gray-900/40">
+                            <PhaseBalancingCalculator />
+                        </div>
+                    </section>
+
+                    {/* Voltage Drop Module */}
+                    <section className="bg-white dark:bg-gray-800 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+                        <div className="p-8 border-b border-gray-50 dark:border-gray-700 bg-gray-50/30 dark:bg-gray-700/30">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl">
+                                    <CalculatorIcon className="h-5 w-5 text-indigo-600" />
+                                </div>
+                                <div>
+                                    <h2 className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-tight italic">Voltage Drop Checker</h2>
+                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Quick drop estimation along feeders</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="p-8 bg-gray-50 dark:bg-gray-900/40">
+                            <VoltageDropCalculator />
+                        </div>
+                    </section>
+
+                    {/* Short-Circuit Current Module */}
+                    <section className="bg-white dark:bg-gray-800 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+                        <div className="p-8 border-b border-gray-50 dark:border-gray-700 bg-gray-50/30 dark:bg-gray-700/30">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl">
+                                    <BoltIcon className="h-5 w-5 text-indigo-600" />
+                                </div>
+                                <div>
+                                    <h2 className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-tight italic">Short-Circuit Estimator</h2>
+                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Approximate Ik at panel and breaker kA class</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="p-8 bg-gray-50 dark:bg-gray-900/40">
+                            <ShortCircuitCalculator />
+                        </div>
+                    </section>
                 </div>
 
                 {/* RIGHT COLUMN: Library & Tutorials (5 cols) */}
@@ -199,7 +316,7 @@ function TutorialsPage() {
                         {/* Dynamic Protocol List */}
                         <div className="space-y-3 overflow-y-auto pr-2 custom-scrollbar flex-grow max-h-[500px]">
                             {filteredTutorials.length > 0 ? filteredTutorials.map(tutorial => (
-                                <TutorialLink key={tutorial.id} tutorial={tutorial} />
+                                <TutorialLink key={tutorial.id} tutorial={tutorial} onOpen={() => setActiveTutorial(tutorial)} />
                             )) : (
                                 <div className="py-20 text-center text-gray-400 dark:text-gray-500">
                                     <SparklesIcon className="h-8 w-8 mx-auto mb-4" />
@@ -228,7 +345,7 @@ function TutorialsPage() {
 /**
  * COMPONENT: Protocol Item Link
  */
-function TutorialLink({ tutorial }) {
+function TutorialLink({ tutorial, onOpen }) {
     const getFullUrl = (path) => {
         const base = axiosInstance.defaults.baseURL || "";
         const cleanBase = base.includes('/api') ? base.split('/api')[0] : base;
@@ -236,7 +353,7 @@ function TutorialLink({ tutorial }) {
     };
 
     return (
-        <div className="group w-full p-5 bg-gray-50 dark:bg-gray-700/50 rounded-3xl border border-gray-100 dark:border-gray-600 hover:border-indigo-400 dark:hover:border-indigo-500 transition-all duration-300">
+        <div className="group w-full p-5 bg-gray-50 dark:bg-gray-700/50 rounded-3xl border border-gray-100 dark:border-gray-600 hover:border-indigo-400 dark:hover:border-indigo-500 transition-all duration-300 cursor-pointer" onClick={onOpen}>
             <div className="flex justify-between items-start mb-2">
                 <span className="text-[8px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest bg-indigo-50 dark:bg-indigo-900/30 px-2 py-0.5 rounded">
                     {CATEGORY_LABELS[tutorial.category] || tutorial.category}

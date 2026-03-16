@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import desc, asc, func, or_, text
+from sqlalchemy import desc, asc, func, or_, and_, text
 from sqlalchemy.exc import OperationalError
 from typing import Optional, List, Dict, Any
 from datetime import date, datetime, timezone, timedelta
@@ -92,7 +92,10 @@ def get_users(
 def update_user_by_admin(db: Session, user_to_update: models.User, user_data: schemas.UserUpdateAdmin) -> models.User:
     update_data = user_data.model_dump(exclude_unset=True)
     for key, value in update_data.items():
-        if hasattr(user_to_update, key):
+        if key == "extra_permissions":
+            # Store as JSON string in DB
+            setattr(user_to_update, "extra_permissions", json.dumps(value) if value is not None else None)
+        elif hasattr(user_to_update, key):
             setattr(user_to_update, key, value)
     
     # ROADMAP #3: Fix the "Not Specified" location bug
@@ -126,7 +129,8 @@ def create_user_by_admin(db: Session, user_data: schemas.UserCreateAdmin) -> mod
         tenant_id=user_data.tenant_id,
         is_active=user_data.is_active if user_data.is_active is not None else True,
         is_superuser=user_data.is_superuser if user_data.is_superuser is not None else False,
-        hourly_rate=user_data.hourly_rate
+        hourly_rate=user_data.hourly_rate,
+        extra_permissions=json.dumps(user_data.extra_permissions) if user_data.extra_permissions else None,
     )
     db.add(db_user)
     db.commit()
@@ -637,6 +641,159 @@ def get_shopping_list_for_project(db: Session, project_id: int) -> List[Dict[str
     return shopping_list
 
 
+# --- Risk Assessment CRUD ---
+
+def get_risk_items_for_project(db: Session, project_id: int) -> List[models.RiskItem]:
+    return (
+        db.query(models.RiskItem)
+        .filter(models.RiskItem.project_id == project_id)
+        .order_by(models.RiskItem.created_at.asc())
+        .all()
+    )
+
+
+def get_risk_item(db: Session, risk_item_id: int) -> Optional[models.RiskItem]:
+    return db.query(models.RiskItem).filter(models.RiskItem.id == risk_item_id).first()
+
+
+def create_risk_item(db: Session, item: schemas.RiskItemCreate) -> models.RiskItem:
+    db_item = models.RiskItem(**item.model_dump())
+    db.add(db_item)
+    db.commit()
+    db.refresh(db_item)
+    return db_item
+
+
+def update_risk_item(db: Session, db_item: models.RiskItem, update: schemas.RiskItemUpdate) -> models.RiskItem:
+    update_data = update.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(db_item, key, value)
+    db.add(db_item)
+    db.commit()
+    db.refresh(db_item)
+    return db_item
+
+
+def delete_risk_item(db: Session, db_item: models.RiskItem) -> None:
+    db.delete(db_item)
+    db.commit()
+
+
+# --- Risk Template CRUD ---
+
+def get_risk_templates(
+    db: Session,
+    category: Optional[str] = None,
+) -> List[models.RiskTemplate]:
+    query = db.query(models.RiskTemplate).filter(models.RiskTemplate.is_active == True)
+    if category:
+        query = query.filter(models.RiskTemplate.category == category)
+    return query.order_by(models.RiskTemplate.category.nullsfirst(), models.RiskTemplate.title.asc()).all()
+
+
+def get_risk_template(db: Session, template_id: int) -> Optional[models.RiskTemplate]:
+    return db.query(models.RiskTemplate).filter(models.RiskTemplate.id == template_id).first()
+
+
+def create_risk_template(db: Session, template: schemas.RiskTemplateCreate) -> models.RiskTemplate:
+    db_template = models.RiskTemplate(**template.model_dump())
+    db.add(db_template)
+    db.commit()
+    db.refresh(db_template)
+    return db_template
+
+
+def update_risk_template(
+    db: Session,
+    db_template: models.RiskTemplate,
+    update: schemas.RiskTemplateUpdate,
+) -> models.RiskTemplate:
+    update_data = update.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(db_template, key, value)
+    db.add(db_template)
+    db.commit()
+    db.refresh(db_template)
+    return db_template
+
+
+def delete_risk_template(db: Session, db_template: models.RiskTemplate) -> None:
+    db.delete(db_template)
+    db.commit()
+
+
+def create_risk_items_from_templates(
+    db: Session,
+    project_id: int,
+    template_ids: List[int],
+) -> List[models.RiskItem]:
+    if not template_ids:
+        return []
+    templates = (
+        db.query(models.RiskTemplate)
+        .filter(models.RiskTemplate.id.in_(template_ids), models.RiskTemplate.is_active == True)
+        .all()
+    )
+    created_items: List[models.RiskItem] = []
+    for tmpl in templates:
+        item = models.RiskItem(
+            project_id=project_id,
+            title=tmpl.title,
+            description=tmpl.description,
+            likelihood=tmpl.default_likelihood,
+            impact=tmpl.default_impact,
+            mitigation=tmpl.default_mitigation,
+            status=tmpl.default_status,
+        )
+        db.add(item)
+        created_items.append(item)
+    db.commit()
+    for item in created_items:
+        db.refresh(item)
+    return created_items
+
+
+def create_material_request(
+    db: Session,
+    *,
+    project_id: int,
+    inventory_item_id: int,
+    requested_by_id: int,
+    quantity: float,
+    note: Optional[str] = None,
+) -> models.MaterialRequest:
+    db_request = models.MaterialRequest(
+        project_id=project_id,
+        inventory_item_id=inventory_item_id,
+        requested_by_id=requested_by_id,
+        quantity=quantity,
+        note=note,
+        status="Pending",
+    )
+    db.add(db_request)
+    db.commit()
+    db.refresh(db_request)
+    return db_request
+
+
+def get_material_requests_for_project(
+    db: Session,
+    project_id: int,
+    include_resolved: bool = False,
+) -> List[models.MaterialRequest]:
+    query = (
+        db.query(models.MaterialRequest)
+        .options(
+            joinedload(models.MaterialRequest.inventory_item),
+            joinedload(models.MaterialRequest.requested_by),
+        )
+        .filter(models.MaterialRequest.project_id == project_id)
+    )
+    if not include_resolved:
+        query = query.filter(models.MaterialRequest.status.in_(["Pending", "Approved"]))
+    return query.order_by(models.MaterialRequest.created_at.desc()).all()
+
+
 # --- Assets (Tools & Cars & Shops) ---
 
 def create_tool(db: Session, tool: schemas.ToolCreate, tenant_id: int) -> models.Tool:
@@ -949,6 +1106,397 @@ def get_dashboard_data(db: Session, user: models.User) -> Dict[str, Any]:
     return {"my_open_tasks": my_open_tasks, "my_checked_out_tools": my_checked_out_tools, "my_checked_out_car": my_checked_out_car, "managed_projects": managed_projects}
 
 
+def get_tenant_heatmap_data(db: Session) -> List[Dict[str, Any]]:
+    now = datetime.utcnow()
+    thirty_days_ago = now - timedelta(days=30)
+    tenants = db.query(models.Tenant).all()
+    items: List[Dict[str, Any]] = []
+    for tenant in tenants:
+        total_users = db.query(models.User).filter(models.User.tenant_id == tenant.id).count()
+        active_projects = db.query(models.Project).filter(models.Project.tenant_id == tenant.id, models.Project.status != "Archived").count()
+        logs_query = (
+            db.query(models.TimeLog)
+            .join(models.User, models.TimeLog.user_id == models.User.id)
+            .filter(
+                models.User.tenant_id == tenant.id,
+                models.TimeLog.start_time >= thirty_days_ago,
+                models.TimeLog.end_time != None,
+            )
+        )
+        total_seconds = 0.0
+        for log in logs_query.all():
+            if log.end_time and log.start_time:
+                total_seconds += (log.end_time - log.start_time).total_seconds()
+        hours_last_30d = round(total_seconds / 3600.0, 2)
+        items.append(
+            {
+                "tenant_id": tenant.id,
+                "tenant_name": tenant.name,
+                "active_projects": active_projects,
+                "total_users": total_users,
+                "hours_last_30d": hours_last_30d,
+            }
+        )
+    return items
+
+
+def get_platform_growth_metrics(db: Session) -> Dict[str, Any]:
+    now = datetime.utcnow()
+    today = date.today()
+    today_start = datetime.combine(today, datetime.min.time(), tzinfo=timezone.utc)
+    thirty_days_ago = now - timedelta(days=30)
+
+    total_tenants = db.query(models.Tenant).count()
+    total_users = db.query(models.User).count()
+    total_projects = db.query(models.Project).count()
+
+    new_projects_today = (
+        db.query(models.Project)
+        .filter(models.Project.created_at >= today_start)
+        .count()
+    )
+
+    logs_all = db.query(models.TimeLog).filter(models.TimeLog.end_time != None).all()
+    total_seconds_all = 0.0
+    total_seconds_30d = 0.0
+    for log in logs_all:
+        if not (log.start_time and log.end_time):
+            continue
+        duration = (log.end_time - log.start_time).total_seconds()
+        total_seconds_all += duration
+        if log.start_time >= thirty_days_ago:
+            total_seconds_30d += duration
+
+    return {
+        "total_tenants": total_tenants,
+        "total_users": total_users,
+        "total_projects": total_projects,
+        "new_projects_today": new_projects_today,
+        "total_hours_all_time": round(total_seconds_all / 3600.0, 2),
+        "total_hours_last_30d": round(total_seconds_30d / 3600.0, 2),
+    }
+
+
+# --- Billing & System Settings ---
+
+def create_billing_invoice(db: Session, invoice: schemas.BillingInvoiceCreate) -> models.BillingInvoice:
+    db_invoice = models.BillingInvoice(**invoice.model_dump())
+    db.add(db_invoice)
+    db.commit()
+    db.refresh(db_invoice)
+    return db_invoice
+
+
+def get_overdue_billing_by_tenant(db: Session) -> List[Dict[str, Any]]:
+    today = date.today()
+    invoices = (
+        db.query(models.BillingInvoice, models.Tenant)
+        .join(models.Tenant, models.BillingInvoice.tenant_id == models.Tenant.id)
+        .filter(
+            models.BillingInvoice.status == "Overdue",
+            models.BillingInvoice.due_date < today,
+        )
+        .all()
+    )
+    summary: Dict[int, Dict[str, Any]] = {}
+    for inv, tenant in invoices:
+        bucket = summary.setdefault(
+            tenant.id,
+            {"tenant_id": tenant.id, "tenant_name": tenant.name, "overdue_count": 0, "overdue_total": 0.0},
+        )
+        bucket["overdue_count"] += 1
+        bucket["overdue_total"] += inv.amount
+    return list(summary.values())
+
+
+def get_system_setting(db: Session, key: str) -> Optional[models.SystemSetting]:
+    return db.query(models.SystemSetting).filter(models.SystemSetting.key == key).first()
+
+
+def set_system_setting(db: Session, key: str, value: Optional[str]) -> models.SystemSetting:
+    setting = get_system_setting(db, key)
+    if setting is None:
+        setting = models.SystemSetting(key=key, value=value)
+        db.add(setting)
+    else:
+        setting.value = value
+        db.add(setting)
+    db.commit()
+    db.refresh(setting)
+    return setting
+
+
+def get_maintenance_status(db: Session) -> Dict[str, Any]:
+    mode = get_system_setting(db, "maintenance_mode")
+    msg = get_system_setting(db, "maintenance_message")
+    maintenance = bool(mode and (mode.value or "").lower() == "on")
+    message = msg.value if msg and msg.value else None
+    return {"maintenance": maintenance, "message": message}
+
+
+def get_tenant_discount_percent(db: Session, tenant_id: int) -> Optional[float]:
+    key = f"tenant:{tenant_id}:discount_percent"
+    setting = get_system_setting(db, key)
+    if not setting or not setting.value:
+        return None
+    try:
+        return float(setting.value)
+    except ValueError:
+        return None
+
+
+# --- Impersonation audit ---
+
+def create_impersonation_log(db: Session, superuser_id: int, target_user_id: int) -> models.ImpersonationLog:
+    log = models.ImpersonationLog(superuser_id=superuser_id, target_user_id=target_user_id)
+    db.add(log)
+    db.commit()
+    db.refresh(log)
+    return log
+
+
+def get_impersonation_log(db: Session, log_id: int) -> Optional[models.ImpersonationLog]:
+    return db.query(models.ImpersonationLog).filter(models.ImpersonationLog.id == log_id).first()
+
+
+def end_impersonation_log(db: Session, log_id: int, superuser_id: int) -> Optional[models.ImpersonationLog]:
+    log = db.query(models.ImpersonationLog).filter(
+        models.ImpersonationLog.id == log_id,
+        models.ImpersonationLog.superuser_id == superuser_id,
+        models.ImpersonationLog.ended_at.is_(None),
+    ).first()
+    if not log:
+        return None
+    log.ended_at = datetime.now(timezone.utc)
+    db.add(log)
+    db.commit()
+    db.refresh(log)
+    return log
+
+
+def get_impersonation_logs(
+    db: Session,
+    superuser_id: Optional[int] = None,
+    target_user_id: Optional[int] = None,
+    skip: int = 0,
+    limit: int = 200,
+) -> List[Dict[str, Any]]:
+    q = db.query(models.ImpersonationLog).order_by(desc(models.ImpersonationLog.started_at))
+    if superuser_id is not None:
+        q = q.filter(models.ImpersonationLog.superuser_id == superuser_id)
+    if target_user_id is not None:
+        q = q.filter(models.ImpersonationLog.target_user_id == target_user_id)
+    logs = q.offset(skip).limit(limit).all()
+    out = []
+    for log in logs:
+        superuser = db.query(models.User).filter(models.User.id == log.superuser_id).first()
+        target = db.query(models.User).filter(models.User.id == log.target_user_id).first()
+        out.append({
+            "id": log.id,
+            "superuser_id": log.superuser_id,
+            "target_user_id": log.target_user_id,
+            "started_at": log.started_at,
+            "ended_at": log.ended_at,
+            "superuser_email": superuser.email if superuser else None,
+            "target_user_email": target.email if target else None,
+            "target_user_name": target.full_name if target else None,
+        })
+    return out
+
+
+# --- Global Audit Logs ---
+
+def create_audit_log(
+    db: Session,
+    action_type: str,
+    actor_user_id: Optional[int] = None,
+    actor_email: Optional[str] = None,
+    tenant_id: Optional[int] = None,
+    target_ref: Optional[str] = None,
+    details: Optional[str] = None,
+) -> models.AuditLog:
+    log = models.AuditLog(
+        action_type=action_type,
+        actor_user_id=actor_user_id,
+        actor_email=actor_email,
+        tenant_id=tenant_id,
+        target_ref=target_ref,
+        details=details,
+    )
+    db.add(log)
+    db.commit()
+    db.refresh(log)
+    return log
+
+
+def get_audit_logs(
+    db: Session,
+    action_type: Optional[str] = None,
+    tenant_id: Optional[int] = None,
+    actor_user_id: Optional[int] = None,
+    skip: int = 0,
+    limit: int = 300,
+) -> List[models.AuditLog]:
+    q = db.query(models.AuditLog).order_by(desc(models.AuditLog.created_at))
+    if action_type:
+        q = q.filter(models.AuditLog.action_type == action_type)
+    if tenant_id is not None:
+        q = q.filter(models.AuditLog.tenant_id == tenant_id)
+    if actor_user_id is not None:
+        q = q.filter(models.AuditLog.actor_user_id == actor_user_id)
+    return q.offset(skip).limit(limit).all()
+
+
+# --- Global Banners ---
+
+def create_global_banner(
+    db: Session,
+    message: str,
+    created_by_id: Optional[int] = None,
+    starts_at: Optional[datetime] = None,
+    ends_at: Optional[datetime] = None,
+) -> models.GlobalBanner:
+    banner = models.GlobalBanner(
+        message=message,
+        is_active=True,
+        created_by_id=created_by_id,
+        starts_at=starts_at,
+        ends_at=ends_at,
+    )
+    db.add(banner)
+    db.commit()
+    db.refresh(banner)
+    return banner
+
+
+def get_active_global_banner(db: Session) -> Optional[models.GlobalBanner]:
+    now = datetime.now(timezone.utc)
+    q = (
+        db.query(models.GlobalBanner)
+        .filter(models.GlobalBanner.is_active == True)
+        .filter(
+            or_(
+                models.GlobalBanner.starts_at.is_(None),
+                models.GlobalBanner.starts_at <= now,
+            )
+        )
+        .filter(
+            or_(
+                models.GlobalBanner.ends_at.is_(None),
+                models.GlobalBanner.ends_at >= now,
+            )
+        )
+        .order_by(desc(models.GlobalBanner.created_at))
+    )
+    return q.first()
+
+
+def set_global_banner_inactive(db: Session, banner_id: int) -> Optional[models.GlobalBanner]:
+    banner = db.query(models.GlobalBanner).filter(models.GlobalBanner.id == banner_id).first()
+    if not banner:
+        return None
+    banner.is_active = False
+    db.add(banner)
+    db.commit()
+    db.refresh(banner)
+    return banner
+
+
+# --- User last login (for churn) ---
+
+def update_user_last_login(db: Session, user_id: int) -> None:
+    now = datetime.now(timezone.utc)
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        return
+    try:
+        user.last_login_at = now
+        db.add(user)
+        db.commit()
+    except OperationalError as e:
+        msg = str(e.orig) if getattr(e, "orig", None) else str(e)
+        if "last_login_at" in msg or "no such column" in msg.lower():
+            try:
+                db.rollback()
+                db.execute(text("ALTER TABLE users ADD COLUMN last_login_at DATETIME"))
+                db.commit()
+                user.last_login_at = now
+                db.add(user)
+                db.commit()
+            except Exception:
+                db.rollback()
+        else:
+            raise
+
+
+def get_tenant_health_churn(db: Session) -> List[Dict[str, Any]]:
+    """Tenant health for superadmin: last login, hours this week, avg hours previous 4 weeks, churn_risk."""
+    from datetime import timedelta
+    tenants = db.query(models.Tenant).all()
+    now = datetime.now(timezone.utc)
+    this_week_start = now - timedelta(days=now.weekday())
+    this_week_start = this_week_start.replace(hour=0, minute=0, second=0, microsecond=0)
+    four_weeks_ago = this_week_start - timedelta(weeks=4)
+    out = []
+    for t in tenants:
+        users_in_tenant = db.query(models.User).filter(models.User.tenant_id == t.id).all()
+        user_ids = [u.id for u in users_in_tenant]
+        last_login = None
+        for u in users_in_tenant:
+            lo = getattr(u, "last_login_at", None)
+            if lo and (last_login is None or lo > last_login):
+                last_login = lo
+        hours_this_week = 0.0
+        hours_prev_4_weeks = 0.0
+        if user_ids:
+            logs_this_week = (
+                db.query(models.TimeLog)
+                .filter(models.TimeLog.user_id.in_(user_ids))
+                .filter(models.TimeLog.start_time >= this_week_start)
+                .filter(models.TimeLog.end_time.isnot(None))
+                .all()
+            )
+            for log in logs_this_week:
+                if log.end_time:
+                    delta = log.end_time - log.start_time
+                    hours_this_week += delta.total_seconds() / 3600.0
+            logs_prev = (
+                db.query(models.TimeLog)
+                .filter(models.TimeLog.user_id.in_(user_ids))
+                .filter(models.TimeLog.start_time >= four_weeks_ago)
+                .filter(models.TimeLog.start_time < this_week_start)
+                .filter(models.TimeLog.end_time.isnot(None))
+                .all()
+            )
+            for log in logs_prev:
+                if log.end_time:
+                    delta = log.end_time - log.start_time
+                    hours_prev_4_weeks += delta.total_seconds() / 3600.0
+        avg_prev_4 = hours_prev_4_weeks / 4.0 if hours_prev_4_weeks else 0.0
+        churn_risk = "none"
+        if avg_prev_4 >= 10 and hours_this_week == 0 and user_ids:
+            churn_risk = "high"
+        elif avg_prev_4 >= 5 and hours_this_week < 1 and user_ids:
+            churn_risk = "medium"
+        elif last_login:
+            # Normalize naive datetimes from SQLite to timezone-aware for comparison
+            if last_login.tzinfo is None:
+                last_login_norm = last_login.replace(tzinfo=timezone.utc)
+            else:
+                last_login_norm = last_login
+            if (now - last_login_norm).days > 14 and (avg_prev_4 >= 5 or hours_this_week == 0):
+                churn_risk = "medium" if churn_risk == "none" else churn_risk
+        out.append({
+            "tenant_id": t.id,
+            "tenant_name": t.name,
+            "last_login_at": last_login.isoformat() if last_login else None,
+            "hours_this_week": round(hours_this_week, 1),
+            "hours_avg_previous_4_weeks": round(avg_prev_4, 1),
+            "churn_risk": churn_risk,
+        })
+    return out
+
+
 # --- ROADMAP #2: Notification Hub ---
 
 def create_notification(db: Session, user_id: int, message: str, link: Optional[str] = None) -> models.Notification:
@@ -963,41 +1511,123 @@ def get_notifications(db: Session, user_id: int, unread_only: bool = True) -> Li
 
 # --- ROADMAP: Labor Catalog & Private Tenant Pricing ---
 
-def create_labor_catalog_item(db: Session, item_data: schemas.LaborCatalogItemCreate) -> models.LaborCatalogItem:
-    db_item = models.LaborCatalogItem(**item_data.model_dump())
-    db.add(db_item); db.commit(); db.refresh(db_item); return db_item
+def create_labor_catalog_item(
+    db: Session,
+    item_data: schemas.LaborCatalogItemCreate,
+    tenant_id: Optional[int] = None,
+) -> models.LaborCatalogItem:
+    data = item_data.model_dump()
+    default_price = data.pop("default_unit_price", 0.0)
+    if default_price is None:
+        default_price = 0.0
+    data["default_unit_price"] = float(default_price)
+    # Global catalog items (e.g. ar.is import) use tenant_id=1 when no tenant specified
+    data["tenant_id"] = tenant_id if tenant_id is not None else 1
+    db_item = models.LaborCatalogItem(**data)
+    db.add(db_item)
+    db.commit()
+    db.refresh(db_item)
+    if tenant_id is not None and default_price >= 0:
+        update_tenant_labor_price(db, tenant_id=tenant_id, labor_item_id=db_item.id, price=float(default_price))
+    return db_item
 
 def get_labor_catalog_item(db: Session, item_id: int) -> Optional[models.LaborCatalogItem]:
     return db.query(models.LaborCatalogItem).filter(models.LaborCatalogItem.id == item_id).first()
 
-def get_labor_catalog_items(db: Session, tenant_id: Optional[int], skip: int = 0, limit: int = 100) -> List[Dict[str, Any]]:
-    # Fetches global catalog items and injects the requesting tenant's private price (None for superuser)
+def get_labor_catalog_categories(db: Session) -> List[Dict[str, Any]]:
+    """Returns category tree: list of { main_category, sub_categories: [ { sub_category, count } ] }."""
     try:
-        items = db.query(models.LaborCatalogItem).order_by(models.LaborCatalogItem.description).offset(skip).limit(limit).all()
+        q = db.query(
+            models.LaborCatalogItem.main_category,
+            models.LaborCatalogItem.sub_category,
+            func.count(models.LaborCatalogItem.id).label("count"),
+        ).group_by(models.LaborCatalogItem.main_category, models.LaborCatalogItem.sub_category)
+        rows = q.all()
+    except OperationalError:
+        return []
+    tree: Dict[str, Dict[str, int]] = {}
+    for main, sub, count in rows:
+        main_key = main or ""
+        sub_key = sub or ""
+        if main_key not in tree:
+            tree[main_key] = {}
+        tree[main_key][sub_key] = count
+    result = []
+    for main in sorted(tree.keys(), key=lambda x: (x == "", x)):
+        result.append({
+            "main_category": main or None,
+            "sub_categories": [{"sub_category": sub or None, "count": c} for sub, c in sorted(tree[main].items(), key=lambda x: (x[0] == "", x[0]))],
+        })
+    return result
+
+
+def get_labor_catalog_items(
+    db: Session,
+    tenant_id: Optional[int],
+    skip: int = 0,
+    limit: int = 100,
+    main_category: Optional[str] = None,
+    sub_category: Optional[str] = None,
+) -> List[Dict[str, Any]]:
+    # Fetches global catalog items and injects the requesting tenant's private price (None for superuser)
+    # Apply filter() before offset/limit (SQLAlchemy requirement)
+    limit = min(limit, 5000)
+    try:
+        q = db.query(models.LaborCatalogItem)
+        if main_category is not None:
+            if main_category == "":
+                q = q.filter(models.LaborCatalogItem.main_category.is_(None))
+            else:
+                q = q.filter(models.LaborCatalogItem.main_category == main_category)
+        if sub_category is not None:
+            if sub_category == "":
+                q = q.filter(models.LaborCatalogItem.sub_category.is_(None))
+            else:
+                q = q.filter(models.LaborCatalogItem.sub_category == sub_category)
+        q = q.order_by(models.LaborCatalogItem.description).offset(skip).limit(limit)
+        items = q.all()
     except OperationalError as e:
         msg = str(e.orig) if getattr(e, "orig", None) else str(e)
         if "no such column: labor_catalog_items.category" in msg:
-            # Auto-migrate legacy databases that are missing the new columns.
             db.execute(text("ALTER TABLE labor_catalog_items ADD COLUMN category TEXT"))
             db.execute(text("ALTER TABLE labor_catalog_items ADD COLUMN recommended_item_ids TEXT"))
             db.commit()
-            items = db.query(models.LaborCatalogItem).order_by(models.LaborCatalogItem.description).offset(skip).limit(limit).all()
+            q = db.query(models.LaborCatalogItem)
+            if main_category is not None:
+                q = q.filter(models.LaborCatalogItem.main_category.is_(None)) if main_category == "" else q.filter(models.LaborCatalogItem.main_category == main_category)
+            if sub_category is not None:
+                q = q.filter(models.LaborCatalogItem.sub_category.is_(None)) if sub_category == "" else q.filter(models.LaborCatalogItem.sub_category == sub_category)
+            q = q.order_by(models.LaborCatalogItem.description).offset(skip).limit(limit)
+            items = q.all()
         else:
             raise
     tenant_prices = {}
     if tenant_id is not None:
         tenant_prices = {tp.labor_item_id: tp.price for tp in db.query(models.TenantLaborPrice).filter(models.TenantLaborPrice.tenant_id == tenant_id).all()}
-    
+
+    # First variant's units_per_hour per item (for display when item.units_per_hour is None)
+    variant_uph = {}
+    for item in items:
+        if item.units_per_hour is not None:
+            continue
+        first = db.query(models.LaborCatalogItemCondition).filter(
+            models.LaborCatalogItemCondition.labor_catalog_item_id == item.id
+        ).order_by(models.LaborCatalogItemCondition.code).first()
+        if first is not None:
+            variant_uph[item.id] = first.units_per_hour
+
     results = []
     for item in items:
         res = item.__dict__.copy()
         res["tenant_price"] = tenant_prices.get(item.id)
+        if res.get("units_per_hour") is None and item.id in variant_uph:
+            res["units_per_hour"] = variant_uph[item.id]
         results.append(res)
     return results
 
 def update_tenant_labor_price(db: Session, tenant_id: int, labor_item_id: int, price: float):
     existing = db.query(models.TenantLaborPrice).filter(
-        models.TenantLaborPrice.tenant_id == tenant_id, 
+        models.TenantLaborPrice.tenant_id == tenant_id,
         models.TenantLaborPrice.labor_item_id == labor_item_id
     ).first()
     if existing:
@@ -1007,8 +1637,472 @@ def update_tenant_labor_price(db: Session, tenant_id: int, labor_item_id: int, p
         db.add(new_price)
     db.commit()
 
+
+def get_non_hourly_labor_item_ids(db: Session) -> List[int]:
+    """Item ids that are not purely hourly-rate: unit != 'hour' (or null) or units_per_hour set and not 0."""
+    q = db.query(models.LaborCatalogItem.id).filter(
+        or_(
+            models.LaborCatalogItem.unit.is_(None),
+            models.LaborCatalogItem.unit != "hour",
+            and_(
+                models.LaborCatalogItem.units_per_hour.isnot(None),
+                models.LaborCatalogItem.units_per_hour != 0,
+            ),
+        )
+    )
+    return [r[0] for r in q.all()]
+
+
+def apply_tenant_base_price_to_non_hourly(db: Session, tenant_id: int, price: float) -> Dict[str, int]:
+    """Set TenantLaborPrice to `price` for all non-hourly catalog items for this tenant. Returns count updated."""
+    item_ids = get_non_hourly_labor_item_ids(db)
+    updated = 0
+    for labor_item_id in item_ids:
+        existing = db.query(models.TenantLaborPrice).filter(
+            models.TenantLaborPrice.tenant_id == tenant_id,
+            models.TenantLaborPrice.labor_item_id == labor_item_id,
+        ).first()
+        if existing:
+            existing.price = price
+        else:
+            db.add(models.TenantLaborPrice(tenant_id=tenant_id, labor_item_id=labor_item_id, price=price))
+        updated += 1
+    db.commit()
+    return {"updated": updated}
+
+def update_labor_catalog_item(
+    db: Session,
+    db_item: models.LaborCatalogItem,
+    item_update: schemas.LaborCatalogItemUpdate,
+    tenant_id: Optional[int] = None,
+) -> models.LaborCatalogItem:
+    data = item_update.model_dump(exclude_unset=True, exclude={"default_unit_price"})
+    for k, v in data.items():
+        setattr(db_item, k, v)
+    default_price = item_update.default_unit_price
+    if default_price is not None and default_price >= 0:
+        if tenant_id is not None:
+            update_tenant_labor_price(db, tenant_id=tenant_id, labor_item_id=db_item.id, price=float(default_price))
+        else:
+            db_item.default_unit_price = float(default_price)
+            db_item.reference_price = float(default_price)
+    db.add(db_item)
+    db.commit()
+    db.refresh(db_item)
+    return db_item
+
+
 def delete_labor_catalog_item(db: Session, db_item: models.LaborCatalogItem):
     db.delete(db_item); db.commit()
+
+
+def get_labor_catalog_item_conditions(db: Session, labor_catalog_item_id: int) -> List[models.LaborCatalogItemCondition]:
+    """List all condition variants (ar.is drill-down Eining values) for one catalog item."""
+    return db.query(models.LaborCatalogItemCondition).filter(
+        models.LaborCatalogItemCondition.labor_catalog_item_id == labor_catalog_item_id
+    ).order_by(models.LaborCatalogItemCondition.code).all()
+
+
+def upsert_labor_catalog_item_condition(
+    db: Session,
+    labor_catalog_item_id: int,
+    code: str,
+    condition_description: str,
+    units_per_hour: Optional[float] = None,
+    effective_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+) -> models.LaborCatalogItemCondition:
+    """Create or update one condition variant by (labor_catalog_item_id, code)."""
+    existing = db.query(models.LaborCatalogItemCondition).filter(
+        models.LaborCatalogItemCondition.labor_catalog_item_id == labor_catalog_item_id,
+        models.LaborCatalogItemCondition.code == code,
+    ).first()
+    if existing:
+        existing.condition_description = condition_description
+        existing.units_per_hour = units_per_hour
+        existing.effective_date = effective_date
+        existing.end_date = end_date
+        db.add(existing)
+        db.commit()
+        db.refresh(existing)
+        return existing
+    new_row = models.LaborCatalogItemCondition(
+        labor_catalog_item_id=labor_catalog_item_id,
+        code=code,
+        condition_description=condition_description,
+        units_per_hour=units_per_hour,
+        effective_date=effective_date,
+        end_date=end_date,
+    )
+    db.add(new_row)
+    db.commit()
+    db.refresh(new_row)
+    return new_row
+
+
+def import_labor_catalog_item_conditions(
+    db: Session,
+    labor_catalog_item_id: int,
+    rows: List[Dict[str, Any]],
+) -> Dict[str, int]:
+    """Import condition variants from ar.is detail export. Each row: code, condition_description, units_per_hour, effective_date, end_date."""
+    created, updated = 0, 0
+    for row in rows:
+        code = str(row.get("code") or "").strip()
+        if not code:
+            continue
+        cond_desc = str(row.get("condition_description") or "").strip() or code
+        uph = row.get("units_per_hour")
+        if uph is not None and not isinstance(uph, (int, float)):
+            try:
+                uph = float(uph)
+            except (ValueError, TypeError):
+                uph = None
+        eff = str(row.get("effective_date") or "").strip() or None
+        end = str(row.get("end_date") or "").strip() or None
+        existing = db.query(models.LaborCatalogItemCondition).filter(
+            models.LaborCatalogItemCondition.labor_catalog_item_id == labor_catalog_item_id,
+            models.LaborCatalogItemCondition.code == code,
+        ).first()
+        if existing:
+            existing.condition_description = cond_desc
+            existing.units_per_hour = uph
+            existing.effective_date = eff
+            existing.end_date = end
+            db.add(existing)
+            updated += 1
+        else:
+            db.add(models.LaborCatalogItemCondition(
+                labor_catalog_item_id=labor_catalog_item_id,
+                code=code,
+                condition_description=cond_desc,
+                units_per_hour=uph,
+                effective_date=eff,
+                end_date=end,
+            ))
+            created += 1
+    db.commit()
+    return {"created": created, "updated": updated}
+
+
+def get_labor_catalog_item_by_ar_is(
+    db: Session,
+    description: str,
+    main_category: Optional[str] = None,
+    sub_category: Optional[str] = None,
+    conditions: Optional[str] = None,
+) -> Optional[models.LaborCatalogItem]:
+    """Find catalog item matching ar.is key (description + main/sub category + conditions)."""
+    q = db.query(models.LaborCatalogItem).filter(models.LaborCatalogItem.description == description)
+    if main_category is not None:
+        q = q.filter(models.LaborCatalogItem.main_category == main_category)
+    else:
+        q = q.filter(models.LaborCatalogItem.main_category.is_(None))
+    if sub_category is not None:
+        q = q.filter(models.LaborCatalogItem.sub_category == sub_category)
+    else:
+        q = q.filter(models.LaborCatalogItem.sub_category.is_(None))
+    if conditions is not None:
+        q = q.filter(models.LaborCatalogItem.conditions == conditions)
+    else:
+        q = q.filter(models.LaborCatalogItem.conditions.is_(None))
+    return q.first()
+
+
+def _norm_cat(s: Optional[str]) -> Optional[str]:
+    """Normalize category for grouping: '' -> None."""
+    return (s or "").strip() or None
+
+
+def get_labor_catalog_item_by_description_and_category(
+    db: Session,
+    description: str,
+    main_category: Optional[str] = None,
+    sub_category: Optional[str] = None,
+) -> Optional[models.LaborCatalogItem]:
+    """Find one catalog item by (description, main_category, sub_category). Ignores conditions."""
+    main_cat = _norm_cat(main_category)
+    sub_cat = _norm_cat(sub_category)
+    q = db.query(models.LaborCatalogItem).filter(models.LaborCatalogItem.description == description)
+    if main_cat is not None:
+        q = q.filter(models.LaborCatalogItem.main_category == main_cat)
+    else:
+        q = q.filter(models.LaborCatalogItem.main_category.is_(None))
+    if sub_cat is not None:
+        q = q.filter(models.LaborCatalogItem.sub_category == sub_cat)
+    else:
+        q = q.filter(models.LaborCatalogItem.sub_category.is_(None))
+    return q.first()
+
+
+def consolidate_labor_catalog(db: Session) -> Dict[str, int]:
+    """
+    Merge duplicate catalog items: one row per (description, main_category, sub_category).
+    Moves each row's (conditions, units_per_hour) into LaborCatalogItemCondition under the kept item.
+    Keeps the lowest id per group; reassigns tenant price to that item; deletes duplicates.
+    Returns {"merged_groups": N, "deleted_items": M, "variants_created": K}.
+    """
+    all_items = db.query(models.LaborCatalogItem).order_by(models.LaborCatalogItem.id).all()
+    key_to_items: Dict[tuple, List[models.LaborCatalogItem]] = {}
+    for item in all_items:
+        key = (item.description or "", _norm_cat(item.main_category), _norm_cat(item.sub_category))
+        key_to_items.setdefault(key, []).append(item)
+
+    merged_groups = 0
+    deleted_items = 0
+    variants_created = 0
+
+    for key, group in key_to_items.items():
+        if len(group) <= 1:
+            continue
+        group.sort(key=lambda x: x.id)
+        canonical = group[0]
+        duplicates = group[1:]
+
+        # Ensure canonical has at least one condition variant from its own data
+        if (canonical.conditions or canonical.units_per_hour is not None) and not db.query(
+            models.LaborCatalogItemCondition
+        ).filter(models.LaborCatalogItemCondition.labor_catalog_item_id == canonical.id).first():
+            code = "01"
+            db.add(models.LaborCatalogItemCondition(
+                labor_catalog_item_id=canonical.id,
+                code=code,
+                condition_description=canonical.conditions or "Default",
+                units_per_hour=canonical.units_per_hour,
+            ))
+            variants_created += 1
+
+        existing_codes = {c.code for c in db.query(models.LaborCatalogItemCondition).filter(
+            models.LaborCatalogItemCondition.labor_catalog_item_id == canonical.id
+        ).all()}
+        next_code = 1
+        while str(next_code).zfill(2) in existing_codes:
+            next_code += 1
+
+        for dup in duplicates:
+            code = str(next_code).zfill(2)
+            next_code += 1
+            db.add(models.LaborCatalogItemCondition(
+                labor_catalog_item_id=canonical.id,
+                code=code,
+                condition_description=dup.conditions or "Variant",
+                units_per_hour=dup.units_per_hour,
+            ))
+            variants_created += 1
+            # Remove tenant prices for duplicate so we don't have two for same tenant
+            db.query(models.TenantLaborPrice).filter(
+                models.TenantLaborPrice.labor_item_id == dup.id
+            ).delete(synchronize_session=False)
+            db.delete(dup)
+            deleted_items += 1
+
+        canonical.conditions = None
+        canonical.units_per_hour = None
+        db.add(canonical)
+        merged_groups += 1
+
+    if merged_groups or deleted_items or variants_created:
+        db.commit()
+    return {"merged_groups": merged_groups, "deleted_items": deleted_items, "variants_created": variants_created}
+
+
+def import_labor_catalog_from_ar_is_csv(
+    db: Session,
+    csv_content: str,
+    tenant_id: Optional[int] = None,
+    *,
+    skip_duplicates: bool = True,
+    global_only: bool = False,
+) -> Dict[str, Any]:
+    """
+    Import ar.is labor export. One catalog item per (Item, Main_category, Sub_category).
+    Each row's (Conditions, Unit_cost) becomes a condition variant for that item.
+    CSV columns: Main_category, Sub_category, Item, Conditions, Effective_date, Unit_cost.
+    """
+    import csv as csv_module
+    from io import StringIO
+    result = {"created": 0, "skipped": 0, "updated": 0, "variants_added": 0, "errors": [], "error_count": 0}
+    set_tenant_price = not global_only and tenant_id is not None
+    reader = csv_module.DictReader(StringIO(csv_content))
+    if not reader.fieldnames:
+        result["errors"].append("Empty or invalid CSV")
+        return result
+    for row in reader:
+        try:
+            main_cat = _norm_cat(row.get("Main_category"))
+            sub_cat = _norm_cat(row.get("Sub_category"))
+            item_desc = (row.get("Item") or "").strip()
+            conditions = (row.get("Conditions") or "").strip() or None
+            unit_cost_raw = row.get("Unit_cost", "0")
+            try:
+                unit_cost = float(unit_cost_raw) if unit_cost_raw else 0.0
+            except (ValueError, TypeError):
+                unit_cost = 0.0
+            if not item_desc:
+                continue
+            units_per_hour_val = unit_cost if unit_cost >= 0 else None
+            unit = "hour" if unit_cost == 0 else "unit"
+
+            item = get_labor_catalog_item_by_description_and_category(
+                db, description=item_desc, main_category=main_cat, sub_category=sub_cat
+            )
+            if item is None:
+                create_data = schemas.LaborCatalogItemCreate(
+                    description=item_desc,
+                    category=f"{main_cat or ''} | {sub_cat or ''}".strip(" |") or None,
+                    unit=unit,
+                    main_category=main_cat,
+                    sub_category=sub_cat,
+                    conditions=None,
+                    reference_price=unit_cost if unit_cost > 0 else None,
+                    units_per_hour=None,
+                    default_unit_price=unit_cost,
+                )
+                item = create_labor_catalog_item(db, item_data=create_data, tenant_id=tenant_id if set_tenant_price else None)
+                result["created"] += 1
+                if set_tenant_price:
+                    update_tenant_labor_price(db, tenant_id=tenant_id, labor_item_id=item.id, price=unit_cost)
+            else:
+                if set_tenant_price:
+                    update_tenant_labor_price(db, tenant_id=tenant_id, labor_item_id=item.id, price=unit_cost)
+
+            # Add or update condition variant for this row (Conditions + Eining)
+            cond_desc = conditions or "Default"
+            existing_var = db.query(models.LaborCatalogItemCondition).filter(
+                models.LaborCatalogItemCondition.labor_catalog_item_id == item.id,
+                models.LaborCatalogItemCondition.condition_description == cond_desc,
+            ).first()
+            if existing_var:
+                existing_var.units_per_hour = units_per_hour_val
+                db.add(existing_var)
+            else:
+                existing_codes = [c.code for c in db.query(models.LaborCatalogItemCondition).filter(
+                    models.LaborCatalogItemCondition.labor_catalog_item_id == item.id
+                ).all()]
+                next_code = 1
+                while str(next_code).zfill(2) in existing_codes:
+                    next_code += 1
+                db.add(models.LaborCatalogItemCondition(
+                    labor_catalog_item_id=item.id,
+                    code=str(next_code).zfill(2),
+                    condition_description=cond_desc,
+                    units_per_hour=units_per_hour_val,
+                ))
+                result["variants_added"] += 1
+        except Exception as e:
+            db.rollback()
+            err_msg = f"Row {row}: {str(e)}"
+            result["error_count"] += 1
+            if len(result["errors"]) < 30:
+                result["errors"].append(err_msg)
+    result["error_sample"] = result["errors"][:5]
+    if result["created"] or result["updated"] or result["variants_added"]:
+        db.commit()
+    return result
+
+
+# --- Work load ratios (ar.is location/condition multipliers) ---
+
+def get_work_load_ratios(db: Session, active_only: bool = True) -> List[models.WorkLoadRatio]:
+    q = db.query(models.WorkLoadRatio).order_by(models.WorkLoadRatio.code)
+    if active_only:
+        q = q.filter(models.WorkLoadRatio.is_active == True)
+    return q.all()
+
+
+def upsert_work_load_ratio(db: Session, code: str, description: str, ratio: float, ratio_type: Optional[int] = None, is_active: bool = True) -> models.WorkLoadRatio:
+    existing = db.query(models.WorkLoadRatio).filter(models.WorkLoadRatio.code == code).first()
+    if existing:
+        existing.description = description
+        existing.ratio = ratio
+        existing.ratio_type = ratio_type
+        existing.is_active = is_active
+        db.add(existing)
+        db.commit()
+        db.refresh(existing)
+        return existing
+    row = models.WorkLoadRatio(code=code, description=description, ratio=ratio, ratio_type=ratio_type, is_active=is_active)
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+def import_work_load_ratios(db: Session, rows: List[Dict[str, Any]]) -> Dict[str, int]:
+    """Rows: list of dicts with keys code, description, ratio, ratio_type, is_active."""
+    created, updated = 0, 0
+    for r in rows:
+        code = (r.get("code") or "").strip()
+        if not code:
+            continue
+        desc = (r.get("description") or "").strip()
+        try:
+            ratio = float(r.get("ratio") or 0)
+        except (ValueError, TypeError):
+            ratio = 0.0
+        rt = r.get("ratio_type")
+        if rt is not None and not isinstance(rt, int):
+            try:
+                rt = int(rt)
+            except (ValueError, TypeError):
+                rt = None
+        active = r.get("is_active", True)
+        if isinstance(active, str):
+            active = active.lower() in ("true", "1", "yes", "já", "j")
+        existing = db.query(models.WorkLoadRatio).filter(models.WorkLoadRatio.code == code).first()
+        if existing:
+            existing.description = desc
+            existing.ratio = ratio
+            existing.ratio_type = rt
+            existing.is_active = active
+            db.add(existing)
+            updated += 1
+        else:
+            db.add(models.WorkLoadRatio(code=code, description=desc or code, ratio=ratio, ratio_type=rt, is_active=active))
+            created += 1
+    db.commit()
+    return {"created": created, "updated": updated}
+
+
+# --- Labor main category reference (provisional basis) ---
+
+def get_labor_main_category_refs(db: Session) -> List[models.LaborMainCategoryRef]:
+    return db.query(models.LaborMainCategoryRef).order_by(models.LaborMainCategoryRef.code).all()
+
+
+def upsert_labor_main_category_ref(db: Session, code: str, name: str) -> models.LaborMainCategoryRef:
+    existing = db.query(models.LaborMainCategoryRef).filter(models.LaborMainCategoryRef.code == code).first()
+    if existing:
+        existing.name = name
+        db.add(existing)
+        db.commit()
+        db.refresh(existing)
+        return existing
+    row = models.LaborMainCategoryRef(code=code, name=name)
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+def import_labor_main_category_refs(db: Session, rows: List[Dict[str, Any]]) -> Dict[str, int]:
+    """Rows: list of dicts with keys code, name."""
+    created, updated = 0, 0
+    for r in rows:
+        code = (r.get("code") or "").strip()
+        if not code:
+            continue
+        name = (r.get("name") or "").strip() or code
+        existing = db.query(models.LaborMainCategoryRef).filter(models.LaborMainCategoryRef.code == code).first()
+        if existing:
+            existing.name = name
+            db.add(existing)
+            updated += 1
+        else:
+            db.add(models.LaborMainCategoryRef(code=code, name=name))
+            created += 1
+    db.commit()
+    return {"created": created, "updated": updated}
 
 
 # --- Offers, Licenses & Events ---
@@ -1178,8 +2272,171 @@ def get_all_leave_requests(db: Session, tenant_id: int = None, status: Optional[
     if status: query = query.filter(models.LeaveRequest.status == status)
     return query.order_by(models.LeaveRequest.start_date.asc()).all()
 
+def _create_leave_events_for_approved_request(db: Session, db_request: models.LeaveRequest) -> None:
+    """
+    Internal helper:
+    When a leave request is approved, generate calendar events covering each day
+    of the approved interval for the requesting user.
+    """
+    # Ensure we have the user instance loaded
+    user = db_request.user
+    if user is None:
+        user = db.query(models.User).filter(models.User.id == db_request.user_id).first()
+        if user is None:
+            return
+
+    current = db_request.start_date
+    while current <= db_request.end_date:
+        # Full-day style block for this date
+        start_dt = datetime.combine(current, datetime.min.time())
+        end_dt = datetime.combine(current, datetime.max.time())
+
+        title = f"Leave – {db_request.leave_type}"
+        description_parts = []
+        if db_request.reason:
+            description_parts.append(db_request.reason)
+        description_parts.append("Auto-generated from approved leave request")
+        description = " | ".join(description_parts)
+
+        event = models.Event(
+            title=title,
+            description=description,
+            event_type=models.EventType.custom,
+            start_time=start_dt,
+            end_time=end_dt,
+            location=None,
+            project_id=None,
+            creator_id=user.id,
+            tenant_id=db_request.tenant_id,
+        )
+        # Ensure the employee is an attendee of their own leave block
+        event.attendees.append(user)
+
+        db.add(event)
+
+        current += timedelta(days=1)
+
+
 def update_leave_request_status(db: Session, db_request: models.LeaveRequest, status_enum: models.LeaveStatus, comment: Optional[str] = None):
-    db_request.status = status_enum; db_request.manager_comment = comment; db.commit(); db.refresh(db_request); return db_request
+    previous_status = db_request.status
+    db_request.status = status_enum
+    db_request.manager_comment = comment
+
+    # When transitioning into Approved, create calendar events for the employee
+    if previous_status != models.LeaveStatus.Approved and status_enum == models.LeaveStatus.Approved:
+        _create_leave_events_for_approved_request(db, db_request)
+
+    db.commit()
+    db.refresh(db_request)
+    return db_request
+
+
+# --- Expenses & Money Overview ---
+
+def create_expense(db: Session, tenant_id: int, expense: schemas.ExpenseCreate) -> models.Expense:
+    data = expense.model_dump()
+    db_expense = models.Expense(tenant_id=tenant_id, **data)
+    db.add(db_expense)
+    db.commit()
+    db.refresh(db_expense)
+    return db_expense
+
+
+def get_expenses_for_tenant(
+    db: Session,
+    tenant_id: int,
+    year: Optional[int] = None,
+    project_id: Optional[int] = None,
+    category: Optional[str] = None,
+    flow_type: Optional[str] = None,
+    from_date: Optional[date] = None,
+    to_date: Optional[date] = None,
+    search: Optional[str] = None,
+) -> List[models.Expense]:
+    query = db.query(models.Expense).filter(models.Expense.tenant_id == tenant_id)
+    if year is not None:
+        query = query.filter(func.extract("year", models.Expense.date) == year)
+    if from_date is not None:
+        query = query.filter(models.Expense.date >= from_date)
+    if to_date is not None:
+        query = query.filter(models.Expense.date <= to_date)
+    if project_id is not None:
+        query = query.filter(models.Expense.project_id == project_id)
+    if category is not None:
+        query = query.filter(models.Expense.category == category)
+    if flow_type is not None:
+        query = query.filter(models.Expense.flow_type == flow_type)
+    if search:
+        like = f"%{search}%"
+        query = query.filter(
+            or_(
+                models.Expense.description.ilike(like),
+                models.Expense.reference.ilike(like),
+            )
+        )
+    return query.order_by(models.Expense.date.desc(), models.Expense.id.desc()).all()
+
+
+def get_yearly_money_overview(
+    db: Session,
+    tenant_id: int,
+    year: int,
+    project_id: Optional[int] = None,
+    category: Optional[str] = None,
+    flow_type: Optional[str] = None,
+    from_date: Optional[date] = None,
+    to_date: Optional[date] = None,
+    search: Optional[str] = None,
+) -> schemas.YearlyMoneyOverview:
+    expenses = get_expenses_for_tenant(
+        db,
+        tenant_id=tenant_id,
+        year=year,
+        project_id=project_id,
+        category=category,
+        flow_type=flow_type,
+        from_date=from_date,
+        to_date=to_date,
+        search=search,
+    )
+
+    total_in = sum(e.amount for e in expenses if e.flow_type == "in")
+    total_out = sum(e.amount for e in expenses if e.flow_type == "out")
+
+    by_month_map: Dict[int, Dict[str, float]] = {}
+    by_category_map: Dict[str, Dict[str, float]] = {}
+
+    for e in expenses:
+        month = e.date.month
+        month_bucket = by_month_map.setdefault(month, {"in": 0.0, "out": 0.0})
+        cat_key = e.category or "other"
+        cat_bucket = by_category_map.setdefault(cat_key, {"in": 0.0, "out": 0.0})
+
+        if e.flow_type == "in":
+            month_bucket["in"] += e.amount
+            cat_bucket["in"] += e.amount
+        else:
+            month_bucket["out"] += e.amount
+            cat_bucket["out"] += e.amount
+
+    by_month = [
+        schemas.MonthlyMoneySummary(month=m, total_in=b["in"], total_out=b["out"])
+        for m, b in sorted(by_month_map.items(), key=lambda kv: kv[0])
+    ]
+
+    by_category = [
+        schemas.CategoryMoneySummary(category=c, total_in=b["in"], total_out=b["out"])
+        for c, b in sorted(by_category_map.items(), key=lambda kv: kv[0])
+    ]
+
+    return schemas.YearlyMoneyOverview(
+        year=year,
+        total_in=total_in,
+        total_out=total_out,
+        net=total_in - total_out,
+        by_month=by_month,
+        by_category=by_category,
+    )
 
 # --- Project Assignment Logic (ROADMAP #3) ---
 

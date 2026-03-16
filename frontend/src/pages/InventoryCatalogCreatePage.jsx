@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import axiosInstance from '../api/axiosInstance';
 import { toast } from 'react-toastify';
 import { useAuth } from '../context/AuthContext';
@@ -18,20 +19,25 @@ import {
 } from '@heroicons/react/24/outline';
 
 function InventoryCatalogCreatePage() {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const { user } = useAuth();
     
     const [formData, setFormData] = useState({
         name: '',
+        category: '',
+        subcategory: '',
         description: '',
         unit: '',
         shop_url_1: '',
+        shop_url_2: '',
+        shop_url_3: '',
         local_image_path: '',
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const isSuperuser = user?.is_superuser;
-    const canManageCatalog = user && (['admin', 'project manager'].includes(user.role) || isSuperuser);
+    const canManageCatalog = !!isSuperuser;
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -47,8 +53,8 @@ function InventoryCatalogCreatePage() {
 
         setIsSubmitting(true);
         try {
-            // Note: The backend endpoint is usually /inventory/ (plural/singular check)
-            await axiosInstance.post('/inventory/', formData);
+            // Align with backend inventory catalog endpoint
+            await axiosInstance.post('/inventory/catalog', formData);
             toast.success(`Material "${formData.name}" initialized in registry.`);
             
             // REDIRECT SYNC: Pointing back to the main Global Inventory Node
@@ -72,18 +78,11 @@ function InventoryCatalogCreatePage() {
                 >
                     <ChevronLeftIcon className="h-3 w-3 mr-1" /> Terminate / Return to Global Inventory
                 </Link>
-                <div className="flex items-center gap-4">
-                    <div className="p-4 bg-indigo-600 rounded-2xl">
-                        <CubeIcon className="h-8 w-8 text-white" />
+                <div className="flex items-center gap-3">
+                    <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
+                        <CubeIcon className="h-6 w-6 text-indigo-600" />
                     </div>
-                    <div>
-                        <h1 className="text-4xl font-black text-gray-900 dark:text-white tracking-tighter italic leading-none">
-                            New material
-                        </h1>
-                        <p className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.3em] mt-2">
-                            GLOBAL LOGISTICS / REGISTRY ENTRY
-                        </p>
-                    </div>
+                    <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">{t('new_material_page_title')}</h1>
                 </div>
             </div>
 
@@ -150,28 +149,80 @@ function InventoryCatalogCreatePage() {
                                 className="modern-input h-auto py-4 resize-none text-sm"
                             ></textarea>
                         </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div className="space-y-1">
+                                <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">Category</label>
+                                <input 
+                                    type="text" 
+                                    name="category" 
+                                    value={formData.category} 
+                                    onChange={handleChange} 
+                                    placeholder="e.g. Cables"
+                                    className="modern-input h-12" 
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">Subcategory</label>
+                                <input 
+                                    type="text" 
+                                    name="subcategory" 
+                                    value={formData.subcategory} 
+                                    onChange={handleChange} 
+                                    placeholder="e.g. Power cables / Copper power cables"
+                                    className="modern-input h-12" 
+                                />
+                            </div>
+                        </div>
                     </section>
                 </div>
 
                 <div className="lg:col-span-4 space-y-8">
                     <section className="bg-white dark:bg-gray-800 p-8 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-700 space-y-4">
                         <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] flex items-center gap-2 ml-1">
-                            <ShoppingBagIcon className="h-4 w-4 text-indigo-500" /> Procurement Hub
+                            <ShoppingBagIcon className="h-4 w-4 text-indigo-500" /> Procurement Links
                         </label>
-                        <input 
-                            type="url" 
-                            name="shop_url_1" 
-                            value={formData.shop_url_1} 
-                            onChange={handleChange} 
-                            placeholder="https://vendor.is/..."
-                            className="modern-input text-xs italic" 
-                        />
+                        <div className="space-y-3">
+                            <div>
+                                <label className="block text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">Ronning URL</label>
+                                <input 
+                                    type="url" 
+                                    name="shop_url_1" 
+                                    value={formData.shop_url_1} 
+                                    onChange={handleChange} 
+                                    placeholder="https://ronning.is/..."
+                                    className="modern-input text-xs italic" 
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">Iskraft URL</label>
+                                <input 
+                                    type="url" 
+                                    name="shop_url_2" 
+                                    value={formData.shop_url_2} 
+                                    onChange={handleChange} 
+                                    placeholder="https://iskraft.is/..."
+                                    className="modern-input text-xs italic" 
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">Reykjafell URL</label>
+                                <input 
+                                    type="url" 
+                                    name="shop_url_3" 
+                                    value={formData.shop_url_3} 
+                                    onChange={handleChange} 
+                                    placeholder="https://reykjafell.is/..."
+                                    className="modern-input text-xs italic" 
+                                />
+                            </div>
+                        </div>
                     </section>
 
                     <button 
                         type="submit" 
                         disabled={isSubmitting} 
-                        className="w-full h-16 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-[1.5rem] shadow-xl shadow-indigo-100 dark:shadow-none transition transform active:scale-95 disabled:opacity-50 flex items-center justify-center gap-3 uppercase text-xs tracking-[0.2em]"
+                        className="w-full h-16 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-[1.5rem] transition transform active:scale-95 disabled:opacity-50 flex items-center justify-center gap-3 uppercase text-xs tracking-[0.2em]"
                     >
                         {isSubmitting ? (
                             <><ArrowPathIcon className="h-5 w-5 animate-spin" /> Syncing...</>

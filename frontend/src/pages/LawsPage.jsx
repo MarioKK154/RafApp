@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { 
     BookOpenIcon, 
     ShieldCheckIcon, 
@@ -11,6 +12,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 function LawsPage() {
+    const { t } = useTranslation();
     // Structured data for legal resources
     const legalCategories = [
         {
@@ -47,19 +49,17 @@ function LawsPage() {
             {/* Header Section */}
             <header className="mb-10">
                 <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5">
-                <div className="flex items-center gap-3 mb-2">
-                    <div className="p-2 bg-indigo-600 rounded-xl shadow-lg shadow-indigo-100 dark:shadow-none">
-                        <BookOpenIcon className="h-6 w-6 text-white" />
+                    <div className="flex items-center gap-3 mb-2">
+                        <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
+                            <BookOpenIcon className="h-6 w-6 text-indigo-600" />
+                        </div>
+                        <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">
+                            {t('laws_standards', { defaultValue: 'Icelandic Electrical Laws & Standards' })} <span className="inline-block ml-2">🇮🇸</span>
+                        </h1>
                     </div>
-                    <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 tracking-[0.2em]">Compliance Registry</span>
-                </div>
-                <h1 className="text-4xl font-black text-gray-900 dark:text-white leading-none mb-4">
-                    Icelandic Electrical Laws & Standards <span className="inline-block ml-2">🇮🇸</span>
-                </h1>
-                <p className="text-gray-500 dark:text-gray-400 max-w-2xl text-sm leading-relaxed">
-                    Access critical legal frameworks and technical regulations mandatory for all RafApp deployments. 
-                    Ensure all site work complies with <strong className="text-gray-900 dark:text-white">HMS (Húsnæðis- og mannvirkjastofnun)</strong> requirements.
-                </p>
+                    <p className="text-gray-500 dark:text-gray-400 max-w-2xl text-sm leading-relaxed mt-2">
+                        {t('laws_standards_desc', { defaultValue: 'Access critical legal frameworks and technical regulations mandatory for all RafApp deployments. Ensure all site work complies with HMS (Húsnæðis- og mannvirkjastofnun) requirements.' })}
+                    </p>
                 </div>
             </header>
 

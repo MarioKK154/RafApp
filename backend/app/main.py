@@ -19,11 +19,116 @@ from .routers import (
     dashboard, project_inventory, offers, events,
     labor_catalog, calculators, customers,
     accounting,
-    notifications, assignments, tutorials  # <--- ROADMAP #2: Added
+    notifications, assignments, tutorials,
+    risk_assessments,
+    system,
 )
 
 # 2. Create database tables
 models.Base.metadata.create_all(bind=engine)
+
+# 2b. Migrate existing DBs: add users.last_login_at if missing (for churn/tenant health)
+try:
+    from sqlalchemy import text
+    with engine.connect() as conn:
+        conn.execute(text("ALTER TABLE users ADD COLUMN last_login_at DATETIME"))
+        conn.commit()
+except Exception as e:
+    msg = str(e).lower()
+    if "duplicate column name" in msg or "already exists" in msg:
+        pass  # Column already there
+    else:
+        raise  # Unexpected error
+
+# 2c. Migrate labor_catalog_items: ar.is fields (main_category, sub_category, conditions, reference_price)
+for col in ("main_category", "sub_category", "conditions"):
+    try:
+        with engine.connect() as conn:
+            conn.execute(text(f"ALTER TABLE labor_catalog_items ADD COLUMN {col} VARCHAR"))
+            conn.commit()
+    except Exception as e:
+        msg = str(e).lower()
+        if "duplicate column name" in msg or "already exists" in msg:
+            pass
+        else:
+            raise
+try:
+    with engine.connect() as conn:
+        conn.execute(text("ALTER TABLE labor_catalog_items ADD COLUMN reference_price FLOAT"))
+        conn.commit()
+except Exception as e:
+    msg = str(e).lower()
+    if "duplicate column name" in msg or "already exists" in msg:
+        pass
+    else:
+        raise
+try:
+    with engine.connect() as conn:
+        conn.execute(text("ALTER TABLE labor_catalog_items ADD COLUMN default_unit_price FLOAT NOT NULL DEFAULT 0"))
+        conn.commit()
+except Exception as e:
+    msg = str(e).lower()
+    if "duplicate column name" in msg or "already exists" in msg:
+        pass
+    else:
+        raise
+try:
+    with engine.connect() as conn:
+        conn.execute(text("ALTER TABLE labor_catalog_items ADD COLUMN tenant_id INTEGER NOT NULL DEFAULT 1"))
+        conn.commit()
+except Exception as e:
+    msg = str(e).lower()
+    if "duplicate column name" in msg or "already exists" in msg:
+        pass
+    else:
+        raise
+try:
+    with engine.connect() as conn:
+        conn.execute(text("ALTER TABLE labor_catalog_items ADD COLUMN units_per_hour FLOAT"))
+        conn.commit()
+except Exception as e:
+    msg = str(e).lower()
+    if "duplicate column name" in msg or "already exists" in msg:
+        pass
+    else:
+        raise
+try:
+    with engine.connect() as conn:
+        conn.execute(text("ALTER TABLE projects ADD COLUMN work_load_ratio_codes TEXT"))
+        conn.commit()
+except Exception as e:
+    msg = str(e).lower()
+    if "duplicate column name" in msg or "already exists" in msg:
+        pass
+    else:
+        raise
+try:
+    with engine.connect() as conn:
+        conn.execute(text("ALTER TABLE offers ADD COLUMN work_load_ratio_codes TEXT"))
+        conn.commit()
+except Exception as e:
+    msg = str(e).lower()
+    if "duplicate column name" in msg or "already exists" in msg:
+        pass
+    else:
+        raise
+# ar.is condition variants: one catalog item can have multiple (condition, Eining) rows
+try:
+    with engine.connect() as conn:
+        conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS labor_catalog_item_conditions (
+                id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                labor_catalog_item_id INTEGER NOT NULL REFERENCES labor_catalog_items(id),
+                code VARCHAR NOT NULL,
+                condition_description VARCHAR NOT NULL,
+                units_per_hour FLOAT,
+                effective_date VARCHAR,
+                end_date VARCHAR
+            )
+        """))
+        conn.commit()
+except Exception:
+    pass
 
 app = FastAPI(
     title="RafApp API",
@@ -91,6 +196,8 @@ app.include_router(notifications.router) # <--- ROADMAP #2: Added
 app.include_router(assignments.router)
 app.include_router(tutorials.router)
 app.include_router(admin_tools.router)
+app.include_router(system.router)
+app.include_router(risk_assessments.router)
 
 # 6. Root Endpoint
 @app.get("/")

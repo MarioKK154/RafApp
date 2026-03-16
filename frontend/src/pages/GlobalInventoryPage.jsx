@@ -60,38 +60,29 @@ function GlobalInventoryPage() {
         <div className="container mx-auto p-4 md:p-8 max-w-7xl animate-in fade-in duration-500">
             {/* Header Area */}
             <header className="mb-12">
-                <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
-                <div>
-                    <div className="flex items-center gap-4 mb-3">
-                        <div className="p-4 bg-indigo-600 rounded-2xl shadow-xl shadow-indigo-100 dark:shadow-none">
-                            <CircleStackIcon className="h-8 w-8 text-white" />
+                <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5 flex justify-between items-center gap-6">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
+                            <CircleStackIcon className="h-6 w-6 text-indigo-600" />
                         </div>
-                        <div>
-                            <h1 className="text-4xl font-black text-gray-900 dark:text-white leading-none tracking-tighter italic">
-                                {t('inventory')}
-                            </h1>
-                        </div>
+                        <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">{t('inventory')}</h1>
                     </div>
-                </div>
-
-                <div className="flex items-center gap-4 w-full md:w-auto">
-                    <Link 
-                        to="/shopping-list"
-                        className="flex-1 md:flex-none h-14 px-6 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 text-gray-500 hover:text-indigo-600 rounded-2xl flex items-center justify-center gap-2 shadow-sm transition"
-                    >
-                        <ShoppingCartIcon className="h-5 w-5" />
-                        <span className="text-[10px] font-black uppercase tracking-widest">Procurement</span>
-                    </Link>
-                    {canManageInventory && (
-                        <Link 
-                            to="/inventory/new"
-                            className="flex-1 md:flex-none h-14 px-8 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-[0.2em] rounded-2xl shadow-lg shadow-indigo-100 dark:shadow-none transition transform active:scale-95 flex items-center justify-center gap-2"
+                    <div className="flex items-center gap-3">
+                        <Link
+                            to="/shopping-list"
+                            className="inline-flex items-center gap-2 px-5 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-200 font-black text-[10px] uppercase tracking-widest rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition"
                         >
-                            <PlusIcon className="h-4 w-4 stroke-[3px]" /> 
-                            {t('create_new')}
+                            <ShoppingCartIcon className="h-5 w-5" /> {t('shopping_list', { defaultValue: 'Procurement' })}
                         </Link>
-                    )}
-                </div>
+                        {canManageInventory && (
+                            <Link
+                                to="/inventory/new"
+                                className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition transform active:scale-95"
+                            >
+                                <PlusIcon className="h-5 w-5" /> {t('create_new')}
+                            </Link>
+                        )}
+                    </div>
                 </div>
             </header>
 

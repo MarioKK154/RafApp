@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { 
     SignalSlashIcon, 
@@ -8,6 +9,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 function NotFoundPage() {
+    const { t } = useTranslation();
     return (
         <div className="min-h-[80vh] flex flex-col justify-center items-center p-6 text-center animate-in fade-in zoom-in duration-500">
             {/* Visual Error Indicator */}
@@ -40,18 +42,18 @@ function NotFoundPage() {
                 <div className="pt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
                     <Link
                         to="/"
-                        className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 h-14 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-2xl shadow-lg shadow-indigo-100 dark:shadow-none transition transform active:scale-95"
+                        className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition transform active:scale-95"
                     >
                         <HomeIcon className="h-5 w-5" />
-                        Restore to Dashboard
+                        {t('restore_to_dashboard', { defaultValue: 'Restore to Dashboard' })}
                     </Link>
                     
                     <button
                         onClick={() => window.history.back()}
-                        className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 h-14 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 font-bold rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-700 transition"
+                        className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-200 font-black text-[10px] uppercase tracking-widest rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition"
                     >
                         <ChevronLeftIcon className="h-5 w-5" />
-                        Previous Station
+                        {t('previous_page', { defaultValue: 'Go Back' })}
                     </button>
                 </div>
             </div>

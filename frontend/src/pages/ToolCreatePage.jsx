@@ -91,8 +91,8 @@ function ToolCreatePage() {
                     <ChevronLeftIcon className="h-3 w-3 mr-1" /> {t('hardware_registry')}
                 </Link>
                 <div className="flex items-center gap-3">
-                    <div className="p-3 bg-indigo-600 rounded-2xl">
-                        <WrenchScrewdriverIcon className="h-8 w-8 text-white" />
+                    <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
+                        <WrenchScrewdriverIcon className="h-6 w-6 text-indigo-600" />
                     </div>
                     <div>
                         <h1 className="text-3xl font-black text-gray-900 dark:text-white leading-none tracking-tight">
@@ -192,7 +192,7 @@ function ToolCreatePage() {
                     <button 
                         type="submit" 
                         disabled={isSaving || !canManageTools}
-                        className="w-full inline-flex justify-center items-center h-14 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-2xl shadow-lg shadow-indigo-100 dark:shadow-none transition transform active:scale-95 disabled:opacity-50"
+                        className="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition transform active:scale-95 disabled:opacity-50"
                     >
                         {isSaving ? (
                             <>

@@ -217,12 +217,12 @@ function TaskEditPage() {
                     <Link to="/tasks" className="flex items-center text-[10px] font-black text-gray-400 hover:text-indigo-600 transition mb-4 uppercase tracking-[0.2em]">
                         <ChevronLeftIcon className="h-3 w-3 mr-1 stroke-[3px]" /> {t('tasks')}
                     </Link>
-                    <div className="flex items-center gap-4">
-                        <div className="p-3 bg-indigo-600 rounded-2xl">
-                            <ClipboardDocumentCheckIcon className="h-8 w-8 text-white" />
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
+                            <ClipboardDocumentCheckIcon className="h-6 w-6 text-indigo-600" />
                         </div>
                         <div>
-                            <h1 className="text-3xl font-black text-gray-900 dark:text-white tracking-tighter leading-none">
+                            <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">
                                 {taskData?.title}
                             </h1>
                             <div className="flex items-center gap-3 mt-2">
@@ -262,19 +262,19 @@ function TaskEditPage() {
                                 toast.error(t('export_failed_task', { defaultValue: 'Failed to export task.' }));
                             }
                         }}
-                        className="inline-flex items-center px-5 h-10 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-200 text-[10px] font-black uppercase tracking-[0.2em] rounded-xl shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition"
+                        className="inline-flex items-center gap-2 px-5 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-200 font-black text-[10px] uppercase tracking-widest rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition"
                     >
                         <DocumentTextIcon className="h-4 w-4 mr-1.5" /> {t('export_pdf')}
                     </button>
                 </div>
 
                 {canCommissionTask && taskData?.status === "Done" && !isLocked && (
-                    <button 
-                        onClick={handleCommissionTask} 
+                    <button
+                        onClick={handleCommissionTask}
                         disabled={isCommissioning}
-                        className="inline-flex items-center px-10 h-14 bg-teal-600 hover:bg-teal-700 text-white font-black text-xs uppercase tracking-[0.2em] rounded-2xl transition transform active:scale-95 disabled:opacity-50"
+                        className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition transform active:scale-95 disabled:opacity-50"
                     >
-                        {isCommissioning ? <ArrowPathIcon className="h-5 w-5 animate-spin mr-3" /> : <ShieldCheckIcon className="h-5 w-5 mr-3" />}
+                        {isCommissioning ? <ArrowPathIcon className="h-5 w-5 animate-spin" /> : <ShieldCheckIcon className="h-5 w-5" />}
                         {t('commission_task')}
                     </button>
                 )}

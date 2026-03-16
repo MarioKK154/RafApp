@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import axiosInstance from '../api/axiosInstance';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
@@ -17,6 +18,7 @@ import {
 const formatDate = (dateString) => dateString ? new Date(dateString).toLocaleDateString() : 'N/A';
 
 function UserLicenses({ userId }) {
+    const { t } = useTranslation();
     const [licenses, setLicenses] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
@@ -53,7 +55,7 @@ function UserLicenses({ userId }) {
             setLicenses(response.data);
         } catch (error) {
             console.error('Fetch licenses error:', error);
-            setError('Failed to synchronize certification registry.');
+            setError(t('sync_cert_failed'));
         } finally {
             setIsLoading(false);
         }
@@ -67,7 +69,7 @@ function UserLicenses({ userId }) {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
             if (file.type !== 'application/pdf') {
-                toast.error("Certification documents must be in PDF format.");
+                toast.error(t('cert_must_pdf'));
                 e.target.value = '';
                 setSelectedFile(null);
             } else {
@@ -79,7 +81,7 @@ function UserLicenses({ userId }) {
     const handleUpload = async (e) => {
         e.preventDefault();
         if (!selectedFile || !description) {
-            toast.warn("Please provide a name/description and select the PDF file.");
+            toast.warn(t('provide_name_and_file'));
             return;
         }
 
@@ -94,7 +96,7 @@ function UserLicenses({ userId }) {
             await axiosInstance.post(`/users/${userId}/licenses/`, formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
-            toast.success('License added to registry.');
+            toast.success(t('license_added'));
             
             // Reset form
             setDescription(''); setIssueDate(''); setExpiryDate(''); setSelectedFile(null);
@@ -118,11 +120,11 @@ function UserLicenses({ userId }) {
         if (!licenseToDelete) return;
         try {
             await axiosInstance.delete(`/users/licenses/${licenseToDelete.id}`);
-            toast.success(`Removed: ${licenseToDelete.description}`);
+            toast.success(`${t('removed', { defaultValue: 'Removed' })}: ${licenseToDelete.description}`);
             fetchLicenses();
         } catch (error) {
             console.error('Delete license failed:', error);
-            toast.error('Could not delete document.');
+            toast.error(t('could_not_delete_doc'));
         } finally {
             setIsDeleteModalOpen(false);
             setLicenseToDelete(null);
@@ -144,7 +146,7 @@ function UserLicenses({ userId }) {
             window.URL.revokeObjectURL(url);
         } catch (error) {
             console.error('License download failed:', error);
-            toast.error("File retrieval failed.");
+            toast.error(t('file_retrieval_failed'));
         }
     };
 
@@ -167,41 +169,41 @@ function UserLicenses({ userId }) {
             <div className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-100 dark:border-gray-700 mt-8">
                 <p className="text-sm text-gray-500 italic flex items-center gap-2">
                     <DocumentTextIcon className="h-5 w-5" />
-                    License data is restricted to administrative staff.
+                    {t('certification_restricted')}
                 </p>
             </div>
         );
     }
 
-    if (isLoading) return <LoadingSpinner text="Accessing personnel certifications..." size="sm" />;
+    if (isLoading) return <LoadingSpinner text={t('accessing_certifications')} size="sm" />;
 
     return (
         <div className="mt-10 pt-8 border-t border-gray-200 dark:border-gray-700">
             <div className="flex items-center gap-2 mb-6">
                 <IdentificationIcon className="h-6 w-6 text-indigo-600" />
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white">Licenses & Certifications</h2>
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white">{t('licenses_certifications')}</h2>
             </div>
 
             {error && <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-xl text-xs">{error}</div>}
 
             {/* Upload Form */}
             <div className="mb-8 p-6 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
-                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Register New Certification</h3>
+                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">{t('register_new_certification')}</h3>
                 <form onSubmit={handleUpload} className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-[10px] font-black text-gray-500 uppercase mb-1 ml-1">Document Title*</label>
+                            <label className="block text-[10px] font-black text-gray-500 uppercase mb-1 ml-1">{t('document_title')}*</label>
                             <input 
                                 type="text" 
                                 value={description} 
                                 onChange={e => setDescription(e.target.value)} 
-                                placeholder="e.g., Master Electrician License"
+                                placeholder={t('license_title_placeholder')}
                                 required 
                                 className="block w-full rounded-xl border-gray-300 dark:bg-gray-700 dark:text-white text-sm focus:ring-2 focus:ring-indigo-500 transition"
                             />
                         </div>
                         <div>
-                            <label className="block text-[10px] font-black text-gray-500 uppercase mb-1 ml-1">Select PDF Document*</label>
+                            <label className="block text-[10px] font-black text-gray-500 uppercase mb-1 ml-1">{t('select_pdf')}</label>
                             <input 
                                 type="file" 
                                 id="license-file-input" 
@@ -214,7 +216,7 @@ function UserLicenses({ userId }) {
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                         <div>
-                            <label className="block text-[10px] font-black text-gray-500 uppercase mb-1 ml-1">Issue Date</label>
+                            <label className="block text-[10px] font-black text-gray-500 uppercase mb-1 ml-1">{t('issue_date')}</label>
                             <input 
                                 type="date" 
                                 value={issueDate} 
@@ -223,7 +225,7 @@ function UserLicenses({ userId }) {
                             />
                         </div>
                         <div>
-                            <label className="block text-[10px] font-black text-gray-500 uppercase mb-1 ml-1">Expiry Date</label>
+                            <label className="block text-[10px] font-black text-gray-500 uppercase mb-1 ml-1">{t('expiry_date')}</label>
                             <input 
                                 type="date" 
                                 value={expiryDate} 
@@ -237,7 +239,7 @@ function UserLicenses({ userId }) {
                             className="w-full inline-flex justify-center items-center px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-sm transition disabled:opacity-50"
                         >
                             <PlusIcon className="h-5 w-5 mr-1.5" />
-                            {isUploading ? 'Registering...' : 'Upload Certification'}
+                            {isUploading ? t('registering') : t('upload_certification')}
                         </button>
                     </div>
                 </form>
@@ -264,7 +266,7 @@ function UserLicenses({ userId }) {
                                         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-0.5">
                                             <p className="text-[10px] text-gray-400 flex items-center gap-1 uppercase font-medium">
                                                 <CalendarIcon className="h-3 w-3" />
-                                                Issued: {formatDate(license.issue_date)}
+                                                {t('issued')}: {formatDate(license.issue_date)}
                                             </p>
                                             {license.expiry_date && (
                                                 <p className={`text-[10px] flex items-center gap-1 uppercase font-bold ${
@@ -272,7 +274,7 @@ function UserLicenses({ userId }) {
                                                     status === 'warning' ? 'text-orange-600' : 'text-gray-400'
                                                 }`}>
                                                     {status === 'expired' && <ExclamationTriangleIcon className="h-3 w-3" />}
-                                                    Expires: {formatDate(license.expiry_date)}
+                                                    {t('expires')}: {formatDate(license.expiry_date)}
                                                 </p>
                                             )}
                                         </div>
@@ -283,7 +285,7 @@ function UserLicenses({ userId }) {
                                     <button
                                         onClick={() => handleDownload(license.id, license.filename)}
                                         className="p-2 text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition"
-                                        title="Download PDF"
+                                        title={t('download_pdf')}
                                     >
                                         <ArrowDownTrayIcon className="h-5 w-5" />
                                     </button>
@@ -291,7 +293,7 @@ function UserLicenses({ userId }) {
                                         <button
                                             onClick={() => triggerDelete(license)}
                                             className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-lg transition"
-                                            title="Delete Entry"
+                                            title={t('delete_entry')}
                                         >
                                             <TrashIcon className="h-5 w-5" />
                                         </button>
@@ -303,7 +305,7 @@ function UserLicenses({ userId }) {
                 ) : (
                     <div className="py-12 text-center border-2 border-dashed border-gray-100 dark:border-gray-700 rounded-2xl">
                         <IdentificationIcon className="h-10 w-10 text-gray-200 mx-auto mb-2" />
-                        <p className="text-sm text-gray-500 italic">No professional certifications found for this user.</p>
+                        <p className="text-sm text-gray-500 italic">{t('no_certifications_found')}</p>
                     </div>
                 )}
             </div>
@@ -313,9 +315,9 @@ function UserLicenses({ userId }) {
                 isOpen={isDeleteModalOpen}
                 onClose={() => { setIsDeleteModalOpen(false); setLicenseToDelete(null); }}
                 onConfirm={confirmDelete}
-                title="Purge Certification Record"
-                message={`Are you sure you want to delete "${licenseToDelete?.description}"? This document will be removed from legal personnel records.`}
-                confirmText="Permanently Delete"
+                title={t('purge_cert_record')}
+                message={t('purge_cert_message')}
+                confirmText={t('permanently_delete')}
                 type="danger"
             />
         </div>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -13,10 +13,12 @@ import HomePage from './pages/HomePage';
 import ProjectsPage from './pages/ProjectsPage';
 import ProjectCreatePage from './pages/ProjectCreatePage';
 import ProjectEditPage from './pages/ProjectEditPage';
+import ProjectRiskAssessmentPage from './pages/ProjectRiskAssessmentPage';
 import TasksListPage from './pages/TasksListPage';
 import TaskCreatePage from './pages/TaskCreatePage';
 import TaskEditPage from './pages/TaskEditPage';
 import GlobalInventoryPage from './pages/GlobalInventoryPage';
+import InventoryCatalogPage from './pages/InventoryCatalogPage';
 import InventoryCatalogCreatePage from './pages/InventoryCatalogCreatePage';
 import InventoryCatalogEditPage from './pages/InventoryCatalogEditPage';
 import ToolInventoryPage from './pages/ToolInventoryPage';
@@ -58,6 +60,8 @@ import AccountingPage from './pages/AccountingPage';
 import LeaveRequestCreatePage from './pages/LeaveRequestCreatePage';
 import NotificationHubPage from './pages/NotificationHubPage'; 
 import SchedulingGridPage from './pages/SchedulingGridPage'; 
+import axiosInstance from './api/axiosInstance';
+import RiskLibraryPage from './pages/RiskLibraryPage';
 
 const ProtectedRoute = ({ children }) => {
     const { isAuthenticated, isLoading } = useAuth();
@@ -83,7 +87,9 @@ const ProtectedRoute = ({ children }) => {
 
 function AppShell() {
     const { background } = useTenantBranding();
-    const { isAuthenticated } = useAuth();
+    const { isAuthenticated, user: currentUser, isImpersonating, stopImpersonation } = useAuth();
+    const [systemStatus, setSystemStatus] = useState(null);
+    const [globalBanner, setGlobalBanner] = useState(null);
 
     const style = background && isAuthenticated
         ? {
@@ -94,14 +100,63 @@ function AppShell() {
           }
         : {};
 
+    useEffect(() => {
+        const fetchStatus = async () => {
+            try {
+                const res = await axiosInstance.get('/system/status');
+                setSystemStatus(res.data);
+            } catch {
+                // ignore; system status is optional
+            }
+        };
+        fetchStatus();
+    }, []);
+
+    useEffect(() => {
+        if (!isAuthenticated) return;
+        const fetchBanner = async () => {
+            try {
+                const res = await axiosInstance.get('/system/banner');
+                setGlobalBanner(res.data || null);
+            } catch {
+                setGlobalBanner(null);
+            }
+        };
+        fetchBanner();
+    }, [isAuthenticated]);
+
+    const showMaintenanceOverlay = systemStatus?.maintenance && !currentUser?.is_superuser;
+
     return (
         <div
-            className="flex h-screen bg-gray-50/95 dark:bg-gray-900/95 text-gray-900 dark:text-gray-100 font-sans selection:bg-indigo-100 selection:text-indigo-700"
+            className="relative flex h-screen bg-gray-50/95 dark:bg-gray-900/95 text-gray-900 dark:text-gray-100 font-sans selection:bg-indigo-100 selection:text-indigo-700"
             style={style}
         >
             <Sidebar />
 
-            <main className="flex-1 overflow-x-hidden overflow-y-auto scroll-smooth custom-scrollbar">
+            <main className="flex-1 overflow-x-hidden overflow-y-auto scroll-smooth custom-scrollbar flex flex-col">
+                {globalBanner && globalBanner.message && (
+                    <div className="flex-shrink-0 flex items-center justify-center gap-4 px-6 py-3 bg-indigo-600 text-white text-sm font-medium text-center">
+                        <span>{globalBanner.message}</span>
+                    </div>
+                )}
+                {isImpersonating && (
+                    <div className="flex-shrink-0 flex items-center justify-between gap-4 px-6 py-3 bg-amber-500 text-black text-sm font-bold">
+                        <span>
+                            Viewing as <strong>{currentUser?.full_name || currentUser?.email}</strong>
+                            {currentUser?.impersonated_by_email && (
+                                <span className="opacity-90 ml-1">(impersonated by {currentUser.impersonated_by_email})</span>
+                            )}
+                        </span>
+                        <button
+                            type="button"
+                            onClick={stopImpersonation}
+                            className="px-4 py-1.5 rounded-xl bg-black/20 hover:bg-black/30 font-black uppercase tracking-wider transition-colors"
+                        >
+                            Stop impersonation
+                        </button>
+                    </div>
+                )}
                     <Routes>
                         <Route path="/login" element={<LoginPage />} />
 
@@ -115,6 +170,7 @@ function AppShell() {
                         <Route path="/projects/new" element={<ProtectedRoute><ProjectCreatePage /></ProtectedRoute>} />
                         <Route path="/projects/edit/:projectId" element={<ProtectedRoute><ProjectEditPage /></ProtectedRoute>} />
                         <Route path="/projects/:projectId" element={<ProtectedRoute><ProjectEditPage /></ProtectedRoute>} />
+                        <Route path="/projects/:projectId/risk-assessment" element={<ProtectedRoute><ProjectRiskAssessmentPage /></ProtectedRoute>} />
 
                         {/* --- CRM --- */}
                         <Route path="/customers" element={<ProtectedRoute><CustomerListPage /></ProtectedRoute>} />
@@ -127,7 +183,7 @@ function AppShell() {
                         <Route path="/tasks/:taskId" element={<ProtectedRoute><TaskEditPage /></ProtectedRoute>} />
 
                         {/* --- INVENTORY --- */}
-                        <Route path="/inventory" element={<ProtectedRoute><GlobalInventoryPage /></ProtectedRoute>} />
+                        <Route path="/inventory" element={<ProtectedRoute><InventoryCatalogPage /></ProtectedRoute>} />
                         <Route path="/inventory/new" element={<ProtectedRoute><InventoryCatalogCreatePage /></ProtectedRoute>} />
                         <Route path="/inventory/edit/:itemId" element={<ProtectedRoute><InventoryCatalogEditPage /></ProtectedRoute>} />
 
@@ -152,6 +208,7 @@ function AppShell() {
                         <Route path="/accounting" element={<ProtectedRoute><AccountingPage /></ProtectedRoute>} />
                         <Route path="/accounting/leave/new" element={<ProtectedRoute><LeaveRequestCreatePage /></ProtectedRoute>} />
                         <Route path="/reports" element={<ProtectedRoute><ReportsPage /></ProtectedRoute>} />
+                        <Route path="/risk-library" element={<ProtectedRoute><RiskLibraryPage /></ProtectedRoute>} />
 
                         {/* --- USER MANAGEMENT (TARGET FIX) --- */}
                         <Route path="/users" element={<ProtectedRoute><UserListPage /></ProtectedRoute>} />
@@ -180,6 +237,22 @@ function AppShell() {
                         <Route path="*" element={<NotFoundPage />} />
                     </Routes>
                 </main>
+
+            {showMaintenanceOverlay && (
+                <div className="fixed inset-0 z-60 flex flex-col items-center justify-center bg-gray-900/90 text-white text-center px-4">
+                    <h1 className="text-3xl md:text-4xl font-black tracking-tight mb-3">
+                        Scheduled Maintenance
+                    </h1>
+                    <p className="text-sm md:text-base text-gray-200 max-w-lg mb-2">
+                        The RafApp platform is temporarily offline while system maintenance is in progress.
+                    </p>
+                    {systemStatus?.message && (
+                        <p className="text-xs md:text-sm text-gray-300 max-w-lg">
+                            {systemStatus.message}
+                        </p>
+                    )}
+                </div>
+            )}
 
             <ToastContainer
                 position="bottom-right"

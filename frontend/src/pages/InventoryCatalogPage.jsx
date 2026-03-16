@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import axiosInstance from '../api/axiosInstance';
@@ -36,8 +36,9 @@ function useDebounce(value, delay) {
 function InventoryCatalogPage() {
     const { t } = useTranslation();
     const navigate = useNavigate();
+    const location = useLocation();
     const { user } = useAuth();
-    
+
     // Core Registry State
     const [items, setItems] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -48,15 +49,17 @@ function InventoryCatalogPage() {
     const debouncedSearch = useDebounce(searchTerm, 300);
     const [itemToDelete, setItemToDelete] = useState(null);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [selectedVariant, setSelectedVariant] = useState(null);
 
     const isSuperuser = user?.is_superuser;
-    const canManageCatalog = user && (['admin', 'project manager'].includes(user.role) || isSuperuser);
+    const canManageCatalog = !!isSuperuser;
 
     const fetchItems = useCallback(async () => {
         setIsLoading(true);
         setError('');
         try {
-            const response = await axiosInstance.get('/inventory/', { params: { limit: 1000 } });
+            // Align with backend: /inventory/catalog
+            const response = await axiosInstance.get('/inventory/catalog', { params: { limit: 1000 } });
             setItems(response.data);
         } catch (err) {
             console.error("Catalog Sync Error:", err);
@@ -69,14 +72,81 @@ function InventoryCatalogPage() {
 
     useEffect(() => { fetchItems(); }, [fetchItems]);
 
-    const filteredItems = useMemo(() => {
-        if (!debouncedSearch) return items;
-        const query = debouncedSearch.toLowerCase();
-        return items.filter(item =>
-            item.name.toLowerCase().includes(query) ||
-            (item.description && item.description.toLowerCase().includes(query))
-        );
-    }, [items, debouncedSearch]);
+    // Derive category → subcategory tree from items
+    const categoryTree = useMemo(() => {
+        const map = new Map();
+        items.forEach((item) => {
+            const cat = (item.category || 'Uncategorized').trim();
+            const rawSub = (item.subcategory || '').trim();
+            // Use only the first segment before " / " as the visible subcategory level
+            const baseSub = rawSub.split('/')[0].trim();
+
+            if (!map.has(cat)) {
+                map.set(cat, new Set());
+            }
+            if (baseSub) {
+                map.get(cat).add(baseSub);
+            }
+        });
+        return Array.from(map.entries()).map(([category, subs]) => ({
+            category,
+            subcategories: Array.from(subs).sort(),
+        })).sort((a, b) => a.category.localeCompare(b.category));
+    }, [items]);
+
+    // Read navigation state from URL (hard navigation via query params)
+    const searchParams = new URLSearchParams(location.search);
+    const selectedCategory = searchParams.get('category');
+    const selectedSubcategory = searchParams.get('subcategory');
+
+    // Reset sub-variant filter when changing category or subcategory
+    useEffect(() => {
+        setSelectedVariant(null);
+    }, [selectedCategory, selectedSubcategory]);
+
+    // Base items for current category + subcategory (ignores search & variant)
+    const baseItems = useMemo(() => {
+        if (!selectedCategory || !selectedSubcategory) return [];
+        return items.filter((item) => {
+            const cat = (item.category || 'Uncategorized').trim();
+            const rawSub = (item.subcategory || '').trim();
+            const baseSub = rawSub.split('/')[0].trim();
+            return cat === selectedCategory && baseSub === selectedSubcategory;
+        });
+    }, [items, selectedCategory, selectedSubcategory]);
+
+    // Available variants (sub-subcategories) within current subcategory
+    const variantOptions = useMemo(() => {
+        const set = new Set();
+        baseItems.forEach((item) => {
+            const rawSub = (item.subcategory || '').trim();
+            const parts = rawSub.split('/').map(p => p.trim()).filter(Boolean);
+            if (parts.length > 1) {
+                const variant = parts.slice(1).join(' / ');
+                if (variant) set.add(variant);
+            }
+        });
+        return Array.from(set).sort();
+    }, [baseItems]);
+
+    // Final visible items with search + optional variant filter applied
+    const visibleItems = useMemo(() => {
+        if (!selectedCategory || !selectedSubcategory) return [];
+        const query = debouncedSearch ? debouncedSearch.toLowerCase() : '';
+
+        return baseItems.filter((item) => {
+            const rawSub = (item.subcategory || '').trim();
+            const parts = rawSub.split('/').map(p => p.trim()).filter(Boolean);
+            const variant = parts.length > 1 ? parts.slice(1).join(' / ') : null;
+
+            if (selectedVariant && variant !== selectedVariant) return false;
+
+            if (!query) return true;
+            const nameMatch = item.name?.toLowerCase().includes(query);
+            const descMatch = item.description?.toLowerCase().includes(query);
+            return nameMatch || descMatch;
+        });
+    }, [baseItems, debouncedSearch, selectedCategory, selectedSubcategory, selectedVariant]);
 
     const triggerDelete = (item) => {
         if (!canManageCatalog) return;
@@ -87,7 +157,7 @@ function InventoryCatalogPage() {
     const confirmDeleteItem = async () => {
         if (!itemToDelete) return;
         try {
-            await axiosInstance.delete(`/inventory/${itemToDelete.id}`);
+            await axiosInstance.delete(`/inventory/catalog/${itemToDelete.id}`);
             toast.success(`Registry entry purged: "${itemToDelete.name}"`);
             fetchItems();
         } catch (err) {
@@ -102,51 +172,48 @@ function InventoryCatalogPage() {
         return <LoadingSpinner text="Accessing Master Catalog Registry..." size="lg" />;
     }
 
+    const hasCategory = !!selectedCategory;
+    const hasSubcategory = !!selectedSubcategory;
+
     return (
         <div className="container mx-auto p-4 md:p-8 max-w-7xl animate-in fade-in duration-500">
             {/* Catalog Header Protocol */}
-            <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-12">
-                <div>
-                    <div className="flex items-center gap-4 mb-3">
-                        <div className="p-4 bg-indigo-600 rounded-2xl">
-                            <CubeIcon className="h-8 w-8 text-white" />
+            <header className="mb-6">
+                <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5 flex justify-between items-center gap-6">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
+                            <CubeIcon className="h-6 w-6 text-indigo-600" />
                         </div>
                         <div>
-                            <h1 className="text-4xl font-black text-gray-900 dark:text-white tracking-tighter italic leading-none">{t('global_inventory')}</h1>
-                            <p className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.3em] mt-2">
-                                {isSuperuser ? "GLOBAL TECHNICAL ASSET REGISTRY" : "LOCALIZED PROCUREMENT DATABASE"}
+                            <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">{t('global_inventory')}</h1>
+                            <p className="text-[10px] text-gray-400 uppercase tracking-[0.2em] mt-1">
+                                {!hasCategory && !hasSubcategory && 'Select a category to drill down.'}
+                                {hasCategory && !hasSubcategory && `Category: ${selectedCategory}`}
+                                {hasCategory && hasSubcategory && `Category: ${selectedCategory} / ${selectedSubcategory}`}
                             </p>
                         </div>
                     </div>
+                    {canManageCatalog && (
+                        <button
+                            onClick={() => navigate('/inventory/new')}
+                            className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition transform active:scale-95"
+                        >
+                            <PlusIcon className="h-5 w-5" /> {t('new_material')}
+                        </button>
+                    )}
                 </div>
-
-                {canManageCatalog && (
-                    <button 
-                        onClick={() => navigate('/inventory/catalog/new')}
-                        className="h-14 px-8 bg-gray-900 dark:bg-gray-800 hover:bg-black text-white text-xs font-black uppercase tracking-widest rounded-2xl transition transform active:scale-95 shadow-xl shadow-gray-200 dark:shadow-none flex items-center gap-2"
-                    >
-                        <PlusIcon className="h-5 w-5" /> 
-                        {t('new_material')}
-                    </button>
-                )}
             </header>
 
-            {/* Tactical Filtering Terminal */}
-            <div className="mb-10 grid grid-cols-1 lg:grid-cols-4 gap-6">
-                <div className="lg:col-span-3 relative group">
-                    <MagnifyingGlassIcon className="h-5 w-5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2 group-focus-within:text-indigo-500 transition-colors" />
-                    <input
-                        type="text"
-                        placeholder="Search by Material Designation or Specifications..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="modern-input pl-12 h-14 !rounded-[1.25rem] font-bold"
-                    />
-                </div>
-                <div className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-[1.25rem] p-4 flex items-center justify-center gap-3 text-[10px] font-black uppercase tracking-widest shadow-sm">
-                    <AdjustmentsHorizontalIcon className="h-4 w-4 text-indigo-500" /> 
-                    <span className="text-gray-900 dark:text-gray-100">{filteredItems.length} Materials Indexed</span>
-                </div>
+            {/* Global search (kept for quick lookup) */}
+            <div className="mb-6 max-w-xl relative group">
+                <MagnifyingGlassIcon className="h-5 w-5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2 group-focus-within:text-indigo-500 transition-colors" />
+                <input
+                    type="text"
+                    placeholder="Search by Material Designation or Specifications..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="modern-input pl-12 h-14 !rounded-[1.25rem] font-bold"
+                />
             </div>
 
             {error && (
@@ -155,10 +222,122 @@ function InventoryCatalogPage() {
                 </div>
             )}
 
-            {/* Registry Entry Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {filteredItems.length > 0 ? filteredItems.map(item => (
-                    <div key={item.id} className="group bg-white dark:bg-gray-800 rounded-[2.5rem] border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-500 flex flex-col overflow-hidden">
+            {/* LEVEL 1: Category Grid */}
+            {!hasCategory && (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
+                    {categoryTree.map(({ category }) => (
+                        <button
+                            key={category}
+                            type="button"
+                            onClick={() => navigate(`/inventory?category=${encodeURIComponent(category)}`)}
+                            className="group bg-white dark:bg-gray-800 rounded-[2.5rem] border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 p-8 flex items-center justify-between"
+                        >
+                            <div className="text-left">
+                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">
+                                    {t('category') || 'Category'}
+                                </p>
+                                <h2 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic group-hover:text-indigo-600 dark:group-hover:text-indigo-400">
+                                    {category}
+                                </h2>
+                            </div>
+                            <div className="p-3 bg-indigo-50 dark:bg-indigo-900/40 rounded-2xl border border-indigo-100 dark:border-indigo-800">
+                                <TagIcon className="h-6 w-6 text-indigo-600" />
+                            </div>
+                        </button>
+                    ))}
+                </div>
+            )}
+
+            {/* LEVEL 2: Subcategory Grid */}
+            {hasCategory && !hasSubcategory && (
+                <div className="mt-4">
+                    <button
+                        type="button"
+                        onClick={() => navigate('/inventory')}
+                        className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-1 hover:text-indigo-600"
+                    >
+                        ← {t('back', { defaultValue: 'Back to categories' })}
+                    </button>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {categoryTree
+                            .find(c => c.category === selectedCategory)?.subcategories
+                            .map(sub => (
+                                <button
+                                    key={sub}
+                                    type="button"
+                                    onClick={() => navigate(`/inventory?category=${encodeURIComponent(selectedCategory)}&subcategory=${encodeURIComponent(sub)}`)}
+                                    className="group bg-white dark:bg-gray-800 rounded-[2.5rem] border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 p-8 flex items-center justify-between"
+                                >
+                                    <div className="text-left">
+                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">
+                                            {t('subcategory') || 'Subcategory'}
+                                        </p>
+                                        <h2 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic group-hover:text-indigo-600 dark:group-hover:text-indigo-400">
+                                            {sub}
+                                        </h2>
+                                    </div>
+                                    <div className="p-3 bg-amber-50 dark:bg-amber-900/40 rounded-2xl border border-amber-100 dark:border-amber-800">
+                                        <CubeIcon className="h-6 w-6 text-amber-600" />
+                                    </div>
+                                </button>
+                            ))}
+                    </div>
+                </div>
+            )}
+
+            {/* LEVEL 3: Item Grid for selected category + subcategory */}
+            {hasCategory && hasSubcategory && (
+                <>
+                    <div className="mt-2 mb-4 flex items-center justify-between text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">
+                        <button
+                            type="button"
+                            onClick={() => navigate(`/inventory?category=${encodeURIComponent(selectedCategory)}`)}
+                            className="hover:text-indigo-600 flex items-center gap-1"
+                        >
+                            ← {t('back', { defaultValue: 'Back to subcategories' })}
+                        </button>
+                        <span>
+                            {visibleItems.length} {t('records_indexed', { defaultValue: 'Items in subcategory' })}
+                        </span>
+                    </div>
+
+                    {variantOptions.length > 0 && (
+                        <div className="mb-4 flex flex-wrap gap-2">
+                            <button
+                                type="button"
+                                onClick={() => setSelectedVariant(null)}
+                                className={`px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-[0.18em] border transition ${
+                                    !selectedVariant
+                                        ? 'bg-gray-900 text-white border-gray-900'
+                                        : 'bg-gray-50 dark:bg-gray-900 text-gray-500 border-gray-100 dark:border-gray-700 hover:bg-gray-100'
+                                }`}
+                            >
+                                {t('all', { defaultValue: 'All types' })}
+                            </button>
+                            {variantOptions.map((variant) => (
+                                <button
+                                    key={variant}
+                                    type="button"
+                                    onClick={() => setSelectedVariant(variant)}
+                                    className={`px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-[0.18em] border transition ${
+                                        selectedVariant === variant
+                                            ? 'bg-emerald-500 text-white border-emerald-600'
+                                            : 'bg-gray-50 dark:bg-gray-900 text-gray-500 border-gray-100 dark:border-gray-700 hover:bg-emerald-50 hover:text-emerald-700'
+                                    }`}
+                                >
+                                    {variant}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        {visibleItems.length > 0 ? visibleItems.map(item => (
+                    <div
+                        key={item.id}
+                        onClick={() => navigate(`/inventory/edit/${item.id}`)}
+                        className="group bg-white dark:bg-gray-800 rounded-[2.5rem] border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-500 flex flex-col overflow-hidden cursor-pointer"
+                    >
                         
                         {/* Header Node */}
                         <div className="p-8 pb-6 border-b border-gray-50 dark:border-gray-700/50 flex justify-between items-start gap-4">
@@ -166,11 +345,19 @@ function InventoryCatalogPage() {
                                 <h2 className="text-xl font-black text-gray-900 dark:text-white truncate uppercase tracking-tighter italic group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                                     {item.name}
                                 </h2>
-                                <div className="flex items-center gap-2 mt-2">
-                                    <HashtagIcon className="h-3.5 w-3.5 text-indigo-500" />
-                                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none">
-                                        Base Unit: <span className="text-gray-900 dark:text-gray-200">{item.unit || 'UNITS'}</span>
-                                    </span>
+                                <div className="mt-2 space-y-1">
+                                    <div className="flex items-center gap-2">
+                                        <HashtagIcon className="h-3.5 w-3.5 text-indigo-500" />
+                                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none">
+                                            Base Unit: <span className="text-gray-900 dark:text-gray-200">{item.unit || 'UNITS'}</span>
+                                        </span>
+                                    </div>
+                                    {(item.category || item.subcategory) && (
+                                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.16em] line-clamp-1">
+                                            {item.category || 'Uncategorized'}
+                                            {item.subcategory ? ` / ${item.subcategory}` : ''}
+                                        </p>
+                                    )}
                                 </div>
                             </div>
                             <div className="p-3 bg-gray-50 dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800">
@@ -190,25 +377,52 @@ function InventoryCatalogPage() {
                                 </div>
                             </div>
 
-                            {item.shop_url_1 && (
-                                <a 
-                                    href={item.shop_url_1} 
-                                    target="_blank" 
-                                    rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-xl text-[10px] font-black uppercase tracking-widest border border-indigo-100 dark:border-indigo-900 hover:bg-indigo-100 transition-colors"
-                                >
-                                    <ShoppingBagIcon className="h-3.5 w-3.5" />
-                                    Procurement Hub
-                                </a>
-                            )}
+                            <div className="flex flex-wrap gap-2">
+                                {item.shop_url_1 && (
+                                    <a 
+                                        href={item.shop_url_1} 
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center gap-2 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 rounded-xl text-[9px] font-black uppercase tracking-widest border border-indigo-100 dark:border-indigo-900 hover:bg-indigo-100 transition-colors"
+                                    >
+                                        <ShoppingBagIcon className="h-3.5 w-3.5" />
+                                        Ronning
+                                    </a>
+                                )}
+                                {item.shop_url_2 && (
+                                    <a 
+                                        href={item.shop_url_2} 
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 rounded-xl text-[9px] font-black uppercase tracking-widest border border-emerald-100 dark:border-emerald-900 hover:bg-emerald-100 transition-colors"
+                                    >
+                                        <ShoppingBagIcon className="h-3.5 w-3.5" />
+                                        Iskraft
+                                    </a>
+                                )}
+                                {item.shop_url_3 && (
+                                    <a 
+                                        href={item.shop_url_3} 
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center gap-2 px-3 py-1.5 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 rounded-xl text-[9px] font-black uppercase tracking-widest border border-amber-100 dark:border-amber-900 hover:bg-amber-100 transition-colors"
+                                    >
+                                        <ShoppingBagIcon className="h-3.5 w-3.5" />
+                                        Reykjavell
+                                    </a>
+                                )}
+                            </div>
                         </div>
 
                         {/* Administrative Terminal */}
                         {canManageCatalog && (
-                            <div className="px-8 py-6 bg-gray-50 dark:bg-gray-700/30 flex items-center justify-between border-t border-gray-50 dark:border-gray-700/50">
+                            <div
+                                className="px-8 py-6 bg-gray-50 dark:bg-gray-700/30 flex items-center justify-between border-t border-gray-50 dark:border-gray-700/50"
+                                onClick={(e) => e.stopPropagation()}
+                            >
                                 <div className="flex items-center gap-3">
                                     <button 
-                                        onClick={() => navigate(`/inventory/catalog/edit/${item.id}`)}
+                                        onClick={() => navigate(`/inventory/edit/${item.id}`)}
                                         className="p-3 bg-white dark:bg-gray-800 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 transition transform active:scale-95"
                                         title="Modify Specs"
                                     >
@@ -223,7 +437,7 @@ function InventoryCatalogPage() {
                                     </button>
                                 </div>
                                 <Link 
-                                    to={`/inventory/catalog/edit/${item.id}`}
+                                    to={`/inventory/edit/${item.id}`}
                                     className="flex items-center gap-2 text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-[0.2em] hover:gap-3 transition-all"
                                 >
                                     Registry Hub <ChevronRightIcon className="h-3.5 w-3.5" />
@@ -235,10 +449,12 @@ function InventoryCatalogPage() {
                     <div className="col-span-full py-32 text-center bg-white dark:bg-gray-800 rounded-[3rem] border-2 border-dashed border-gray-100 dark:border-gray-700">
                         <CubeIcon className="h-16 w-16 text-gray-200 dark:text-gray-700 mx-auto mb-6" />
                         <h3 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">No registry matches detected</h3>
-                        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-2">Adjust search parameters or initialize a new material node.</p>
+                        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-2">{t('adjust_filters_or_new_material')}</p>
                     </div>
                 )}
-            </div>
+                    </div>
+                </>
+            )}
 
             {/* Registry Purge Confirmation */}
             <ConfirmationModal

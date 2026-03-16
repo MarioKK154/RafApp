@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import axiosInstance from '../api/axiosInstance';
 import { toast } from 'react-toastify';
 import LoadingSpinner from '../components/LoadingSpinner';
+import SuperTenantSelector from '../components/SuperTenantSelector';
 import ConfirmationModal from '../components/ConfirmationModal';
 import { 
     PlusIcon, 
@@ -49,6 +50,7 @@ function ShopListPage() {
     // Search & Protocol States
     const [searchTerm, setSearchTerm] = useState('');
     const debouncedSearch = useDebounce(searchTerm, 300);
+    const [selectedTenantId, setSelectedTenantId] = useState(null);
     const [shopToDelete, setShopToDelete] = useState(null);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
@@ -63,7 +65,11 @@ function ShopListPage() {
         setError('');
         try {
             const response = await axiosInstance.get('/shops/', { params: { limit: 1000 } });
-            setShops(response.data);
+            const allShops = Array.isArray(response.data) ? response.data : [];
+            const scoped = isSuperuser && selectedTenantId
+                ? allShops.filter(s => s.tenant_id === selectedTenantId)
+                : allShops;
+            setShops(scoped);
         } catch (err) {
             console.error("Vendor Registry Sync Error:", err);
             setError(t('vendor_sync_failed', { defaultValue: 'Failed to synchronize vendor database.' }));
@@ -71,7 +77,7 @@ function ShopListPage() {
         } finally {
             setIsLoading(false);
         }
-    }, [t]);
+    }, [t, isSuperuser, selectedTenantId]);
 
     useEffect(() => { fetchShops(); }, [fetchShops]);
 
@@ -116,27 +122,29 @@ function ShopListPage() {
         <div className="container mx-auto p-4 md:p-8 max-w-7xl animate-in fade-in duration-500">
             {/* Header: Identity & Procurement Actions */}
             <header className="mb-10">
-                <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                <div>
-                    <div className="flex items-center gap-3 mb-1">
-                        <div className="p-2 bg-indigo-600 rounded-xl shadow-lg shadow-indigo-100 dark:shadow-none">
-                            <BuildingStorefrontIcon className="h-6 w-6 text-white" />
+                <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5 flex justify-between items-center gap-6">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
+                            <BuildingStorefrontIcon className="h-6 w-6 text-indigo-600" />
                         </div>
-                        <h1 className="text-3xl font-black text-gray-900 dark:text-white leading-none tracking-tight italic">
-                            {t('vendors', { defaultValue: 'Vendors' })}
-                        </h1>
+                        <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">{t('vendors', { defaultValue: 'Vendors' })}</h1>
                     </div>
-                </div>
-
-                {canManageShops && (
-                    <button 
-                        onClick={() => navigate('/shops/new')}
-                        className="h-12 px-8 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-[0.2em] rounded-2xl shadow-lg shadow-indigo-100 dark:shadow-none transition transform active:scale-95 flex items-center gap-2"
-                    >
-                        <PlusIcon className="h-4 w-4 stroke-[3px]" /> 
-                        {t('create_new')}
-                    </button>
-                )}
+                    <div className="flex items-center gap-4">
+                        {isSuperuser && (
+                            <SuperTenantSelector
+                                selectedTenantId={selectedTenantId}
+                                onChange={setSelectedTenantId}
+                            />
+                        )}
+                        {canManageShops && (
+                            <button
+                                onClick={() => navigate('/shops/new')}
+                                className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition transform active:scale-95"
+                            >
+                                <PlusIcon className="h-5 w-5" /> {t('create_new')}
+                            </button>
+                        )}
+                    </div>
                 </div>
             </header>
 
@@ -212,7 +220,7 @@ function ShopListPage() {
                                     href={shop.website.startsWith('http') ? shop.website : `//${shop.website}`} 
                                     target="_blank" 
                                     rel="noopener noreferrer"
-                                    className="flex items-center justify-center gap-2 w-full h-12 bg-indigo-600 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-xl hover:bg-indigo-700 transition shadow-lg shadow-indigo-100 dark:shadow-none"
+                                    className="inline-flex items-center justify-center gap-2 w-full px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition"
                                 >
                                     <GlobeAltIcon className="h-4 w-4" />
                                     {t('visit_website', { defaultValue: 'Digital Storefront' })}

@@ -22,7 +22,7 @@ import {
     BanknotesIcon
 } from '@heroicons/react/24/outline';
 
-const ROLES_LIST = ['admin', 'project manager', 'team leader', 'electrician', 'accountant'];
+const ROLES_LIST = ['admin', 'project manager', 'team leader', 'electrician', 'accountant', 'subcontractor'];
 
 function UserCreatePage() {
     const { t } = useTranslation();
@@ -120,18 +120,11 @@ function UserCreatePage() {
                 <Link to="/users" className="flex items-center text-[10px] font-black text-gray-400 hover:text-indigo-600 transition mb-3 uppercase tracking-[0.2em]">
                     <ChevronLeftIcon className="h-3 w-3 mr-1 stroke-[3px]" /> Terminate / Return to Registry
                 </Link>
-                <div className="flex items-center gap-5">
-                    <div className="p-4 bg-indigo-600 rounded-2xl">
-                        <PlusIcon className="h-8 w-8 text-white stroke-[2.5px]" />
+                <div className="flex items-center gap-3">
+                    <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
+                        <PlusIcon className="h-6 w-6 text-indigo-600" />
                     </div>
-                    <div>
-                        <h1 className="text-4xl font-black text-gray-900 dark:text-white tracking-tighter italic leading-none">
-                            {t('new_user')}
-                        </h1>
-                        <p className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.3em] mt-2">
-                            Workforce Infrastructure / Node Setup
-                        </p>
-                    </div>
+                    <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">{t('new_user')}</h1>
                 </div>
             </header>
 
@@ -235,14 +228,14 @@ function UserCreatePage() {
                     </section>
 
                     <button 
-                        type="submit" 
-                        disabled={isSubmitting} 
-                        className="w-full h-16 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-[1.5rem] shadow-xl shadow-indigo-100 dark:shadow-none transition transform active:scale-95 disabled:opacity-50 flex items-center justify-center gap-3 uppercase text-xs tracking-[0.2em]"
+                        type="submit"
+                        disabled={isSubmitting}
+                        className="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition transform active:scale-95 disabled:opacity-50"
                     >
                         {isSubmitting ? (
-                            <><ArrowPathIcon className="h-5 w-5 animate-spin" /> Initializing Node...</>
+                            <><ArrowPathIcon className="h-5 w-5 animate-spin" /> {t('processing_registry', { defaultValue: 'Processing...' })}</>
                         ) : (
-                            <><ShieldCheckIcon className="h-5 w-5 stroke-[2.5px]" /> Commit to Registry</>
+                            <><ShieldCheckIcon className="h-5 w-5" /> {t('commit_to_registry', { defaultValue: 'Commit to Registry' })}</>
                         )}
                     </button>
                 </div>

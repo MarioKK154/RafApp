@@ -5,6 +5,7 @@ import axiosInstance from '../api/axiosInstance';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
 import LoadingSpinner from '../components/LoadingSpinner';
+import SuperTenantSelector from '../components/SuperTenantSelector';
 import ConfirmationModal from '../components/ConfirmationModal';
 import { isPast, isToday, parseISO } from 'date-fns';
 import { 
@@ -54,9 +55,16 @@ const ProjectsPage = () => {
 
     const isSuperuser = user?.is_superuser;
     const isAdmin = user && (user.role === 'admin' || isSuperuser);
+    const [selectedTenantId, setSelectedTenantId] = useState(null);
 
     const fetchProjects = useCallback(async () => {
         if (!user) return;
+        // Superadmin must explicitly pick a tenant scope
+        if (isSuperuser && !selectedTenantId) {
+            setProjects([]);
+            setIsLoading(false);
+            return;
+        }
         setIsLoading(true);
         try {
             // We fetch the full list so our Date-Based Logic can re-classify 
@@ -64,8 +72,9 @@ const ProjectsPage = () => {
             const response = await axiosInstance.get('/projects/', {
                 params: {
                     limit: 1000,
-                    search: debouncedSearchTerm || undefined
-                }
+                    search: debouncedSearchTerm || undefined,
+                    tenant_id: isSuperuser ? selectedTenantId : undefined,
+                },
             });
             setProjects(Array.isArray(response.data) ? response.data : []);
         } catch (error) {
@@ -74,7 +83,7 @@ const ProjectsPage = () => {
         } finally {
             setIsLoading(false);
         }
-    }, [debouncedSearchTerm, user]);
+    }, [debouncedSearchTerm, user, isSuperuser, selectedTenantId]);
 
     useEffect(() => {
         if (!authLoading && user) fetchProjects();
@@ -137,34 +146,45 @@ const ProjectsPage = () => {
         }
     };
 
-    if (authLoading || (isLoading && projects.length === 0)) {
+    if (authLoading || (isLoading && projects.length === 0 && !isSuperuser)) {
         return <LoadingSpinner text={t('accessing_project_registry')} size="lg" />;
     }
 
     return (
         <div className="container mx-auto p-4 md:p-8 max-w-7xl animate-in fade-in duration-500">
             <header className="mb-12">
-                <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
-                <div className="flex items-center gap-4">
-                    <div className="p-4 bg-indigo-600 rounded-2xl shadow-xl">
-                        <BriefcaseIcon className="h-8 w-8 text-white" />
+                <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5 flex justify-between items-center gap-6">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
+                            <BriefcaseIcon className="h-6 w-6 text-indigo-600" />
+                        </div>
+                        <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">{t('projects')}</h1>
                     </div>
-                    <div>
-                        <h1 className="text-4xl font-black text-gray-900 dark:text-white tracking-tighter italic leading-none">{t('projects')}</h1>
+                    <div className="flex items-center gap-4">
+                        {isSuperuser && (
+                            <SuperTenantSelector
+                                selectedTenantId={selectedTenantId}
+                                onChange={setSelectedTenantId}
+                            />
+                        )}
+                        <button
+                            onClick={() => navigate('/projects/new')}
+                            className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition transform active:scale-95"
+                        >
+                            <PlusIcon className="h-5 w-5" /> {t('new_project')}
+                        </button>
                     </div>
-                </div>
-                
-                <button 
-                    onClick={() => navigate('/projects/new')}
-                    className="h-14 px-8 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-700 text-white text-xs font-black uppercase tracking-widest rounded-2xl transition transform active:scale-95 shadow-xl shadow-indigo-100 dark:shadow-none flex items-center gap-2"
-                >
-                    <PlusIcon className="h-5 w-5 stroke-[3px]" /> {t('new_project')}
-                </button>
                 </div>
             </header>
 
+            {isSuperuser && !selectedTenantId && (
+                <div className="mb-8 bg-gray-50 dark:bg-gray-800 border border-dashed border-gray-200 dark:border-gray-700 rounded-2xl px-6 py-8 text-center text-xs text-gray-500">
+                    {t('select_tenant_to_view', { defaultValue: 'Select a tenant above to view its projects.' })}
+                </div>
+            )}
+
             {/* Tactical Filtering Console */}
-            <div className="mb-10 grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div className={`mb-10 grid grid-cols-1 lg:grid-cols-12 gap-6 ${isSuperuser && !selectedTenantId ? 'opacity-40 pointer-events-none' : ''}`}>
                 <div className="lg:col-span-6 relative group">
                     <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-indigo-500 transition-colors" />
                     <input

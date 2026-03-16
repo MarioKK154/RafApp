@@ -31,7 +31,8 @@ import {
     BookOpenIcon,
     LanguageIcon,
     BellIcon,
-    Squares2X2Icon
+    Squares2X2Icon,
+    ShieldExclamationIcon as ShieldExclamationOutlineIcon
 } from '@heroicons/react/24/outline';
 
 function Sidebar() {
@@ -40,8 +41,10 @@ function Sidebar() {
     const [isCollapsed, setIsCollapsed] = useState(false);
 
     const isSuperuser = currentUser?.is_superuser;
-    const isAdmin = currentUser?.role === 'admin' || isSuperuser;
-    const isManager = currentUser?.role === 'project manager' || isSuperuser;
+    const role = currentUser?.role || '';
+    const isSubcontractor = role === 'subcontractor' && !isSuperuser;
+    const isAdmin = role === 'admin' || isSuperuser;
+    const isManager = role === 'project manager' || isSuperuser;
     const isManagement = isAdmin || isManager;
 
     const logoToDisplay = isAuthenticated && currentUser?.tenant?.logo_url
@@ -78,7 +81,7 @@ function Sidebar() {
                         <span className="block font-black text-sm tracking-tighter text-gray-900 dark:text-white uppercase truncate leading-none italic">
                             {tenantName}
                         </span>
-                        <span className="text-[9px] font-black text-indigo-500 uppercase tracking-[0.2em] mt-1.5 block">Infrastructure</span>
+                        <span className="text-[9px] font-black text-indigo-500 uppercase tracking-[0.2em] mt-1.5 block">{t('infrastructure')}</span>
                     </div>
                 </Link>
 
@@ -100,42 +103,54 @@ function Sidebar() {
                     {!isCollapsed && <p className="px-3 text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-4">{t('core_operations')}</p>}
                     <div className="space-y-1">
                         <NavItem to="/" icon={<HomeIcon />} label={t('dashboard')} collapsed={isCollapsed} end />
-                        <NavItem to="/notifications" icon={<BellIcon />} label="Notifications" collapsed={isCollapsed} />
+                        <NavItem to="/notifications" icon={<BellIcon />} label={t('notifications')} collapsed={isCollapsed} />
                         {isManagement && (
-                            <NavItem to="/scheduling" icon={<Squares2X2Icon />} label="Schedule" collapsed={isCollapsed} />
+                            <NavItem to="/scheduling" icon={<Squares2X2Icon />} label={t('schedule')} collapsed={isCollapsed} />
                         )}
-                        <NavItem to="/projects" icon={<BriefcaseIcon />} label={t('projects')} collapsed={isCollapsed} />
+                        {!isSubcontractor && (
+                            <NavItem to="/projects" icon={<BriefcaseIcon />} label={t('projects')} collapsed={isCollapsed} />
+                        )}
                         <NavItem to="/tasks" icon={<ClipboardDocumentListIcon />} label={t('tasks')} collapsed={isCollapsed} />
                         <NavItem to="/calendar" icon={<CalendarDaysIcon />} label={t('calendar')} collapsed={isCollapsed} />
-                        {isManagement && (
-                            <NavItem to="/gantt" icon={<ChartBarSquareIcon />} label="Gantt chart" collapsed={isCollapsed} />
+                        {isManagement && !isSubcontractor && (
+                            <NavItem to="/gantt" icon={<ChartBarSquareIcon />} label={t('gantt_chart')} collapsed={isCollapsed} />
                         )}
                     </div>
                 </div>
 
                 <div>
                     {!isCollapsed && <p className="px-3 text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-4">{t('resources')}</p>}
-                    <div className="space-y-1">
-                        <NavItem to="/inventory" icon={<CircleStackIcon />} label={t('inventory')} collapsed={isCollapsed} />
-                        <NavItem to="/tools" icon={<WrenchScrewdriverIcon />} label={t('tools')} collapsed={isCollapsed} />
-                        <NavItem to="/cars" icon={<TruckIcon />} label={t('cars')} collapsed={isCollapsed} />
-                        <NavItem to="/shops" icon={<BuildingStorefrontIcon />} label={t('vendors')} collapsed={isCollapsed} />
-                    </div>
+                    {!isSubcontractor && (
+                        <div className="space-y-1">
+                            <NavItem to="/inventory" icon={<CircleStackIcon />} label={t('shop', { defaultValue: 'Shop' })} collapsed={isCollapsed} />
+                            <NavItem to="/tools" icon={<WrenchScrewdriverIcon />} label={t('tools')} collapsed={isCollapsed} />
+                            <NavItem to="/cars" icon={<TruckIcon />} label={t('cars')} collapsed={isCollapsed} />
+                            <NavItem to="/shops" icon={<BuildingStorefrontIcon />} label={t('vendors')} collapsed={isCollapsed} />
+                            {isManagement && (
+                                <NavItem to="/shopping-list" icon={<ListBulletIcon />} label={t('shopping_list')} collapsed={isCollapsed} />
+                            )}
+                        </div>
+                    )}
                 </div>
 
                 <div>
                     {!isCollapsed && <p className="px-3 text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-4">{t('administration')}</p>}
                     <div className="space-y-1">
                         <NavItem to="/timelogs" icon={<ClockIcon />} label={t('time_tracking')} collapsed={isCollapsed} />
-                        <NavItem to="/accounting" icon={<BanknotesIcon />} label={t('hr_payroll')} collapsed={isCollapsed} />
-                        {isManagement && (
+                        {!isSubcontractor && (
                             <>
-                                <NavItem to="/customers" icon={<UserGroupIcon />} label={t('customers')} collapsed={isCollapsed} />
-                                <NavItem to="/labor-catalog" icon={<ListBulletIcon />} label={t('service_rates')} collapsed={isCollapsed} />
-                                <NavItem to="/reports" icon={<DocumentChartBarIcon />} label={t('analytics')} collapsed={isCollapsed} />
+                                <NavItem to="/accounting" icon={<BanknotesIcon />} label={t('hr_payroll')} collapsed={isCollapsed} />
+                                {isManagement && (
+                                    <>
+                                        <NavItem to="/customers" icon={<UserGroupIcon />} label={t('customers')} collapsed={isCollapsed} />
+                                        <NavItem to="/labor-catalog" icon={<ListBulletIcon />} label={t('service_rates')} collapsed={isCollapsed} />
+                                        <NavItem to="/reports" icon={<DocumentChartBarIcon />} label={t('analytics')} collapsed={isCollapsed} />
+                                        <NavItem to="/risk-library" icon={<ShieldExclamationOutlineIcon />} label={t('risk_library')} collapsed={isCollapsed} />
+                                    </>
+                                )}
+                                <NavItem to="/users" icon={<UsersIcon />} label={t('personnel')} collapsed={isCollapsed} />
                             </>
                         )}
-                        <NavItem to="/users" icon={<UsersIcon />} label={t('personnel')} collapsed={isCollapsed} />
                     </div>
                 </div>
 
@@ -202,13 +217,13 @@ function Sidebar() {
 }
 
 function NavItem({ to, icon, label, collapsed, end = false, color = "indigo" }) {
-    const linkBase = "flex items-center px-3 py-2.5 text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300 rounded-xl group mb-1";
+    const linkBase = "flex items-center px-3 py-2.5 text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-200 ease-out rounded-xl group mb-1";
     const activeClass = color === "orange"
         ? "bg-orange-600 text-white shadow-lg"
         : "bg-indigo-600 text-white shadow-lg";
     const inactiveClass = color === "orange"
-        ? "text-gray-500 dark:text-gray-400 hover:bg-orange-50 dark:hover:bg-gray-700 hover:text-orange-600"
-        : "text-gray-500 dark:text-gray-400 hover:bg-indigo-50 dark:hover:bg-gray-700 hover:text-indigo-600";
+        ? "text-gray-500 dark:text-gray-400 hover:bg-orange-50 dark:hover:bg-gray-700 hover:text-orange-600 hover:-translate-y-0.5 hover:shadow-md active:translate-y-0"
+        : "text-gray-500 dark:text-gray-400 hover:bg-indigo-50 dark:hover:bg-gray-700 hover:text-indigo-600 hover:-translate-y-0.5 hover:shadow-md active:translate-y-0";
 
     return (
         <NavLink

@@ -47,8 +47,18 @@ def get_user_and_verify_access(user_id: int, db: DbDependency, current_user: Cur
 
 @router.get("/me", response_model=schemas.UserRead)
 @limiter.limit("100/minute")
-async def read_users_me(request: Request, current_user: CurrentUserDependency):
-    return current_user
+async def read_users_me(
+    request: Request,
+    current_user: CurrentUserDependency,
+    token: Annotated[str, Depends(security.oauth2_scheme)],
+):
+    """Current user profile; includes impersonation metadata when present in token."""
+    data = schemas.UserRead.model_validate(current_user).model_dump()
+    payload = security.decode_token_payload(token)
+    if payload and payload.get("impersonated_by"):
+        data["impersonated_by_email"] = payload.get("impersonated_by")
+        data["impersonation_log_id"] = payload.get("impersonation_log_id")
+    return schemas.UserRead(**data)
 
 @router.post("/me/profile-picture", response_model=schemas.UserReadAdmin)
 @limiter.limit("10/minute")
@@ -79,8 +89,13 @@ async def upload_profile_picture(request: Request, db: DbDependency, current_use
 async def change_current_user_password(request: Request, password_data: schemas.UserChangePassword, db: DbDependency, current_user: CurrentUserDependency):
     if not security.verify_password(password_data.current_password, current_user.hashed_password):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Incorrect current password")
-    
+
     crud.update_user_password(db=db, user=current_user, new_password=password_data.new_password)
+    crud.create_audit_log(
+        db, action_type="password_change",
+        actor_user_id=current_user.id, actor_email=current_user.email,
+        tenant_id=current_user.tenant_id, target_ref=f"user:{current_user.id}", details="User changed own password",
+    )
     return None
 
 # --- User Management Endpoints ---
@@ -180,6 +195,12 @@ async def set_user_password_by_admin_endpoint(request: Request, user_id_to_updat
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Cannot set password for user in another tenant.")
     
     crud.set_user_password_by_admin(db=db, user=user_to_update, new_password=password_data.new_password)
+    crud.create_audit_log(
+        db, action_type="password_change",
+        actor_user_id=current_admin.id, actor_email=current_admin.email,
+        tenant_id=current_admin.tenant_id, target_ref=f"user:{user_to_update.id}",
+        details=f"Admin set password for user {user_to_update.email}",
+    )
     return None
 
 @router.delete("/{user_id_to_delete}", status_code=status.HTTP_204_NO_CONTENT)

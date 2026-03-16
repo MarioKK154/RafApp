@@ -75,7 +75,8 @@ async def read_all_tasks(
     sort_by: Optional[AllowedTaskSortFields] = Query('id'),
     sort_dir: Optional[AllowedSortDirections] = Query('asc'),
     skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=1000)
+    limit: int = Query(100, ge=1, le=1000),
+    tenant_id: Optional[int] = Query(None, description="Superadmin-only tenant scope filter"),
 ):
     """
     Telemetry: Retrieve task registry entries based on operational filters.
@@ -98,9 +99,22 @@ async def read_all_tasks(
         limit=limit
     )
 
-    # Filter by tenant for non-superuser accounts
-    if not current_user.is_superuser:
-        tasks = [task for task in tasks if task.project.tenant_id == current_user.tenant_id]
+    # Tenant / role scoping rules:
+    # - Superadmins can optionally filter by tenant_id when provided
+    # - Subcontractors can only see tasks assigned to themselves within their tenant
+    # - Other users are locked to their own tenant, with standard filters
+    if current_user.is_superuser:
+        if tenant_id is not None:
+            tasks = [task for task in tasks if task.project and task.project.tenant_id == tenant_id]
+    elif security.is_subcontractor(current_user):
+        tasks = [
+            task for task in tasks
+            if task.project
+            and task.project.tenant_id == current_user.tenant_id
+            and task.assignee_id == current_user.id
+        ]
+    else:
+        tasks = [task for task in tasks if task.project and task.project.tenant_id == current_user.tenant_id]
 
     return tasks
 
@@ -266,7 +280,19 @@ async def export_tasks_pdf(
         limit=1000,
     )
 
-    if not current_user.is_superuser:
+    if current_user.is_superuser:
+        # Superadmin: optionally scope by explicit tenant_id via project filter above
+        pass
+    elif security.is_subcontractor(current_user):
+        # Subcontractors: only tasks assigned to them within their tenant
+        tasks = [
+            task for task in tasks
+            if task.project
+            and task.project.tenant_id == current_user.tenant_id
+            and task.assignee_id == current_user.id
+        ]
+    else:
+        # Standard tenant scoping
         tasks = [task for task in tasks if task.project.tenant_id == current_user.tenant_id]
 
     # Mirror UI semantics: when no explicit status filter, exclude commissioned tasks
@@ -335,6 +361,12 @@ async def export_tasks_pdf(
     pdf.save()
 
     buffer.seek(0)
+    crud.create_audit_log(
+        db, action_type="data_export",
+        actor_user_id=current_user.id, actor_email=current_user.email,
+        tenant_id=current_user.tenant_id, target_ref="tasks",
+        details=f"Tasks list PDF export (filters: project={project_id}, assignee={assignee_id}, status={status}, count={len(tasks)})",
+    )
     filename = "tasks-export.pdf"
     return StreamingResponse(
         buffer,
@@ -417,6 +449,12 @@ async def export_single_task_pdf(
     pdf.save()
 
     buffer.seek(0)
+    crud.create_audit_log(
+        db, action_type="data_export",
+        actor_user_id=current_user.id, actor_email=current_user.email,
+        tenant_id=current_user.tenant_id, target_ref=f"task:{task.id}",
+        details=f"Single task PDF export: #{task.id} {task.title}",
+    )
     filename = f"task-{task.id}.pdf"
     return StreamingResponse(
         buffer,

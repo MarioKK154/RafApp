@@ -175,10 +175,13 @@ class User(Base):
     is_active = Column(Boolean, default=True)
     is_superuser = Column(Boolean, default=False)
     role = Column(String, nullable=False)
+    # Optional per-user granular permissions, stored as JSON string (e.g. ["offers.manage", "inventory.manage"])
+    extra_permissions = Column(Text, nullable=True)
     tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True) 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-    
+    last_login_at = Column(DateTime(timezone=True), nullable=True)
+
     tenant = relationship("Tenant", back_populates="users")
     tools_checked_out: Mapped[list["Tool"]] = relationship(back_populates="current_user")
     projects_created = relationship("Project", foreign_keys="[Project.creator_id]", back_populates="creator")
@@ -255,6 +258,7 @@ class Project(Base):
     tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    work_load_ratio_codes = Column(Text, nullable=True)  # JSON array of codes e.g. ["3020","6013"]; applied to labor
 
     tenant = relationship("Tenant", back_populates="projects")
     creator = relationship("User", foreign_keys=[creator_id], back_populates="projects_created")
@@ -263,6 +267,8 @@ class Project(Base):
     members = relationship("User", secondary=project_members_table, back_populates="assigned_projects")
     boq: Mapped[Optional["BoQ"]] = relationship(back_populates="project", cascade="all, delete-orphan")
     project_inventory: Mapped[List["ProjectInventoryItem"]] = relationship(back_populates="project", cascade="all, delete-orphan")
+    material_requests: Mapped[List["MaterialRequest"]] = relationship(back_populates="project", cascade="all, delete-orphan")
+    risk_items: Mapped[List["RiskItem"]] = relationship(back_populates="project", cascade="all, delete-orphan")
     offers: Mapped[list["Offer"]] = relationship(back_populates="project", cascade="all, delete-orphan")
     
     parent = relationship("Project", remote_side=[id], back_populates="sub_projects")
@@ -305,6 +311,34 @@ class Task(Base):
         back_populates="successors"
     )
 
+
+class RiskItem(Base):
+    __tablename__ = "risk_items"
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    project_id: Mapped[int] = mapped_column(ForeignKey("projects.id"), nullable=False)
+    title: Mapped[str] = mapped_column(String, nullable=False)
+    description: Mapped[Optional[str]] = mapped_column(Text)
+    likelihood: Mapped[str] = mapped_column(String, default="Medium")
+    impact: Mapped[str] = mapped_column(String, default="Medium")
+    mitigation: Mapped[Optional[str]] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(String, default="Open")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    project: Mapped["Project"] = relationship(back_populates="risk_items")
+
+
+class RiskTemplate(Base):
+    __tablename__ = "risk_templates"
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    category: Mapped[Optional[str]] = mapped_column(String, index=True)
+    title: Mapped[str] = mapped_column(String, nullable=False)
+    description: Mapped[Optional[str]] = mapped_column(Text)
+    default_likelihood: Mapped[str] = mapped_column(String, default="Medium")
+    default_impact: Mapped[str] = mapped_column(String, default="Medium")
+    default_mitigation: Mapped[Optional[str]] = mapped_column(Text)
+    default_status: Mapped[str] = mapped_column(String, default="Open")
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+
 class InventoryItem(Base):
     __tablename__ = "inventory_items"
     id = Column(Integer, primary_key=True, index=True)
@@ -323,15 +357,56 @@ class InventoryItem(Base):
     project_allocations: Mapped[List["ProjectInventoryItem"]] = relationship(back_populates="inventory_item")
     boq_items: Mapped[List["BoQItem"]] = relationship(back_populates="inventory_item")
     offer_line_items: Mapped[list["OfferLineItem"]] = relationship(back_populates="inventory_item")
+    material_requests: Mapped[List["MaterialRequest"]] = relationship(back_populates="inventory_item")
+
+
+class MaterialRequest(Base):
+    __tablename__ = "material_requests"
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    project_id: Mapped[int] = mapped_column(ForeignKey("projects.id"), nullable=False)
+    inventory_item_id: Mapped[int] = mapped_column(ForeignKey("inventory_items.id"), nullable=False)
+    requested_by_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    quantity: Mapped[float] = mapped_column(Float, nullable=False)
+    note: Mapped[Optional[str]] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(String, default="Pending")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    resolved_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+
+    project: Mapped["Project"] = relationship(back_populates="material_requests")
+    inventory_item: Mapped["InventoryItem"] = relationship(back_populates="material_requests")
+    requested_by: Mapped["User"] = relationship()
 
 class LaborCatalogItem(Base):
     __tablename__ = "labor_catalog_items"
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id"), nullable=False, index=True)
     description: Mapped[str] = mapped_column(String, nullable=False, index=True)
     unit: Mapped[str] = mapped_column(String, default="hour")
-    category: Mapped[Optional[str]] = mapped_column(String) 
-    recommended_item_ids: Mapped[Optional[str]] = mapped_column(Text) 
+    category: Mapped[Optional[str]] = mapped_column(String)
+    recommended_item_ids: Mapped[Optional[str]] = mapped_column(Text)
+    # Legacy / DB compatibility: some DBs have this column NOT NULL; we use reference_price + TenantLaborPrice for actual pricing
+    default_unit_price: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
+    # ar.is / verktakarýnin: main category (Aðalflokkur), sub-category (Flokkur), conditions (Aðstæður), reference price (Eining)
+    main_category: Mapped[Optional[str]] = mapped_column(String, index=True)
+    sub_category: Mapped[Optional[str]] = mapped_column(String, index=True)
+    conditions: Mapped[Optional[str]] = mapped_column(String)
+    reference_price: Mapped[Optional[float]] = mapped_column(Float)
+    # ar.is Eining time meaning: 4 = 4 units per hour (15 min each), 2 = 30 min, 1 = 1 hour, 0 = hourly rate
+    units_per_hour: Mapped[Optional[float]] = mapped_column(Float)
     tenant_prices: Mapped[list["TenantLaborPrice"]] = relationship(back_populates="labor_item", cascade="all, delete-orphan")
+    condition_variants: Mapped[list["LaborCatalogItemCondition"]] = relationship(back_populates="labor_item", cascade="all, delete-orphan")
+
+class LaborCatalogItemCondition(Base):
+    """ar.is detail: one item can have multiple (condition, Eining) variants from the drill-down export."""
+    __tablename__ = "labor_catalog_item_conditions"
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    labor_catalog_item_id: Mapped[int] = mapped_column(ForeignKey("labor_catalog_items.id"), nullable=False, index=True)
+    code: Mapped[str] = mapped_column(String, nullable=False, index=True)  # Númer e.g. 01, 02
+    condition_description: Mapped[str] = mapped_column(String, nullable=False)  # Ástæður
+    units_per_hour: Mapped[Optional[float]] = mapped_column(Float)  # Eining
+    effective_date: Mapped[Optional[str]] = mapped_column(String)  # Tök gildi
+    end_date: Mapped[Optional[str]] = mapped_column(String)  # Fell úr gildi
+    labor_item: Mapped["LaborCatalogItem"] = relationship(back_populates="condition_variants")
 
 class TenantLaborPrice(Base):
     __tablename__ = "tenant_labor_prices"
@@ -342,6 +417,26 @@ class TenantLaborPrice(Base):
     tenant: Mapped["Tenant"] = relationship(back_populates="labor_prices")
     labor_item: Mapped["LaborCatalogItem"] = relationship(back_populates="tenant_prices")
     __table_args__ = (UniqueConstraint('tenant_id', 'labor_item_id', name='_tenant_labor_uc'),)
+
+
+class WorkLoadRatio(Base):
+    """ar.is work load ratios: location/condition multipliers (e.g. ceiling height, floor, older building). Applied to labor."""
+    __tablename__ = "work_load_ratios"
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    code: Mapped[str] = mapped_column(String, unique=True, index=True)
+    description: Mapped[str] = mapped_column(String, nullable=False)
+    ratio: Mapped[float] = mapped_column(Float, default=0.0)  # e.g. 0.1 = +10%, -0.1 = -10%
+    ratio_type: Mapped[Optional[int]] = mapped_column(Integer)  # Tegund: 2 or 3
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+
+
+class LaborMainCategoryRef(Base):
+    """ar.is main category reference (provisional basis): code + name for ALMENNT, LAGNALEIÐIR, etc."""
+    __tablename__ = "labor_main_category_refs"
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    code: Mapped[str] = mapped_column(String, unique=True, index=True)
+    name: Mapped[str] = mapped_column(String, nullable=False)
+
 
 class Offer(Base):
     __tablename__ = "offers"
@@ -358,6 +453,7 @@ class Offer(Base):
     project_id: Mapped[int] = mapped_column(ForeignKey("projects.id"), nullable=False)
     tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id"), nullable=False)
     created_by_user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    work_load_ratio_codes: Mapped[Optional[str]] = mapped_column(Text)  # JSON array of codes; applied to labor lines
     project: Mapped["Project"] = relationship(back_populates="offers")
     tenant: Mapped["Tenant"] = relationship(back_populates="offers")
     creator: Mapped["User"] = relationship()
@@ -639,6 +735,76 @@ class LeaveRequest(Base):
     tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id"), nullable=False)
     user: Mapped["User"] = relationship(back_populates="leave_requests")
     tenant: Mapped["Tenant"] = relationship(back_populates="leave_requests")
+
+
+class Expense(Base):
+    __tablename__ = "expenses"
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id"), nullable=False, index=True)
+    project_id: Mapped[Optional[int]] = mapped_column(ForeignKey("projects.id"))
+    date: Mapped[date] = mapped_column(Date, nullable=False)
+    amount: Mapped[float] = mapped_column(Float, nullable=False)
+    flow_type: Mapped[str] = mapped_column(String, nullable=False, default="out")  # "in" or "out"
+    category: Mapped[Optional[str]] = mapped_column(String, index=True)  # car, tool, repair, clothing, project, other
+    description: Mapped[Optional[str]] = mapped_column(Text)
+    reference: Mapped[Optional[str]] = mapped_column(String)  # e.g. car plate, tool id, invoice no.
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class BillingInvoice(Base):
+    __tablename__ = "billing_invoices"
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id"), nullable=False, index=True)
+    amount: Mapped[float] = mapped_column(Float, nullable=False)
+    currency: Mapped[str] = mapped_column(String, default="ISK")
+    due_date: Mapped[date] = mapped_column(Date, nullable=False)
+    status: Mapped[str] = mapped_column(String, default="Pending")  # Pending, Paid, Overdue
+    provider: Mapped[str] = mapped_column(String, default="manual")  # manual, stripe, bokun
+    external_invoice_id: Mapped[Optional[str]] = mapped_column(String)
+    description: Mapped[Optional[str]] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    paid_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+
+
+class SystemSetting(Base):
+    __tablename__ = "system_settings"
+    key: Mapped[str] = mapped_column(String, primary_key=True)
+    value: Mapped[Optional[str]] = mapped_column(String)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
+class ImpersonationLog(Base):
+    __tablename__ = "impersonation_logs"
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    superuser_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    target_user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    ended_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class AuditLog(Base):
+    __tablename__ = "audit_logs"
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    action_type: Mapped[str] = mapped_column(String(64), nullable=False, index=True)  # password_change, data_export, tenant_deletion
+    actor_user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    actor_email: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    tenant_id: Mapped[Optional[int]] = mapped_column(ForeignKey("tenants.id", ondelete="SET NULL"), nullable=True, index=True)
+    target_ref: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)  # e.g. user:123, tenant:5
+    details: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class GlobalBanner(Base):
+    __tablename__ = "global_banners"
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    message: Mapped[str] = mapped_column(Text, nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_by_id: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    starts_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    ends_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+
 
 class ProjectAssignment(Base):
     __tablename__ = "project_assignments"

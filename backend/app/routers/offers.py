@@ -16,12 +16,18 @@ from ..limiter import limiter
 router = APIRouter(
     prefix="/offers",
     tags=["Offers"],
-    dependencies=[Depends(security.get_current_active_user)]
+    dependencies=[Depends(security.block_subcontractor)]
 )
 
 DbDependency = Annotated[Session, Depends(get_db)]
 CurrentUserDependency = Annotated[models.User, Depends(security.get_current_active_user)]
-ManagerOrAdminDependency = Annotated[models.User, Depends(security.require_role(["admin", "project manager"]))]
+# Users who can manage offers:
+# - Roles: admin, project manager
+# - Or any user with granular permission code "offers.manage"
+OfferManagerDependency = Annotated[
+    models.User,
+    Depends(security.require_permission("offers.manage", allowed_roles=["admin", "project manager"]))
+]
 
 # Helper to get offer and check permissions
 def get_offer_and_check_auth(offer_id: int, db: DbDependency, current_user: CurrentUserDependency) -> models.Offer:
@@ -56,7 +62,7 @@ def create_new_offer(
     request: Request,
     offer_data: schemas.OfferCreate,
     db: DbDependency,
-    current_user: ManagerOrAdminDependency
+    current_user: OfferManagerDependency
 ):
     """
     Creates a new work offer for a project.
@@ -111,7 +117,7 @@ def update_offer_details(
     offer_id: int,
     offer_update: schemas.OfferUpdate,
     db: DbDependency,
-    current_user: ManagerOrAdminDependency
+    current_user: OfferManagerDependency
 ):
     """
     Updates the general details of an offer (title, status, client info).
@@ -125,7 +131,7 @@ def delete_an_offer(
     request: Request,
     offer_id: int,
     db: DbDependency,
-    current_user: ManagerOrAdminDependency
+    current_user: OfferManagerDependency
 ):
     """
     Deletes an offer and its associated line items.
@@ -143,7 +149,7 @@ def add_item_to_an_offer(
     offer_id: int,
     item_data: schemas.OfferLineItemCreate,
     db: DbDependency,
-    current_user: ManagerOrAdminDependency
+    current_user: OfferManagerDependency
 ):
     """
     Adds a Material or Labor line item to an offer.
@@ -177,7 +183,7 @@ def update_an_offer_item(
     line_item_id: int,
     item_update: schemas.OfferLineItemUpdate,
     db: DbDependency,
-    current_user: ManagerOrAdminDependency
+    current_user: OfferManagerDependency
 ):
     """
     Updates a line item's quantity or price.
@@ -206,7 +212,7 @@ def remove_item_from_an_offer(
     request: Request,
     line_item_id: int,
     db: DbDependency,
-    current_user: ManagerOrAdminDependency
+    current_user: OfferManagerDependency
 ):
     """
     Removes a specific line item from an offer.
@@ -324,6 +330,12 @@ def export_offer_pdf(
     pdf.save()
 
     buffer.seek(0)
+    crud.create_audit_log(
+        db, action_type="data_export",
+        actor_user_id=current_user.id, actor_email=current_user.email,
+        tenant_id=offer.tenant_id if getattr(offer, "tenant_id", None) else current_user.tenant_id,
+        target_ref=f"offer:{offer_id}", details=f"Offer PDF export: {offer.offer_number or offer_id}",
+    )
     filename = f"offer-{offer.offer_number or offer_id}.pdf"
     return StreamingResponse(
         buffer,

@@ -79,7 +79,7 @@ function TimeLogsPage() {
     const debouncedSearch = useDebounce(searchTerm, 300);
 
     const isSuperuser = currentUser?.is_superuser;
-    const isAdminOrManager = currentUser && (['admin', 'project manager'].includes(currentUser.role) || isSuperuser);
+    const isAdminOrManager = currentUser && (['admin', 'project manager', 'accountant'].includes(currentUser.role) || isSuperuser);
     const isAdmin = currentUser?.role === 'admin' || isSuperuser;
 
     // Admin edit timelog modal
@@ -211,16 +211,14 @@ function TimeLogsPage() {
         <div className="container mx-auto p-4 md:p-8 max-w-7xl animate-in fade-in duration-500">
             {/* Header */}
             <header className="mb-10">
-                <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
-                <div>
-                    <div className="flex items-center gap-3 mb-1">
-                        <div className="p-2 bg-indigo-600 rounded-xl shadow-lg shadow-indigo-100 dark:shadow-none">
-                            <ClockIcon className="h-6 w-6 text-white" />
+                <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5 flex justify-between items-center gap-6">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
+                            <ClockIcon className="h-6 w-6 text-indigo-600" />
                         </div>
-                        <h1 className="text-3xl font-black text-gray-900 dark:text-white leading-none tracking-tight">{t('timesheets')}</h1>
+                        <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">{t('timesheets')}</h1>
                     </div>
-                </div>
-                <div className="bg-white dark:bg-gray-800 px-6 py-3 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm flex items-center gap-4">
+                    <div className="bg-white dark:bg-gray-800 px-6 py-3 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm flex items-center gap-4">
                     <div className="text-right border-r border-gray-100 dark:border-gray-700 pr-4">
                         <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none">{t('net_total')}</p>
                         <p className="text-xl font-black text-indigo-600 dark:text-indigo-400">{totalDisplayedHours} <span className="text-xs font-bold text-gray-400">HRS</span></p>

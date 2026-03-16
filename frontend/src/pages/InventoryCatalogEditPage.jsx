@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import axiosInstance from '../api/axiosInstance';
 import { toast } from 'react-toastify';
@@ -22,22 +23,31 @@ import {
 } from '@heroicons/react/24/outline';
 
 function InventoryCatalogEditPage() {
+    const { t } = useTranslation();
     const { itemId } = useParams();
     const navigate = useNavigate();
     const { user } = useAuth();
     
     const [formData, setFormData] = useState({
         name: '',
+        category: '',
+        subcategory: '',
         description: '',
         unit: '',
         shop_url_1: '',
+        shop_url_2: '',
+        shop_url_3: '',
         local_image_path: '',
     });
     const [isLoadingData, setIsLoadingData] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    const [isEditingShop1, setIsEditingShop1] = useState(false);
+    const [isEditingShop2, setIsEditingShop2] = useState(false);
+    const [isEditingShop3, setIsEditingShop3] = useState(false);
+
     const isSuperuser = user?.is_superuser;
-    const canManageCatalog = user && (['admin', 'project manager'].includes(user.role) || isSuperuser);
+    const canManageCatalog = !!isSuperuser;
 
     /**
      * Protocol: Sync with /inventory/catalog/{item_id}
@@ -52,9 +62,13 @@ function InventoryCatalogEditPage() {
             if (item) {
                 setFormData({
                     name: item.name ?? '',
+                    category: item.category ?? '',
+                    subcategory: item.subcategory ?? '',
                     description: item.description ?? '',
                     unit: item.unit ?? '',
                     shop_url_1: item.shop_url_1 ?? '',
+                    shop_url_2: item.shop_url_2 ?? '',
+                    shop_url_3: item.shop_url_3 ?? '',
                     local_image_path: item.local_image_path ?? '',
                 });
             }
@@ -102,33 +116,35 @@ function InventoryCatalogEditPage() {
     return (
         <div className="container mx-auto p-4 md:p-8 max-w-6xl animate-in fade-in duration-500">
             {/* Header Protocol */}
-            <div className="mb-10">
-                <Link 
-                    to="/inventory" 
-                    className="flex items-center text-[10px] font-black text-gray-400 hover:text-indigo-600 transition mb-3 uppercase tracking-[0.2em]"
-                >
-                    <ChevronLeftIcon className="h-3 w-3 mr-1" /> Terminate Edit / Return to Registry
-                </Link>
-                
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                    <div className="flex items-center gap-4">
-                        <div className="p-4 bg-indigo-600 rounded-2xl shadow-xl shadow-indigo-100 dark:shadow-none">
-                            <CubeIcon className="h-8 w-8 text-white" />
-                        </div>
-                        <div>
-                            <h1 className="text-4xl font-black text-gray-900 dark:text-white leading-none tracking-tighter italic">
-                                Modify Specification Node
-                            </h1>
-                            <div className="flex items-center gap-3 mt-2">
-                                <FingerPrintIcon className="h-3 w-3 text-indigo-500" />
-                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                                    Registry ID: <span className="text-indigo-600 dark:text-indigo-400 font-mono text-sm tracking-normal">{itemId}</span>
-                                </span>
+            <header className="mb-10">
+                <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5">
+                    <Link 
+                        to="/inventory" 
+                        className="flex items-center text-[10px] font-black text-gray-400 hover:text-indigo-600 transition mb-3 uppercase tracking-[0.2em]"
+                    >
+                        <ChevronLeftIcon className="h-3 w-3 mr-1" /> Terminate Edit / Return to Registry
+                    </Link>
+                    
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
+                                <CubeIcon className="h-6 w-6 text-indigo-600" />
+                            </div>
+                            <div>
+                                <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">
+                                    {t('modify_spec', { defaultValue: 'Modify Specification' })}
+                                </h1>
+                                <div className="flex items-center gap-3 mt-2">
+                                    <FingerPrintIcon className="h-3 w-3 text-indigo-500" />
+                                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                                        Registry ID: <span className="text-indigo-600 dark:text-indigo-400 font-mono text-sm tracking-normal">{itemId}</span>
+                                    </span>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            </header>
 
             <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                 {/* Primary Data Column */}
@@ -142,103 +158,314 @@ function InventoryCatalogEditPage() {
                         
                         <div className="space-y-1">
                             <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">Global Asset Descriptor*</label>
-                            <input 
-                                type="text" 
-                                name="name" 
-                                required 
-                                value={formData.name} 
-                                onChange={handleChange} 
-                                disabled={isSubmitting}
-                                className="modern-input h-14 font-black" 
-                            />
+                            {isSuperuser ? (
+                                <input 
+                                    type="text" 
+                                    name="name" 
+                                    required 
+                                    value={formData.name} 
+                                    onChange={handleChange} 
+                                    disabled={isSubmitting}
+                                    className="modern-input h-14 font-black" 
+                                />
+                            ) : (
+                                <div className="h-14 flex items-center px-4 rounded-2xl border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-sm font-black text-gray-800 dark:text-gray-100 cursor-default select-none">
+                                    {formData.name || '—'}
+                                </div>
+                            )}
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <div className="space-y-1">
-                                <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">Base Logistics Unit</label>
-                                <div className="relative">
-                                    <HashtagIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                                    <input 
-                                        type="text" 
-                                        name="unit" 
-                                        value={formData.unit} 
-                                        onChange={handleChange} 
-                                        disabled={isSubmitting}
-                                        className="modern-input h-14 pl-12" 
-                                    />
+                        {isSuperuser && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div className="space-y-1">
+                                    <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">Base Logistics Unit</label>
+                                    <div className="relative">
+                                        <HashtagIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                        <input 
+                                            type="text" 
+                                            name="unit" 
+                                            value={formData.unit} 
+                                            onChange={handleChange} 
+                                            disabled={isSubmitting}
+                                            className="modern-input h-14 pl-12" 
+                                        />
+                                    </div>
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">Internal Asset Visual Path</label>
+                                    <div className="relative">
+                                        <PhotoIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                        <input 
+                                            type="text" 
+                                            name="local_image_path" 
+                                            value={formData.local_image_path} 
+                                            onChange={handleChange} 
+                                            disabled={isSubmitting}
+                                            className="modern-input h-14 pl-12 font-mono text-xs" 
+                                        />
+                                    </div>
                                 </div>
                             </div>
-                            <div className="space-y-1">
-                                <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">Internal Asset Visual Path</label>
-                                <div className="relative">
-                                    <PhotoIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                                    <input 
-                                        type="text" 
-                                        name="local_image_path" 
-                                        value={formData.local_image_path} 
-                                        onChange={handleChange} 
-                                        disabled={isSubmitting}
-                                        className="modern-input h-14 pl-12 font-mono text-xs" 
-                                    />
-                                </div>
-                            </div>
-                        </div>
+                        )}
 
                         <div className="space-y-1">
                             <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">Technical Telemetry / Details</label>
                             <div className="relative">
                                 <DocumentTextIcon className="absolute left-4 top-4 h-5 w-5 text-gray-400" />
-                                <textarea 
-                                    name="description" 
-                                    rows="5" 
-                                    value={formData.description} 
-                                    onChange={handleChange} 
-                                    disabled={isSubmitting}
-                                    className="modern-input h-auto py-4 pl-12 resize-none text-sm leading-relaxed"
-                                    placeholder="Input manufacturer specifications..."
-                                ></textarea>
+                                {isSuperuser ? (
+                                    <textarea 
+                                        name="description" 
+                                        rows="5" 
+                                        value={formData.description} 
+                                        onChange={handleChange} 
+                                        disabled={isSubmitting}
+                                        className="modern-input h-auto py-4 pl-12 resize-none text-sm leading-relaxed"
+                                        placeholder="Input manufacturer specifications..."
+                                    ></textarea>
+                                ) : (
+                                    <div className="modern-input h-auto py-4 pl-12 text-sm leading-relaxed bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-700 rounded-2xl cursor-default select-none min-h-[4rem] flex items-start">
+                                        <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                                            {formData.description || 'Registry entry contains no supplementary technical specifications.'}
+                                        </p>
+                                    </div>
+                                )}
                             </div>
                         </div>
+
+                        {isSuperuser && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div className="space-y-1">
+                                    <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">Category</label>
+                                    <input 
+                                        type="text" 
+                                        name="category" 
+                                        value={formData.category} 
+                                        onChange={handleChange} 
+                                        disabled={isSubmitting}
+                                        className="modern-input h-12" 
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">Subcategory</label>
+                                    <input 
+                                        type="text" 
+                                        name="subcategory" 
+                                        value={formData.subcategory} 
+                                        onChange={handleChange} 
+                                        disabled={isSubmitting}
+                                        className="modern-input h-12" 
+                                    />
+                                </div>
+                            </div>
+                        )}
                     </section>
                 </div>
 
                 <div className="lg:col-span-4 space-y-8">
                     <section className="bg-white dark:bg-gray-800 p-8 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-700 space-y-4">
-                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] flex items-center gap-2 ml-1">
-                            <ShoppingBagIcon className="h-4 w-4 text-indigo-500" /> Procurement Link
+                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] flex items-center justify-between ml-1">
+                            <span className="flex items-center gap-2">
+                                <ShoppingBagIcon className="h-4 w-4 text-indigo-500" /> Procurement Links
+                            </span>
+                            {!isSuperuser && (
+                                <span className="text-[8px] font-black text-gray-400 uppercase tracking-[0.2em]">
+                                    View-only – managed by system root
+                                </span>
+                            )}
                         </label>
-                        <div className="space-y-1">
-                            <label className="block text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">Master Vendor URL</label>
-                            <input 
-                                type="url" 
-                                name="shop_url_1" 
-                                value={formData.shop_url_1} 
-                                onChange={handleChange} 
-                                disabled={isSubmitting}
-                                placeholder="https://vendor.is/..."
-                                className="modern-input text-xs italic" 
-                            />
+                        <div className="space-y-3">
+                            {/* Jóhann Rönning */}
+                            <div className="space-y-1">
+                                <label className="block text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">Jóhann Rönning</label>
+                                {isSuperuser ? (
+                                    isEditingShop1 ? (
+                                        <input
+                                            type="url"
+                                            name="shop_url_1"
+                                            value={formData.shop_url_1}
+                                            onChange={handleChange}
+                                            disabled={isSubmitting}
+                                            placeholder="https://ronning.is/..."
+                                            className="modern-input text-xs italic"
+                                            onBlur={() => !isSubmitting && setIsEditingShop1(false)}
+                                        />
+                                    ) : (
+                                        <div className="flex items-center gap-2">
+                                            {formData.shop_url_1 ? (
+                                                <a
+                                                    href={formData.shop_url_1}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="inline-flex items-center justify-center px-4 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[10px] font-black uppercase tracking-[0.2em]"
+                                                >
+                                                    johann ronning
+                                                </a>
+                                            ) : (
+                                                <span className="text-[10px] text-gray-400 italic">No link configured</span>
+                                            )}
+                                            <button
+                                                type="button"
+                                                onClick={() => setIsEditingShop1(true)}
+                                                className="text-[9px] font-black text-gray-400 hover:text-indigo-600 uppercase tracking-[0.2em]"
+                                            >
+                                                Edit
+                                            </button>
+                                        </div>
+                                    )
+                                ) : (
+                                    <div>
+                                        {formData.shop_url_1 ? (
+                                            <a
+                                                href={formData.shop_url_1}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="inline-flex items-center justify-center px-4 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[10px] font-black uppercase tracking-[0.2em]"
+                                            >
+                                                johann ronning
+                                            </a>
+                                        ) : (
+                                            <span className="text-[10px] text-gray-400 italic">No link configured</span>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Iskraft */}
+                            <div className="space-y-1">
+                                <label className="block text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">Iskraft</label>
+                                {isSuperuser ? (
+                                    isEditingShop2 ? (
+                                        <input
+                                            type="url"
+                                            name="shop_url_2"
+                                            value={formData.shop_url_2}
+                                            onChange={handleChange}
+                                            disabled={isSubmitting}
+                                            placeholder="https://iskraft.is/..."
+                                            className="modern-input text-xs italic"
+                                            onBlur={() => !isSubmitting && setIsEditingShop2(false)}
+                                        />
+                                    ) : (
+                                        <div className="flex items-center gap-2">
+                                            {formData.shop_url_2 ? (
+                                                <a
+                                                    href={formData.shop_url_2}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="inline-flex items-center justify-center px-4 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[10px] font-black uppercase tracking-[0.2em]"
+                                                >
+                                                    iskraft
+                                                </a>
+                                            ) : (
+                                                <span className="text-[10px] text-gray-400 italic">No link configured</span>
+                                            )}
+                                            <button
+                                                type="button"
+                                                onClick={() => setIsEditingShop2(true)}
+                                                className="text-[9px] font-black text-gray-400 hover:text-indigo-600 uppercase tracking-[0.2em]"
+                                            >
+                                                Edit
+                                            </button>
+                                        </div>
+                                    )
+                                ) : (
+                                    <div>
+                                        {formData.shop_url_2 ? (
+                                            <a
+                                                href={formData.shop_url_2}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="inline-flex items-center justify-center px-4 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[10px] font-black uppercase tracking-[0.2em]"
+                                            >
+                                                iskraft
+                                            </a>
+                                        ) : (
+                                            <span className="text-[10px] text-gray-400 italic">No link configured</span>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Reykjafell */}
+                            <div className="space-y-1">
+                                <label className="block text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">Reykjafell</label>
+                                {isSuperuser ? (
+                                    isEditingShop3 ? (
+                                        <input
+                                            type="url"
+                                            name="shop_url_3"
+                                            value={formData.shop_url_3}
+                                            onChange={handleChange}
+                                            disabled={isSubmitting}
+                                            placeholder="https://reykjafell.is/..."
+                                            className="modern-input text-xs italic"
+                                            onBlur={() => !isSubmitting && setIsEditingShop3(false)}
+                                        />
+                                    ) : (
+                                        <div className="flex items-center gap-2">
+                                            {formData.shop_url_3 ? (
+                                                <a
+                                                    href={formData.shop_url_3}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="inline-flex items-center justify-center px-4 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[10px] font-black uppercase tracking-[0.2em]"
+                                            >
+                                                reykjafell
+                                            </a>
+                                            ) : (
+                                                <span className="text-[10px] text-gray-400 italic">No link configured</span>
+                                            )}
+                                            <button
+                                                type="button"
+                                                onClick={() => setIsEditingShop3(true)}
+                                                className="text-[9px] font-black text-gray-400 hover:text-indigo-600 uppercase tracking-[0.2em]"
+                                            >
+                                                Edit
+                                            </button>
+                                        </div>
+                                    )
+                                ) : (
+                                    <div>
+                                        {formData.shop_url_3 ? (
+                                            <a
+                                                href={formData.shop_url_3}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="inline-flex items-center justify-center px-4 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[10px] font-black uppercase tracking-[0.2em]"
+                                            >
+                                                reykjafell
+                                            </a>
+                                        ) : (
+                                            <span className="text-[10px] text-gray-400 italic">No link configured</span>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </section>
 
-                    <button 
-                        type="submit" 
-                        disabled={isSubmitting || !canManageCatalog}
-                        className="w-full h-16 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-[1.5rem] shadow-xl shadow-indigo-100 dark:shadow-none transition transform active:scale-95 disabled:opacity-50 flex items-center justify-center gap-3 uppercase text-xs tracking-[0.2em]"
-                    >
-                        {isSubmitting ? (
-                            <><ArrowPathIcon className="h-5 w-5 animate-spin" /> Updating...</>
-                        ) : (
-                            <><CheckBadgeIcon className="h-5 w-5" /> Commit Specs</>
-                        )}
-                    </button>
+                    {isSuperuser && (
+                        <>
+                            <button
+                                type="submit"
+                                disabled={isSubmitting || !canManageCatalog}
+                                className="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition transform active:scale-95 disabled:opacity-50"
+                            >
+                                {isSubmitting ? (
+                                    <><ArrowPathIcon className="h-5 w-5 animate-spin" /> {t('syncing')}</>
+                                ) : (
+                                    <><CheckBadgeIcon className="h-5 w-5" /> {t('save_changes')}</>
+                                )}
+                            </button>
 
-                    <div className="p-6 bg-orange-50 dark:bg-orange-900/10 rounded-[1.5rem] border border-orange-100 dark:border-orange-800/30 flex gap-3">
-                        <InformationCircleIcon className="h-6 w-6 text-orange-600 shrink-0" />
-                        <p className="text-[10px] text-orange-700 dark:text-orange-300 leading-relaxed font-black uppercase tracking-tight">
-                            Critical Alert: Modifications to the Master Catalog affect all project BoQ templates and future procurement requests system-wide.
-                        </p>
-                    </div>
+                            <div className="p-6 bg-orange-50 dark:bg-orange-900/10 rounded-[1.5rem] border border-orange-100 dark:border-orange-800/30 flex gap-3">
+                                <InformationCircleIcon className="h-6 w-6 text-orange-600 shrink-0" />
+                                <p className="text-[10px] text-orange-700 dark:text-orange-300 leading-relaxed font-black uppercase tracking-tight">
+                                    Critical Alert: Modifications to the Master Catalog affect all project BoQ templates and future procurement requests system-wide.
+                                </p>
+                            </div>
+                        </>
+                    )}
 
                     {isSuperuser && (
                         <div className="p-6 bg-indigo-50 dark:bg-indigo-900/10 rounded-[1.5rem] border border-indigo-100 dark:border-indigo-800/30 flex gap-3">

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import axiosInstance from '../api/axiosInstance';
@@ -18,6 +19,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 function UserBulkImportPage() {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const { user: currentUser, isAuthenticated, isLoading: authIsLoading } = useAuth();
     
@@ -103,10 +105,10 @@ function UserBulkImportPage() {
                         <ChevronLeftIcon className="h-3 w-3 mr-1" /> Personnel Registry
                     </Link>
                     <div className="flex items-center gap-3">
-                        <div className="p-2 bg-indigo-600 rounded-xl shadow-lg shadow-indigo-100 dark:shadow-none">
-                            <CloudArrowUpIcon className="h-6 w-6 text-white" />
+                        <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
+                            <CloudArrowUpIcon className="h-6 w-6 text-indigo-600" />
                         </div>
-                        <h1 className="text-3xl font-black text-gray-900 dark:text-white leading-none tracking-tight">Bulk Ingestion</h1>
+                        <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">{t('bulk_ingestion', { defaultValue: 'Bulk Ingestion' })}</h1>
                     </div>
                 </div>
             </header>
@@ -153,7 +155,7 @@ function UserBulkImportPage() {
                             <button
                                 type="submit"
                                 disabled={isUploading || !selectedFile}
-                                className="w-full h-14 flex justify-center items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-2xl shadow-lg shadow-indigo-100 dark:shadow-none transition transform active:scale-95 disabled:opacity-50 disabled:grayscale"
+                                className="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition transform active:scale-95 disabled:opacity-50 disabled:grayscale"
                             >
                                 {isUploading ? (
                                     <>

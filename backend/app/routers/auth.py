@@ -31,8 +31,10 @@ async def login_for_access_token(
             detail="Incorrect email or password, or account is inactive.",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
-    access_token_data = {"sub": user.email} 
+
+    crud.update_user_last_login(db, user.id)
+
+    access_token_data = {"sub": user.email}
     access_token = security.create_access_token(data=access_token_data)
-    
+
     return {"access_token": access_token, "token_type": "bearer"}

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import axiosInstance from '../api/axiosInstance';
 import { 
@@ -12,6 +13,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'react-toastify';
 
 function NotificationDropdown() {
+    const { t } = useTranslation();
     const [notifications, setNotifications] = useState([]);
     const [isOpen, setIsOpen] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
@@ -66,7 +68,7 @@ function NotificationDropdown() {
         <div className="relative" ref={dropdownRef}>
             <button 
                 onClick={() => setIsOpen(!isOpen)}
-                className={`relative p-2.5 rounded-xl border transition-all duration-300 ${
+                className={`relative p-2.5 rounded-xl border transition-all duration-150 ease-out hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 ${
                     unreadCount > 0 
                     ? 'bg-indigo-50 border-indigo-200 text-indigo-600' 
                     : 'bg-gray-50 dark:bg-gray-800 border-gray-100 dark:border-gray-700 text-gray-400 hover:text-gray-600'
@@ -97,9 +99,9 @@ function NotificationDropdown() {
                             <p className="text-[9px] font-bold text-indigo-500 uppercase tracking-widest mt-0.5">Personnel Registry Sync</p>
                         </div>
                         {unreadCount > 0 && (
-                            <button 
+                                <button 
                                 onClick={markAllRead}
-                                className="p-2 hover:bg-white dark:hover:bg-gray-700 rounded-lg text-indigo-600 transition-colors"
+                                className="p-2 rounded-lg text-indigo-600 transition-all duration-150 ease-out hover:bg-white dark:hover:bg-gray-700 hover:-translate-y-0.5 hover:shadow-sm active:translate-y-0"
                                 title="Clear All"
                             >
                                 <CheckCheckIcon className="h-5 w-5" />
@@ -113,7 +115,7 @@ function NotificationDropdown() {
                                 {notifications.map((note) => (
                                     <div 
                                         key={note.id} 
-                                        className={`p-5 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer group ${!note.is_read ? 'bg-indigo-50/30 dark:bg-indigo-900/5' : ''}`}
+                                        className={`p-5 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-all duration-150 ease-out cursor-pointer group ${!note.is_read ? 'bg-indigo-50/30 dark:bg-indigo-900/5' : ''}`}
                                         onClick={() => markAsRead(note.id)}
                                     >
                                         <div className="flex gap-4">
@@ -145,7 +147,7 @@ function NotificationDropdown() {
                             <div className="py-20 flex flex-col items-center justify-center text-center px-10">
                                 <InboxStackIcon className="h-12 w-12 text-gray-200 dark:text-gray-700 mb-4" />
                                 <h4 className="text-sm font-black text-gray-400 uppercase tracking-tighter italic">Sector Clear</h4>
-                                <p className="text-[10px] text-gray-300 font-bold uppercase tracking-widest mt-2">No active deployment alerts pending</p>
+                                <p className="text-[10px] text-gray-300 font-bold uppercase tracking-widest mt-2">{t('no_active_alerts')}</p>
                             </div>
                         )}
                     </div>
@@ -155,7 +157,7 @@ function NotificationDropdown() {
                             to="/notifications" 
                             className="text-[10px] font-black text-gray-400 hover:text-indigo-600 uppercase tracking-[0.2em] transition"
                         >
-                            View Full History Registry
+                            {t('view_full_history')}
                         </Link>
                     </footer>
                 </div>

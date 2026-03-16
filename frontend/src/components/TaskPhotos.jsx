@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import axiosInstance from '../api/axiosInstance';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
@@ -17,6 +18,7 @@ import {
 const PHOTO_MODERATOR_ROLES = ["admin", "project manager", "team leader"];
 
 function TaskPhotos({ taskId }) {
+    const { t } = useTranslation();
     const [photos, setPhotos] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
@@ -47,7 +49,7 @@ function TaskPhotos({ taskId }) {
             setPhotos(response.data);
         } catch (error) {
             console.error('Fetch photos error:', error);
-            setError('Unable to load photo gallery.');
+            setError(t('unable_load_gallery'));
         } finally {
             setIsLoading(false);
         }
@@ -63,7 +65,7 @@ function TaskPhotos({ taskId }) {
             setSelectedFile(file);
         } else {
             setSelectedFile(null);
-            toast.error("Please select a valid image file (JPG, PNG).");
+            toast.error(t('valid_image_file'));
         }
     };
 
@@ -80,7 +82,7 @@ function TaskPhotos({ taskId }) {
             await axiosInstance.post(`/task_photos/upload/${taskId}`, formData, {
                 headers: { 'Content-Type': 'multipart/form-data' },
             });
-            toast.success("Photo uploaded to task.");
+            toast.success(t('photo_uploaded'));
             setSelectedFile(null);
             setDescription('');
             // Reset the native file input
@@ -88,7 +90,7 @@ function TaskPhotos({ taskId }) {
             if (fileInput) fileInput.value = '';
             fetchPhotos();
         } catch (error) {
-            toast.error(error.response?.data?.detail || "Upload failed.");
+            toast.error(error.response?.data?.detail || t('upload_failed'));
         } finally {
             setIsUploading(false);
         }
@@ -110,7 +112,7 @@ function TaskPhotos({ taskId }) {
             window.URL.revokeObjectURL(url);
         } catch (error) {
             console.error('Download failed:', error);
-            toast.error("Download failed.");
+            toast.error(t('download_failed'));
         } finally {
             setDownloadingPhotoId(null);
         }
@@ -125,31 +127,31 @@ function TaskPhotos({ taskId }) {
         if (!photoToDelete) return;
         try {
             await axiosInstance.delete(`/task_photos/${photoToDelete.id}`);
-            toast.success("Photo removed.");
+            toast.success(t('photo_removed'));
             fetchPhotos();
         } catch (error) {
             console.error('Delete photo failed:', error);
-            toast.error("Delete failed.");
+            toast.error(t('upload_failed'));
         } finally {
             setIsDeleteModalOpen(false);
             setPhotoToDelete(null);
         }
     };
 
-    if (isLoading) return <LoadingSpinner text="Developing photos..." size="sm" />;
+    if (isLoading) return <LoadingSpinner text={t('developing_photos')} size="sm" />;
 
     return (
         <div className="mt-10 pt-8 border-t border-gray-200 dark:border-gray-700">
             <div className="flex items-center gap-2 mb-6">
                 <CameraIcon className="h-6 w-6 text-indigo-600" />
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white">Evidence & Site Photos</h2>
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white">{t('evidence_site_photos')}</h2>
             </div>
             {error && <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 text-xs rounded-xl">{error}</div>}
             {isAuthenticated && (
                 <div className="mb-8 p-6 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-100 dark:border-gray-700">
                     <form onSubmit={handleUpload} className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
                         <div className="md:col-span-4">
-                            <label className="block text-[10px] font-black text-gray-400 uppercase mb-1 ml-1">Select Image</label>
+                            <label className="block text-[10px] font-black text-gray-400 uppercase mb-1 ml-1">{t('select_image')}</label>
                             <input
                                 id={`file-upload-${taskId}`}
                                 type="file"
@@ -159,12 +161,12 @@ function TaskPhotos({ taskId }) {
                             />
                         </div>
                         <div className="md:col-span-5">
-                            <label className="block text-[10px] font-black text-gray-400 uppercase mb-1 ml-1">Notes</label>
+                            <label className="block text-[10px] font-black text-gray-400 uppercase mb-1 ml-1">{t('notes')}</label>
                             <input
                                 type="text"
                                 value={description}
                                 onChange={(e) => setDescription(e.target.value)}
-                                placeholder="What is shown in this photo?"
+                                placeholder={t('photo_notes_placeholder')}
                                 className="block w-full rounded-xl border-gray-300 dark:bg-gray-700 dark:text-white text-sm focus:ring-2 focus:ring-indigo-500 transition"
                             />
                         </div>
@@ -175,7 +177,7 @@ function TaskPhotos({ taskId }) {
                                 className="w-full inline-flex justify-center items-center px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-sm transition disabled:opacity-50"
                             >
                                 <CloudArrowUpIcon className="h-5 w-5 mr-2" />
-                                {isUploading ? 'Uploading...' : 'Upload'}
+                                {isUploading ? t('uploading') : t('upload')}
                             </button>
                         </div>
                     </form>
@@ -202,7 +204,7 @@ function TaskPhotos({ taskId }) {
                                     <button
                                         onClick={() => handleDownload(photo.id, photo.filename)}
                                         className="p-2 bg-white text-indigo-600 rounded-full shadow-lg hover:scale-110 transition transform"
-                                        title="Download Original"
+                                        title={t('download_original')}
                                     >
                                         <ArrowDownTrayIcon className="h-5 w-5" />
                                     </button>
@@ -210,7 +212,7 @@ function TaskPhotos({ taskId }) {
                                         <button
                                             onClick={() => triggerDelete(photo)}
                                             className="p-2 bg-white text-red-600 rounded-full shadow-lg hover:scale-110 transition transform"
-                                            title="Delete Photo"
+                                            title={t('delete_photo')}
                                         >
                                             <TrashIcon className="h-5 w-5" />
                                         </button>
@@ -241,7 +243,7 @@ function TaskPhotos({ taskId }) {
             ) : (
                 <div className="py-12 text-center bg-white dark:bg-gray-800 rounded-2xl border-2 border-dashed border-gray-100 dark:border-gray-700">
                     <PhotoIcon className="h-10 w-10 text-gray-200 mx-auto mb-2" />
-                    <p className="text-sm text-gray-500 italic">No photographic evidence attached to this task.</p>
+                    <p className="text-sm text-gray-500 italic">{t('no_photos_attached')}</p>
                 </div>
             )}
 
@@ -250,9 +252,9 @@ function TaskPhotos({ taskId }) {
                 isOpen={isDeleteModalOpen}
                 onClose={() => { setIsDeleteModalOpen(false); setPhotoToDelete(null); }}
                 onConfirm={confirmDelete}
-                title="Permanently Delete Photo"
-                message={`Are you sure you want to delete "${photoToDelete?.filename}"? This will remove the file from site records forever.`}
-                confirmText="Delete File"
+                title={t('delete_photo_title')}
+                message={t('delete_photo_confirm')}
+                confirmText={t('delete_file')}
                 type="danger"
             />
         </div>

@@ -99,23 +99,19 @@ function TenantListPage() {
         <div className="container mx-auto p-4 md:p-8 max-w-7xl animate-in fade-in duration-500">
             {/* Infrastructure Header */}
             <header className="mb-10">
-                <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div>
-                    <div className="flex items-center gap-3 mb-1">
-                        <div className="p-2 bg-orange-600 rounded-xl shadow-lg shadow-orange-100 dark:shadow-none">
-                            <AdjustmentsHorizontalIcon className="h-6 w-6 text-white" />
+                <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5 flex justify-between items-center gap-6">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
+                            <AdjustmentsHorizontalIcon className="h-6 w-6 text-indigo-600" />
                         </div>
-                        <h1 className="text-3xl font-black text-gray-900 dark:text-white leading-none tracking-tight">{t('tenant_registry_title')}</h1>
+                        <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">{t('tenant_registry_title')}</h1>
                     </div>
-                </div>
-
-                <button 
-                    onClick={() => navigate('/tenants/new')}
-                    className="inline-flex items-center px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-xl shadow-lg shadow-indigo-100 dark:shadow-none transition transform active:scale-95"
-                >
-                    <PlusIcon className="h-5 w-5 mr-1.5" /> 
-                    {t('new_tenant')}
-                </button>
+                    <button
+                        onClick={() => navigate('/tenants/new')}
+                        className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition transform active:scale-95"
+                    >
+                        <PlusIcon className="h-5 w-5" /> {t('new_tenant')}
+                    </button>
                 </div>
             </header>
 
@@ -148,7 +144,7 @@ function TenantListPage() {
                                 <tr>
                                     <th className="py-5 px-8">{t('identifier')}</th>
                                     <th className="py-5 px-6">{t('company_organization')}</th>
-                                    <th className="py-5 px-6">{t('brand_assets')}</th>
+                                    <th className="py-5 px-6">Stats & Billing</th>
                                     <th className="py-5 px-8 text-right">{t('registry_actions')}</th>
                                 </tr>
                             </thead>
@@ -165,13 +161,8 @@ function TenantListPage() {
                                         </td>
                                         <td className="py-5 px-6">
                                             <div className="flex items-center gap-3">
-                                                <div className="h-10 w-10 rounded-xl bg-white border border-gray-100 dark:bg-gray-800 dark:border-gray-600 p-1 flex-shrink-0 shadow-sm">
-                                                    <img 
-                                                        src={tenant.logo_url || '/default-logo.png'} 
-                                                        alt="" 
-                                                        className="h-full w-full object-contain grayscale group-hover:grayscale-0 transition-all"
-                                                        onError={(e) => { e.target.onerror = null; e.target.src = '/default-logo.png'; }}
-                                                    />
+                                                <div className="h-10 w-10 rounded-xl bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 flex-shrink-0 shadow-sm flex items-center justify-center text-xs font-black text-gray-600 dark:text-gray-200">
+                                                    {(tenant.name || '?').charAt(0).toUpperCase()}
                                                 </div>
                                                 <span className="font-black text-gray-900 dark:text-white uppercase tracking-tight">{tenant.name}</span>
                                             </div>
@@ -179,10 +170,30 @@ function TenantListPage() {
                                         <td className="py-5 px-6">
                                             <div className="flex flex-col gap-1">
                                                 <div className="flex items-center gap-1.5 text-[9px] font-bold text-gray-400 uppercase tracking-widest">
-                                                    <PhotoIcon className="h-3 w-3" /> Logo: <span className="text-indigo-500 truncate max-w-[120px]">{tenant.logo_url ? t('logo_configured') : t('logo_null')}</span>
+                                                    <PhotoIcon className="h-3 w-3" /> Users:{' '}
+                                                    <span className="text-indigo-500">
+                                                        {tenant.user_count ?? 0}
+                                                    </span>
                                                 </div>
                                                 <div className="flex items-center gap-1.5 text-[9px] font-bold text-gray-400 uppercase tracking-widest">
-                                                    <AdjustmentsHorizontalIcon className="h-3 w-3" /> UI: <span className="text-indigo-500 truncate max-w-[120px]">{tenant.background_image_url ? t('ui_custom') : t('ui_default')}</span>
+                                                    <AdjustmentsHorizontalIcon className="h-3 w-3" /> Billing:{' '}
+                                                    {tenant.has_overdue_invoices ? (
+                                                        <span className="text-red-600">
+                                                            Overdue {tenant.overdue_amount?.toFixed(0)} ISK
+                                                        </span>
+                                                    ) : (
+                                                        <span className="text-emerald-600">Up to date</span>
+                                                    )}
+                                                </div>
+                                                <div className="flex items-center gap-1.5 text-[9px] font-bold text-gray-400 uppercase tracking-widest">
+                                                    <AdjustmentsHorizontalIcon className="h-3 w-3" /> Discount:{' '}
+                                                    {tenant.discount_percent != null ? (
+                                                        <span className="text-indigo-500">
+                                                            {tenant.discount_percent.toFixed(1)}%
+                                                        </span>
+                                                    ) : (
+                                                        <span className="text-gray-400">None</span>
+                                                    )}
                                                 </div>
                                             </div>
                                         </td>
