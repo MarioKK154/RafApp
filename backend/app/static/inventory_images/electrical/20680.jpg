@@ -1,0 +1,1748 @@
+
+<!DOCTYPE html>
+<html lang="is" data-theme="khvinnufot">
+    <head><script>(function(w,i,g){w[g]=w[g]||[];if(typeof w[g].push=='function')w[g].push(i)})
+(window,'GTM-TDCDPXMK','google_tags_first_party');</script><script>(function(w,d,s,l){w[l]=w[l]||[];(function(){w[l].push(arguments);})('set', 'developer_id.dYzg1YT', true);
+		w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+		j=d.createElement(s);j.async=true;j.src='/rloa/';
+		f.parentNode.insertBefore(j,f);
+		})(window,document,'script','dataLayer');</script>
+        
+        <script type="aaa65416e23dca4f85a8450b-text/javascript">(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+        new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+        j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+        'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+        })(window,document,'script','dataLayer','GTM-TDCDPXMK');</script>
+        
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Johan Rönning - Leiðandi í lausnum fyrir rafiðnaðinn. | Johan Rönning </title>
+        
+        <style>[x-cloak]{display:none}</style>
+        <link rel="manifest" href="https://varaldur-prod.fra1.cdn.digitaloceanspaces.com/varaldur-prod/static/favicon/ronning/site.webmanifest" />
+        <link rel="icon" type="image/png" href="https://varaldur-prod.fra1.cdn.digitaloceanspaces.com/varaldur-prod/static/favicon/ronning/favicon-96x96.png" sizes="96x96" />
+        <link rel="icon" type="image/svg+xml" href="https://varaldur-prod.fra1.cdn.digitaloceanspaces.com/varaldur-prod/static/favicon/ronning/favicon.svg" />
+        <link rel="shortcut icon" href="https://varaldur-prod.fra1.cdn.digitaloceanspaces.com/varaldur-prod/static/favicon/ronning/favicon.ico" />
+        <link rel="apple-touch-icon" sizes="180x180" href="https://varaldur-prod.fra1.cdn.digitaloceanspaces.com/varaldur-prod/static/favicon/ronning/apple-touch-icon.png" />
+        <link rel="manifest" href="https://varaldur-prod.fra1.cdn.digitaloceanspaces.com/varaldur-prod/static/favicon/ronning/site.webmanifest" />
+
+        <meta name="apple-mobile-web-app-title" content="Johan Rönning" />
+        
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+        <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js" type="aaa65416e23dca4f85a8450b-text/javascript"></script>
+        <script id="google-maps" data-cfasync="false" type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBsnMTRnkYM6c3GAHedYEJPWmQSg0cx5vw&v=weekly&loading=async&libraries=places"></script>
+        <link href="https://api.mapbox.com/mapbox-gl-js/v3.7.0/mapbox-gl.css" rel="stylesheet">
+        <script src="https://api.mapbox.com/mapbox-gl-js/v3.7.0/mapbox-gl.js" type="aaa65416e23dca4f85a8450b-text/javascript"></script>
+        <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.4/dist/htmx.min.js" type="aaa65416e23dca4f85a8450b-text/javascript"></script>
+        <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.4/dist/htmx.min.js" type="aaa65416e23dca4f85a8450b-text/javascript"></script>
+
+        
+            <link href="https://varaldur-prod.fra1.cdn.digitaloceanspaces.com/varaldur-prod/static/webpack_bundles/css/common-986088cdc5608e1e9df6.css" rel="stylesheet" />
+<link href="https://varaldur-prod.fra1.cdn.digitaloceanspaces.com/varaldur-prod/static/webpack_bundles/css/theme-ronning-7dd3de7e4e5cd7169901.css" rel="stylesheet" />
+        
+
+        <link href="https://varaldur-prod.fra1.cdn.digitaloceanspaces.com/varaldur-prod/static/webpack_bundles/css/vendor-ae51e418ebaa1f2f4e3d.css" rel="stylesheet" />
+
+        
+            <link href="https://varaldur-prod.fra1.cdn.digitaloceanspaces.com/varaldur-prod/static/webpack_bundles/css/common-986088cdc5608e1e9df6.css" rel="stylesheet" />
+<link href="https://varaldur-prod.fra1.cdn.digitaloceanspaces.com/varaldur-prod/static/webpack_bundles/css/ronning-7391bbdaebe635da6ff2.css" rel="stylesheet" />
+        
+        
+
+        
+    </head>
+    <body hx-headers='{"X-CSRFToken": "ZStenKqsnHqWKZV1Qnhaau8d1jMI3ffp8HLsZOp3XPGKUnRtpjd0OfVitVMdMIi2"}' hx-ext="preload">
+        
+        <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-TDCDPXMK" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+        
+        <script src="https://cdn.jsdelivr.net/npm/@glidejs/glide" type="aaa65416e23dca4f85a8450b-text/javascript"></script>
+        <div aria-live="polite" aria-atomic="true" style="z-index: 9999; position: fixed; top: 108px; right: 10vh;">
+    <div style="position: relative;" class="toast-container ">
+  
+      <!-- Then put toasts within -->
+      
+      <div id="addToCartModal" class="add-to-cart-modal toast rounded-0 p-2 border-0 bg-solid-white" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header text-center align-middle p-4 cart-toast__header">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#023B76">
+            <g clip-path="url(#clip0_1_60)">
+              <path fill-rule="evenodd" clip-rule="evenodd" d="M0 12C0 5.37259 5.37259 0 12 0C18.6274 0 24 5.37258 24 12C24 18.6274 18.6274 24 12 24C5.37258 24 0 18.6274 0 12ZM12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47716 22 12 22C17.5228 22 22 17.5228 22 12C22 6.47716 17.5228 2 12 2Z" fill="#023B76"/>
+              <path fill-rule="evenodd" clip-rule="evenodd" d="M18.7071 8.70711L11.7071 15.7071C11.3166 16.0976 10.6834 16.0976 10.2929 15.7071L6.29289 11.7071L7.70711 10.2929L11 13.5858L17.2929 7.29289L18.7071 8.70711Z" fill="#023B76"/>
+            </g>
+            <defs>
+              <clipPath id="clip0_1_60">
+                <rect width="24" height="24" fill="white"/>
+              </clipPath>
+            </defs>
+          </svg>
+          <h5 class="me-auto ms-3 py-0 py-0 mb-0 text-center align-middle">
+            Vöru bætt í körfu</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body px-4 py-4" id="cartToastBody">
+          
+        </div>
+      </div>
+  
+     
+    </div>
+  </div>
+
+        
+
+
+<script type="aaa65416e23dca4f85a8450b-text/javascript">
+    /**
+      Alpine js logic for adding tooltip on hover
+      To call tooltip use this configuration on element: 
+        x-tooltip="'Some tooltip text'" 
+        x-data={open: false}
+        class="position-relative"
+    */
+    document.addEventListener('alpine:init', () => {
+      // Define the x-tooltip directive
+      Alpine.directive('tooltip', (el, { expression }, { evaluate }) => {
+        const tooltipText = evaluate(expression);
+
+        // Initialize Alpine.js component state
+        el.setAttribute('x-data', '{ show: false, tooltipText: "' + tooltipText.replace(/"/g, '\\"') + '" }');
+        el.setAttribute('x-on:mouseenter', 'show = true');
+        el.setAttribute('x-on:mouseleave', 'show = false');
+
+        // Create the tooltip element
+        const tooltip = document.createElement('div');
+        tooltip.className = 'tooltip-hover';
+        tooltip.setAttribute('x-show', 'show');
+        tooltip.setAttribute('x-text', 'tooltipText');
+        tooltip.setAttribute('x-transition:enter', 'transition ease-out duration-200');
+        tooltip.setAttribute('x-transition:enter-start', 'opacity-0 translate-y-2');
+        tooltip.setAttribute('x-transition:enter-end', 'opacity-100 translate-y-0');
+        tooltip.setAttribute('x-transition:leave', 'transition ease-in duration-150');
+        tooltip.setAttribute('x-transition:leave-start', 'opacity-100 translate-y-0');
+        tooltip.setAttribute('x-transition:leave-end', 'opacity-0 translate-y-2');
+
+        // Append the tooltip to the element
+        el.appendChild(tooltip);
+      });
+    });
+
+    const MEGA_MENU_SCROLL_THRESHOLD = 15;
+    const MEGA_MENU_TOP_DEFAULT = '98px';
+    const MEGA_MENU_TOP_SCROLLED = '70px';
+
+    const updateDesktopMegaMenuTop = () => {
+      const desktopNav = document.getElementById('nav_not_scroll');
+      if (!desktopNav) {
+        return;
+      }
+      const nextValue = window.scrollY > MEGA_MENU_SCROLL_THRESHOLD
+        ? MEGA_MENU_TOP_SCROLLED
+        : MEGA_MENU_TOP_DEFAULT;
+      if (desktopNav.style.getPropertyValue('--desktop-mega-menu-top') !== nextValue) {
+        desktopNav.style.setProperty('--desktop-mega-menu-top', nextValue);
+      }
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+      updateDesktopMegaMenuTop();
+      window.addEventListener('scroll', updateDesktopMegaMenuTop, { passive: true });
+      window.addEventListener('resize', updateDesktopMegaMenuTop);
+    });
+</script>
+
+<div class="container">
+  <div class="navbar navbar-expand-md fixed-top pb-0 mb-0 main-header d-flex flex-column">
+    <div
+      x-data="{}"
+      @click.outside="
+        document.getElementById('nav-autocomplete-panel').innerHTML = ''; 
+        const input = document.getElementById('searchbox'); 
+        if (input) input.value = ''; 
+        document.body.classList.remove('no-scroll');
+      "
+      style="width: 100%;"
+    >
+      
+
+<div class="navbar__desktop" id="nav_not_scroll" data-bs-theme=""> 
+  <!-- Main Navigation Bar -->
+  <div class="navbar navbar-expand-md pb-0 mb-0 container main-header navbar__desktop-border" id="desktop_nav_main_container">
+    <div class="container main-header__wrapper">
+
+      <div class="navbar__elements-wrapper py-4" id="desktop_nav_logo_wrapper">
+        <!-- Brand Logo for Desktop (hidden on mobile) -->
+        <a class="navbar-brand not-on-mobile ms-3 me-3" href="/" preload="mouseover">
+          <img alt="JR logo 3128x824px" height="40" id="desktop_nav_logo" sizes="" src="https://varaldur-prod.fra1.cdn.digitaloceanspaces.com/varaldur-prod/media/images/Ronning_Logo_copy_XQtMIje.height-40.png" srcset="https://varaldur-prod.fra1.cdn.digitaloceanspaces.com/varaldur-prod/media/images/Ronning_Logo_copy_XQtMIje.height-40.png 151w, https://varaldur-prod.fra1.cdn.digitaloceanspaces.com/varaldur-prod/media/images/Ronning_Logo_copy_XQtMIje.height-80.png 303w" width="151">
+        </a>
+        
+      </div>
+      <!-- Collapsible Navigation Menu (toggles visibility based on Alpine.js state) -->
+      <div  class="navbar__desktop-links">
+        <!-- Left-Aligned Navigation Links -->
+        <div class="navbar__links-wrapper">
+  <!-- Conditional Rendering of Navigation Items based on Settings -->
+  
+</div>
+        <!-- Button for more cattegories which will open Mega Menu on click -->
+        
+
+
+ 
+
+        
+
+
+  <div class="navbar__links-wrapper"
+    x-data="{
+      activeItem: null,
+      toggleOpen(activeItem) {
+        if (activeItem !== this.activeItem) {
+          this.activeItem = activeItem;
+        } else {
+          this.activeItem = null
+        }
+      }
+    }"
+    x-init="$watch('activeItem', value => {
+      document.body.className = !!value ? 'no-scroll' : ''
+    })">
+    <div class="navbar__links-wrapper navbar__mega-menu flex align-strech">
+      <div class="navbar__single-link nav-item d-flex align-items-center nav-item-customized">
+        <span class="nav-link"
+          aria-current="page"
+          hx-get="/get-category-children/?cat_id=2178&menu_type=grid&id=grid_children_cat&href=/"
+          hx-target="#grid_children_cat"
+          hx-swap="innerHTML"
+          @click="toggleOpen('2178')">Vörulisti</span>
+      </div>
+
+      <div draggable=""
+        class="navbar__mega-menu-container container grid-mega-menu grid-mega-menu--fit-height grid-mega-menu-wraper"
+        style="top: var(--desktop-mega-menu-top, 88px)"
+        x-show="activeItem !== null"
+        @click.outside="activeItem = null"
+        x-cloak>
+        <div id="grid_children_cat" class="navbar__mega-menu-container-items grid-swap-container"></div>
+      </div>
+    </div>
+  </div>
+
+ 
+        
+        
+
+ 
+
+        <!-- Main Menu (Visible based on settings and if navigation is not shown) -->
+        
+          
+<ul class="navbar-nav me-auto mb-2 mb-md-0 d-flex align-items-md-center menu_items ">
+    
+    <li class="navbar__single-link nav-item d-flex align-items-center nav-item-customized">
+        <a class="nav-link active fs-6" aria-current="page"
+        href="/framleidendur/">Framleiðendur</a></li>
+    
+    <li class="navbar__single-link nav-item d-flex align-items-center nav-item-customized">
+        <a class="nav-link active fs-6" aria-current="page"
+        href="/stadsetningar/">Staðsetningar</a></li>
+    
+    <li class="navbar__single-link nav-item d-flex align-items-center nav-item-customized">
+        <a class="nav-link active fs-6" aria-current="page"
+        href="/starfsfolk/">Starfsfólk</a></li>
+    
+</ul>
+
+        
+
+        <!-- Product Search Form (Visible based on settings) -->
+        
+
+  <div class="navbar__search-form">
+    <form class="w-100" role="search" action="/leita/" method="GET">
+      <div class="input-group p-2 search-box-container">
+        <span class="input-group-text border-0 nav-searchbox__icon-box">
+          
+
+  
+  <svg class="icon-S  nav-icons" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="#023B76">
+    <g clip-path="url(#clip0_1_54)">
+      <path fill-rule="evenodd" clip-rule="evenodd" d="M0 10C0 4.47716 4.47716 0 10 0C15.5229 0 20 4.47716 20 10C20 15.5229 15.5229 20 10 20C4.47716 20 0 15.5229 0 10ZM10 2C5.58172 2 2 5.58172 2 10C2 14.4183 5.58172 18 10 18C14.4183 18 18 14.4183 18 10C18 5.58172 14.4183 2 10 2Z" />
+      <path fill-rule="evenodd" clip-rule="evenodd" d="M22.2929 23.7071L15.6569 17.0711L17.0711 15.6569L23.7071 22.2929L22.2929 23.7071Z" />
+    </g>
+    <defs>
+      <clipPath id="clip0_1_54">
+        <rect width="24" height="24" fill="white" />
+      </clipPath>
+    </defs>
+  </svg>
+    
+  
+
+
+        </span>
+        <input type="hidden" name="updateFacets" value="nav_search">
+        <input type="search" class="border-0 form-control nav-searchbox" placeholder="Leita að vöru" name="q" id="searchbox" oninput="if (!window.__cfRLUnblockHandlers) return false; if (!this.value) { const panel = document.getElementById('nav-autocomplete-panel'); if (panel) panel.innerHTML = ''; document.body.classList.remove('no-scroll'); }" hx-get="/leita/autocomplete/" hx-target="#nav-autocomplete-panel" hx-trigger="keyup changed delay:250ms" hx-sync="this:abort" hx-params="q" aria-label="Search" aria-describedby="button-addon2" data-cf-modified-aaa65416e23dca4f85a8450b-="">
+      </div>
+    </form>
+  </div>
+
+
+                
+        <div class="navbar__elements-icon-links">
+   
+  
+
+  
+
+  <!-- Profile/User Dropdown Navigation Icon (visible based on settings) -->
+  
+    
+    <div 
+      
+        x-tooltip="'Innskráning'" 
+        x-data="{open: false}" 
+      
+      class="position-relative"
+    >
+      <a 
+        href="/audkenni/innskraning/"
+        role="button"
+        aria-haspopup="true"
+        class="navbar__elements-icon-links-link"
+      >
+        <!-- Login Icon SVG -->
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="17" viewBox="0 0 16 17" fill="none">
+          <path fill-rule="evenodd" clip-rule="evenodd" d="M8.79747 3.08633C8.41712 2.92862 7.99371 2.88663 7.58941 2.96563C7.18829 3.04401 6.81741 3.24269 6.52417 3.53593C6.23094 3.82916 6.03226 4.20005 5.95388 4.60116C5.87488 5.00546 5.91687 5.42887 6.07457 5.80922C6.23264 6.19044 6.50227 6.51972 6.84354 6.74569L6.84743 6.74827C7.19266 6.98153 7.59025 7.10546 7.99967 7.10546C8.55061 7.10546 9.08515 6.88271 9.47518 6.49268L9.47728 6.49059C9.86925 6.10323 10.088 5.57066 10.088 5.01718C10.088 4.60712 9.96366 4.20302 9.73523 3.85724C9.50096 3.51132 9.17531 3.24299 8.79747 3.08633ZM7.39763 1.98419C7.99414 1.86763 8.61755 1.92917 9.18049 2.16258C9.74523 2.39675 10.2243 2.79491 10.5651 3.29932L10.5677 3.30318C10.9022 3.80823 11.088 4.4042 11.088 5.01718C11.088 5.83213 10.7664 6.62199 10.1812 7.20083C9.60507 7.77645 8.81716 8.10546 7.99967 8.10546C7.38607 8.10546 6.79508 7.91925 6.28947 7.57816C5.78043 7.24052 5.38358 6.75357 5.15083 6.19223C4.91742 5.62929 4.85588 5.00589 4.97244 4.40939C5.08962 3.8097 5.38558 3.2603 5.81707 2.82882C6.24855 2.39734 6.79795 2.10137 7.39763 1.98419ZM4.56847 10.757C3.76925 11.3567 3.32324 12.1846 3.32324 13.1546V13.2987H12.6764V13.1546C12.6764 12.1846 12.2304 11.3567 11.4311 10.757C10.6231 10.1506 9.44138 9.77213 7.99981 9.77213C6.55823 9.77213 5.37654 10.1506 4.56847 10.757ZM3.96827 9.95713C4.98637 9.19315 6.39296 8.77213 7.99981 8.77213C9.60666 8.77213 11.0132 9.19315 12.0314 9.95713C13.0583 10.7278 13.6764 11.8411 13.6764 13.1546V14.2987H2.32324V13.1546C2.32324 11.8411 2.94131 10.7278 3.96827 9.95713Z"/>
+        </svg>
+        <span class="navbar__elements-icon-links-label">Innskrá</span>
+      </a>
+    </div>
+    
+  
+</div>
+
+        <!-- Cart Navigation Button (visible based on settings) -->
+        
+  <div 
+    class="navbar__cart-button" 
+    class="position-relative" 
+    
+      x-tooltip="'Karfa'"
+      x-data="{ open: false }"
+    
+  >
+    <!-- Cart Link -->
+    <a href="/karfa/"
+      class="navbar__cart-link"
+      role="button" 
+      data-bs-toggle="tooltip" 
+      data-bs-placement="top"
+      data-bs-title="Karfa" 
+      data-bs-custom-class="custom-tooltip"
+    >
+      
+      <!-- Cart Item Count Badge (shows only if there are items in the cart) -->
+      
+      <div id="cart_count_badge"
+           hx-get="/karfa/badge/"
+           hx-trigger="load"
+           hx-swap="outerHTML">
+        
+      </div>
+      <!-- Cart Icon SVG -->
+      <svg xmlns="http://www.w3.org/2000/svg" class="nav-icons" width="16" height="17" viewBox="0 0 16 17" fill="none">
+        <g clip-path="url(#clip0_10267_44023)">
+          <path fill-rule="evenodd" clip-rule="evenodd" d="M5.76941 0.811523L6.60804 1.28356L3.86884 6.28113H12.0881L9.34892 1.28357L10.1875 0.811535L13.1855 6.28113H14.8778C15.2191 6.28113 15.5441 6.4394 15.7567 6.70796C15.9697 6.97696 16.0486 7.32633 15.9704 7.66208L14.0982 15.7737C13.9842 16.2904 13.5307 16.6508 13.0048 16.6508H3.01586C2.49403 16.6508 2.0366 16.2821 1.9227 15.7747L0.050429 7.66256L0.0502714 7.66188C-0.0278517 7.32619 0.0510207 6.9769 0.263962 6.70796C0.4766 6.4394 0.801549 6.28113 1.14293 6.28113H2.77148L5.76941 0.811523ZM1.14293 7.28113C1.10972 7.28113 1.07257 7.29764 1.04797 7.32871C1.02382 7.35922 1.01525 7.39666 1.02426 7.4353L1.02454 7.43649L2.89838 15.5555C2.91021 15.6087 2.96411 15.6508 3.01586 15.6508H13.0048C13.0647 15.6508 13.1097 15.6134 13.1218 15.5577L13.1232 15.5515L14.9964 7.4353C15.0054 7.39666 14.9969 7.35922 14.9727 7.32871C14.9481 7.29764 14.911 7.28113 14.8778 7.28113H1.14293Z" />
+          <path d="M7.49992 9.16394H8.49992V13.8332H7.49992V9.16394Z"/>
+          <path d="M3.77222 9.22795L4.76688 9.1248L5.24851 13.7692L4.25385 13.8723L3.77222 9.22795Z" />
+          <path d="M10.6368 13.7692L11.6315 13.8723L12.1131 9.22795L11.1184 9.1248L10.6368 13.7692Z" />
+        </g>
+        <defs>
+          <clipPath id="clip0_10267_44023">
+            <rect width="16" height="16" fill="white" transform="translate(0 0.5)"/>
+          </clipPath>
+        </defs>
+      </svg>
+    </a>
+  </div>
+
+
+      </div>
+
+    </div>
+  </div>
+</div>
+
+      
+
+
+<header
+  data-bs-theme=""
+  x-data="{ 
+    isNavbarCollapsed: false, 
+    isNavbarSearchCollapsed: false 
+  }"
+  x-init="
+    $watch('isNavbarCollapsed', value => {
+      if (value) {
+        document.body.classList.add('no-scroll');
+      } else {
+        document.body.classList.remove('no-scroll');
+      }
+    });
+  "
+  class="navbar__mobile"
+>
+  <div class="navbar navbar-expand-md pb-0 mb-0 main-header">
+    <div class="container main-header__wrapper">
+      <div class="navbar__mobile-wrapper pb-2 navbar__mobile-border">
+        
+        <!-- Brand Logo for Mobile (visible only on mobile) -->
+        <a class="navbar-brand navbar__mobile-logo-link" href="/" preload="mouseover">
+          <img alt="JR logo 3128x824px" height="20" sizes="" src="https://varaldur-prod.fra1.cdn.digitaloceanspaces.com/varaldur-prod/media/images/Ronning_Logo_copy_XQtMIje.height-20.png" srcset="https://varaldur-prod.fra1.cdn.digitaloceanspaces.com/varaldur-prod/media/images/Ronning_Logo_copy_XQtMIje.height-20.png 75w, https://varaldur-prod.fra1.cdn.digitaloceanspaces.com/varaldur-prod/media/images/Ronning_Logo_copy_XQtMIje.height-40.png 151w" width="75">
+        </a>
+        
+        <!-- Container for Navigation Buttons -->
+        <div class="button-container d-flex main-header__button-container">
+
+          
+            <div class="navbar__mobile-search-header">
+              
+
+  <div class="navbar__search-form">
+    <form class="w-100" role="search" action="/leita/" method="GET">
+      <div class="input-group p-2 search-box-container">
+        <span class="input-group-text border-0 nav-searchbox__icon-box">
+          
+
+  
+  <svg class="icon-S  nav-icons" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="#023B76">
+    <g clip-path="url(#clip0_1_54)">
+      <path fill-rule="evenodd" clip-rule="evenodd" d="M0 10C0 4.47716 4.47716 0 10 0C15.5229 0 20 4.47716 20 10C20 15.5229 15.5229 20 10 20C4.47716 20 0 15.5229 0 10ZM10 2C5.58172 2 2 5.58172 2 10C2 14.4183 5.58172 18 10 18C14.4183 18 18 14.4183 18 10C18 5.58172 14.4183 2 10 2Z" />
+      <path fill-rule="evenodd" clip-rule="evenodd" d="M22.2929 23.7071L15.6569 17.0711L17.0711 15.6569L23.7071 22.2929L22.2929 23.7071Z" />
+    </g>
+    <defs>
+      <clipPath id="clip0_1_54">
+        <rect width="24" height="24" fill="white" />
+      </clipPath>
+    </defs>
+  </svg>
+    
+  
+
+
+        </span>
+        <input type="hidden" name="updateFacets" value="nav_search">
+        <input type="search" class="border-0 form-control nav-searchbox" placeholder="Leita að vöru" name="q" id="searchbox" oninput="if (!window.__cfRLUnblockHandlers) return false; if (!this.value) { const panel = document.getElementById('nav-autocomplete-panel'); if (panel) panel.innerHTML = ''; document.body.classList.remove('no-scroll'); }" hx-get="/leita/autocomplete/" hx-target="#nav-autocomplete-panel" hx-trigger="keyup changed delay:250ms" hx-sync="this:abort" hx-params="q" aria-label="Search" aria-describedby="button-addon2" data-cf-modified-aaa65416e23dca4f85a8450b-="">
+      </div>
+    </form>
+  </div>
+
+
+            </div>
+          
+          
+          <!-- Product Search Button (visible based on settings) -->
+          
+          <button 
+            class="navbar__mobile-buttons navbar-mobile-button navbar__search-icon nav-link text-white align-items-center justify-content-center px-0 mx-2"
+            type="button" 
+            @click="isNavbarSearchCollapsed = !isNavbarSearchCollapsed; if (!isNavbarSearchCollapsed) { const panel = document.getElementById('nav-autocomplete-panel'); if (panel) panel.innerHTML = ''; }"
+            aria-controls="navbarSearchCollapse" 
+            :aria-expanded="isNavbarSearchCollapsed.toString()"
+            aria-label="Toggle navigation" 
+          >
+            
+
+  
+  <svg class="icon-S  nav-icons" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="#023B76">
+    <g clip-path="url(#clip0_1_54)">
+      <path fill-rule="evenodd" clip-rule="evenodd" d="M0 10C0 4.47716 4.47716 0 10 0C15.5229 0 20 4.47716 20 10C20 15.5229 15.5229 20 10 20C4.47716 20 0 15.5229 0 10ZM10 2C5.58172 2 2 5.58172 2 10C2 14.4183 5.58172 18 10 18C14.4183 18 18 14.4183 18 10C18 5.58172 14.4183 2 10 2Z" />
+      <path fill-rule="evenodd" clip-rule="evenodd" d="M22.2929 23.7071L15.6569 17.0711L17.0711 15.6569L23.7071 22.2929L22.2929 23.7071Z" />
+    </g>
+    <defs>
+      <clipPath id="clip0_1_54">
+        <rect width="24" height="24" fill="white" />
+      </clipPath>
+    </defs>
+  </svg>
+    
+  
+
+
+          </button>
+          
+          
+          
+  <div 
+    class="navbar__cart-button" 
+    class="position-relative" 
+    
+  >
+    <!-- Cart Link -->
+    <a href="/karfa/"
+      class="navbar__cart-link"
+      role="button" 
+      data-bs-toggle="tooltip" 
+      data-bs-placement="top"
+      data-bs-title="Karfa" 
+      data-bs-custom-class="custom-tooltip"
+    >
+      
+      <!-- Cart Item Count Badge (shows only if there are items in the cart) -->
+      
+      <div id="cart_count_badge"
+           hx-get="/karfa/badge/"
+           hx-trigger="load"
+           hx-swap="outerHTML">
+        
+      </div>
+      <!-- Cart Icon SVG -->
+      <svg xmlns="http://www.w3.org/2000/svg" class="nav-icons" width="16" height="17" viewBox="0 0 16 17" fill="none">
+        <g clip-path="url(#clip0_10267_44023)">
+          <path fill-rule="evenodd" clip-rule="evenodd" d="M5.76941 0.811523L6.60804 1.28356L3.86884 6.28113H12.0881L9.34892 1.28357L10.1875 0.811535L13.1855 6.28113H14.8778C15.2191 6.28113 15.5441 6.4394 15.7567 6.70796C15.9697 6.97696 16.0486 7.32633 15.9704 7.66208L14.0982 15.7737C13.9842 16.2904 13.5307 16.6508 13.0048 16.6508H3.01586C2.49403 16.6508 2.0366 16.2821 1.9227 15.7747L0.050429 7.66256L0.0502714 7.66188C-0.0278517 7.32619 0.0510207 6.9769 0.263962 6.70796C0.4766 6.4394 0.801549 6.28113 1.14293 6.28113H2.77148L5.76941 0.811523ZM1.14293 7.28113C1.10972 7.28113 1.07257 7.29764 1.04797 7.32871C1.02382 7.35922 1.01525 7.39666 1.02426 7.4353L1.02454 7.43649L2.89838 15.5555C2.91021 15.6087 2.96411 15.6508 3.01586 15.6508H13.0048C13.0647 15.6508 13.1097 15.6134 13.1218 15.5577L13.1232 15.5515L14.9964 7.4353C15.0054 7.39666 14.9969 7.35922 14.9727 7.32871C14.9481 7.29764 14.911 7.28113 14.8778 7.28113H1.14293Z" />
+          <path d="M7.49992 9.16394H8.49992V13.8332H7.49992V9.16394Z"/>
+          <path d="M3.77222 9.22795L4.76688 9.1248L5.24851 13.7692L4.25385 13.8723L3.77222 9.22795Z" />
+          <path d="M10.6368 13.7692L11.6315 13.8723L12.1131 9.22795L11.1184 9.1248L10.6368 13.7692Z" />
+        </g>
+        <defs>
+          <clipPath id="clip0_10267_44023">
+            <rect width="16" height="16" fill="white" transform="translate(0 0.5)"/>
+          </clipPath>
+        </defs>
+      </svg>
+    </a>
+  </div>
+
+
+          
+          <!-- Navbar Toggle Button for Collapsing the Navigation Menu -->
+          <button 
+            class="navbar__mobile-buttons navbar-mobile-button navbar-mobile-button--hamburger nav-link align-items-center justify-content-center px-0 ms-2" 
+            type="button" 
+            @click="isNavbarCollapsed = !isNavbarCollapsed"
+            aria-controls="navbarCollapse" 
+            :aria-expanded="isNavbarCollapsed.toString()"
+            aria-label="Toggle navigation" 
+          >
+            <!-- Hamburger Menu Icon SVG -->
+            <svg xmlns="http://www.w3.org/2000/svg" class="nav-icons" width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path fill-rule="evenodd" clip-rule="evenodd"
+                d="M0 8.00033C0 6.71167 1.04467 5.66699 2.33333 5.66699C3.622 5.66699 4.66667 6.71167 4.66667 8.00033C4.66667 9.28898 3.622 10.3337 2.33333 10.3337C1.04467 10.3337 0 9.28898 0 8.00033ZM2.33333 7.00033C1.78105 7.00033 1.33333 7.44805 1.33333 8.00033C1.33333 8.5526 1.78105 9.00033 2.33333 9.00033C2.88562 9.00033 3.33333 8.5526 3.33333 8.00033C3.33333 7.44805 2.88562 7.00033 2.33333 7.00033ZM5.66667 8.00033C5.66667 6.71167 6.71134 5.66699 8 5.66699C9.28866 5.66699 10.3333 6.71167 10.3333 8.00033C10.3333 9.28898 9.28866 10.3337 8 10.3337C6.71134 10.3337 5.66667 9.28898 5.66667 8.00033ZM8 7.00033C7.44772 7.00033 7 7.44805 7 8.00033C7 8.5526 7.44772 9.00033 8 9.00033C8.55228 9.00033 9 8.5526 9 8.00033C9 7.44805 8.55228 7.00033 8 7.00033ZM11.3333 8.00033C11.3333 6.71167 12.378 5.66699 13.6667 5.66699C14.9553 5.66699 16 6.71167 16 8.00033C16 9.28898 14.9553 10.3337 13.6667 10.3337C12.378 10.3337 11.3333 9.28898 11.3333 8.00033ZM13.6667 7.00033C13.1144 7.00033 12.6667 7.44805 12.6667 8.00033C12.6667 8.5526 13.1144 9.00033 13.6667 9.00033C14.2189 9.00033 14.6667 8.5526 14.6667 8.00033C14.6667 7.44805 14.2189 7.00033 13.6667 7.00033Z"
+                fill="white" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Search Collapse Section (toggles visibility based on Alpine.js state) -->
+      <div
+        id="navbarSearchCollapse" 
+        x-show="isNavbarSearchCollapsed"
+        x-cloak
+        x-transition
+        class="navbar__mobile-search"
+      >
+        
+
+  <div class="navbar__search-form">
+    <form class="w-100" role="search" action="/leita/" method="GET">
+      <div class="input-group p-2 search-box-container">
+        <span class="input-group-text border-0 nav-searchbox__icon-box">
+          
+
+  
+  <svg class="icon-S  nav-icons" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="#023B76">
+    <g clip-path="url(#clip0_1_54)">
+      <path fill-rule="evenodd" clip-rule="evenodd" d="M0 10C0 4.47716 4.47716 0 10 0C15.5229 0 20 4.47716 20 10C20 15.5229 15.5229 20 10 20C4.47716 20 0 15.5229 0 10ZM10 2C5.58172 2 2 5.58172 2 10C2 14.4183 5.58172 18 10 18C14.4183 18 18 14.4183 18 10C18 5.58172 14.4183 2 10 2Z" />
+      <path fill-rule="evenodd" clip-rule="evenodd" d="M22.2929 23.7071L15.6569 17.0711L17.0711 15.6569L23.7071 22.2929L22.2929 23.7071Z" />
+    </g>
+    <defs>
+      <clipPath id="clip0_1_54">
+        <rect width="24" height="24" fill="white" />
+      </clipPath>
+    </defs>
+  </svg>
+    
+  
+
+
+        </span>
+        <input type="hidden" name="updateFacets" value="nav_search">
+        <input type="search" class="border-0 form-control nav-searchbox" placeholder="Leita að vöru" name="q" id="searchbox" oninput="if (!window.__cfRLUnblockHandlers) return false; if (!this.value) { const panel = document.getElementById('nav-autocomplete-panel'); if (panel) panel.innerHTML = ''; document.body.classList.remove('no-scroll'); }" hx-get="/leita/autocomplete/" hx-target="#nav-autocomplete-panel" hx-trigger="keyup changed delay:250ms" hx-sync="this:abort" hx-params="q" aria-label="Search" aria-describedby="button-addon2" data-cf-modified-aaa65416e23dca4f85a8450b-="">
+      </div>
+    </form>
+  </div>
+
+
+      </div>
+
+
+      <!-- Collapsible Navigation Menu (toggles visibility based on Alpine.js state) -->
+      <div 
+        class="mobile-menu" 
+        id="navbarCollapse" 
+        x-show="isNavbarCollapsed"
+        x-cloak
+        x-transition
+      >
+
+        
+
+
+ 
+        
+
+
+  <div class="navbar__links-wrapper"
+    x-data="{
+      activeItem: null,
+      toggleOpen(activeItem) {
+        if (activeItem !== this.activeItem) {
+          this.activeItem = activeItem;
+        } else {
+          this.activeItem = null
+        }
+      }
+    }"
+    x-init="$watch('activeItem', value => {
+      document.body.className = !!value ? 'no-scroll' : ''
+    })">
+    <div class="navbar__links-wrapper navbar__mega-menu flex align-strech">
+      <div class="navbar__single-link nav-item d-flex align-items-center nav-item-customized">
+        <span class="nav-link"
+          aria-current="page"
+          hx-get="/get-category-children/?cat_id=2178&menu_type=grid&id=mobile_children_cat&href=/"
+          hx-target="#mobile_children_cat"
+          hx-swap="innerHTML"
+          @click="toggleOpen('2178')">Vörulisti</span>
+      </div>
+
+      <div draggable=""
+        class="navbar__mega-menu-container container grid-mega-menu grid-mega-menu--fit-height grid-mega-menu-wraper"
+        style="top: var(--desktop-mega-menu-top, 0px)"
+        x-show="activeItem !== null"
+        @click.outside="activeItem = null"
+        x-cloak>
+        <div id="mobile_children_cat" class="navbar__mega-menu-container-items grid-swap-container"></div>
+      </div>
+    </div>
+  </div>
+
+ 
+        
+
+ 
+        <div class="navbar__links-wrapper">
+  <!-- Conditional Rendering of Navigation Items based on Settings -->
+  
+</div>
+
+
+        
+        <!-- Main Menu (Visible based on settings and if navigation is not shown) -->
+        
+          
+<ul class="navbar-nav me-auto mb-2 mb-md-0 d-flex align-items-md-center menu_items ">
+    
+    <li class="navbar__single-link nav-item d-flex align-items-center nav-item-customized">
+        <a class="nav-link active fs-6" aria-current="page"
+        href="/framleidendur/">Framleiðendur</a></li>
+    
+    <li class="navbar__single-link nav-item d-flex align-items-center nav-item-customized">
+        <a class="nav-link active fs-6" aria-current="page"
+        href="/stadsetningar/">Staðsetningar</a></li>
+    
+    <li class="navbar__single-link nav-item d-flex align-items-center nav-item-customized">
+        <a class="nav-link active fs-6" aria-current="page"
+        href="/starfsfolk/">Starfsfólk</a></li>
+    
+</ul>
+
+        
+
+
+        <div class="navbar__elements-icon-links">
+   
+  
+
+  
+
+  <!-- Profile/User Dropdown Navigation Icon (visible based on settings) -->
+  
+    
+    <div 
+      
+      class="position-relative"
+    >
+      <a 
+        href="/audkenni/innskraning/"
+        role="button"
+        aria-haspopup="true"
+        class="navbar__elements-icon-links-link"
+      >
+        <!-- Login Icon SVG -->
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="17" viewBox="0 0 16 17" fill="none">
+          <path fill-rule="evenodd" clip-rule="evenodd" d="M8.79747 3.08633C8.41712 2.92862 7.99371 2.88663 7.58941 2.96563C7.18829 3.04401 6.81741 3.24269 6.52417 3.53593C6.23094 3.82916 6.03226 4.20005 5.95388 4.60116C5.87488 5.00546 5.91687 5.42887 6.07457 5.80922C6.23264 6.19044 6.50227 6.51972 6.84354 6.74569L6.84743 6.74827C7.19266 6.98153 7.59025 7.10546 7.99967 7.10546C8.55061 7.10546 9.08515 6.88271 9.47518 6.49268L9.47728 6.49059C9.86925 6.10323 10.088 5.57066 10.088 5.01718C10.088 4.60712 9.96366 4.20302 9.73523 3.85724C9.50096 3.51132 9.17531 3.24299 8.79747 3.08633ZM7.39763 1.98419C7.99414 1.86763 8.61755 1.92917 9.18049 2.16258C9.74523 2.39675 10.2243 2.79491 10.5651 3.29932L10.5677 3.30318C10.9022 3.80823 11.088 4.4042 11.088 5.01718C11.088 5.83213 10.7664 6.62199 10.1812 7.20083C9.60507 7.77645 8.81716 8.10546 7.99967 8.10546C7.38607 8.10546 6.79508 7.91925 6.28947 7.57816C5.78043 7.24052 5.38358 6.75357 5.15083 6.19223C4.91742 5.62929 4.85588 5.00589 4.97244 4.40939C5.08962 3.8097 5.38558 3.2603 5.81707 2.82882C6.24855 2.39734 6.79795 2.10137 7.39763 1.98419ZM4.56847 10.757C3.76925 11.3567 3.32324 12.1846 3.32324 13.1546V13.2987H12.6764V13.1546C12.6764 12.1846 12.2304 11.3567 11.4311 10.757C10.6231 10.1506 9.44138 9.77213 7.99981 9.77213C6.55823 9.77213 5.37654 10.1506 4.56847 10.757ZM3.96827 9.95713C4.98637 9.19315 6.39296 8.77213 7.99981 8.77213C9.60666 8.77213 11.0132 9.19315 12.0314 9.95713C13.0583 10.7278 13.6764 11.8411 13.6764 13.1546V14.2987H2.32324V13.1546C2.32324 11.8411 2.94131 10.7278 3.96827 9.95713Z"/>
+        </svg>
+        <span class="navbar__elements-icon-links-label">Innskrá</span>
+      </a>
+    </div>
+    
+  
+</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div id="nav-autocomplete-panel"></div>
+    </div>
+  </div>
+</div>
+
+        
+        
+
+
+  
+<div class="page-hero-block">
+  
+    
+      <div class="page-hero-block__image ">
+        <img alt="0R1A5852-Edit" height="933" src="https://varaldur-prod.fra1.cdn.digitaloceanspaces.com/varaldur-prod/media/images/0R1A5852-Edit.max-1400x1400.jpg" width="1400">
+        
+          
+
+<div class="card-cta cta-hero">
+  <div class="card-cta--content">
+    
+    <h1 class="headlines-6">Johan Rönning</h1>
+    <p class="body-3">Leiðandi í lausnum</p>
+  </div>
+  <div class="card-cta--button">
+    
+    
+  </div>
+</div>
+        
+      </div>
+    
+  
+
+
+  
+    <div class="page-hero-block__content container ">
+      <div class="page-hero-block__second-image  page-hero-block__second-image--no-image ">
+        
+      </div>
+      <div class="page-hero-block__section">
+        
+          <div class="page-hero-block__logo-repeaters">
+            
+              <div class="page-hero-block__logo-item">
+                
+              </div>
+            
+          </div>
+        
+        <div class="page-hero-block__section-content">
+        
+        
+        </div>
+      </div>
+    </div>
+  
+</div>
+<script type="aaa65416e23dca4f85a8450b-text/javascript">
+const cta = document.querySelector('.cta-hero');
+const content = document.querySelector('.page-hero-block__content');
+if (cta && content) {
+  const height = cta.offsetHeight;
+  
+  if (window.innerWidth < 992) {
+    content.style.marginTop = `${height - 50}px`;
+  } else {
+    content.style.marginTop = `${height}px`;
+  }
+  
+  // Update on resize
+  window.addEventListener('resize', () => {
+    const newHeight = cta.offsetHeight;
+    if (window.innerWidth < 992) {
+      content.style.marginTop = `${newHeight - 50}px`;
+    } else {
+      content.style.marginTop = `${newHeight}px`;
+    }
+  });
+}
+</script>
+
+  
+
+
+
+<div class="img-text-block img-text-block--portrait  container">
+    <div class="img-text-block--content">
+        
+<div class="portrait-img-text-block--text-content title-content-cta">
+    
+      <h1 class="headlines-5">Fjölbreyttar lausnir fyrir rafiðnaðinn</h1>
+    
+    
+    
+      <div class="body-3 custom-text-block"><p data-block-key="rynbk">Johan Rönning er leiðandi heildverslun í rafmagns- og tækniiðnaði, sem þjónustar aðallega fagmarkaðinn. Fyrirtækið býður fjölbreytt úrval af rafmagns- og lagnakerfum, netbúnaði, hitalausnum, lýsingar- og öryggisbúnaði, auk sérhæfðra stýri- og hússtjórnarkerfa. Johan Rönning leggur áherslu á gæðavörur, faglega ráðgjöf og sérhæfða þjónustu fyrir fjölbreyttar framkvæmdir um allt land.</p></div>
+    
+    
+    
+  </div>
+    </div>
+    <div class="img-text-block--image img-text-block--image--portrait ">
+        
+            
+                <img alt="3_L5000" height="545" src="https://varaldur-prod.fra1.cdn.digitaloceanspaces.com/varaldur-prod/media/images/3_L5000.original.jpg" width="904">
+            
+        
+    </div>
+</div>
+
+
+  
+<div class="container position-relative py-5 my-5 specials-carousel-container">
+  <h4 class="carousel-title pb-5">Nýjar vörur</h4>
+  <div class="specials-swiper">
+    <div class="swiper-wrapper">
+      
+      <div class="swiper-slide d-flex align-items-stretch">
+        
+
+<div class="product-card mb-4" ts_id="" x-data="{ open: false, anim: false, copied: false }" @mouseover.away="open = false" x-on:mouseover="open = true">
+    <div class="h-100 pb-1">
+        <div class="product-card--wrapper h-100">
+            
+            
+                <a href="/vara/M%203385/" preload="mouseover">
+                    
+                    <img src="https://varaldur-prod.fra1.cdn.digitaloceanspaces.com/varaldur-prod/media/thumbnails/pim_images/3385.png.500x500_q85_background-%23fff_upscale.png" width="500" loading="lazy" class="card-img-top" alt="...">
+                </a>
+            
+            
+
+            <div class="product-card--body">
+                <div>
+                    <a class="product-card--body--title" href="/vara/M%203385/">CEE Tengill 16A 5P f Tenglakas</a>
+                    
+                    
+                        
+                            
+                        
+                    
+                </div>
+
+                
+                    <a 
+                        style="cursor: pointer;" 
+                        hx-post="/karfa/add/?product=M 3385&quantity=1" 
+                        hx-target="#cartToastBody"
+                        class="add-to-cart-btn add-to-cart-btn-normal mt-3"
+                        :class="{'add-to-cart-btn-hover': open, '': !open }"
+                    >Setja í körfu</a>
+                
+            </div>
+
+            <div class="mt-2 fs-7">
+                <div x-show="!copied">
+                    <p x-cloak x-show="open" style="cursor: pointer;" class="d-block font-monospace text-center" @click="copied = true; setTimeout(() => {copied = false; open = true;}, 1000);" onclick="if (!window.__cfRLUnblockHandlers) return false; navigator.clipboard.writeText('M 3385');" data-cf-modified-aaa65416e23dca4f85a8450b-="">
+                        M 3385
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none">
+                            <path d="M21.4142 1.58582C21.0391 1.2107 20.5304 1 20 1H8C7.46948 1 6.96094 1.21069 6.58582 1.58575C6.2107 1.96087 6 2.4696 6 3V7H4C3.64429 7 3.30237 7.10205 3 7.27753C2.85132 7.36377 2.70947 7.46216 2.58582 7.58576C2.2107 7.96088 2 8.46961 2 9.00001V21C2 21.5304 2.21069 22.0391 2.58582 22.4142C2.96095 22.7892 3.46949 23 4 23H15.9937C17.1018 23 18 22.1017 18 20.9937V17H19.9937C21.1018 17 22 16.1017 22 14.9937V3C22 2.4696 21.7893 1.96088 21.4142 1.58582ZM16 21H4V9H16V21ZM20 15H18V9C18 8.4696 17.7893 7.96088 17.4142 7.58582C17.0391 7.2107 16.5304 7 16 7H8V3H20V15Z" fill="black"/>
+                        </svg>
+                    </p>
+                </div>
+                <div x-cloak x-show="copied">
+                    <p class="text-center font-monospace">Afritað!</p>
+                </div>
+
+                
+            </div>
+        </div>
+    </div>
+</div>
+
+
+      </div>
+      
+      <div class="swiper-slide d-flex align-items-stretch">
+        
+
+<div class="product-card mb-4" ts_id="" x-data="{ open: false, anim: false, copied: false }" @mouseover.away="open = false" x-on:mouseover="open = true">
+    <div class="h-100 pb-1">
+        <div class="product-card--wrapper h-100">
+            
+            
+                <a href="/vara/665885330/" preload="mouseover">
+                    
+                    <img src="https://varaldur-prod.fra1.cdn.digitaloceanspaces.com/varaldur-prod/media/thumbnails/pim_images/img_MhMHmCA.png.500x500_q85_background-%23fff_upscale.jpg" width="500" loading="lazy" class="card-img-top" alt="...">
+                </a>
+            
+            
+
+            <div class="product-card--body">
+                <div>
+                    <a class="product-card--body--title" href="/vara/665885330/">Vínkill RapidStrut - 135° 2 boltar </a>
+                    
+                    
+                        
+                            
+                        
+                    
+                </div>
+
+                
+                    <a 
+                        style="cursor: pointer;" 
+                        hx-post="/karfa/add/?product=665885330&quantity=1" 
+                        hx-target="#cartToastBody"
+                        class="add-to-cart-btn add-to-cart-btn-normal mt-3"
+                        :class="{'add-to-cart-btn-hover': open, '': !open }"
+                    >Setja í körfu</a>
+                
+            </div>
+
+            <div class="mt-2 fs-7">
+                <div x-show="!copied">
+                    <p x-cloak x-show="open" style="cursor: pointer;" class="d-block font-monospace text-center" @click="copied = true; setTimeout(() => {copied = false; open = true;}, 1000);" onclick="if (!window.__cfRLUnblockHandlers) return false; navigator.clipboard.writeText('665885330');" data-cf-modified-aaa65416e23dca4f85a8450b-="">
+                        665885330
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none">
+                            <path d="M21.4142 1.58582C21.0391 1.2107 20.5304 1 20 1H8C7.46948 1 6.96094 1.21069 6.58582 1.58575C6.2107 1.96087 6 2.4696 6 3V7H4C3.64429 7 3.30237 7.10205 3 7.27753C2.85132 7.36377 2.70947 7.46216 2.58582 7.58576C2.2107 7.96088 2 8.46961 2 9.00001V21C2 21.5304 2.21069 22.0391 2.58582 22.4142C2.96095 22.7892 3.46949 23 4 23H15.9937C17.1018 23 18 22.1017 18 20.9937V17H19.9937C21.1018 17 22 16.1017 22 14.9937V3C22 2.4696 21.7893 1.96088 21.4142 1.58582ZM16 21H4V9H16V21ZM20 15H18V9C18 8.4696 17.7893 7.96088 17.4142 7.58582C17.0391 7.2107 16.5304 7 16 7H8V3H20V15Z" fill="black"/>
+                        </svg>
+                    </p>
+                </div>
+                <div x-cloak x-show="copied">
+                    <p class="text-center font-monospace">Afritað!</p>
+                </div>
+
+                
+            </div>
+        </div>
+    </div>
+</div>
+
+
+      </div>
+      
+      <div class="swiper-slide d-flex align-items-stretch">
+        
+
+<div class="product-card mb-4" ts_id="" x-data="{ open: false, anim: false, copied: false }" @mouseover.away="open = false" x-on:mouseover="open = true">
+    <div class="h-100 pb-1">
+        <div class="product-card--wrapper h-100">
+            
+            
+                <a href="/vara/665885235/" preload="mouseover">
+                    
+                    <img src="https://varaldur-prod.fra1.cdn.digitaloceanspaces.com/varaldur-prod/media/thumbnails/pim_images/H2854.png.500x500_q85_background-%23fff_upscale.png" width="500" loading="lazy" class="card-img-top" alt="...">
+                </a>
+            
+            
+
+            <div class="product-card--body">
+                <div>
+                    <a class="product-card--body--title" href="/vara/665885235/">Vínkill RapidStrut - 135° 2+2 boltar </a>
+                    
+                    
+                        
+                            
+                        
+                    
+                </div>
+
+                
+                    <a 
+                        style="cursor: pointer;" 
+                        hx-post="/karfa/add/?product=665885235&quantity=1" 
+                        hx-target="#cartToastBody"
+                        class="add-to-cart-btn add-to-cart-btn-normal mt-3"
+                        :class="{'add-to-cart-btn-hover': open, '': !open }"
+                    >Setja í körfu</a>
+                
+            </div>
+
+            <div class="mt-2 fs-7">
+                <div x-show="!copied">
+                    <p x-cloak x-show="open" style="cursor: pointer;" class="d-block font-monospace text-center" @click="copied = true; setTimeout(() => {copied = false; open = true;}, 1000);" onclick="if (!window.__cfRLUnblockHandlers) return false; navigator.clipboard.writeText('665885235');" data-cf-modified-aaa65416e23dca4f85a8450b-="">
+                        665885235
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none">
+                            <path d="M21.4142 1.58582C21.0391 1.2107 20.5304 1 20 1H8C7.46948 1 6.96094 1.21069 6.58582 1.58575C6.2107 1.96087 6 2.4696 6 3V7H4C3.64429 7 3.30237 7.10205 3 7.27753C2.85132 7.36377 2.70947 7.46216 2.58582 7.58576C2.2107 7.96088 2 8.46961 2 9.00001V21C2 21.5304 2.21069 22.0391 2.58582 22.4142C2.96095 22.7892 3.46949 23 4 23H15.9937C17.1018 23 18 22.1017 18 20.9937V17H19.9937C21.1018 17 22 16.1017 22 14.9937V3C22 2.4696 21.7893 1.96088 21.4142 1.58582ZM16 21H4V9H16V21ZM20 15H18V9C18 8.4696 17.7893 7.96088 17.4142 7.58582C17.0391 7.2107 16.5304 7 16 7H8V3H20V15Z" fill="black"/>
+                        </svg>
+                    </p>
+                </div>
+                <div x-cloak x-show="copied">
+                    <p class="text-center font-monospace">Afritað!</p>
+                </div>
+
+                
+            </div>
+        </div>
+    </div>
+</div>
+
+
+      </div>
+      
+      <div class="swiper-slide d-flex align-items-stretch">
+        
+
+<div class="product-card mb-4" ts_id="" x-data="{ open: false, anim: false, copied: false }" @mouseover.away="open = false" x-on:mouseover="open = true">
+    <div class="h-100 pb-1">
+        <div class="product-card--wrapper h-100">
+            
+            
+                <a href="/vara/96701909/" preload="mouseover">
+                    
+                    <img src="https://varaldur-prod.fra1.cdn.digitaloceanspaces.com/varaldur-prod/media/thumbnails/pim_images/TE_ANNA_F_60_mount_box_persp.png.500x500_q85_background-%23fff_upscale.png" width="500" loading="lazy" class="card-img-top" alt="...">
+                </a>
+            
+            
+
+            <div class="product-card--body">
+                <div>
+                    <a class="product-card--body--title" href="/vara/96701909/">Rammi utanáliggjandi f. Anna Vario Hæð: 7cm Stærð:600x600x70mm</a>
+                    
+                    
+                        
+                            
+                        
+                    
+                </div>
+
+                
+                    <a 
+                        style="cursor: pointer;" 
+                        hx-post="/karfa/add/?product=96701909&quantity=1" 
+                        hx-target="#cartToastBody"
+                        class="add-to-cart-btn add-to-cart-btn-normal mt-3"
+                        :class="{'add-to-cart-btn-hover': open, '': !open }"
+                    >Setja í körfu</a>
+                
+            </div>
+
+            <div class="mt-2 fs-7">
+                <div x-show="!copied">
+                    <p x-cloak x-show="open" style="cursor: pointer;" class="d-block font-monospace text-center" @click="copied = true; setTimeout(() => {copied = false; open = true;}, 1000);" onclick="if (!window.__cfRLUnblockHandlers) return false; navigator.clipboard.writeText('96701909');" data-cf-modified-aaa65416e23dca4f85a8450b-="">
+                        96701909
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none">
+                            <path d="M21.4142 1.58582C21.0391 1.2107 20.5304 1 20 1H8C7.46948 1 6.96094 1.21069 6.58582 1.58575C6.2107 1.96087 6 2.4696 6 3V7H4C3.64429 7 3.30237 7.10205 3 7.27753C2.85132 7.36377 2.70947 7.46216 2.58582 7.58576C2.2107 7.96088 2 8.46961 2 9.00001V21C2 21.5304 2.21069 22.0391 2.58582 22.4142C2.96095 22.7892 3.46949 23 4 23H15.9937C17.1018 23 18 22.1017 18 20.9937V17H19.9937C21.1018 17 22 16.1017 22 14.9937V3C22 2.4696 21.7893 1.96088 21.4142 1.58582ZM16 21H4V9H16V21ZM20 15H18V9C18 8.4696 17.7893 7.96088 17.4142 7.58582C17.0391 7.2107 16.5304 7 16 7H8V3H20V15Z" fill="black"/>
+                        </svg>
+                    </p>
+                </div>
+                <div x-cloak x-show="copied">
+                    <p class="text-center font-monospace">Afritað!</p>
+                </div>
+
+                
+            </div>
+        </div>
+    </div>
+</div>
+
+
+      </div>
+      
+      <div class="swiper-slide d-flex align-items-stretch">
+        
+
+<div class="product-card mb-4" ts_id="" x-data="{ open: false, anim: false, copied: false }" @mouseover.away="open = false" x-on:mouseover="open = true">
+    <div class="h-100 pb-1">
+        <div class="product-card--wrapper h-100">
+            
+            
+                <a href="/vara/2170240_M/" preload="mouseover">
+                    
+                    <img src="https://varaldur-prod.fra1.cdn.digitaloceanspaces.com/varaldur-prod/media/thumbnails/pim_images/57AF1352-9132-4C6D-A9B8-2087FC90A09F.jpeg.1000x1000_q85.jpg.500x500_q85_background-%23fff_upscale.jpg" width="500" loading="lazy" class="card-img-top" alt="...">
+                </a>
+            
+            
+
+            <div class="product-card--body">
+                <div>
+                    <a class="product-card--body--title" href="/vara/2170240_M/">Instabus strengur 2x2x0,8mm² mældur</a>
+                    
+                    
+                        
+                            
+                        
+                    
+                </div>
+
+                
+                    <a 
+                        style="cursor: pointer;" 
+                        hx-post="/karfa/add/?product=2170240_M&quantity=1" 
+                        hx-target="#cartToastBody"
+                        class="add-to-cart-btn add-to-cart-btn-normal mt-3"
+                        :class="{'add-to-cart-btn-hover': open, '': !open }"
+                    >Setja í körfu</a>
+                
+            </div>
+
+            <div class="mt-2 fs-7">
+                <div x-show="!copied">
+                    <p x-cloak x-show="open" style="cursor: pointer;" class="d-block font-monospace text-center" @click="copied = true; setTimeout(() => {copied = false; open = true;}, 1000);" onclick="if (!window.__cfRLUnblockHandlers) return false; navigator.clipboard.writeText('2170240_M');" data-cf-modified-aaa65416e23dca4f85a8450b-="">
+                        2170240_M
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none">
+                            <path d="M21.4142 1.58582C21.0391 1.2107 20.5304 1 20 1H8C7.46948 1 6.96094 1.21069 6.58582 1.58575C6.2107 1.96087 6 2.4696 6 3V7H4C3.64429 7 3.30237 7.10205 3 7.27753C2.85132 7.36377 2.70947 7.46216 2.58582 7.58576C2.2107 7.96088 2 8.46961 2 9.00001V21C2 21.5304 2.21069 22.0391 2.58582 22.4142C2.96095 22.7892 3.46949 23 4 23H15.9937C17.1018 23 18 22.1017 18 20.9937V17H19.9937C21.1018 17 22 16.1017 22 14.9937V3C22 2.4696 21.7893 1.96088 21.4142 1.58582ZM16 21H4V9H16V21ZM20 15H18V9C18 8.4696 17.7893 7.96088 17.4142 7.58582C17.0391 7.2107 16.5304 7 16 7H8V3H20V15Z" fill="black"/>
+                        </svg>
+                    </p>
+                </div>
+                <div x-cloak x-show="copied">
+                    <p class="text-center font-monospace">Afritað!</p>
+                </div>
+
+                
+            </div>
+        </div>
+    </div>
+</div>
+
+
+      </div>
+      
+      <div class="swiper-slide d-flex align-items-stretch">
+        
+
+<div class="product-card mb-4" ts_id="" x-data="{ open: false, anim: false, copied: false }" @mouseover.away="open = false" x-on:mouseover="open = true">
+    <div class="h-100 pb-1">
+        <div class="product-card--wrapper h-100">
+            
+            
+                <a href="/vara/10239871/" preload="mouseover">
+                    
+                    <img src="https://varaldur-prod.fra1.cdn.digitaloceanspaces.com/varaldur-prod/media/thumbnails/pim_images/10239871_y2rniWz.jpg.500x500_q85_background-%23fff_upscale.jpg" width="500" loading="lazy" class="card-img-top" alt="...">
+                </a>
+            
+            
+
+            <div class="product-card--body">
+                <div>
+                    <a class="product-card--body--title" href="/vara/10239871/">Benning EV 3-3 Prufutæki hleðslustöðva</a>
+                    
+                    
+                        
+                            
+                        
+                    
+                </div>
+
+                
+                    
+                        <a href="/vara/10239871/" class="add-to-cart-btn add-to-cart-btn-normal mt-3">Sérpöntun</a>
+                    
+                
+            </div>
+
+            <div class="mt-2 fs-7">
+                <div x-show="!copied">
+                    <p x-cloak x-show="open" style="cursor: pointer;" class="d-block font-monospace text-center" @click="copied = true; setTimeout(() => {copied = false; open = true;}, 1000);" onclick="if (!window.__cfRLUnblockHandlers) return false; navigator.clipboard.writeText('10239871');" data-cf-modified-aaa65416e23dca4f85a8450b-="">
+                        10239871
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none">
+                            <path d="M21.4142 1.58582C21.0391 1.2107 20.5304 1 20 1H8C7.46948 1 6.96094 1.21069 6.58582 1.58575C6.2107 1.96087 6 2.4696 6 3V7H4C3.64429 7 3.30237 7.10205 3 7.27753C2.85132 7.36377 2.70947 7.46216 2.58582 7.58576C2.2107 7.96088 2 8.46961 2 9.00001V21C2 21.5304 2.21069 22.0391 2.58582 22.4142C2.96095 22.7892 3.46949 23 4 23H15.9937C17.1018 23 18 22.1017 18 20.9937V17H19.9937C21.1018 17 22 16.1017 22 14.9937V3C22 2.4696 21.7893 1.96088 21.4142 1.58582ZM16 21H4V9H16V21ZM20 15H18V9C18 8.4696 17.7893 7.96088 17.4142 7.58582C17.0391 7.2107 16.5304 7 16 7H8V3H20V15Z" fill="black"/>
+                        </svg>
+                    </p>
+                </div>
+                <div x-cloak x-show="copied">
+                    <p class="text-center font-monospace">Afritað!</p>
+                </div>
+
+                
+            </div>
+        </div>
+    </div>
+</div>
+
+
+      </div>
+      
+      <div class="swiper-slide d-flex align-items-stretch">
+        
+
+<div class="product-card mb-4" ts_id="" x-data="{ open: false, anim: false, copied: false }" @mouseover.away="open = false" x-on:mouseover="open = true">
+    <div class="h-100 pb-1">
+        <div class="product-card--wrapper h-100">
+            
+            
+                <a href="/vara/11001243/" preload="mouseover">
+                    
+                    <img src="https://varaldur-prod.fra1.cdn.digitaloceanspaces.com/varaldur-prod/media/thumbnails/pim_images/11001243_nXHSZ8c.jpg.500x500_q85_background-%23fff_upscale.jpg" width="500" loading="lazy" class="card-img-top" alt="...">
+                </a>
+            
+            
+
+            <div class="product-card--body">
+                <div>
+                    <a class="product-card--body--title" href="/vara/11001243/">Benning EV 3-1 Handprufutæki hleðslustöðva</a>
+                    
+                    
+                        
+                            
+                        
+                    
+                </div>
+
+                
+                    
+                        <a href="/vara/11001243/" class="add-to-cart-btn add-to-cart-btn-normal mt-3">Sérpöntun</a>
+                    
+                
+            </div>
+
+            <div class="mt-2 fs-7">
+                <div x-show="!copied">
+                    <p x-cloak x-show="open" style="cursor: pointer;" class="d-block font-monospace text-center" @click="copied = true; setTimeout(() => {copied = false; open = true;}, 1000);" onclick="if (!window.__cfRLUnblockHandlers) return false; navigator.clipboard.writeText('11001243');" data-cf-modified-aaa65416e23dca4f85a8450b-="">
+                        11001243
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none">
+                            <path d="M21.4142 1.58582C21.0391 1.2107 20.5304 1 20 1H8C7.46948 1 6.96094 1.21069 6.58582 1.58575C6.2107 1.96087 6 2.4696 6 3V7H4C3.64429 7 3.30237 7.10205 3 7.27753C2.85132 7.36377 2.70947 7.46216 2.58582 7.58576C2.2107 7.96088 2 8.46961 2 9.00001V21C2 21.5304 2.21069 22.0391 2.58582 22.4142C2.96095 22.7892 3.46949 23 4 23H15.9937C17.1018 23 18 22.1017 18 20.9937V17H19.9937C21.1018 17 22 16.1017 22 14.9937V3C22 2.4696 21.7893 1.96088 21.4142 1.58582ZM16 21H4V9H16V21ZM20 15H18V9C18 8.4696 17.7893 7.96088 17.4142 7.58582C17.0391 7.2107 16.5304 7 16 7H8V3H20V15Z" fill="black"/>
+                        </svg>
+                    </p>
+                </div>
+                <div x-cloak x-show="copied">
+                    <p class="text-center font-monospace">Afritað!</p>
+                </div>
+
+                
+            </div>
+        </div>
+    </div>
+</div>
+
+
+      </div>
+      
+      <div class="swiper-slide d-flex align-items-stretch">
+        
+
+<div class="product-card mb-4" ts_id="" x-data="{ open: false, anim: false, copied: false }" @mouseover.away="open = false" x-on:mouseover="open = true">
+    <div class="h-100 pb-1">
+        <div class="product-card--wrapper h-100">
+            
+            
+                <a href="/vara/STA501044/" preload="mouseover">
+                    
+                    <img src="https://varaldur-prod.fra1.cdn.digitaloceanspaces.com/varaldur-prod/media/thumbnails/pim_images/STA501044.png.500x500_q85_background-%23fff_upscale.jpg" width="500" loading="lazy" class="card-img-top" alt="...">
+                </a>
+            
+            
+
+            <div class="product-card--body">
+                <div>
+                    <a class="product-card--body--title" href="/vara/STA501044/">DATA umgjörð svart með miðju f. Keystone x 2 RAL9017 Stago</a>
+                    
+                    
+                        
+                            
+                        
+                    
+                </div>
+
+                
+                    <a 
+                        style="cursor: pointer;" 
+                        hx-post="/karfa/add/?product=STA501044&quantity=1" 
+                        hx-target="#cartToastBody"
+                        class="add-to-cart-btn add-to-cart-btn-normal mt-3"
+                        :class="{'add-to-cart-btn-hover': open, '': !open }"
+                    >Setja í körfu</a>
+                
+            </div>
+
+            <div class="mt-2 fs-7">
+                <div x-show="!copied">
+                    <p x-cloak x-show="open" style="cursor: pointer;" class="d-block font-monospace text-center" @click="copied = true; setTimeout(() => {copied = false; open = true;}, 1000);" onclick="if (!window.__cfRLUnblockHandlers) return false; navigator.clipboard.writeText('STA501044');" data-cf-modified-aaa65416e23dca4f85a8450b-="">
+                        STA501044
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none">
+                            <path d="M21.4142 1.58582C21.0391 1.2107 20.5304 1 20 1H8C7.46948 1 6.96094 1.21069 6.58582 1.58575C6.2107 1.96087 6 2.4696 6 3V7H4C3.64429 7 3.30237 7.10205 3 7.27753C2.85132 7.36377 2.70947 7.46216 2.58582 7.58576C2.2107 7.96088 2 8.46961 2 9.00001V21C2 21.5304 2.21069 22.0391 2.58582 22.4142C2.96095 22.7892 3.46949 23 4 23H15.9937C17.1018 23 18 22.1017 18 20.9937V17H19.9937C21.1018 17 22 16.1017 22 14.9937V3C22 2.4696 21.7893 1.96088 21.4142 1.58582ZM16 21H4V9H16V21ZM20 15H18V9C18 8.4696 17.7893 7.96088 17.4142 7.58582C17.0391 7.2107 16.5304 7 16 7H8V3H20V15Z" fill="black"/>
+                        </svg>
+                    </p>
+                </div>
+                <div x-cloak x-show="copied">
+                    <p class="text-center font-monospace">Afritað!</p>
+                </div>
+
+                
+            </div>
+        </div>
+    </div>
+</div>
+
+
+      </div>
+      
+      <div class="swiper-slide d-flex align-items-stretch">
+        
+
+<div class="product-card mb-4" ts_id="" x-data="{ open: false, anim: false, copied: false }" @mouseover.away="open = false" x-on:mouseover="open = true">
+    <div class="h-100 pb-1">
+        <div class="product-card--wrapper h-100">
+            
+            
+                <a href="/vara/538703/" preload="mouseover">
+                    
+                    <img src="https://varaldur-prod.fra1.cdn.digitaloceanspaces.com/varaldur-prod/media/thumbnails/pim_images/538703_GwvtAB4.jpg.500x500_q85_background-%23fff_upscale.jpg" width="500" loading="lazy" class="card-img-top" alt="...">
+                </a>
+            
+            
+
+            <div class="product-card--body">
+                <div>
+                    <a class="product-card--body--title" href="/vara/538703/">Vippa 2f. með 4 örvum S55 hvítt glans</a>
+                    
+                    
+                        
+                            
+                        
+                    
+                </div>
+
+                
+                    <a 
+                        style="cursor: pointer;" 
+                        hx-post="/karfa/add/?product=538703&quantity=1" 
+                        hx-target="#cartToastBody"
+                        class="add-to-cart-btn add-to-cart-btn-normal mt-3"
+                        :class="{'add-to-cart-btn-hover': open, '': !open }"
+                    >Setja í körfu</a>
+                
+            </div>
+
+            <div class="mt-2 fs-7">
+                <div x-show="!copied">
+                    <p x-cloak x-show="open" style="cursor: pointer;" class="d-block font-monospace text-center" @click="copied = true; setTimeout(() => {copied = false; open = true;}, 1000);" onclick="if (!window.__cfRLUnblockHandlers) return false; navigator.clipboard.writeText('538703');" data-cf-modified-aaa65416e23dca4f85a8450b-="">
+                        538703
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none">
+                            <path d="M21.4142 1.58582C21.0391 1.2107 20.5304 1 20 1H8C7.46948 1 6.96094 1.21069 6.58582 1.58575C6.2107 1.96087 6 2.4696 6 3V7H4C3.64429 7 3.30237 7.10205 3 7.27753C2.85132 7.36377 2.70947 7.46216 2.58582 7.58576C2.2107 7.96088 2 8.46961 2 9.00001V21C2 21.5304 2.21069 22.0391 2.58582 22.4142C2.96095 22.7892 3.46949 23 4 23H15.9937C17.1018 23 18 22.1017 18 20.9937V17H19.9937C21.1018 17 22 16.1017 22 14.9937V3C22 2.4696 21.7893 1.96088 21.4142 1.58582ZM16 21H4V9H16V21ZM20 15H18V9C18 8.4696 17.7893 7.96088 17.4142 7.58582C17.0391 7.2107 16.5304 7 16 7H8V3H20V15Z" fill="black"/>
+                        </svg>
+                    </p>
+                </div>
+                <div x-cloak x-show="copied">
+                    <p class="text-center font-monospace">Afritað!</p>
+                </div>
+
+                
+            </div>
+        </div>
+    </div>
+</div>
+
+
+      </div>
+      
+      <div class="swiper-slide d-flex align-items-stretch">
+        
+
+<div class="product-card mb-4" ts_id="" x-data="{ open: false, anim: false, copied: false }" @mouseover.away="open = false" x-on:mouseover="open = true">
+    <div class="h-100 pb-1">
+        <div class="product-card--wrapper h-100">
+            
+            
+                <a href="/vara/96638170/" preload="mouseover">
+                    
+                    <img src="https://varaldur-prod.fra1.cdn.digitaloceanspaces.com/varaldur-prod/media/thumbnails/pim_images/A710A4F9-7165-4813-A755-50EE4541F515.jpg.1000x1000_q85.jpg.500x500_q85_background-%23fff_upscale.jpg" width="500" loading="lazy" class="card-img-top" alt="...">
+                </a>
+            
+            
+
+            <div class="product-card--body">
+                <div>
+                    <a class="product-card--body--title" href="/vara/96638170/">AMY Vario Flex Gen. II 200 1950lm 830/35/40, IP44 Þvermál: 230mm (gatmál 190-215mm) Hæð:82mm</a>
+                    
+                    
+                        
+                            
+                        
+                    
+                </div>
+
+                
+                    <a 
+                        style="cursor: pointer;" 
+                        hx-post="/karfa/add/?product=96638170&quantity=1" 
+                        hx-target="#cartToastBody"
+                        class="add-to-cart-btn add-to-cart-btn-normal mt-3"
+                        :class="{'add-to-cart-btn-hover': open, '': !open }"
+                    >Setja í körfu</a>
+                
+            </div>
+
+            <div class="mt-2 fs-7">
+                <div x-show="!copied">
+                    <p x-cloak x-show="open" style="cursor: pointer;" class="d-block font-monospace text-center" @click="copied = true; setTimeout(() => {copied = false; open = true;}, 1000);" onclick="if (!window.__cfRLUnblockHandlers) return false; navigator.clipboard.writeText('96638170');" data-cf-modified-aaa65416e23dca4f85a8450b-="">
+                        96638170
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none">
+                            <path d="M21.4142 1.58582C21.0391 1.2107 20.5304 1 20 1H8C7.46948 1 6.96094 1.21069 6.58582 1.58575C6.2107 1.96087 6 2.4696 6 3V7H4C3.64429 7 3.30237 7.10205 3 7.27753C2.85132 7.36377 2.70947 7.46216 2.58582 7.58576C2.2107 7.96088 2 8.46961 2 9.00001V21C2 21.5304 2.21069 22.0391 2.58582 22.4142C2.96095 22.7892 3.46949 23 4 23H15.9937C17.1018 23 18 22.1017 18 20.9937V17H19.9937C21.1018 17 22 16.1017 22 14.9937V3C22 2.4696 21.7893 1.96088 21.4142 1.58582ZM16 21H4V9H16V21ZM20 15H18V9C18 8.4696 17.7893 7.96088 17.4142 7.58582C17.0391 7.2107 16.5304 7 16 7H8V3H20V15Z" fill="black"/>
+                        </svg>
+                    </p>
+                </div>
+                <div x-cloak x-show="copied">
+                    <p class="text-center font-monospace">Afritað!</p>
+                </div>
+
+                
+            </div>
+        </div>
+    </div>
+</div>
+
+
+      </div>
+      
+    </div>
+    <div class="swiper-pagination"></div>
+  </div>
+  <div class="swiper-button-prev"></div>
+  <div class="swiper-button-next"></div>
+</div>
+
+<script type="aaa65416e23dca4f85a8450b-text/javascript">
+(function() {
+  // Find the most recently added carousel container (this one)
+  var containers = document.querySelectorAll('.specials-carousel-container');
+  var container = containers[containers.length - 1];
+
+  if (!container || container.hasAttribute('data-swiper-init')) return;
+  container.setAttribute('data-swiper-init', 'true');
+
+  var carouselEl = container.querySelector('.specials-swiper');
+  var prevBtn = container.querySelector('.swiper-button-prev');
+  var nextBtn = container.querySelector('.swiper-button-next');
+  var pagination = container.querySelector('.swiper-pagination');
+
+  if (!carouselEl) return;
+
+  function initSwiper() {
+    var width = window.innerWidth;
+    var slidesPerView, spaceBetween;
+
+    if (width >= 1200) {
+      slidesPerView = 5;
+      spaceBetween = 30;
+    } else if (width >= 992){
+      slidesPerView = 4;
+      spaceBetween = 20;
+    } else if (width >= 768) {
+      slidesPerView = 3;
+      spaceBetween = 20;
+    } else {
+      slidesPerView = 2;
+      spaceBetween = 10;
+    }
+
+    if (carouselEl.swiper) {
+      carouselEl.swiper.destroy(true, true);
+    }
+
+    new Swiper(carouselEl, {
+      slidesPerView: slidesPerView,
+      spaceBetween: spaceBetween,
+      direction: 'horizontal',
+      loop: true,
+      navigation: {
+        nextEl: nextBtn,
+        prevEl: prevBtn,
+      },
+      pagination: {
+        el: pagination,
+        clickable: true,
+      },
+    });
+  }
+
+  initSwiper();
+
+  var resizeHandler = function() {
+    initSwiper();
+  };
+  window.addEventListener('resize', resizeHandler);
+})();
+</script>
+
+
+
+  <section class="container  global-separator--big">
+  
+</section>
+
+  
+<div class="cta-block container">
+  
+  
+  
+<div class="image-content-two-columns  image-content-two-columns--reverse">
+  <div class="image-content-two-columns--image">
+    
+      <img alt="Anný" height="5643" src="https://varaldur-prod.fra1.cdn.digitaloceanspaces.com/varaldur-prod/media/images/Anny.original.jpg" width="7524">
+    
+  </div>
+    
+    
+
+<div class="card-cta cta-default">
+  <div class="card-cta--content">
+    
+    <h1 class="headlines-6">Þekkir flesta viðskiptavinina með nafni</h1>
+    <p class="body-3"><p data-block-key="gcrkn">„Þegar ég byrjaði vorum við bara tvö í versluninni og ég var mikið til ein og þá kom oft dauður tími inn á milli. Það komu bara nokkrir rafvirkjar á morgnana, svo aðeins í hádeginu og þetta var miklu, miklu minna,“ segir Anný Björk Guðmundsdóttir, rekstrarstjóri hjá Johan Rönning á Selfossi<br/><br/> Lesa meira</p></p>
+  </div>
+  <div class="card-cta--button">
+    
+    
+      <a href="https://www.fagkaup.is/news/thekkir-flesta-vidskiptavini-med-nafni">
+        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" fill="none" class="arrow-next card-cta--next">
+<path fill-rule="evenodd" clip-rule="evenodd" d="M23.6095 7.05664L31.6095 15.0566C32.1302 15.5773 32.1302 16.4216 31.6095 16.9423L23.6095 24.9423L21.7239 23.0566L27.4477 17.3328H0V14.6661H27.4477L21.7239 8.94226L23.6095 7.05664Z"/>
+</svg>
+      </a>
+    
+  </div>
+</div>
+    
+</div>
+
+  
+
+    
+  
+</div>
+
+
+
+
+
+
+  <section class="container  global-separator--big">
+  
+</section>
+
+        
+
+        
+
+
+
+
+<div class="not-on-mobile footer_scroll" id="footer_scroll">
+    <div class="floating-footer fixed-bottom pt-0 mt-0 footer_scroll__wrapper" style="height: 32px;">
+        <div class="container h-100 footer_scroll__wrapper-inner m-auto d-flex align-items-center justify-content-between left-p-only">
+            <div class="fs-small sticky-footer-title">Johan Rönning er hluti af Fagkaup ehf.</div>
+            <div class="d-flex fs-small gap-3 floating-footer-buttons-container">
+                
+                <a href="https://www.ronning.is/stadsetningar/" class="footer_scroll__item d-flex align-items-center justify-content-center fs-small p-1">Verslanir</a>
+                
+                
+            </div>
+        </div>
+    </div>
+</div>
+        
+        <footer id="main-footer">
+        
+
+        
+             
+
+<div class="main-footer">
+  <div class="main-footer__wrapper container">
+    
+    <div class="main-footer__mobile-icon d-flex d-lg-none ">
+      
+        <div class="main-footer__mobile-icon--badges">
+          <div class="block-badge"><img alt="Fyrirmyndarfyrirtæki" height="100" src="https://varaldur-prod.fra1.cdn.digitaloceanspaces.com/varaldur-prod/media/images/Screenshot_2025-04-28_at_20.57.36.original.png" width="100"></div>
+<div class="block-badge"><img alt="framúrskarandi-fyrirtæki" height="76" src="https://varaldur-prod.fra1.cdn.digitaloceanspaces.com/varaldur-prod/media/images/Screenshot_2025-04-28_at_20.57.56.original.png" width="159"></div>
+<div class="block-badge"><img alt="VR-fyrirmyndarfyrirtæki" height="84" src="https://varaldur-prod.fra1.cdn.digitaloceanspaces.com/varaldur-prod/media/images/Screenshot_2025-04-28_at_20.57.50.original.png" width="131"></div>
+            
+        </div>
+      
+      <div class="main-footer__mobile-icon--socials">
+        
+
+
+<a href="https://www.facebook.com/JohanRonning" target="_blank" rel="noopener noreferrer" class="d-flex me-3">
+  <img class="" src="https://varaldur-prod.fra1.cdn.digitaloceanspaces.com/varaldur-prod/static/img/icons/facebook-blue.svg" alt="" >
+</a>
+
+
+<a href="https://is.linkedin.com/company/johanronning" target="_blank" rel="noopener noreferrer" class="d-flex me-3" >
+  <img class="" src="https://varaldur-prod.fra1.cdn.digitaloceanspaces.com/varaldur-prod/static/img/icons/linkedin-blue.svg" alt="" >
+</a>
+
+
+<a href="https://www.instagram.com/ronning.is/" target="_blank" rel="noopener noreferrer" class="d-flex me-3" >
+  <img class="" src="https://varaldur-prod.fra1.cdn.digitaloceanspaces.com/varaldur-prod/static/img/icons/instagram.png" alt="" >
+</a>
+
+
+<a href="https://www.youtube.com/@johanronning9004" target="_blank" rel="noopener noreferrer" class="d-flex me-3">
+  <img class="yt" src="https://varaldur-prod.fra1.cdn.digitaloceanspaces.com/varaldur-prod/static/img/icons/yt.png" alt="" class="yt-social" >
+</a>
+
+      </div>
+    </div>
+    <div class="main-footer__single-col main-footer__logo-co l">
+      <img alt="JR logo 3128x824px" class="mb-3" height="39" src="https://varaldur-prod.fra1.cdn.digitaloceanspaces.com/varaldur-prod/media/images/Ronning_Logo_copy_XQtMIje.width-150.png" width="150">
+      <span>Fagkaup ehf.</span>
+      
+      <p>
+        Kt. 670169-5459
+      </p>
+       
+      <p>
+        VSK 11784
+      </p>
+       
+        <a href="tel:5 200 800">
+          <p>Sími: 5 200 800</p>
+        </a>
+       
+      <p>
+        <a href="/cdn-cgi/l/email-protection#a3d1cccdcdcacdc4e3d1cccdcdcacdc48dcad0">
+          Netfang: <span class="__cf_email__" data-cfemail="98eaf7f6f6f1f6ffd8eaf7f6f6f1f6ffb6f1eb">[email&#160;protected]</span>
+        </a>
+      </p>
+      
+    </div>
+    
+    <div class="main-footer__menus">
+      <div class="main-footer__single-col">
+        
+<div class="flat-menu ronning-footer-1 with_heading">
+    <h4>Fyrirtækið</h4>
+    
+    <ul>
+        
+        <li class="">
+            <a href="https://fagkaup.is/businessunit/johan-ronning">Um Johan Rönning</a>
+            
+        </li>
+        
+        <li class="">
+            <a href="/starfsfolk/">Starfsfólk</a>
+            
+        </li>
+        
+        <li class="">
+            <a href="/thjonusta/">Þjónusta</a>
+            
+        </li>
+        
+        <li class="">
+            <a href="https://fagkaup.is/reikningsvidskipti">Reikningsviðskipti</a>
+            
+        </li>
+        
+        <li class="">
+            <a href="https://minar.fagkaup.is">Mínar síður</a>
+            
+        </li>
+        
+        <li class="">
+            <a href="https://fagkaup.is/hafa-samband">Hafðu samband</a>
+            
+        </li>
+        
+    </ul>
+    
+</div>
+
+      </div>
+      <div class="main-footer__single-col">
+        
+<div class="flat-menu ronning_footer_2 with_heading">
+    <h4>Stefnur og skilmálar</h4>
+    
+    <ul>
+        
+        <li class="">
+            <a href="https://fagkaup.is/vidskiptaskilmalar">Viðskiptaskilmálar</a>
+            
+        </li>
+        
+        <li class="">
+            <a href="https://fagkaup.is/personuverndarstefna">Persónuverndarstefna</a>
+            
+        </li>
+        
+        <li class="">
+            <a href="https://fagkaup.is/skilmalar-og-stefnur">Skilmálar og stefnur</a>
+            
+        </li>
+        
+        <li class="">
+            <a href="https://fagkaup.is/verklagsreglur-og-vottanir">Verklagsreglur og vottanir</a>
+            
+        </li>
+        
+    </ul>
+    
+</div>
+
+      </div>
+    </div>
+  <div class="main-footer__single-col d-none d-lg-flex">
+  
+  </div>
+  
+  </div>
+  <div class="main-footer__icons container">
+<div class="main-footer__badges d-none d-lg-flex flex-wrap">
+    <div class="block-badge"><img alt="Fyrirmyndarfyrirtæki" height="100" src="https://varaldur-prod.fra1.cdn.digitaloceanspaces.com/varaldur-prod/media/images/Screenshot_2025-04-28_at_20.57.36.original.png" width="100"></div>
+<div class="block-badge"><img alt="framúrskarandi-fyrirtæki" height="76" src="https://varaldur-prod.fra1.cdn.digitaloceanspaces.com/varaldur-prod/media/images/Screenshot_2025-04-28_at_20.57.56.original.png" width="159"></div>
+<div class="block-badge"><img alt="VR-fyrirmyndarfyrirtæki" height="84" src="https://varaldur-prod.fra1.cdn.digitaloceanspaces.com/varaldur-prod/media/images/Screenshot_2025-04-28_at_20.57.50.original.png" width="131"></div>
+    
+    
+  </div>
+  
+    <div class="main-footer__socials d-none d-lg-flex">
+      <h4>Fylgdu okkur</h4>
+      
+
+
+<a href="https://www.facebook.com/JohanRonning" target="_blank" rel="noopener noreferrer" class="d-flex me-3">
+  <img class="" src="https://varaldur-prod.fra1.cdn.digitaloceanspaces.com/varaldur-prod/static/img/icons/facebook-blue.svg" alt="" >
+</a>
+
+
+<a href="https://is.linkedin.com/company/johanronning" target="_blank" rel="noopener noreferrer" class="d-flex me-3" >
+  <img class="" src="https://varaldur-prod.fra1.cdn.digitaloceanspaces.com/varaldur-prod/static/img/icons/linkedin-blue.svg" alt="" >
+</a>
+
+
+<a href="https://www.instagram.com/ronning.is/" target="_blank" rel="noopener noreferrer" class="d-flex me-3" >
+  <img class="" src="https://varaldur-prod.fra1.cdn.digitaloceanspaces.com/varaldur-prod/static/img/icons/instagram.png" alt="" >
+</a>
+
+
+<a href="https://www.youtube.com/@johanronning9004" target="_blank" rel="noopener noreferrer" class="d-flex me-3">
+  <img class="yt" src="https://varaldur-prod.fra1.cdn.digitaloceanspaces.com/varaldur-prod/static/img/icons/yt.png" alt="" class="yt-social" >
+</a>
+
+    </div>
+    
+<div>
+        
+        </footer>
+
+        <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://varaldur-prod.fra1.cdn.digitaloceanspaces.com/varaldur-prod/static/webpack_bundles/vendor-b6bbd8519618b973df61.js" type="aaa65416e23dca4f85a8450b-text/javascript"></script>
+<script src="https://varaldur-prod.fra1.cdn.digitaloceanspaces.com/varaldur-prod/static/webpack_bundles/main-9a69d492e0850297fa00.js" type="aaa65416e23dca4f85a8450b-text/javascript"></script>
+        
+        
+        <script src="https://varaldur-prod.fra1.cdn.digitaloceanspaces.com/varaldur-prod/static/js/tracker/tracking.js" type="aaa65416e23dca4f85a8450b-text/javascript"></script>
+        <div class="offcanvas offcanvas-bottom mx-5 border-top border-3 border-primary shadow-lg" data-bs-backdrop="false" data-bs-scroll="true" tabindex="-1" id="offcanvasBottom1" aria-labelledby="offcanvasBottomLabel" aria-controls="offcanvasWithBothOptions">
+  <div class="offcanvas-header mt-5">
+    <h3 class="offcanvas-title text-primary" id="offcanvasBottomLabel">Þvottaleiðbeiningar</h3>
+    <button type="button" class="btn-close text-primary" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body small">
+    ...
+  </div>
+</div>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" defer type="aaa65416e23dca4f85a8450b-text/javascript"></script>
+    <script src="/cdn-cgi/scripts/7d0fa10a/cloudflare-static/rocket-loader.min.js" data-cf-settings="aaa65416e23dca4f85a8450b-|49" defer></script><script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"d4bcf06fdcc94693ab11b216f5dc1bbd","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9f322383f9915cbb',t:'MTc3NzMzODExNw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

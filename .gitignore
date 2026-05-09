@@ -75,6 +75,8 @@ frontend/coverage
 *.DS_Store
 
 # Backend
+/backend/.env
 /backend/uploads/
+/backend/.reykjafell_scraper_progress.txt
 # .gitignore (add this line)
 /backend/create_initial_admin.py

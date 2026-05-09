@@ -60,8 +60,33 @@ async def read_risk_templates(
     db: DbDependency,
     current_user: CurrentUserDependency,
     category: Optional[str] = None,
+    lang: Optional[str] = None,
 ):
-    return crud.get_risk_templates(db=db, category=category)
+    templates = crud.get_risk_templates(db=db, category=category)
+
+    # Apply simple language selection for title/description/mitigation
+    lang = (lang or "").lower()
+    if lang in {"en", "is"}:
+        for tmpl in templates:
+            if lang == "is":
+                if getattr(tmpl, "category_is", None):
+                    tmpl.category = tmpl.category_is
+                if getattr(tmpl, "title_is", None):
+                    tmpl.title = tmpl.title_is
+                if getattr(tmpl, "description_is", None):
+                    tmpl.description = tmpl.description_is
+                if getattr(tmpl, "default_mitigation_is", None):
+                    tmpl.default_mitigation = tmpl.default_mitigation_is
+            elif lang == "en":
+                # category stays English (canonical storage); optional category_en could be added later
+                if getattr(tmpl, "title_en", None):
+                    tmpl.title = tmpl.title_en
+                if getattr(tmpl, "description_en", None):
+                    tmpl.description = tmpl.description_en
+                if getattr(tmpl, "default_mitigation_en", None):
+                    tmpl.default_mitigation = tmpl.default_mitigation_en
+
+    return templates
 
 
 @router.post("/templates", response_model=schemas.RiskTemplateRead, status_code=status.HTTP_201_CREATED)
@@ -191,10 +216,13 @@ async def create_risks_from_templates(
     if not template_ids:
         return []
 
+    # Let client optionally request a specific language for seeded items
+    lang = request.query_params.get("lang")
     created_items = crud.create_risk_items_from_templates(
         db=db,
         project_id=project_id,
         template_ids=template_ids,
+        lang=lang,
     )
     return created_items
 

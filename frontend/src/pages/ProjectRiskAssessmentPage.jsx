@@ -16,7 +16,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 function ProjectRiskAssessmentPage() {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const { projectId } = useParams();
     const navigate = useNavigate();
     const { user } = useAuth();
@@ -54,7 +54,7 @@ function ProjectRiskAssessmentPage() {
             setRiskItems(Array.isArray(risksRes.data) ? risksRes.data : []);
         } catch (error) {
             console.error('Risk assessment fetch failed:', error);
-            toast.error('Failed to load project risk assessment.');
+            toast.error(t('error_loading', { defaultValue: 'Failed to load project risk assessment.' }));
         } finally {
             setIsLoading(false);
         }
@@ -63,7 +63,9 @@ function ProjectRiskAssessmentPage() {
     const fetchLibrary = useCallback(async () => {
         setIsLoadingLibrary(true);
         try {
-            const res = await axiosInstance.get('/risk-assessments/templates');
+            const res = await axiosInstance.get('/risk-assessments/templates', {
+                params: { lang: i18n.language },
+            });
             setLibraryTemplates(Array.isArray(res.data) ? res.data : []);
         } catch (error) {
             console.error('Risk library fetch failed:', error);
@@ -71,7 +73,7 @@ function ProjectRiskAssessmentPage() {
         } finally {
             setIsLoadingLibrary(false);
         }
-    }, []);
+    }, [i18n.language]);
 
     useEffect(() => {
         fetchData();
@@ -139,7 +141,7 @@ function ProjectRiskAssessmentPage() {
         setIsApplyingTemplates(true);
         try {
             const res = await axiosInstance.post(
-                `/risk-assessments/project/${projectId}/from-templates`,
+                `/risk-assessments/project/${projectId}/from-templates?lang=${encodeURIComponent(i18n.language)}`,
                 selectedTemplateIds,
             );
             if (Array.isArray(res.data)) {
@@ -178,7 +180,7 @@ function ProjectRiskAssessmentPage() {
     };
 
     if (isLoading) {
-        return <LoadingSpinner text="Loading risk assessment..." size="lg" />;
+        return <LoadingSpinner text={t('loading_risk_library', { defaultValue: 'Loading risk assessment...' })} size="lg" />;
     }
 
     if (!project) {
@@ -189,11 +191,11 @@ function ProjectRiskAssessmentPage() {
                     onClick={() => navigate(-1)}
                     className="mb-4 inline-flex items-center text-[10px] font-black text-gray-400 hover:text-indigo-600 uppercase tracking-[0.2em]"
                 >
-                    <ChevronLeftIcon className="h-3 w-3 mr-1" /> Back
+                        <ChevronLeftIcon className="h-3 w-3 mr-1" /> {t('back')}
                 </button>
                 <div className="p-8 bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700">
                     <p className="text-sm text-gray-600 dark:text-gray-300">
-                        Project node not found or not accessible.
+                        {t('error_loading', { defaultValue: 'Project node not found or not accessible.' })}
                     </p>
                 </div>
             </div>
@@ -208,14 +210,14 @@ function ProjectRiskAssessmentPage() {
                         to={`/projects/${projectId}`}
                         className="flex items-center text-[10px] font-black text-gray-400 hover:text-indigo-600 transition uppercase tracking-[0.2em]"
                     >
-                        <ChevronLeftIcon className="h-3 w-3 mr-1 stroke-[3px]" /> Back to Project
+                        <ChevronLeftIcon className="h-3 w-3 mr-1 stroke-[3px]" /> {t('back_to_registry', { defaultValue: 'Back to Project' })}
                     </Link>
                     <button
                         type="button"
                         onClick={handleExportPdf}
                         className="inline-flex items-center px-4 py-2 bg-gray-900 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-xl shadow-sm hover:bg-black transition gap-2"
                     >
-                        <DocumentTextIcon className="h-4 w-4" /> Export PDF
+                        <DocumentTextIcon className="h-4 w-4" /> {t('export_pdf')}
                     </button>
                 </div>
                 <div className="flex items-center gap-4">
@@ -224,14 +226,13 @@ function ProjectRiskAssessmentPage() {
                     </div>
                     <div>
                         <p className="text-xs font-black text-amber-600 uppercase tracking-[0.25em] mb-1">
-                            Project Risk Register
+                            {t('project_risk_register')}
                         </p>
                         <h1 className="text-2xl md:text-3xl font-black text-gray-900 dark:text-white tracking-tight">
                             {project.name}
                         </h1>
                         <p className="text-xs text-gray-500 mt-1">
-                            Capture and track operational risks for this deployment, including mitigation
-                            strategies.
+                            {t('project_risk_desc')}
                         </p>
                     </div>
                 </div>
@@ -242,7 +243,7 @@ function ProjectRiskAssessmentPage() {
                     <div className="flex items-center gap-2 mb-6">
                         <PlusIcon className="h-4 w-4 text-amber-500 stroke-[3px]" />
                         <h2 className="text-xs font-black text-gray-500 uppercase tracking-[0.3em]">
-                            Add Risk Entry
+                            {t('add_risk_entry')}
                         </h2>
                     </div>
                     <form
@@ -432,10 +433,10 @@ function ProjectRiskAssessmentPage() {
             <section className="bg-white dark:bg-gray-800 rounded-[2rem] border border-gray-100 dark:border-gray-700 shadow-sm p-6 md:p-8">
                 <div className="flex items-center justify-between mb-6">
                     <h2 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-[0.25em]">
-                        Registered Risks
+                        {t('registered_risks')}
                     </h2>
                     <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.25em]">
-                        {riskItems.length} item(s)
+                        {riskItems.length} {t('entries', { defaultValue: 'item(s)' })}
                     </span>
                 </div>
                 {riskItems.length === 0 ? (

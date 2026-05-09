@@ -12,7 +12,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 function RiskLibraryPage() {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const { user } = useAuth();
     const [templates, setTemplates] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -25,6 +25,10 @@ function RiskLibraryPage() {
     const [defaultImpact, setDefaultImpact] = useState('Medium');
     const [defaultMitigation, setDefaultMitigation] = useState('');
     const [defaultStatus, setDefaultStatus] = useState('Open');
+    const [categoryIs, setCategoryIs] = useState('');
+    const [titleIs, setTitleIs] = useState('');
+    const [descriptionIs, setDescriptionIs] = useState('');
+    const [mitigationIs, setMitigationIs] = useState('');
 
     const isSuperuser = user?.is_superuser;
     const isAdmin = user?.role === 'admin' || isSuperuser;
@@ -34,7 +38,9 @@ function RiskLibraryPage() {
     const fetchTemplates = useCallback(async () => {
         setIsLoading(true);
         try {
-            const res = await axiosInstance.get('/risk-assessments/templates');
+            const res = await axiosInstance.get('/risk-assessments/templates', {
+                params: { lang: i18n.language },
+            });
             setTemplates(Array.isArray(res.data) ? res.data : []);
         } catch (error) {
             console.error('Risk template fetch failed:', error);
@@ -42,7 +48,7 @@ function RiskLibraryPage() {
         } finally {
             setIsLoading(false);
         }
-    }, []);
+    }, [i18n.language, t]);
 
     useEffect(() => {
         fetchTemplates();
@@ -58,11 +64,18 @@ function RiskLibraryPage() {
         try {
             const payload = {
                 category: category || null,
+                category_is: categoryIs.trim() || null,
                 title: title.trim(),
+                title_en: title.trim(),
+                title_is: titleIs.trim() || null,
                 description: description || null,
+                description_en: description || null,
+                description_is: descriptionIs.trim() || null,
                 default_likelihood: defaultLikelihood,
                 default_impact: defaultImpact,
                 default_mitigation: defaultMitigation || null,
+                default_mitigation_en: defaultMitigation || null,
+                default_mitigation_is: mitigationIs.trim() || null,
                 default_status: defaultStatus,
                 is_active: true,
             };
@@ -70,11 +83,15 @@ function RiskLibraryPage() {
             setTemplates((prev) => [...prev, res.data]);
 
             setCategory('');
+            setCategoryIs('');
             setTitle('');
+            setTitleIs('');
             setDescription('');
+            setDescriptionIs('');
             setDefaultLikelihood('Medium');
             setDefaultImpact('Medium');
             setDefaultMitigation('');
+            setMitigationIs('');
             setDefaultStatus('Open');
         } catch (error) {
             console.error('Create template failed:', error);
@@ -171,7 +188,7 @@ function RiskLibraryPage() {
                     </div>
                     <div className="space-y-3">
                         <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.25em] ml-1">
-                            Risk Title
+                            {t('risk_title')}
                         </label>
                         <input
                             type="text"
@@ -232,6 +249,49 @@ function RiskLibraryPage() {
                             className="modern-input text-sm font-medium resize-none"
                             placeholder={t('mitigation_placeholder', { defaultValue: 'Typical controls: lock-out/tag-out, permits, PPE, supervision…' })}
                         />
+                    </div>
+                    <div className="md:col-span-2 p-4 rounded-2xl bg-amber-50/60 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/40 space-y-4">
+                        <p className="text-[10px] font-black text-amber-700 dark:text-amber-400 uppercase tracking-[0.25em]">
+                            Icelandic (optional) — same template in both languages
+                        </p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.25em] ml-1">Flokkur (IS)</label>
+                                <input
+                                    type="text"
+                                    value={categoryIs}
+                                    onChange={(e) => setCategoryIs(e.target.value)}
+                                    className="modern-input h-11 text-sm font-bold"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.25em] ml-1">Titill (IS)</label>
+                                <input
+                                    type="text"
+                                    value={titleIs}
+                                    onChange={(e) => setTitleIs(e.target.value)}
+                                    className="modern-input h-11 text-sm font-bold"
+                                />
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.25em] ml-1">Lýsing (IS)</label>
+                            <textarea
+                                value={descriptionIs}
+                                onChange={(e) => setDescriptionIs(e.target.value)}
+                                rows={2}
+                                className="modern-input text-sm font-medium resize-none"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.25em] ml-1">Aðgerðir / úrbætur (IS)</label>
+                            <textarea
+                                value={mitigationIs}
+                                onChange={(e) => setMitigationIs(e.target.value)}
+                                rows={2}
+                                className="modern-input text-sm font-medium resize-none"
+                            />
+                        </div>
                     </div>
                     <div className="space-y-3">
                         <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.25em] ml-1">

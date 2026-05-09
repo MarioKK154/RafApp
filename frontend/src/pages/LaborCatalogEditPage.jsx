@@ -35,10 +35,13 @@ function LaborCatalogEditPage() {
     
     const [formData, setFormData] = useState({ 
         description: '', 
+        description_en: '',
         base_price: '',       // catalog default (reference_price / default_unit_price)
         your_price: '',       // tenant override (tenant_price); used in offers
         main_category: '',
+        main_category_en: '',
         sub_category: '',
+        sub_category_en: '',
         units_per_hour: '',
     });
     
@@ -52,15 +55,18 @@ function LaborCatalogEditPage() {
     const fetchItem = useCallback(async () => {
         setIsLoading(true);
         try {
-            const response = await axiosInstance.get(`/labor-catalog/${itemId}`);
+            const response = await axiosInstance.get(`/labor-catalog/${itemId}`, { params: { lang: 'is' } });
             const base = response.data.reference_price ?? response.data.default_unit_price ?? '';
             const your = response.data.tenant_price ?? response.data.reference_price ?? response.data.default_unit_price ?? '';
             setFormData({
-                description: response.data.description || '',
+                description: response.data.description_is || response.data.description || '',
+                description_en: response.data.description_en || '',
                 base_price: base !== '' && base != null ? String(base) : '',
                 your_price: your !== '' && your != null ? String(your) : '',
                 main_category: response.data.main_category || '',
+                main_category_en: response.data.main_category_en || '',
                 sub_category: response.data.sub_category || '',
+                sub_category_en: response.data.sub_category_en || '',
                 units_per_hour: response.data.units_per_hour ?? '',
             });
         } catch (err) {
@@ -75,7 +81,7 @@ function LaborCatalogEditPage() {
     const fetchConditionVariants = useCallback(async () => {
         if (!itemId) return;
         try {
-            const res = await axiosInstance.get(`/labor-catalog/${itemId}/conditions`);
+            const res = await axiosInstance.get(`/labor-catalog/${itemId}/conditions`, { params: { lang: 'is' } });
             setConditionVariants(Array.isArray(res.data) ? res.data : []);
         } catch (_) {
             setConditionVariants([]);
@@ -115,7 +121,16 @@ function LaborCatalogEditPage() {
                 ? null
                 : Number(formData.units_per_hour);
             const payload = isSuperuser
-                ? { default_unit_price: priceToSave, units_per_hour: unitsPerHour, description: formData.description, main_category: formData.main_category || null, sub_category: formData.sub_category || null }
+                ? {
+                    default_unit_price: priceToSave,
+                    units_per_hour: unitsPerHour,
+                    description: formData.description,
+                    description_en: formData.description_en?.trim() || null,
+                    main_category: formData.main_category || null,
+                    main_category_en: formData.main_category_en?.trim() || null,
+                    sub_category: formData.sub_category || null,
+                    sub_category_en: formData.sub_category_en?.trim() || null,
+                }
                 : { default_unit_price: priceToSave };
             await axiosInstance.put(`/labor-catalog/${itemId}`, payload);
             toast.success('Saved.');
@@ -189,6 +204,53 @@ function LaborCatalogEditPage() {
                         </div>
                     )}
                 </div>
+
+                {isSuperuser && (
+                    <div className="space-y-4 p-4 rounded-2xl bg-indigo-50/50 dark:bg-indigo-900/10 border border-indigo-100 dark:border-indigo-800">
+                        <p className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">
+                            English (optional) — shown when the app language is English
+                        </p>
+                        <div>
+                            <label className="block text-[10px] font-black text-gray-400 uppercase mb-1 ml-1 tracking-widest">
+                                Description (English)
+                            </label>
+                            <input
+                                type="text"
+                                name="description_en"
+                                value={formData.description_en}
+                                onChange={handleChange}
+                                className="block w-full rounded-2xl border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-indigo-500"
+                                placeholder="Translated line item title"
+                            />
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-[10px] font-black text-gray-400 uppercase mb-1 ml-1 tracking-widest">
+                                    Main category (English)
+                                </label>
+                                <input
+                                    type="text"
+                                    name="main_category_en"
+                                    value={formData.main_category_en}
+                                    onChange={handleChange}
+                                    className="block w-full rounded-2xl border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-indigo-500"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-[10px] font-black text-gray-400 uppercase mb-1 ml-1 tracking-widest">
+                                    Subcategory (English)
+                                </label>
+                                <input
+                                    type="text"
+                                    name="sub_category_en"
+                                    value={formData.sub_category_en}
+                                    onChange={handleChange}
+                                    className="block w-full rounded-2xl border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-indigo-500"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* Base price (catalog): superadmin can edit; tenants see read-only. Your price: tenant override for offers. */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -278,9 +340,10 @@ function LaborCatalogEditPage() {
                         <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-600">
                             <table className="w-full text-sm text-left">
                                 <thead className="bg-slate-100 dark:bg-slate-800 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                                    <tr>
+                                                    <tr>
                                         <th className="py-3 px-4">Code</th>
-                                        <th className="py-3 px-4">Condition (Ástæður)</th>
+                                        <th className="py-3 px-4">Condition (IS)</th>
+                                        <th className="py-3 px-4">Condition (EN)</th>
                                         <th className="py-3 px-4 text-right">Eining (units/hr)</th>
                                         <th className="py-3 px-4 text-right">Time per unit</th>
                                     </tr>
@@ -289,7 +352,8 @@ function LaborCatalogEditPage() {
                                     {conditionVariants.map((c) => (
                                         <tr key={c.id} className="bg-white dark:bg-slate-800/50">
                                             <td className="py-3 px-4 font-mono font-bold text-slate-700 dark:text-slate-300">{c.code}</td>
-                                            <td className="py-3 px-4 text-slate-700 dark:text-slate-300">{c.condition_description}</td>
+                                            <td className="py-3 px-4 text-slate-700 dark:text-slate-300">{c.condition_description_is || c.condition_description}</td>
+                                            <td className="py-3 px-4 text-slate-600 dark:text-slate-400 text-xs">{c.condition_description_en || '—'}</td>
                                             <td className="py-3 px-4 text-right font-mono">{c.units_per_hour != null ? Number(c.units_per_hour) : '—'}</td>
                                             <td className="py-3 px-4 text-right font-medium text-indigo-600 dark:text-indigo-400">{einingLabel(c.units_per_hour) || '—'}</td>
                                         </tr>

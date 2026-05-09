@@ -1,0 +1,1552 @@
+{
+  "overrides": [
+    {
+      "category": "Afldreifibúnaður",
+      "subcategory": "Spennar og Spennistöðvar",
+      "sub_subcategory": null,
+      "listing_url": "https://iskraft.husa.is/afldreifibunadur/spennar-og-spennistodvar/"
+    },
+    {
+      "category": "Afldreifibúnaður",
+      "subcategory": "Öryggisbúnaður",
+      "sub_subcategory": null,
+      "listing_url": "https://iskraft.husa.is/afldreifibunadur/oryggisbunadur/"
+    },
+    {
+      "category": "Afldreifibúnaður",
+      "subcategory": "Háspennubúnaður",
+      "sub_subcategory": "Öryggisbúnaður háspennu",
+      "listing_url": "https://iskraft.husa.is/afldreifibunadur/haspennubunadur/oryggisbunadur-haspennu/"
+    },
+    {
+      "category": "Afldreifibúnaður",
+      "subcategory": "Háspennubúnaður",
+      "sub_subcategory": "Tengibúnaður háspennu",
+      "listing_url": "https://iskraft.husa.is/afldreifibunadur/haspennubunadur/tengibunadur-haspennu/"
+    },
+    {
+      "category": "Afldreifibúnaður",
+      "subcategory": "Tenglastöðvar",
+      "sub_subcategory": null,
+      "listing_url": "https://iskraft.husa.is/afldreifibunadur/tenglastodvar/"
+    },
+    {
+      "category": "Afldreifibúnaður",
+      "subcategory": "Dreifiskápar og Vinnutöflur",
+      "sub_subcategory": "Dreifiskápar",
+      "listing_url": "https://iskraft.husa.is/afldreifibunadur/dreifiskapar-og-vinnutoflur/dreifiskapar/"
+    },
+    {
+      "category": "Afldreifibúnaður",
+      "subcategory": "Dreifiskápar og Vinnutöflur",
+      "sub_subcategory": "Vinnutöflur",
+      "listing_url": "https://iskraft.husa.is/afldreifibunadur/dreifiskapar-og-vinnutoflur/vinnutoflur/"
+    },
+    {
+      "category": "Afldreifibúnaður",
+      "subcategory": "Dreifiskápar og Vinnutöflur",
+      "sub_subcategory": "Íhlutir og Varahlutir",
+      "listing_url": "https://iskraft.husa.is/afldreifibunadur/dreifiskapar-og-vinnutoflur/ihlutir-og-varahlutir/"
+    },
+    {
+      "category": "Afldreifibúnaður",
+      "subcategory": "Varaaflgjafar",
+      "sub_subcategory": null,
+      "listing_url": "https://iskraft.husa.is/afldreifibunadur/varaaflgjafar/"
+    },
+    {
+      "category": "Fjarskiptabúnaður",
+      "subcategory": "Ljósleiðaralagnir",
+      "sub_subcategory": "19\" skúffur og fylgihlutir",
+      "listing_url": "https://iskraft.husa.is/fjarskiptabunadur/ljosleidaralagnir/19-skuffur-og-fylgihlutir/"
+    },
+    {
+      "category": "Fjarskiptabúnaður",
+      "subcategory": "Ljósleiðaralagnir",
+      "sub_subcategory": "Hreinsiefni og verkfæri",
+      "listing_url": "https://iskraft.husa.is/fjarskiptabunadur/ljosleidaralagnir/hreinsiefni-og-verkfaeri/"
+    },
+    {
+      "category": "Fjarskiptabúnaður",
+      "subcategory": "Ljósleiðaralagnir",
+      "sub_subcategory": "Ljósleiðarastrengir Multimode",
+      "listing_url": "https://iskraft.husa.is/fjarskiptabunadur/ljosleidaralagnir/ljosleidarastrengir-multimode/"
+    },
+    {
+      "category": "Fjarskiptabúnaður",
+      "subcategory": "Ljósleiðaralagnir",
+      "sub_subcategory": "Ljósleiðarastrengir Singlemode",
+      "listing_url": "https://iskraft.husa.is/fjarskiptabunadur/ljosleidaralagnir/ljosleidarastrengir-singlemode/"
+    },
+    {
+      "category": "Fjarskiptabúnaður",
+      "subcategory": "Ljósleiðaralagnir",
+      "sub_subcategory": "Splæsivélar og mælar",
+      "listing_url": "https://iskraft.husa.is/fjarskiptabunadur/ljosleidaralagnir/splaesivelar-og-maelar/"
+    },
+    {
+      "category": "Fjarskiptabúnaður",
+      "subcategory": "Ljósleiðaralagnir",
+      "sub_subcategory": "Tengi og pigtail Singlemode",
+      "listing_url": "https://iskraft.husa.is/fjarskiptabunadur/ljosleidaralagnir/tengi-og-pigtail-singlemode/"
+    },
+    {
+      "category": "Fjarskiptabúnaður",
+      "subcategory": "Ljósleiðaralagnir",
+      "sub_subcategory": "Tengi og pigtail Multimode",
+      "listing_url": "https://iskraft.husa.is/fjarskiptabunadur/ljosleidaralagnir/tengi-og-pigtail-multimode/"
+    },
+    {
+      "category": "Fjarskiptabúnaður",
+      "subcategory": "Ljósleiðaralagnir",
+      "sub_subcategory": "Tengibox og skápar",
+      "listing_url": "https://iskraft.husa.is/fjarskiptabunadur/ljosleidaralagnir/tengibox-og-skapar/"
+    },
+    {
+      "category": "Fjarskiptabúnaður",
+      "subcategory": "Ljósleiðaralagnir",
+      "sub_subcategory": "Tengisnúrur Multimode",
+      "listing_url": "https://iskraft.husa.is/fjarskiptabunadur/ljosleidaralagnir/tengisnurur-multimode/"
+    },
+    {
+      "category": "Fjarskiptabúnaður",
+      "subcategory": "Ljósleiðaralagnir",
+      "sub_subcategory": "Tengisnúrur Singlemode",
+      "listing_url": "https://iskraft.husa.is/fjarskiptabunadur/ljosleidaralagnir/tengisnurur-singlemode/"
+    },
+    {
+      "category": "Fjarskiptabúnaður",
+      "subcategory": "Tölvulagnir",
+      "sub_subcategory": "Cat5e lagnir",
+      "listing_url": "https://iskraft.husa.is/fjarskiptabunadur/tolvulagnir/cat5e-lagnir/"
+    },
+    {
+      "category": "Fjarskiptabúnaður",
+      "subcategory": "Tölvulagnir",
+      "sub_subcategory": "Cat6 lagnir",
+      "listing_url": "https://iskraft.husa.is/fjarskiptabunadur/tolvulagnir/cat6-lagnir/"
+    },
+    {
+      "category": "Fjarskiptabúnaður",
+      "subcategory": "Tölvulagnir",
+      "sub_subcategory": "Cat6A lagnir",
+      "listing_url": "https://iskraft.husa.is/fjarskiptabunadur/tolvulagnir/cat6a-lagnir/"
+    },
+    {
+      "category": "Fjarskiptabúnaður",
+      "subcategory": "Tölvulagnir",
+      "sub_subcategory": "Verkfæri og mælar",
+      "listing_url": "https://iskraft.husa.is/fjarskiptabunadur/tolvulagnir/verkfaeri-og-maelar/"
+    },
+    {
+      "category": "Fjarskiptabúnaður",
+      "subcategory": "Tölvuskápar og fylgihlutir",
+      "sub_subcategory": "Legrand Tölvuskápar",
+      "listing_url": "https://iskraft.husa.is/fjarskiptabunadur/tolvuskapar-og-fylgihlutir/legrand-tolvuskapar/"
+    },
+    {
+      "category": "Fjarskiptabúnaður",
+      "subcategory": "Tölvuskápar og fylgihlutir",
+      "sub_subcategory": "Excel Veggskápar",
+      "listing_url": "https://iskraft.husa.is/fjarskiptabunadur/tolvuskapar-og-fylgihlutir/excel-veggskapar/"
+    },
+    {
+      "category": "Fjarskiptabúnaður",
+      "subcategory": "Tölvuskápar og fylgihlutir",
+      "sub_subcategory": "Excel Gólfskápar",
+      "listing_url": "https://iskraft.husa.is/fjarskiptabunadur/tolvuskapar-og-fylgihlutir/excel-golfskapar/"
+    },
+    {
+      "category": "Fjarskiptabúnaður",
+      "subcategory": "Tölvuskápar og fylgihlutir",
+      "sub_subcategory": "Ýmislegt í 19\"",
+      "listing_url": "https://iskraft.husa.is/fjarskiptabunadur/tolvuskapar-og-fylgihlutir/ymislegt-i-19/"
+    },
+    {
+      "category": "Fjarskiptabúnaður",
+      "subcategory": "Netbúnaður",
+      "sub_subcategory": "Iðnaðar netbúnaður",
+      "listing_url": "https://iskraft.husa.is/fjarskiptabunadur/netbunadur/idnadar-netbunadur/"
+    },
+    {
+      "category": "Fjarskiptabúnaður",
+      "subcategory": "Netbúnaður",
+      "sub_subcategory": "Ljósbreytur SFP/Standalone",
+      "listing_url": "https://iskraft.husa.is/fjarskiptabunadur/netbunadur/ljosbreytur-sfpstandalone/"
+    },
+    {
+      "category": "Fjarskiptabúnaður",
+      "subcategory": "Netbúnaður",
+      "sub_subcategory": "Unifi Routerar",
+      "listing_url": "https://iskraft.husa.is/fjarskiptabunadur/netbunadur/unifi-routerar/"
+    },
+    {
+      "category": "Fjarskiptabúnaður",
+      "subcategory": "Netbúnaður",
+      "sub_subcategory": "PoE netbúnaður",
+      "listing_url": "https://iskraft.husa.is/fjarskiptabunadur/netbunadur/poe-netbunadur/"
+    },
+    {
+      "category": "Fjarskiptabúnaður",
+      "subcategory": "Netbúnaður",
+      "sub_subcategory": "Switch",
+      "listing_url": "https://iskraft.husa.is/fjarskiptabunadur/netbunadur/switch/"
+    },
+    {
+      "category": "Fjarskiptabúnaður",
+      "subcategory": "Netbúnaður",
+      "sub_subcategory": "Þráðlaus netbúnaður Wifi inni",
+      "listing_url": "https://iskraft.husa.is/fjarskiptabunadur/netbunadur/thradlaus-netbunadur-wifi-inni/"
+    },
+    {
+      "category": "Fjarskiptabúnaður",
+      "subcategory": "Netbúnaður",
+      "sub_subcategory": "Þráðlaus netbúnaður Wifi úti",
+      "listing_url": "https://iskraft.husa.is/fjarskiptabunadur/netbunadur/thradlaus-netbunadur-wifi-uti/"
+    },
+    {
+      "category": "Fjarskiptabúnaður",
+      "subcategory": "Netbúnaður",
+      "sub_subcategory": "Annar netbúnaður",
+      "listing_url": "https://iskraft.husa.is/fjarskiptabunadur/netbunadur/annar-netbunadur/"
+    },
+    {
+      "category": "Fjarskiptabúnaður",
+      "subcategory": "Netbúnaður",
+      "sub_subcategory": "UBNT UNIFI búnaður",
+      "listing_url": "https://iskraft.husa.is/fjarskiptabunadur/netbunadur/ubnt-unifi-bunadur/"
+    },
+    {
+      "category": "Fjarskiptabúnaður",
+      "subcategory": "Netbúnaður",
+      "sub_subcategory": "Wifi 7",
+      "listing_url": "https://iskraft.husa.is/fjarskiptabunadur/netbunadur/wifi-7/"
+    },
+    {
+      "category": "Fjarskiptabúnaður",
+      "subcategory": "Loftnetskerfi",
+      "sub_subcategory": "Loftnetstenglar",
+      "listing_url": "https://iskraft.husa.is/fjarskiptabunadur/loftnetskerfi/loftnetstenglar/"
+    },
+    {
+      "category": "Fjarskiptabúnaður",
+      "subcategory": "Loftnetskerfi",
+      "sub_subcategory": "F-Tengi, TV-klær ofl.",
+      "listing_url": "https://iskraft.husa.is/fjarskiptabunadur/loftnetskerfi/f-tengi-tv-klaer-ofl/"
+    },
+    {
+      "category": "Fjarskiptabúnaður",
+      "subcategory": "Loftnetskerfi",
+      "sub_subcategory": "Loftnetsgreiður",
+      "listing_url": "https://iskraft.husa.is/fjarskiptabunadur/loftnetskerfi/loftnetsgreidur/"
+    },
+    {
+      "category": "Fjarskiptabúnaður",
+      "subcategory": "Loftnetskerfi",
+      "sub_subcategory": "Deilar, magnarar ofl.",
+      "listing_url": "https://iskraft.husa.is/fjarskiptabunadur/loftnetskerfi/deilar-magnarar-ofl/"
+    },
+    {
+      "category": "Fjarskiptabúnaður",
+      "subcategory": "Dyrasímakerfi",
+      "sub_subcategory": "Aðrir Íhlutir",
+      "listing_url": "https://iskraft.husa.is/fjarskiptabunadur/dyrasimakerfi/adrir-ihlutir/"
+    },
+    {
+      "category": "Fjarskiptabúnaður",
+      "subcategory": "Dyrasímakerfi",
+      "sub_subcategory": "AMI útistöð",
+      "listing_url": "https://iskraft.husa.is/fjarskiptabunadur/dyrasimakerfi/ami-utistod/"
+    },
+    {
+      "category": "Fjarskiptabúnaður",
+      "subcategory": "Dyrasímakerfi",
+      "sub_subcategory": "Audio kerfi",
+      "listing_url": "https://iskraft.husa.is/fjarskiptabunadur/dyrasimakerfi/audio-kerfi/"
+    },
+    {
+      "category": "Fjarskiptabúnaður",
+      "subcategory": "Dyrasímakerfi",
+      "sub_subcategory": "Bjöllur, Hnappar ofl.",
+      "listing_url": "https://iskraft.husa.is/fjarskiptabunadur/dyrasimakerfi/bjollur-hnappar-ofl/"
+    },
+    {
+      "category": "Fjarskiptabúnaður",
+      "subcategory": "Dyrasímakerfi",
+      "sub_subcategory": "Innistöðvar",
+      "listing_url": "https://iskraft.husa.is/fjarskiptabunadur/dyrasimakerfi/innistodvar/"
+    },
+    {
+      "category": "Fjarskiptabúnaður",
+      "subcategory": "Dyrasímakerfi",
+      "sub_subcategory": "Útistöðvar Audio",
+      "listing_url": "https://iskraft.husa.is/fjarskiptabunadur/dyrasimakerfi/utistodvar-audio/"
+    },
+    {
+      "category": "Fjarskiptabúnaður",
+      "subcategory": "Dyrasímakerfi",
+      "sub_subcategory": "Útistöðvar Video",
+      "listing_url": "https://iskraft.husa.is/fjarskiptabunadur/dyrasimakerfi/utistodvar-video/"
+    },
+    {
+      "category": "Fjarskiptabúnaður",
+      "subcategory": "Dyrasímakerfi",
+      "sub_subcategory": "2 víra video kerfi",
+      "listing_url": "https://iskraft.husa.is/fjarskiptabunadur/dyrasimakerfi/2-vira-video-kerfi/"
+    },
+    {
+      "category": "Fjarskiptabúnaður",
+      "subcategory": "Dyrasímakerfi",
+      "sub_subcategory": "Aðgangskerfi",
+      "listing_url": "https://iskraft.husa.is/fjarskiptabunadur/dyrasimakerfi/adgangskerfi/"
+    },
+    {
+      "category": "Fjarskiptabúnaður",
+      "subcategory": "Dyrasímakerfi",
+      "sub_subcategory": "Stækkanir fyrir PES Pro stöðvar",
+      "listing_url": "https://iskraft.husa.is/fjarskiptabunadur/dyrasimakerfi/staekkanir-fyrir-pes-pro-stodvar/"
+    },
+    {
+      "category": "Fjarskiptabúnaður",
+      "subcategory": "Dyrasímakerfi",
+      "sub_subcategory": "Akuvox IP Dyrasímakerfi",
+      "listing_url": "https://iskraft.husa.is/fjarskiptabunadur/dyrasimakerfi/akuvox-ip-dyrasimakerfi/"
+    },
+    {
+      "category": "Hleðslustöðvar",
+      "subcategory": "Hleðslustöðvar Elinta",
+      "sub_subcategory": null,
+      "listing_url": "https://iskraft.husa.is/hledslustodvar/hledslustodvar-elinta/"
+    },
+    {
+      "category": "Hleðslustöðvar",
+      "subcategory": "Hleðslustöðvar EO Charging",
+      "sub_subcategory": null,
+      "listing_url": "https://iskraft.husa.is/hledslustodvar/hledslustodvar-eo-charging/"
+    },
+    {
+      "category": "Hleðslustöðvar",
+      "subcategory": "Hraðhleðslustöðvar",
+      "sub_subcategory": null,
+      "listing_url": "https://iskraft.husa.is/hledslustodvar/hradhledslustodvar/"
+    },
+    {
+      "category": "Hleðslustöðvar",
+      "subcategory": "Hleðslutenglar Legrand",
+      "sub_subcategory": null,
+      "listing_url": "https://iskraft.husa.is/hledslustodvar/hledslutenglar-legrand/"
+    },
+    {
+      "category": "Hleðslustöðvar",
+      "subcategory": "Hleðslustöðvar Qudo",
+      "sub_subcategory": "Qudo",
+      "listing_url": "https://iskraft.husa.is/hledslustodvar/hledslustodvar-qudo/qudo/"
+    },
+    {
+      "category": "Hleðslustöðvar",
+      "subcategory": "Hleðslustöðvar Qudo",
+      "sub_subcategory": "Qudo Aukahlutir",
+      "listing_url": "https://iskraft.husa.is/hledslustodvar/hledslustodvar-qudo/qudo-aukahlutir/"
+    },
+    {
+      "category": "Hleðslustöðvar",
+      "subcategory": "Hleðslukaplar",
+      "sub_subcategory": null,
+      "listing_url": "https://iskraft.husa.is/hledslustodvar/hledslukaplar/"
+    },
+    {
+      "category": "Hleðslustöðvar",
+      "subcategory": "Staurar fyrir hleðslustöðvar Onepole",
+      "sub_subcategory": null,
+      "listing_url": "https://iskraft.husa.is/hledslustodvar/staurar-fyrir-hledslustodvar-onepole/"
+    },
+    {
+      "category": "Hitunarbúnaður",
+      "subcategory": "Blástursofnar",
+      "sub_subcategory": "Elbjörn Hitablásarar",
+      "listing_url": "https://iskraft.husa.is/hitunarbunadur/blastursofnar/elbjorn-hitablasarar/"
+    },
+    {
+      "category": "Hitunarbúnaður",
+      "subcategory": "Blástursofnar",
+      "sub_subcategory": "Varahlutir í Elbjörn",
+      "listing_url": "https://iskraft.husa.is/hitunarbunadur/blastursofnar/varahlutir-i-elbjorn/"
+    },
+    {
+      "category": "Hitunarbúnaður",
+      "subcategory": "Rafmagnsþilofnar",
+      "sub_subcategory": "Olíufylltir ofnar",
+      "listing_url": "https://iskraft.husa.is/hitunarbunadur/rafmagnsthilofnar/oliufylltir-ofnar/"
+    },
+    {
+      "category": "Hitunarbúnaður",
+      "subcategory": "Rafmagnsþilofnar",
+      "sub_subcategory": "Þilofnar",
+      "listing_url": "https://iskraft.husa.is/hitunarbunadur/rafmagnsthilofnar/thilofnar/"
+    },
+    {
+      "category": "Hitunarbúnaður",
+      "subcategory": "Rafmagnsþilofnar",
+      "sub_subcategory": "Ýmsar aðrar gerðir",
+      "listing_url": "https://iskraft.husa.is/hitunarbunadur/rafmagnsthilofnar/ymsar-adrar-gerdir/"
+    },
+    {
+      "category": "Hitunarbúnaður",
+      "subcategory": "Hitastrengir og mottur",
+      "sub_subcategory": "Hitastrengir",
+      "listing_url": "https://iskraft.husa.is/hitunarbunadur/hitastrengir-og-mottur/hitastrengir/"
+    },
+    {
+      "category": "Hitunarbúnaður",
+      "subcategory": "Hitastrengir og mottur",
+      "sub_subcategory": "Fylgihlutir",
+      "listing_url": "https://iskraft.husa.is/hitunarbunadur/hitastrengir-og-mottur/fylgihlutir/"
+    },
+    {
+      "category": "Hitunarbúnaður",
+      "subcategory": "Hitastrengir og mottur",
+      "sub_subcategory": "Hitamottur Ebeco 120W/m2",
+      "listing_url": "https://iskraft.husa.is/hitunarbunadur/hitastrengir-og-mottur/hitamottur-ebeco-120wm2/"
+    },
+    {
+      "category": "Hitunarbúnaður",
+      "subcategory": "Hitastrengir og mottur",
+      "sub_subcategory": "Hitamottur Ebeco 160W/m2",
+      "listing_url": "https://iskraft.husa.is/hitunarbunadur/hitastrengir-og-mottur/hitamottur-ebeco-160wm2/"
+    },
+    {
+      "category": "Hitunarbúnaður",
+      "subcategory": "Hitastrengir og mottur",
+      "sub_subcategory": "Hitastillar",
+      "listing_url": "https://iskraft.husa.is/hitunarbunadur/hitastrengir-og-mottur/hitastillar/"
+    },
+    {
+      "category": "Hitunarbúnaður",
+      "subcategory": "Hitastrengir og mottur",
+      "sub_subcategory": "Hitafilma",
+      "listing_url": "https://iskraft.husa.is/hitunarbunadur/hitastrengir-og-mottur/hitafilma/"
+    },
+    {
+      "category": "Hitunarbúnaður",
+      "subcategory": "Viftur og íhlutir",
+      "sub_subcategory": null,
+      "listing_url": "https://iskraft.husa.is/hitunarbunadur/viftur-og-ihlutir/"
+    },
+    {
+      "category": "Hitunarbúnaður",
+      "subcategory": "Geislahitarar",
+      "sub_subcategory": null,
+      "listing_url": "https://iskraft.husa.is/hitunarbunadur/geislahitarar/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Ferjöld og umbreytar",
+      "sub_subcategory": null,
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/ferjold-og-umbreytar/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Hraðabreytar og Mjúkræsar",
+      "sub_subcategory": "Mjúkræsar",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/hradabreytar-og-mjukraesar/mjukraesar/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Hraðabreytar og Mjúkræsar",
+      "sub_subcategory": "PowerFlex 4M Hraðabreytar",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/hradabreytar-og-mjukraesar/powerflex-4m-hradabreytar/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Hraðabreytar og Mjúkræsar",
+      "sub_subcategory": "PowerFlex 523 Hraðabreytar",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/hradabreytar-og-mjukraesar/powerflex-523-hradabreytar/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Hraðabreytar og Mjúkræsar",
+      "sub_subcategory": "PowerFlex 525 Hraðabreytar",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/hradabreytar-og-mjukraesar/powerflex-525-hradabreytar/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Hraðabreytar og Mjúkræsar",
+      "sub_subcategory": "Vacon 100 hraðabreytar",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/hradabreytar-og-mjukraesar/vacon-100-hradabreytar/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Hraðabreytar og Mjúkræsar",
+      "sub_subcategory": "Vacon 20 hraðabreytar",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/hradabreytar-og-mjukraesar/vacon-20-hradabreytar/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Hraðabreytar og Mjúkræsar",
+      "sub_subcategory": "Vacon NX hraðabreytar",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/hradabreytar-og-mjukraesar/vacon-nx-hradabreytar/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Hraðabreytar og Mjúkræsar",
+      "sub_subcategory": "PowerFlex 755TS Hraðabreytar",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/hradabreytar-og-mjukraesar/powerflex-755ts-hradabreytar/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Hraðabreytar og Mjúkræsar",
+      "sub_subcategory": "PowerFlex Fylgihlutir",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/hradabreytar-og-mjukraesar/powerflex-fylgihlutir/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Iðntölvur",
+      "sub_subcategory": "CompactLogix",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/idntolvur/compactlogix/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Iðntölvur",
+      "sub_subcategory": "ControlLogix",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/idntolvur/controllogix/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Iðntölvur",
+      "sub_subcategory": "Micro 800",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/idntolvur/micro-800/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Iðntölvur",
+      "sub_subcategory": "MicroLogix",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/idntolvur/micrologix/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Iðntölvur",
+      "sub_subcategory": "Remote I/O",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/idntolvur/remote-io/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Iðntölvur",
+      "sub_subcategory": "Industrial PC",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/idntolvur/industrial-pc/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Nemar og skynjarar",
+      "sub_subcategory": "Aukabúnaður fyrir nema",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/nemar-og-skynjarar/aukabunadur-fyrir-nema/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Nemar og skynjarar",
+      "sub_subcategory": "CO2 nemar",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/nemar-og-skynjarar/co2-nemar/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Nemar og skynjarar",
+      "sub_subcategory": "Flotrofar",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/nemar-og-skynjarar/flotrofar/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Nemar og skynjarar",
+      "sub_subcategory": "Flæðinemar",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/nemar-og-skynjarar/flaedinemar/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Nemar og skynjarar",
+      "sub_subcategory": "Hallanemar",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/nemar-og-skynjarar/hallanemar/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Nemar og skynjarar",
+      "sub_subcategory": "Hita og rakanemar",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/nemar-og-skynjarar/hita-og-rakanemar/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Nemar og skynjarar",
+      "sub_subcategory": "Hitanemar",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/nemar-og-skynjarar/hitanemar/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Nemar og skynjarar",
+      "sub_subcategory": "Hljóðbylgjunemar",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/nemar-og-skynjarar/hljodbylgjunemar/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Nemar og skynjarar",
+      "sub_subcategory": "I/O Link",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/nemar-og-skynjarar/io-link/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Nemar og skynjarar",
+      "sub_subcategory": "Leiðninemar",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/nemar-og-skynjarar/leidninemar/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Nemar og skynjarar",
+      "sub_subcategory": "Massaskynjarar",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/nemar-og-skynjarar/massaskynjarar/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Nemar og skynjarar",
+      "sub_subcategory": "Ljósnemar",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/nemar-og-skynjarar/ljosnemar/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Nemar og skynjarar",
+      "sub_subcategory": "Málmskynjarar",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/nemar-og-skynjarar/malmskynjarar/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Nemar og skynjarar",
+      "sub_subcategory": "Þrýstinemar",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/nemar-og-skynjarar/thrystinemar/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Nemar og skynjarar",
+      "sub_subcategory": "Víbríngsnemar",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/nemar-og-skynjarar/vibringsnemar/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Nemar og skynjarar",
+      "sub_subcategory": "Hæðar- og stöðuskynjarar",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/nemar-og-skynjarar/haedar-og-stoduskynjarar/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Nemar og skynjarar",
+      "sub_subcategory": "Skannar",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/nemar-og-skynjarar/skannar/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Nemar og skynjarar",
+      "sub_subcategory": "Radarskynjarar",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/nemar-og-skynjarar/radarskynjarar/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Nemar og skynjarar",
+      "sub_subcategory": "LED Skjáir",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/nemar-og-skynjarar/led-skjair/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Nemar og skynjarar",
+      "sub_subcategory": "Vatnsgæðamælar",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/nemar-og-skynjarar/vatnsgaedamaelar/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Nemar og skynjarar",
+      "sub_subcategory": "Stokkaskynjarar",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/nemar-og-skynjarar/stokkaskynjarar/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Snarar, rofar og gaumljós",
+      "sub_subcategory": "Baco Snarar og rofar",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/snarar-rofar-og-gaumljos/baco-snarar-og-rofar/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Snarar, rofar og gaumljós",
+      "sub_subcategory": "Rofaefni 22mm",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/snarar-rofar-og-gaumljos/rofaefni-22mm/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Snarar, rofar og gaumljós",
+      "sub_subcategory": "Ljósasúlur 50mm",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/snarar-rofar-og-gaumljos/ljosasulur-50mm/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Snarar, rofar og gaumljós",
+      "sub_subcategory": "AB Snarar og rofar",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/snarar-rofar-og-gaumljos/ab-snarar-og-rofar/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Spólurofar og smáliðar",
+      "sub_subcategory": "Mótorrofar",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/spolurofar-og-smalidar/motorrofar/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Spólurofar og smáliðar",
+      "sub_subcategory": "Rafeindaliðar",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/spolurofar-og-smalidar/rafeindalidar/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Spólurofar og smáliðar",
+      "sub_subcategory": "Smáliðar",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/spolurofar-og-smalidar/smalidar/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Spólurofar og smáliðar",
+      "sub_subcategory": "Spólurofar",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/spolurofar-og-smalidar/spolurofar/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Spólurofar og smáliðar",
+      "sub_subcategory": "Stýriliðar",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/spolurofar-og-smalidar/styrilidar/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Spólurofar og smáliðar",
+      "sub_subcategory": "Tímaliðar",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/spolurofar-og-smalidar/timalidar/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Spólurofar og smáliðar",
+      "sub_subcategory": "Yfirálagsvarnir smáspólurofa",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/spolurofar-og-smalidar/yfiralagsvarnir-smaspolurofa/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Spólurofar og smáliðar",
+      "sub_subcategory": "Yfirálagsvarnir spólurofa",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/spolurofar-og-smalidar/yfiralagsvarnir-spolurofa/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Spólurofar og smáliðar",
+      "sub_subcategory": "Rafeindavör",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/spolurofar-og-smalidar/rafeindavor/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Spólurofar og smáliðar",
+      "sub_subcategory": "Vaktbúnaður",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/spolurofar-og-smalidar/vaktbunadur/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Spólurofar og smáliðar",
+      "sub_subcategory": "Mótorræsar",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/spolurofar-og-smalidar/motorraesar/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Töfluspennar",
+      "sub_subcategory": "AC spennar",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/tofluspennar/ac-spennar/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Töfluspennar",
+      "sub_subcategory": "DC spennar",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/tofluspennar/dc-spennar/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Töfluspennar",
+      "sub_subcategory": "DC varbúnaður",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/tofluspennar/dc-varbunadur/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "VPN tengibúnaður",
+      "sub_subcategory": null,
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/vpn-tengibunadur/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Öryggisbúnaður",
+      "sub_subcategory": "Endastopp og Lásar",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/oryggisbunadur/endastopp-og-lasar/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Öryggisbúnaður",
+      "sub_subcategory": "Ljóshlið",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/oryggisbunadur/ljoshlid/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Öryggisbúnaður",
+      "sub_subcategory": "Safety Barriers",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/oryggisbunadur/safety-barriers/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Öryggisbúnaður",
+      "sub_subcategory": "Öryggisliðar",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/oryggisbunadur/oryggislidar/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Öryggisbúnaður",
+      "sub_subcategory": "Öryggismottur",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/oryggisbunadur/oryggismottur/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Öryggisbúnaður",
+      "sub_subcategory": "Neyðartogrofar",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/oryggisbunadur/neydartogrofar/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Öryggisbúnaður",
+      "sub_subcategory": "Öryggisskannar",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/oryggisbunadur/oryggisskannar/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Öryggisbúnaður",
+      "sub_subcategory": "AS-i Öryggisbúnaður",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/oryggisbunadur/as-i-oryggisbunadur/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Hugbúnaður",
+      "sub_subcategory": null,
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/hugbunadur/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Skjáir",
+      "sub_subcategory": "OptixPanel",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/skjair/optixpanel/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Skjáir",
+      "sub_subcategory": "Panel PC",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/skjair/panel-pc/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Skjáir",
+      "sub_subcategory": "PanelView",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/skjair/panelview/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Skjáir",
+      "sub_subcategory": "Snertiskjáir",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/skjair/snertiskjair/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Skjáir",
+      "sub_subcategory": "Fylgihlutir fyrir skjái",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/skjair/fylgihlutir-fyrir-skjai/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Iðnaðarvogir",
+      "sub_subcategory": "Gólfvogir",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/idnadarvogir/golfvogir/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Iðnaðarvogir",
+      "sub_subcategory": "Borðvogir",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/idnadarvogir/bordvogir/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Iðnaðarvogir",
+      "sub_subcategory": "Loadsellur",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/idnadarvogir/loadsellur/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Iðnaðarvogir",
+      "sub_subcategory": "Skjáir og fylgihlutir",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/idnadarvogir/skjair-og-fylgihlutir/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "4G GSM-búnaður",
+      "sub_subcategory": null,
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/4g-gsm-bunadur/"
+    },
+    {
+      "category": "Innlagnaefni",
+      "subcategory": "Dimma- og stýripungar",
+      "sub_subcategory": "Dimmapungar í dós",
+      "listing_url": "https://iskraft.husa.is/innlagnaefni/dimma-og-styripungar/dimmapungar-i-dos/"
+    },
+    {
+      "category": "Innlagnaefni",
+      "subcategory": "Dimma- og stýripungar",
+      "sub_subcategory": "Rofaeiningar í dós",
+      "listing_url": "https://iskraft.husa.is/innlagnaefni/dimma-og-styripungar/rofaeiningar-i-dos/"
+    },
+    {
+      "category": "Innlagnaefni",
+      "subcategory": "Fjöltengi,Klær og Hulsur",
+      "sub_subcategory": "Fjöltengi",
+      "listing_url": "https://iskraft.husa.is/innlagnaefni/fjoltengiklaer-og-hulsur/fjoltengi/"
+    },
+    {
+      "category": "Innlagnaefni",
+      "subcategory": "Fjöltengi,Klær og Hulsur",
+      "sub_subcategory": "Fjöltengi Úti IP44",
+      "listing_url": "https://iskraft.husa.is/innlagnaefni/fjoltengiklaer-og-hulsur/fjoltengi-uti-ip44/"
+    },
+    {
+      "category": "Innlagnaefni",
+      "subcategory": "Fjöltengi,Klær og Hulsur",
+      "sub_subcategory": "Klær og Hulsur",
+      "listing_url": "https://iskraft.husa.is/innlagnaefni/fjoltengiklaer-og-hulsur/klaer-og-hulsur/"
+    },
+    {
+      "category": "Innlagnaefni",
+      "subcategory": "Fjöltengi,Klær og Hulsur",
+      "sub_subcategory": "Klær og Hulsur Gúmmí",
+      "listing_url": "https://iskraft.husa.is/innlagnaefni/fjoltengiklaer-og-hulsur/klaer-og-hulsur-gummi/"
+    },
+    {
+      "category": "Innlagnaefni",
+      "subcategory": "Fjöltengi,Klær og Hulsur",
+      "sub_subcategory": "Millitengi",
+      "listing_url": "https://iskraft.husa.is/innlagnaefni/fjoltengiklaer-og-hulsur/millitengi/"
+    },
+    {
+      "category": "Innlagnaefni",
+      "subcategory": "Fjöltengi,Klær og Hulsur",
+      "sub_subcategory": "Snúru með Kló",
+      "listing_url": "https://iskraft.husa.is/innlagnaefni/fjoltengiklaer-og-hulsur/snuru-med-klo/"
+    },
+    {
+      "category": "Innlagnaefni",
+      "subcategory": "Hússtjórnarkerfi",
+      "sub_subcategory": "Lunatone Dali",
+      "listing_url": "https://iskraft.husa.is/innlagnaefni/husstjornarkerfi/lunatone-dali/"
+    },
+    {
+      "category": "Innlagnaefni",
+      "subcategory": "Hússtjórnarkerfi",
+      "sub_subcategory": "Z-wave",
+      "listing_url": "https://iskraft.husa.is/innlagnaefni/husstjornarkerfi/z-wave/"
+    },
+    {
+      "category": "Innlagnaefni",
+      "subcategory": "Iðnaðartengibúnaður CEE",
+      "sub_subcategory": "Tengibúnaður CEE IP44",
+      "listing_url": "https://iskraft.husa.is/innlagnaefni/idnadartengibunadur-cee/tengibunadur-cee-ip44/"
+    },
+    {
+      "category": "Innlagnaefni",
+      "subcategory": "Iðnaðartengibúnaður CEE",
+      "sub_subcategory": "Tengibúnaður CEE IP67",
+      "listing_url": "https://iskraft.husa.is/innlagnaefni/idnadartengibunadur-cee/tengibunadur-cee-ip67/"
+    },
+    {
+      "category": "Innlagnaefni",
+      "subcategory": "Legrand Innlagnaefni",
+      "sub_subcategory": "Mosaic Hvítt",
+      "listing_url": "https://iskraft.husa.is/innlagnaefni/legrand-innlagnaefni/mosaic-hvitt/"
+    },
+    {
+      "category": "Innlagnaefni",
+      "subcategory": "Legrand Innlagnaefni",
+      "sub_subcategory": "Valena Hvítt",
+      "listing_url": "https://iskraft.husa.is/innlagnaefni/legrand-innlagnaefni/valena-hvitt/"
+    },
+    {
+      "category": "Innlagnaefni",
+      "subcategory": "Legrand Innlagnaefni",
+      "sub_subcategory": "Mosaic Svart",
+      "listing_url": "https://iskraft.husa.is/innlagnaefni/legrand-innlagnaefni/mosaic-svart/"
+    },
+    {
+      "category": "Innlagnaefni",
+      "subcategory": "Legrand Innlagnaefni",
+      "sub_subcategory": "Mosaic Álgrátt",
+      "listing_url": "https://iskraft.husa.is/innlagnaefni/legrand-innlagnaefni/mosaic-algratt/"
+    },
+    {
+      "category": "Innlagnaefni",
+      "subcategory": "Merten Innlagnaefni",
+      "sub_subcategory": "Grunneiningar",
+      "listing_url": "https://iskraft.husa.is/innlagnaefni/merten-innlagnaefni/grunneiningar/"
+    },
+    {
+      "category": "Innlagnaefni",
+      "subcategory": "Merten Innlagnaefni",
+      "sub_subcategory": "Merten M-Glans",
+      "listing_url": "https://iskraft.husa.is/innlagnaefni/merten-innlagnaefni/merten-m-glans/"
+    },
+    {
+      "category": "Innlagnaefni",
+      "subcategory": "Merten Innlagnaefni",
+      "sub_subcategory": "Merten M-Matt",
+      "listing_url": "https://iskraft.husa.is/innlagnaefni/merten-innlagnaefni/merten-m-matt/"
+    },
+    {
+      "category": "Innlagnaefni",
+      "subcategory": "Merten Innlagnaefni",
+      "sub_subcategory": "Merten 1M",
+      "listing_url": "https://iskraft.husa.is/innlagnaefni/merten-innlagnaefni/merten-1m/"
+    },
+    {
+      "category": "Innlagnaefni",
+      "subcategory": "Merten Innlagnaefni",
+      "sub_subcategory": "Merten M-Pure",
+      "listing_url": "https://iskraft.husa.is/innlagnaefni/merten-innlagnaefni/merten-m-pure/"
+    },
+    {
+      "category": "Innlagnaefni",
+      "subcategory": "Merten Innlagnaefni",
+      "sub_subcategory": "Merten M-Plan",
+      "listing_url": "https://iskraft.husa.is/innlagnaefni/merten-innlagnaefni/merten-m-plan/"
+    },
+    {
+      "category": "Innlagnaefni",
+      "subcategory": "Merten Innlagnaefni",
+      "sub_subcategory": "Merten Aqua IP44",
+      "listing_url": "https://iskraft.husa.is/innlagnaefni/merten-innlagnaefni/merten-aqua-ip44/"
+    },
+    {
+      "category": "Innlagnaefni",
+      "subcategory": "Merten Innlagnaefni",
+      "sub_subcategory": "Merten M-Plan Gler",
+      "listing_url": "https://iskraft.husa.is/innlagnaefni/merten-innlagnaefni/merten-m-plan-gler/"
+    },
+    {
+      "category": "Innlagnaefni",
+      "subcategory": "Utanáliggjandi efni",
+      "sub_subcategory": "ABB Utanáliggjandi efni",
+      "listing_url": "https://iskraft.husa.is/innlagnaefni/utanaliggjandi-efni/abb-utanaliggjandi-efni/"
+    },
+    {
+      "category": "Innlagnaefni",
+      "subcategory": "Utanáliggjandi efni",
+      "sub_subcategory": "Hreyfiskynjarar ofl.",
+      "listing_url": "https://iskraft.husa.is/innlagnaefni/utanaliggjandi-efni/hreyfiskynjarar-ofl/"
+    },
+    {
+      "category": "Innlagnaefni",
+      "subcategory": "Utanáliggjandi efni",
+      "sub_subcategory": "Ljósnemar",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/nemar-og-skynjarar/ljosnemar/"
+    },
+    {
+      "category": "Innlagnaefni",
+      "subcategory": "Utanáliggjandi efni",
+      "sub_subcategory": "Utanáliggjandi annað",
+      "listing_url": "https://iskraft.husa.is/innlagnaefni/utanaliggjandi-efni/utanaliggjandi-annad/"
+    },
+    {
+      "category": "Innlagnaefni",
+      "subcategory": "Utanáliggjandi Rakahelt",
+      "sub_subcategory": null,
+      "listing_url": "https://iskraft.husa.is/innlagnaefni/utanaliggjandi-rakahelt/"
+    },
+    {
+      "category": "Innlagnaefni",
+      "subcategory": "Þráðlaust innlagnaefni",
+      "sub_subcategory": "Merten Þráðlaust efni",
+      "listing_url": "https://iskraft.husa.is/innlagnaefni/thradlaust-innlagnaefni/merten-thradlaust-efni/"
+    },
+    {
+      "category": "Innlagnaefni",
+      "subcategory": "Þráðlaust innlagnaefni",
+      "sub_subcategory": "Elko Þráðlaust Efni",
+      "listing_url": "https://iskraft.husa.is/innlagnaefni/thradlaust-innlagnaefni/elko-thradlaust-efni/"
+    },
+    {
+      "category": "Innlagnaefni",
+      "subcategory": "Þráðlaust innlagnaefni",
+      "sub_subcategory": "Plejd Þráðlaust Efni",
+      "listing_url": "https://iskraft.husa.is/innlagnaefni/thradlaust-innlagnaefni/plejd-thradlaust-efni/"
+    },
+    {
+      "category": "Innlagnaefni",
+      "subcategory": "ION Innlagnaefni",
+      "sub_subcategory": "ION Dimmer",
+      "listing_url": "https://iskraft.husa.is/innlagnaefni/ion-innlagnaefni/ion-dimmer/"
+    },
+    {
+      "category": "Innlagnaefni",
+      "subcategory": "ION Innlagnaefni",
+      "sub_subcategory": "ION Grunneiningar",
+      "listing_url": "https://iskraft.husa.is/innlagnaefni/ion-innlagnaefni/ion-grunneiningar/"
+    },
+    {
+      "category": "Innlagnaefni",
+      "subcategory": "ION Innlagnaefni",
+      "sub_subcategory": "ION V1 línan",
+      "listing_url": "https://iskraft.husa.is/innlagnaefni/ion-innlagnaefni/ion-v1-linan/"
+    },
+    {
+      "category": "Innlagnaefni",
+      "subcategory": "ION Innlagnaefni",
+      "sub_subcategory": "ION J1 línan",
+      "listing_url": "https://iskraft.husa.is/innlagnaefni/ion-innlagnaefni/ion-j1-linan/"
+    },
+    {
+      "category": "Innlagnaefni",
+      "subcategory": "ION Innlagnaefni",
+      "sub_subcategory": "ION E1 linan",
+      "listing_url": "https://iskraft.husa.is/innlagnaefni/ion-innlagnaefni/ion-e1-linan/"
+    },
+    {
+      "category": "Lagnaefni",
+      "subcategory": "Bruna-og Vatnsþéttingar",
+      "sub_subcategory": "MCT Þéttingar",
+      "listing_url": "https://iskraft.husa.is/lagnaefni/bruna-og-vatnsthettingar/mct-thettingar/"
+    },
+    {
+      "category": "Lagnaefni",
+      "subcategory": "Bruna-og Vatnsþéttingar",
+      "sub_subcategory": "Eldvarnarrör",
+      "listing_url": "https://iskraft.husa.is/lagnaefni/bruna-og-vatnsthettingar/eldvarnarror/"
+    },
+    {
+      "category": "Lagnaefni",
+      "subcategory": "Bruna-og Vatnsþéttingar",
+      "sub_subcategory": "Eldvarnarkítti",
+      "listing_url": "https://iskraft.husa.is/lagnaefni/bruna-og-vatnsthettingar/eldvarnarkitti/"
+    },
+    {
+      "category": "Lagnaefni",
+      "subcategory": "Dósalok",
+      "sub_subcategory": "Dósalok Skrúfuð",
+      "listing_url": "https://iskraft.husa.is/lagnaefni/dosalok/dosalok-skrufud/"
+    },
+    {
+      "category": "Lagnaefni",
+      "subcategory": "Dósalok",
+      "sub_subcategory": "Dóslalok Smellt",
+      "listing_url": "https://iskraft.husa.is/lagnaefni/dosalok/doslalok-smellt/"
+    },
+    {
+      "category": "Lagnaefni",
+      "subcategory": "Dósalok",
+      "sub_subcategory": "Önnur Lok",
+      "listing_url": "https://iskraft.husa.is/lagnaefni/dosalok/onnur-lok/"
+    },
+    {
+      "category": "Lagnaefni",
+      "subcategory": "Dósir og plastefni",
+      "sub_subcategory": "Vegg-og Rofadósir",
+      "listing_url": "https://iskraft.husa.is/lagnaefni/dosir-og-plastefni/vegg-og-rofadosir/"
+    },
+    {
+      "category": "Lagnaefni",
+      "subcategory": "Dósir og plastefni",
+      "sub_subcategory": "Loftdósir",
+      "listing_url": "https://iskraft.husa.is/lagnaefni/dosir-og-plastefni/loftdosir/"
+    },
+    {
+      "category": "Lagnaefni",
+      "subcategory": "Dósir og plastefni",
+      "sub_subcategory": "Plötustútar",
+      "listing_url": "https://iskraft.husa.is/lagnaefni/dosir-og-plastefni/plotustutar/"
+    },
+    {
+      "category": "Lagnaefni",
+      "subcategory": "Dósir og plastefni",
+      "sub_subcategory": "Töflustútar",
+      "listing_url": "https://iskraft.husa.is/lagnaefni/dosir-og-plastefni/toflustutar/"
+    },
+    {
+      "category": "Lagnaefni",
+      "subcategory": "Dósir og plastefni",
+      "sub_subcategory": "Dósaíhlutir ABB",
+      "listing_url": "https://iskraft.husa.is/lagnaefni/dosir-og-plastefni/dosaihlutir-abb/"
+    },
+    {
+      "category": "Lagnaefni",
+      "subcategory": "Dósir og plastefni",
+      "sub_subcategory": "Halogenbox í Steypu",
+      "listing_url": "https://iskraft.husa.is/lagnaefni/dosir-og-plastefni/halogenbox-i-steypu/"
+    },
+    {
+      "category": "Lagnaefni",
+      "subcategory": "Dósir og plastefni",
+      "sub_subcategory": "Dósaíhlutir Bjarg",
+      "listing_url": "https://iskraft.husa.is/lagnaefni/dosir-og-plastefni/dosaihlutir-bjarg/"
+    },
+    {
+      "category": "Lagnaefni",
+      "subcategory": "Dósir og plastefni",
+      "sub_subcategory": "Rörastólar steypu",
+      "listing_url": "https://iskraft.husa.is/lagnaefni/dosir-og-plastefni/rorastolar-steypu/"
+    },
+    {
+      "category": "Lagnaefni",
+      "subcategory": "Festiefni",
+      "sub_subcategory": "Kapalspennur",
+      "listing_url": "https://iskraft.husa.is/lagnaefni/festiefni/kapalspennur/"
+    },
+    {
+      "category": "Lagnaefni",
+      "subcategory": "Festiefni",
+      "sub_subcategory": "Rörastólar og Röraspennur",
+      "listing_url": "https://iskraft.husa.is/lagnaefni/festiefni/rorastolar-og-roraspennur/"
+    },
+    {
+      "category": "Lagnaefni",
+      "subcategory": "Festiefni",
+      "sub_subcategory": "Dragbönd og Girði",
+      "listing_url": "https://iskraft.husa.is/lagnaefni/festiefni/dragbond-og-girdi/"
+    },
+    {
+      "category": "Lagnaefni",
+      "subcategory": "Festiefni",
+      "sub_subcategory": "Múrtappar, rekskrúfur ofl.",
+      "listing_url": "https://iskraft.husa.is/lagnaefni/festiefni/murtappar-rekskrufur-ofl/"
+    },
+    {
+      "category": "Lagnaefni",
+      "subcategory": "Festiefni",
+      "sub_subcategory": "Múrboltar, Snittteinar ofl.",
+      "listing_url": "https://iskraft.husa.is/lagnaefni/festiefni/murboltar-snittteinar-ofl/"
+    },
+    {
+      "category": "Lagnaefni",
+      "subcategory": "Festiefni",
+      "sub_subcategory": "Erico Caddy Festingar",
+      "listing_url": "https://iskraft.husa.is/lagnaefni/festiefni/erico-caddy-festingar/"
+    },
+    {
+      "category": "Lagnaefni",
+      "subcategory": "Festiefni",
+      "sub_subcategory": "Strengfestingar",
+      "listing_url": "https://iskraft.husa.is/lagnaefni/festiefni/strengfestingar/"
+    },
+    {
+      "category": "Lagnaefni",
+      "subcategory": "Lagnaleiðir",
+      "sub_subcategory": "Kapalgrindur Heitgalv",
+      "listing_url": "https://iskraft.husa.is/lagnaefni/lagnaleidir/kapalgrindur-heitgalv/"
+    },
+    {
+      "category": "Lagnaefni",
+      "subcategory": "Lagnaleiðir",
+      "sub_subcategory": "Kapalgrindur Rafgalv",
+      "listing_url": "https://iskraft.husa.is/lagnaefni/lagnaleidir/kapalgrindur-rafgalv/"
+    },
+    {
+      "category": "Lagnaefni",
+      "subcategory": "Lagnaleiðir",
+      "sub_subcategory": "Kapalgrindur Ryðfríar",
+      "listing_url": "https://iskraft.husa.is/lagnaefni/lagnaleidir/kapalgrindur-rydfriar/"
+    },
+    {
+      "category": "Lagnaefni",
+      "subcategory": "Lagnaleiðir",
+      "sub_subcategory": "Lagnabakkar",
+      "listing_url": "https://iskraft.husa.is/lagnaefni/lagnaleidir/lagnabakkar/"
+    },
+    {
+      "category": "Lagnaefni",
+      "subcategory": "Lagnaleiðir",
+      "sub_subcategory": "Límlistar & Rennur",
+      "listing_url": "https://iskraft.husa.is/lagnaefni/lagnaleidir/limlistar-rennur/"
+    },
+    {
+      "category": "Lagnaefni",
+      "subcategory": "Lagnaleiðir",
+      "sub_subcategory": "Strengstigar Heitgalv",
+      "listing_url": "https://iskraft.husa.is/lagnaefni/lagnaleidir/strengstigar-heitgalv/"
+    },
+    {
+      "category": "Lagnaefni",
+      "subcategory": "Lagnaleiðir",
+      "sub_subcategory": "Strengstigar Rafgalv",
+      "listing_url": "https://iskraft.husa.is/lagnaefni/lagnaleidir/strengstigar-rafgalv/"
+    },
+    {
+      "category": "Lagnaefni",
+      "subcategory": "Lagnaleiðir",
+      "sub_subcategory": "Tenglastokkar Plast",
+      "listing_url": "https://iskraft.husa.is/lagnaefni/lagnaleidir/tenglastokkar-plast/"
+    },
+    {
+      "category": "Lagnaefni",
+      "subcategory": "Lagnaleiðir",
+      "sub_subcategory": "Tenglastokkar Ál",
+      "listing_url": "https://iskraft.husa.is/lagnaefni/lagnaleidir/tenglastokkar-al/"
+    },
+    {
+      "category": "Lagnaefni",
+      "subcategory": "Lagnaleiðir",
+      "sub_subcategory": "Tenglasúlur",
+      "listing_url": "https://iskraft.husa.is/lagnaefni/lagnaleidir/tenglasulur/"
+    },
+    {
+      "category": "Lagnaefni",
+      "subcategory": "Lagnaleiðir",
+      "sub_subcategory": "Gólf-og borðtenglar",
+      "listing_url": "https://iskraft.husa.is/lagnaefni/lagnaleidir/golf-og-bordtenglar/"
+    },
+    {
+      "category": "Lagnaefni",
+      "subcategory": "Lagnaleiðir",
+      "sub_subcategory": "Gormarennur",
+      "listing_url": "https://iskraft.husa.is/lagnaefni/lagnaleidir/gormarennur/"
+    },
+    {
+      "category": "Lagnaefni",
+      "subcategory": "Nipplar og rær",
+      "sub_subcategory": "Plastnipplar og Rær MM",
+      "listing_url": "https://iskraft.husa.is/lagnaefni/nipplar-og-raer/plastnipplar-og-raer-mm/"
+    },
+    {
+      "category": "Lagnaefni",
+      "subcategory": "Nipplar og rær",
+      "sub_subcategory": "Málmnipplar og Rær",
+      "listing_url": "https://iskraft.husa.is/lagnaefni/nipplar-og-raer/malmnipplar-og-raer/"
+    },
+    {
+      "category": "Lagnaefni",
+      "subcategory": "Nipplar og rær",
+      "sub_subcategory": "Ex Nipplar og Rær",
+      "listing_url": "https://iskraft.husa.is/lagnaefni/nipplar-og-raer/ex-nipplar-og-raer/"
+    },
+    {
+      "category": "Lagnaefni",
+      "subcategory": "Nipplar og rær",
+      "sub_subcategory": "Skermaðir Nipplar og Rær",
+      "listing_url": "https://iskraft.husa.is/lagnaefni/nipplar-og-raer/skermadir-nipplar-og-raer/"
+    },
+    {
+      "category": "Lagnaefni",
+      "subcategory": "Nipplar og rær",
+      "sub_subcategory": "Stækkanir, Þrengingar ofl",
+      "listing_url": "https://iskraft.husa.is/lagnaefni/nipplar-og-raer/staekkanir-threngingar-ofl/"
+    },
+    {
+      "category": "Lagnaefni",
+      "subcategory": "Nipplar og rær",
+      "sub_subcategory": "Troðnipplar",
+      "listing_url": "https://iskraft.husa.is/lagnaefni/nipplar-og-raer/trodnipplar/"
+    },
+    {
+      "category": "Lagnaefni",
+      "subcategory": "Nipplar og rær",
+      "sub_subcategory": "Rörafóðringar",
+      "listing_url": "https://iskraft.husa.is/lagnaefni/nipplar-og-raer/rorafodringar/"
+    },
+    {
+      "category": "Lagnaefni",
+      "subcategory": "Nipplar og rær",
+      "sub_subcategory": "Nipplasamtengi IP68",
+      "listing_url": "https://iskraft.husa.is/lagnaefni/nipplar-og-raer/nipplasamtengi-ip68/"
+    },
+    {
+      "category": "Lagnaefni",
+      "subcategory": "Rör og Barki",
+      "sub_subcategory": "Plaströr",
+      "listing_url": "https://iskraft.husa.is/lagnaefni/ror-og-barki/plastror/"
+    },
+    {
+      "category": "Lagnaefni",
+      "subcategory": "Rör og Barki",
+      "sub_subcategory": "Plastbarki",
+      "listing_url": "https://iskraft.husa.is/lagnaefni/ror-og-barki/plastbarki/"
+    },
+    {
+      "category": "Lagnaefni",
+      "subcategory": "Rör og Barki",
+      "sub_subcategory": "Álrör",
+      "listing_url": "https://iskraft.husa.is/lagnaefni/ror-og-barki/alror/"
+    },
+    {
+      "category": "Lagnaefni",
+      "subcategory": "Rör og Barki",
+      "sub_subcategory": "Ídreginn Barki",
+      "listing_url": "https://iskraft.husa.is/lagnaefni/ror-og-barki/idreginn-barki/"
+    },
+    {
+      "category": "Lagnaefni",
+      "subcategory": "Rör og Barki",
+      "sub_subcategory": "Hólkar og Beygjur",
+      "listing_url": "https://iskraft.husa.is/lagnaefni/ror-og-barki/holkar-og-beygjur/"
+    },
+    {
+      "category": "Lagnaefni",
+      "subcategory": "Rör og Barki",
+      "sub_subcategory": "Jarðvegsbarki",
+      "listing_url": "https://iskraft.husa.is/lagnaefni/ror-og-barki/jardvegsbarki/"
+    },
+    {
+      "category": "Lýsingarbúnaður",
+      "subcategory": "Iðnaðarlampar",
+      "sub_subcategory": "Efnaþolnir",
+      "listing_url": "https://iskraft.husa.is/lysingarbunadur/idnadarlampar/efnatholnir/"
+    },
+    {
+      "category": "Lýsingarbúnaður",
+      "subcategory": "Iðnaðarlampar",
+      "sub_subcategory": "Tunnulampar",
+      "listing_url": "https://iskraft.husa.is/lysingarbunadur/idnadarlampar/tunnulampar/"
+    },
+    {
+      "category": "Lýsingarbúnaður",
+      "subcategory": "Iðnaðarlampar",
+      "sub_subcategory": "led Iðnaðarlampar",
+      "listing_url": "https://iskraft.husa.is/lysingarbunadur/idnadarlampar/led-idnadarlampar/"
+    },
+    {
+      "category": "Lýsingarbúnaður",
+      "subcategory": "Iðnaðarlampar",
+      "sub_subcategory": "Sprengiheldir",
+      "listing_url": "https://iskraft.husa.is/lysingarbunadur/idnadarlampar/sprengiheldir/"
+    },
+    {
+      "category": "Lýsingarbúnaður",
+      "subcategory": "Heimilisljós",
+      "sub_subcategory": "Innfelld ljós",
+      "listing_url": "https://iskraft.husa.is/lysingarbunadur/heimilisljos/innfelld-ljos/"
+    },
+    {
+      "category": "Lýsingarbúnaður",
+      "subcategory": "Heimilisljós",
+      "sub_subcategory": "Kúplar",
+      "listing_url": "https://iskraft.husa.is/lysingarbunadur/heimilisljos/kuplar/"
+    },
+    {
+      "category": "Lýsingarbúnaður",
+      "subcategory": "Heimilisljós",
+      "sub_subcategory": "Veggljós",
+      "listing_url": "https://iskraft.husa.is/lysingarbunadur/heimilisljos/veggljos/"
+    },
+    {
+      "category": "Lýsingarbúnaður",
+      "subcategory": "Heimilisljós",
+      "sub_subcategory": "Innréttingaljós",
+      "listing_url": "https://iskraft.husa.is/lysingarbunadur/heimilisljos/innrettingaljos/"
+    },
+    {
+      "category": "Lýsingarbúnaður",
+      "subcategory": "Heimilisljós",
+      "sub_subcategory": "Loftljós",
+      "listing_url": "https://iskraft.husa.is/lysingarbunadur/heimilisljos/loftljos/"
+    },
+    {
+      "category": "Lýsingarbúnaður",
+      "subcategory": "Heimilisljós",
+      "sub_subcategory": "Dúkaloft / Hljóðdúkar",
+      "listing_url": "https://iskraft.husa.is/lysingarbunadur/heimilisljos/dukaloft-hljoddukar/"
+    },
+    {
+      "category": "Lýsingarbúnaður",
+      "subcategory": "Íhlutir í ljós",
+      "sub_subcategory": "Ballast",
+      "listing_url": "https://iskraft.husa.is/lysingarbunadur/ihlutir-i-ljos/ballast/"
+    },
+    {
+      "category": "Lýsingarbúnaður",
+      "subcategory": "Íhlutir í ljós",
+      "sub_subcategory": "Fattningar",
+      "listing_url": "https://iskraft.husa.is/lysingarbunadur/ihlutir-i-ljos/fattningar/"
+    },
+    {
+      "category": "Lýsingarbúnaður",
+      "subcategory": "Kastarabrautir og kastarar",
+      "sub_subcategory": "Kastarabrautir",
+      "listing_url": "https://iskraft.husa.is/lysingarbunadur/kastarabrautir-og-kastarar/kastarabrautir/"
+    },
+    {
+      "category": "Lýsingarbúnaður",
+      "subcategory": "Kastarabrautir og kastarar",
+      "sub_subcategory": "Brautakastarar",
+      "listing_url": "https://iskraft.husa.is/lysingarbunadur/kastarabrautir-og-kastarar/brautakastarar/"
+    },
+    {
+      "category": "Lýsingarbúnaður",
+      "subcategory": "Kastarabrautir og kastarar",
+      "sub_subcategory": "Einfasa brautir og ljós",
+      "listing_url": "https://iskraft.husa.is/lysingarbunadur/kastarabrautir-og-kastarar/einfasa-brautir-og-ljos/"
+    },
+    {
+      "category": "Lýsingarbúnaður",
+      "subcategory": "LED Borðar",
+      "sub_subcategory": "LED lengjur",
+      "listing_url": "https://iskraft.husa.is/lysingarbunadur/led-bordar/led-lengjur/"
+    },
+    {
+      "category": "Lýsingarbúnaður",
+      "subcategory": "LED Borðar",
+      "sub_subcategory": "LED prófílar",
+      "listing_url": "https://iskraft.husa.is/lysingarbunadur/led-bordar/led-profilar/"
+    },
+    {
+      "category": "Lýsingarbúnaður",
+      "subcategory": "LED Borðar",
+      "sub_subcategory": "LED LABS",
+      "listing_url": "https://iskraft.husa.is/lysingarbunadur/led-bordar/led-labs/"
+    },
+    {
+      "category": "Lýsingarbúnaður",
+      "subcategory": "LED Borðar",
+      "sub_subcategory": "230V led lengjur",
+      "listing_url": "https://iskraft.husa.is/lysingarbunadur/led-bordar/230v-led-lengjur/"
+    },
+    {
+      "category": "Lýsingarbúnaður",
+      "subcategory": "Skrifstofulampar",
+      "sub_subcategory": "Kerfisloftalampar",
+      "listing_url": "https://iskraft.husa.is/lysingarbunadur/skrifstofulampar/kerfisloftalampar/"
+    },
+    {
+      "category": "Lýsingarbúnaður",
+      "subcategory": "Skrifstofulampar",
+      "sub_subcategory": "Lampar á loft",
+      "listing_url": "https://iskraft.husa.is/lysingarbunadur/skrifstofulampar/lampar-a-loft/"
+    },
+    {
+      "category": "Lýsingarbúnaður",
+      "subcategory": "Skrifstofulampar",
+      "sub_subcategory": "Hangandi lampar",
+      "listing_url": "https://iskraft.husa.is/lysingarbunadur/skrifstofulampar/hangandi-lampar/"
+    },
+    {
+      "category": "Lýsingarbúnaður",
+      "subcategory": "Skrifstofulampar",
+      "sub_subcategory": "Skápalampar",
+      "listing_url": "https://iskraft.husa.is/lysingarbunadur/skrifstofulampar/skapalampar/"
+    },
+    {
+      "category": "Lýsingarbúnaður",
+      "subcategory": "Skrifstofulampar",
+      "sub_subcategory": "Strokkar",
+      "listing_url": "https://iskraft.husa.is/lysingarbunadur/skrifstofulampar/strokkar/"
+    },
+    {
+      "category": "Lýsingarbúnaður",
+      "subcategory": "Skrifstofulampar",
+      "sub_subcategory": "Speglaljós",
+      "listing_url": "https://iskraft.husa.is/lysingarbunadur/skrifstofulampar/speglaljos/"
+    },
+    {
+      "category": "Lýsingarbúnaður",
+      "subcategory": "Ljósaperur",
+      "sub_subcategory": "LED perur",
+      "listing_url": "https://iskraft.husa.is/lysingarbunadur/ljosaperur/led-perur/"
+    }
+  ]
+}

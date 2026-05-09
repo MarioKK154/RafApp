@@ -1,0 +1,33 @@
+# Local stack that matches production shape: PostgreSQL + Redis.
+# From backend/:  docker compose up -d
+# Then set DATABASE_URL=postgresql+psycopg2://rafapp:rafapp_local@127.0.0.1:5432/rafapp
+# and REDIS_URL=redis://127.0.0.1:6379/0  in .env
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: rafapp
+      POSTGRES_PASSWORD: rafapp_local
+      POSTGRES_DB: rafapp
+    ports:
+      - "5432:5432"
+    volumes:
+      - rafapp_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rafapp -d rafapp"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - rafapp_redis:/data
+    command: redis-server --appendonly yes
+
+volumes:
+  rafapp_pgdata:
+  rafapp_redis:

@@ -5,7 +5,58 @@ from typing import Optional, List, Dict, Any
 from datetime import date, datetime, timezone, timedelta
 import json
 from . import models, schemas
+from .database import engine
 from .security import get_password_hash
+from .labor_i18n import main_category_label_en
+
+
+def _labor_ui_lang(lang: Optional[str]) -> str:
+    l = (lang or "").strip().lower()
+    if l.startswith("en"):
+        return "en"
+    return "is"
+
+
+def _labor_sub_category_en_map(db: Session) -> Dict[tuple, str]:
+    m: Dict[tuple, str] = {}
+    for row in db.query(
+        models.LaborCatalogItem.main_category,
+        models.LaborCatalogItem.sub_category,
+        models.LaborCatalogItem.sub_category_en,
+    ).all():
+        if not row.sub_category_en:
+            continue
+        key = (row.main_category or "", row.sub_category or "")
+        m[key] = row.sub_category_en
+    return m
+
+
+def enrich_labor_item_dict(
+    item: models.LaborCatalogItem,
+    *,
+    tenant_price: Optional[float] = None,
+    units_per_hour_resolved: Optional[float] = None,
+    lang: Optional[str] = None,
+) -> Dict[str, Any]:
+    lang_code = _labor_ui_lang(lang)
+    res = {k: v for k, v in item.__dict__.items() if not k.startswith("_")}
+    res["tenant_price"] = tenant_price
+    res["description_is"] = item.description
+    if lang_code == "en" and item.description_en:
+        res["description"] = item.description_en
+    uph = item.units_per_hour if item.units_per_hour is not None else units_per_hour_resolved
+    res["units_per_hour"] = uph
+    if lang_code == "en":
+        res["main_category_display"] = (
+            item.main_category_en
+            or main_category_label_en(item.main_category)
+            or item.main_category
+        )
+        res["sub_category_display"] = item.sub_category_en or item.sub_category
+    else:
+        res["main_category_display"] = item.main_category
+        res["sub_category_display"] = item.sub_category
+    return res
 
 # --- Tenant CRUD Operations ---
 
@@ -20,11 +71,14 @@ def get_tenants(db: Session, skip: int = 0, limit: int = 100) -> List[models.Ten
 
 def create_tenant(db: Session, tenant: schemas.TenantCreate) -> models.Tenant:
     bg_urls = tenant.background_image_urls if tenant.background_image_urls else None
+    now = datetime.now(timezone.utc)
     db_tenant = models.Tenant(
         name=tenant.name,
         logo_url=str(tenant.logo_url) if tenant.logo_url else None,
         background_image_url=str(tenant.background_image_url) if tenant.background_image_url else None,
-        background_image_urls=json.dumps(bg_urls) if bg_urls else None
+        background_image_urls=json.dumps(bg_urls) if bg_urls else None,
+        created_at=now,
+        updated_at=now,
     )
     db.add(db_tenant)
     db.commit()
@@ -40,6 +94,7 @@ def update_tenant(db: Session, db_tenant: models.Tenant, tenant_update: schemas.
             setattr(db_tenant, key, json.dumps(value) if value else None)
         else:
             setattr(db_tenant, key, value)
+    db_tenant.updated_at = datetime.now(timezone.utc)
     db.add(db_tenant)
     db.commit()
     db.refresh(db_tenant)
@@ -89,12 +144,39 @@ def get_users(
         query = query.filter(models.User.is_active == is_active)
     return query.order_by(models.User.id).offset(skip).limit(limit).all()
 
+
+def _normalize_role_value(role: Optional[str]) -> Optional[str]:
+    """
+    Normalize role aliases for DB/API compatibility.
+    Postgres enum/user checks in this app primarily use spaced labels.
+    """
+    if role is None:
+        return None
+    raw = str(role).strip().lower()
+    mapping = {
+        "admin": "admin",
+        "superuser": "superuser",
+        "accountant": "accountant",
+        "project_manager": "project manager",
+        "project manager": "project manager",
+        "team_lead": "team leader",
+        "teamlead": "team leader",
+        "team leader": "team leader",
+        "regular_user": "regular user",
+        "regular user": "regular user",
+        "electrician": "electrician",
+        "subcontractor": "subcontractor",
+    }
+    return mapping.get(raw, raw)
+
 def update_user_by_admin(db: Session, user_to_update: models.User, user_data: schemas.UserUpdateAdmin) -> models.User:
     update_data = user_data.model_dump(exclude_unset=True)
     for key, value in update_data.items():
         if key == "extra_permissions":
             # Store as JSON string in DB
             setattr(user_to_update, "extra_permissions", json.dumps(value) if value is not None else None)
+        elif key == "role":
+            setattr(user_to_update, "role", _normalize_role_value(value))
         elif hasattr(user_to_update, key):
             setattr(user_to_update, key, value)
     
@@ -125,7 +207,7 @@ def create_user_by_admin(db: Session, user_data: schemas.UserCreateAdmin) -> mod
         phone_number=user_data.phone_number, 
         city=loc,
         location=loc,
-        role=user_data.role, 
+        role=_normalize_role_value(user_data.role),
         tenant_id=user_data.tenant_id,
         is_active=user_data.is_active if user_data.is_active is not None else True,
         is_superuser=user_data.is_superuser if user_data.is_superuser is not None else False,
@@ -550,15 +632,64 @@ def get_inventory_item(db: Session, item_id: int) -> Optional[models.InventoryIt
 def get_inventory_items(
     db: Session, 
     search: Optional[str] = None, 
+    category: Optional[str] = None,
+    subcategory: Optional[str] = None,
     skip: int = 0, 
     limit: int = 100
 ) -> List[models.InventoryItem]:
     query = db.query(models.InventoryItem)
     if search:
         search_term = f"%{search}%"
-        query = query.filter(models.InventoryItem.name.ilike(search_term))
+        query = query.filter(
+            or_(
+                models.InventoryItem.name.ilike(search_term),
+                models.InventoryItem.name_en.ilike(search_term),
+                models.InventoryItem.description.ilike(search_term),
+                models.InventoryItem.description_en.ilike(search_term),
+            )
+        )
+
+    if category:
+        query = query.filter(models.InventoryItem.category == category)
+
+    if subcategory:
+        # Frontend treats "subcategory" as the first segment before '/'.
+        # Example: "Foo / Bar" -> "Foo"
+        col = models.InventoryItem.subcategory
+        if engine.dialect.name == "postgresql":
+            base_subcategory = func.nullif(func.trim(func.split_part(col, "/", 1)), "")
+        else:
+            from sqlalchemy import case
+
+            base_subcategory = case(
+                (func.instr(col, "/") > 0,
+                 func.trim(func.substr(col, 1, func.instr(col, "/") - 1))),
+                else_=func.trim(col),
+            )
+        query = query.filter(base_subcategory == subcategory)
     
     return query.order_by(models.InventoryItem.name).offset(skip).limit(limit).all()
+
+
+def get_inventory_catalog_filters(db: Session) -> List[dict]:
+    """
+    Build a category -> subcategory tree for the catalog UI.
+    Uses frontend's "base subcategory = first segment before '/'" convention.
+    """
+    rows = db.query(models.InventoryItem.category, models.InventoryItem.subcategory).all()
+    cat_map = {}
+    for cat, sub in rows:
+        cat_val = (cat or "Uncategorized").strip()
+        raw_sub = (sub or "").strip()
+        base_sub = raw_sub.split("/")[0].strip() if raw_sub else ""
+        if cat_val not in cat_map:
+            cat_map[cat_val] = set()
+        if base_sub:
+            cat_map[cat_val].add(base_sub)
+
+    result = [{"category": cat, "subcategories": sorted(list(subs))} for cat, subs in cat_map.items()]
+    # Keep sorting stable for UI
+    return sorted(result, key=lambda x: x["category"])
 
 def create_inventory_item(db: Session, item: schemas.InventoryItemCreate) -> models.InventoryItem:
     db_item = models.InventoryItem(**item.model_dump())
@@ -726,6 +857,7 @@ def create_risk_items_from_templates(
     db: Session,
     project_id: int,
     template_ids: List[int],
+    lang: Optional[str] = None,
 ) -> List[models.RiskItem]:
     if not template_ids:
         return []
@@ -735,14 +867,28 @@ def create_risk_items_from_templates(
         .all()
     )
     created_items: List[models.RiskItem] = []
+    lang = (lang or "").lower()
     for tmpl in templates:
+        # Select title/description/mitigation based on requested language if bilingual fields are populated
+        title = tmpl.title
+        description = tmpl.description
+        mitigation = tmpl.default_mitigation
+        if lang == "is":
+            title = tmpl.title_is or title
+            description = tmpl.description_is or description
+            mitigation = tmpl.default_mitigation_is or mitigation
+        elif lang == "en":
+            title = tmpl.title_en or title
+            description = tmpl.description_en or description
+            mitigation = tmpl.default_mitigation_en or mitigation
+
         item = models.RiskItem(
             project_id=project_id,
-            title=tmpl.title,
-            description=tmpl.description,
+            title=title,
+            description=description,
             likelihood=tmpl.default_likelihood,
             impact=tmpl.default_impact,
-            mitigation=tmpl.default_mitigation,
+            mitigation=mitigation,
             status=tmpl.default_status,
         )
         db.add(item)
@@ -1534,8 +1680,8 @@ def create_labor_catalog_item(
 def get_labor_catalog_item(db: Session, item_id: int) -> Optional[models.LaborCatalogItem]:
     return db.query(models.LaborCatalogItem).filter(models.LaborCatalogItem.id == item_id).first()
 
-def get_labor_catalog_categories(db: Session) -> List[Dict[str, Any]]:
-    """Returns category tree: list of { main_category, sub_categories: [ { sub_category, count } ] }."""
+def get_labor_catalog_categories(db: Session, lang: Optional[str] = None) -> List[Dict[str, Any]]:
+    """Category tree with filter keys (main_category, sub_category) and display_name per UI language."""
     try:
         q = db.query(
             models.LaborCatalogItem.main_category,
@@ -1552,12 +1698,44 @@ def get_labor_catalog_categories(db: Session) -> List[Dict[str, Any]]:
         if main_key not in tree:
             tree[main_key] = {}
         tree[main_key][sub_key] = count
+    lang_code = _labor_ui_lang(lang)
+    sub_en_map = _labor_sub_category_en_map(db) if lang_code == "en" else {}
+    refs = {r.code: r for r in db.query(models.LaborMainCategoryRef).all()}
     result = []
     for main in sorted(tree.keys(), key=lambda x: (x == "", x)):
-        result.append({
-            "main_category": main or None,
-            "sub_categories": [{"sub_category": sub or None, "count": c} for sub, c in sorted(tree[main].items(), key=lambda x: (x[0] == "", x[0]))],
-        })
+        main_key = main or ""
+        if lang_code == "en":
+            ref = refs.get(main_key)
+            display_main = (
+                (ref.name_en if ref and getattr(ref, "name_en", None) else None)
+                or main_category_label_en(main)
+                or main_key
+                or "(Uncategorized)"
+            )
+        else:
+            ref = refs.get(main_key)
+            display_main = (ref.name if ref else None) or main_key or "(Óflokkað)"
+        subs = []
+        for sub, c in sorted(tree[main].items(), key=lambda x: (x[0] == "", x[0])):
+            sk = sub or ""
+            if lang_code == "en":
+                display_sub = sub_en_map.get((main_key, sk)) or sk
+            else:
+                display_sub = sk
+            subs.append(
+                {
+                    "sub_category": sub or None,
+                    "display_name": display_sub,
+                    "count": c,
+                }
+            )
+        result.append(
+            {
+                "main_category": main or None,
+                "display_name": display_main,
+                "sub_categories": subs,
+            }
+        )
     return result
 
 
@@ -1568,6 +1746,7 @@ def get_labor_catalog_items(
     limit: int = 100,
     main_category: Optional[str] = None,
     sub_category: Optional[str] = None,
+    lang: Optional[str] = None,
 ) -> List[Dict[str, Any]]:
     # Fetches global catalog items and injects the requesting tenant's private price (None for superuser)
     # Apply filter() before offset/limit (SQLAlchemy requirement)
@@ -1618,11 +1797,17 @@ def get_labor_catalog_items(
 
     results = []
     for item in items:
-        res = item.__dict__.copy()
-        res["tenant_price"] = tenant_prices.get(item.id)
-        if res.get("units_per_hour") is None and item.id in variant_uph:
-            res["units_per_hour"] = variant_uph[item.id]
-        results.append(res)
+        uph_res = None
+        if item.units_per_hour is None and item.id in variant_uph:
+            uph_res = variant_uph[item.id]
+        results.append(
+            enrich_labor_item_dict(
+                item,
+                tenant_price=tenant_prices.get(item.id),
+                units_per_hour_resolved=uph_res,
+                lang=lang,
+            )
+        )
     return results
 
 def update_tenant_labor_price(db: Session, tenant_id: int, labor_item_id: int, price: float):
@@ -1696,11 +1881,26 @@ def delete_labor_catalog_item(db: Session, db_item: models.LaborCatalogItem):
     db.delete(db_item); db.commit()
 
 
-def get_labor_catalog_item_conditions(db: Session, labor_catalog_item_id: int) -> List[models.LaborCatalogItemCondition]:
-    """List all condition variants (ar.is drill-down Eining values) for one catalog item."""
-    return db.query(models.LaborCatalogItemCondition).filter(
-        models.LaborCatalogItemCondition.labor_catalog_item_id == labor_catalog_item_id
-    ).order_by(models.LaborCatalogItemCondition.code).all()
+def get_labor_catalog_item_conditions(
+    db: Session, labor_catalog_item_id: int, lang: Optional[str] = None
+) -> List[Dict[str, Any]]:
+    """List condition variants; condition_description is localized when lang=en and EN text exists."""
+    lang_code = _labor_ui_lang(lang)
+    rows = (
+        db.query(models.LaborCatalogItemCondition)
+        .filter(models.LaborCatalogItemCondition.labor_catalog_item_id == labor_catalog_item_id)
+        .order_by(models.LaborCatalogItemCondition.code)
+        .all()
+    )
+    out: List[Dict[str, Any]] = []
+    for c in rows:
+        is_txt = c.condition_description
+        disp = c.condition_description_en if lang_code == "en" and c.condition_description_en else is_txt
+        d = {k: v for k, v in c.__dict__.items() if not k.startswith("_")}
+        d["condition_description"] = disp
+        d["condition_description_is"] = is_txt
+        out.append(d)
+    return out
 
 
 def upsert_labor_catalog_item_condition(
@@ -2094,12 +2294,15 @@ def import_labor_main_category_refs(db: Session, rows: List[Dict[str, Any]]) -> 
             continue
         name = (r.get("name") or "").strip() or code
         existing = db.query(models.LaborMainCategoryRef).filter(models.LaborMainCategoryRef.code == code).first()
+        name_en = (r.get("name_en") or "").strip() or None
         if existing:
             existing.name = name
+            if name_en is not None:
+                existing.name_en = name_en
             db.add(existing)
             updated += 1
         else:
-            db.add(models.LaborMainCategoryRef(code=code, name=name))
+            db.add(models.LaborMainCategoryRef(code=code, name=name, name_en=name_en))
             created += 1
     db.commit()
     return {"created": created, "updated": updated}
@@ -2440,12 +2643,15 @@ def get_yearly_money_overview(
 
 # --- Project Assignment Logic (ROADMAP #3) ---
 
-def get_assignments(db: Session, start: date, end: date):
+def get_assignments(db: Session, start: date, end: date, tenant_id: int | None = None):
     """Fetches all bookings within a specific date window."""
-    return db.query(models.ProjectAssignment).filter(
+    query = db.query(models.ProjectAssignment).filter(
         models.ProjectAssignment.start_date <= end,
         models.ProjectAssignment.end_date >= start
-    ).all()
+    )
+    if tenant_id is not None:
+        query = query.join(models.Project).filter(models.Project.tenant_id == tenant_id)
+    return query.all()
 
 def create_assignment(db: Session, assignment: schemas.AssignmentCreate):
     # Optional: Conflict check logic can be added here

@@ -8,23 +8,30 @@ import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 
 import axiosInstance from '../api/axiosInstance';
+import { extractTenantList } from '../utils/tenantUtils';
 import { toast } from 'react-toastify';
 import Select from 'react-select';
 import LoadingSpinner from '../components/LoadingSpinner';
 import Modal from '../components/Modal';
+import { useAuth } from '../context/AuthContext';
 
 import { 
     CalendarDaysIcon, 
-    InformationCircleIcon
+    InformationCircleIcon,
+    BuildingOffice2Icon
 } from '@heroicons/react/24/outline';
 
 function CalendarPage() {
     const { t, i18n } = useTranslation();
     const navigate = useNavigate(); 
+    const { user } = useAuth();
+    const isSuperuser = !!user?.is_superuser;
     
     const [events, setEvents] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [activeFilters, setActiveFilters] = useState(['task', 'meeting', 'custom']); // project off by default to avoid calendar dominated by green
+    const [selectedTenantId, setSelectedTenantId] = useState('');
+    const [tenants, setTenants] = useState([]);
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalMode, setModalMode] = useState('view'); // 'view' | 'create'
@@ -47,6 +54,29 @@ function CalendarPage() {
             })),
         [users]
     );
+    const tenantOptions = useMemo(() => {
+        const byId = new Map();
+        for (const tenant of tenants) {
+            if (tenant?.id != null) byId.set(String(tenant.id), tenant);
+        }
+        for (const u of users) {
+            if (u?.tenant_id == null) continue;
+            const key = String(u.tenant_id);
+            if (!byId.has(key)) {
+                byId.set(key, { id: u.tenant_id, name: u?.tenant?.name || `Tenant ${u.tenant_id}` });
+            }
+        }
+        return Array.from(byId.values()).sort((a, b) =>
+            String(a?.name || a?.company_name || '').localeCompare(String(b?.name || b?.company_name || ''))
+        );
+    }, [tenants, users]);
+    const activeTenantScopeLabel = useMemo(() => {
+        if (!isSuperuser) return null;
+        if (!selectedTenantId) return 'Scope: All Companies';
+        const selected = tenantOptions.find((tenant) => String(tenant.id) === String(selectedTenantId));
+        const tenantName = selected?.name || selected?.company_name || `Tenant ${selectedTenantId}`;
+        return `Scope: ${tenantName}`;
+    }, [isSuperuser, selectedTenantId, tenantOptions]);
 
     const selectStyles = useMemo(
         () => ({
@@ -71,16 +101,18 @@ function CalendarPage() {
     const fetchData = useCallback(async () => {
         setIsLoading(true);
         try {
+            const tenantScope = isSuperuser && selectedTenantId ? { tenant_id: selectedTenantId } : {};
             const [tasksRes, projectsRes, eventsRes, usersRes] = await Promise.all([
-                axiosInstance.get('/tasks/', { params: { limit: 1000 } }),
-                axiosInstance.get('/projects/', { params: { limit: 1000 } }),
+                axiosInstance.get('/tasks/', { params: { limit: 1000, ...tenantScope } }),
+                axiosInstance.get('/projects/', { params: { limit: 1000, ...tenantScope } }),
                 axiosInstance.get('/events/', {
                     params: { 
                     start: new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1).toISOString(),
-                    end: new Date(new Date().getFullYear(), new Date().getMonth() + 2, 1).toISOString()
+                    end: new Date(new Date().getFullYear(), new Date().getMonth() + 2, 1).toISOString(),
+                    ...tenantScope,
                     },
                 }),
-                axiosInstance.get('/users/', { params: { limit: 500 } }),
+                axiosInstance.get('/users/', { params: { limit: 500, ...tenantScope } }),
             ]);
 
             const taskEvents = tasksRes.data
@@ -136,11 +168,19 @@ function CalendarPage() {
         } finally { 
             setIsLoading(false); 
         }
-    }, [t]);
+    }, [t, isSuperuser, selectedTenantId]);
 
     useEffect(() => { 
         fetchData(); 
     }, [fetchData]);
+
+    useEffect(() => {
+        if (!isSuperuser) return;
+        axiosInstance
+            .get('/tenants/', { params: { limit: 1000 } })
+            .then((res) => setTenants(extractTenantList(res?.data)))
+            .catch(() => setTenants([]));
+    }, [isSuperuser]);
 
     const handleEventClick = (info) => {
         const props = info.event.extendedProps;
@@ -265,12 +305,34 @@ function CalendarPage() {
                         </div>
                         <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">{t('calendar_title')}</h1>
                     </div>
+                    {activeTenantScopeLabel && (
+                        <div className="px-3 py-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 text-[10px] font-black uppercase tracking-widest text-indigo-700 dark:text-indigo-300">
+                            {activeTenantScopeLabel}
+                        </div>
+                    )}
                 </div>
             </header>
 
             <section className="bg-white dark:bg-gray-900 p-6 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden">
                 {/* Filter controls */}
                 <div className="flex flex-wrap gap-2 mb-4">
+                    {isSuperuser && (
+                        <div className="mr-4 mb-2 flex items-center gap-2">
+                            <BuildingOffice2Icon className="h-5 w-5 text-gray-400" />
+                            <select
+                                value={selectedTenantId}
+                                onChange={(e) => setSelectedTenantId(e.target.value)}
+                                className="h-9 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-800 px-3 text-[10px] font-black uppercase tracking-widest"
+                            >
+                                <option value="">All Companies</option>
+                                {tenantOptions.map((tenant) => (
+                                    <option key={tenant.id} value={tenant.id}>
+                                        {tenant.name || tenant.company_name || `Tenant ${tenant.id}`}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
                     {[
                         { id: 'task', label: t('calendar_filter_tasks', { defaultValue: 'Tasks' }) },
                         { id: 'project', label: t('calendar_filter_projects', { defaultValue: 'Projects' }) },

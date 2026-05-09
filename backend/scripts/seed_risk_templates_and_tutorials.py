@@ -7,8 +7,13 @@ Usage (from backend directory, with venv active):
 
     python -m scripts.seed_risk_templates_and_tutorials
 
-This script is idempotent: it checks by (category, title) for risks and by
-(category, title) for tutorials, and only inserts when not already present.
+For a fresh DB (risks + labor CSV, optional tutorials), prefer:
+
+    python -m scripts.reseed_reference_data
+    python -m scripts.reseed_reference_data --with-tutorials
+
+This script is idempotent: risk rows match (category, title); re-runs refresh
+EN/IS columns. Tutorials match (category, title) and update text when present.
 """
 
 from datetime import datetime
@@ -17,8 +22,22 @@ from typing import Optional
 
 from app.database import SessionLocal
 from app import models
-from reportlab.lib.pagesizes import A4
-from reportlab.pdfgen import canvas
+
+from scripts.risk_templates_is import RISK_CATEGORY_IS, RISK_ICELANDIC_BY_TITLE
+
+
+def _risk_bilingual_fields(tpl: dict) -> dict:
+    """Canonical English + Icelandic fields for API lang=en / lang=is."""
+    title = tpl["title"]
+    patch = RISK_ICELANDIC_BY_TITLE.get(title, {})
+    return {
+        "title_en": tpl.get("title_en") or title,
+        "description_en": tpl.get("description_en") or tpl.get("description"),
+        "default_mitigation_en": tpl.get("default_mitigation_en") or tpl.get("default_mitigation"),
+        "title_is": tpl.get("title_is") or patch.get("title_is"),
+        "description_is": tpl.get("description_is") or patch.get("description_is"),
+        "default_mitigation_is": tpl.get("default_mitigation_is") or patch.get("default_mitigation_is"),
+    }
 
 
 RISK_TEMPLATES = [
@@ -647,6 +666,7 @@ TUTORIALS = [
 
 def ensure_risk_templates(session) -> None:
     for tpl in RISK_TEMPLATES:
+        bi = _risk_bilingual_fields(tpl)
         exists = (
             session.query(models.RiskTemplate)
             .filter(
@@ -656,10 +676,25 @@ def ensure_risk_templates(session) -> None:
             .first()
         )
         if exists:
+            exists.title_en = bi["title_en"]
+            exists.description_en = bi["description_en"]
+            exists.default_mitigation_en = bi["default_mitigation_en"]
+            if bi.get("title_is"):
+                exists.title_is = bi["title_is"]
+            if bi.get("description_is"):
+                exists.description_is = bi["description_is"]
+            if bi.get("default_mitigation_is"):
+                exists.default_mitigation_is = bi["default_mitigation_is"]
+            cat = tpl.get("category")
+            if cat and RISK_CATEGORY_IS.get(cat):
+                exists.category_is = RISK_CATEGORY_IS[cat]
+            session.add(exists)
             continue
 
+        cat = tpl.get("category")
         rt = models.RiskTemplate(
-            category=tpl["category"],
+            category=cat,
+            category_is=RISK_CATEGORY_IS.get(cat) if cat else None,
             title=tpl["title"],
             description=tpl.get("description"),
             default_likelihood=tpl.get("default_likelihood", "Medium"),
@@ -667,12 +702,21 @@ def ensure_risk_templates(session) -> None:
             default_mitigation=tpl.get("default_mitigation"),
             default_status=tpl.get("default_status", "Open"),
             is_active=True,
+            title_en=bi["title_en"],
+            title_is=bi.get("title_is"),
+            description_en=bi["description_en"],
+            description_is=bi.get("description_is"),
+            default_mitigation_en=bi["default_mitigation_en"],
+            default_mitigation_is=bi.get("default_mitigation_is"),
         )
         session.add(rt)
     session.commit()
 
 
 def ensure_tutorials(session) -> None:
+    from reportlab.lib.pagesizes import A4
+    from reportlab.pdfgen import canvas
+
     # Resolve static/tutorials directory relative to backend/app
     base_app_dir = Path(__file__).resolve().parents[1] / "app"
     tutorials_dir = base_app_dir / "static" / "tutorials"

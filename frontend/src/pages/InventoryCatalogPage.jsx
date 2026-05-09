@@ -6,6 +6,7 @@ import axiosInstance from '../api/axiosInstance';
 import { toast } from 'react-toastify';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ConfirmationModal from '../components/ConfirmationModal';
+import { inventoryDisplayDescription, inventoryDisplayName } from '../utils/inventoryI18n';
 import { 
     CubeIcon, 
     PlusIcon, 
@@ -13,12 +14,11 @@ import {
     PencilIcon, 
     MagnifyingGlassIcon,
     TagIcon,
-    DocumentTextIcon,
     ShoppingCartIcon,
     ChevronRightIcon,
     AdjustmentsHorizontalIcon,
-    HashtagIcon,
-    ShoppingBagIcon
+    ShoppingBagIcon,
+    ArchiveBoxIcon
 } from '@heroicons/react/24/outline';
 
 /**
@@ -34,8 +34,15 @@ function useDebounce(value, delay) {
 }
 
 function InventoryCatalogPage() {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const navigate = useNavigate();
+    const baseURL = (axiosInstance.defaults.baseURL || '').replace(/\/$/, '');
+    const resolveImageUrl = useCallback((path) => {
+        if (!path) return '';
+        if (typeof path !== 'string') return '';
+        if (path.startsWith('http://') || path.startsWith('https://')) return path;
+        return `${baseURL}${path.startsWith('/') ? '' : '/'}${path}`;
+    }, [baseURL]);
     const location = useLocation();
     const { user } = useAuth();
 
@@ -43,6 +50,9 @@ function InventoryCatalogPage() {
     const [items, setItems] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
+
+    // Catalog filters (distinct category/subcategory pairs for the UI)
+    const [categoryTree, setCategoryTree] = useState([]);
     
     // UI/Operational States
     const [searchTerm, setSearchTerm] = useState('');
@@ -54,12 +64,18 @@ function InventoryCatalogPage() {
     const isSuperuser = user?.is_superuser;
     const canManageCatalog = !!isSuperuser;
 
-    const fetchItems = useCallback(async () => {
+    const fetchItems = useCallback(async (categoryParam, subcategoryParam) => {
         setIsLoading(true);
         setError('');
         try {
             // Align with backend: /inventory/catalog
-            const response = await axiosInstance.get('/inventory/catalog', { params: { limit: 1000 } });
+            const response = await axiosInstance.get('/inventory/catalog', {
+                params: {
+                    limit: 1000,
+                    ...(categoryParam ? { category: categoryParam } : {}),
+                    ...(subcategoryParam ? { subcategory: subcategoryParam } : {}),
+                },
+            });
             setItems(response.data);
         } catch (err) {
             console.error("Catalog Sync Error:", err);
@@ -70,29 +86,14 @@ function InventoryCatalogPage() {
         }
     }, []);
 
-    useEffect(() => { fetchItems(); }, [fetchItems]);
-
-    // Derive category → subcategory tree from items
-    const categoryTree = useMemo(() => {
-        const map = new Map();
-        items.forEach((item) => {
-            const cat = (item.category || 'Uncategorized').trim();
-            const rawSub = (item.subcategory || '').trim();
-            // Use only the first segment before " / " as the visible subcategory level
-            const baseSub = rawSub.split('/')[0].trim();
-
-            if (!map.has(cat)) {
-                map.set(cat, new Set());
-            }
-            if (baseSub) {
-                map.get(cat).add(baseSub);
-            }
-        });
-        return Array.from(map.entries()).map(([category, subs]) => ({
-            category,
-            subcategories: Array.from(subs).sort(),
-        })).sort((a, b) => a.category.localeCompare(b.category));
-    }, [items]);
+    const fetchFilters = useCallback(async () => {
+        try {
+            const res = await axiosInstance.get('/inventory/catalog/filters');
+            setCategoryTree(res.data || []);
+        } catch (err) {
+            console.error('Catalog filters fetch failed:', err);
+        }
+    }, []);
 
     // Read navigation state from URL (hard navigation via query params)
     const searchParams = new URLSearchParams(location.search);
@@ -103,6 +104,16 @@ function InventoryCatalogPage() {
     useEffect(() => {
         setSelectedVariant(null);
     }, [selectedCategory, selectedSubcategory]);
+
+    useEffect(() => {
+        fetchFilters();
+    }, [fetchFilters]);
+
+    useEffect(() => {
+        // Fetch items for the selected category/subcategory.
+        // Without this, the UI can miss categories if the catalog endpoint caps results.
+        fetchItems(selectedCategory, selectedSubcategory);
+    }, [fetchItems, selectedCategory, selectedSubcategory]);
 
     // Base items for current category + subcategory (ignores search & variant)
     const baseItems = useMemo(() => {
@@ -142,8 +153,10 @@ function InventoryCatalogPage() {
             if (selectedVariant && variant !== selectedVariant) return false;
 
             if (!query) return true;
-            const nameMatch = item.name?.toLowerCase().includes(query);
-            const descMatch = item.description?.toLowerCase().includes(query);
+            const nameMatch = item.name?.toLowerCase().includes(query)
+                || item.name_en?.toLowerCase().includes(query);
+            const descMatch = item.description?.toLowerCase().includes(query)
+                || item.description_en?.toLowerCase().includes(query);
             return nameMatch || descMatch;
         });
     }, [baseItems, debouncedSearch, selectedCategory, selectedSubcategory, selectedVariant]);
@@ -338,112 +351,114 @@ function InventoryCatalogPage() {
                         onClick={() => navigate(`/inventory/edit/${item.id}`)}
                         className="group bg-white dark:bg-gray-800 rounded-[2.5rem] border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-500 flex flex-col overflow-hidden cursor-pointer"
                     >
-                        
-                        {/* Header Node */}
-                        <div className="p-8 pb-6 border-b border-gray-50 dark:border-gray-700/50 flex justify-between items-start gap-4">
-                            <div className="min-w-0">
-                                <h2 className="text-xl font-black text-gray-900 dark:text-white truncate uppercase tracking-tighter italic group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-                                    {item.name}
-                                </h2>
-                                <div className="mt-2 space-y-1">
-                                    <div className="flex items-center gap-2">
-                                        <HashtagIcon className="h-3.5 w-3.5 text-indigo-500" />
-                                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none">
-                                            Base Unit: <span className="text-gray-900 dark:text-gray-200">{item.unit || 'UNITS'}</span>
-                                        </span>
-                                    </div>
-                                    {(item.category || item.subcategory) && (
-                                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.16em] line-clamp-1">
-                                            {item.category || 'Uncategorized'}
-                                            {item.subcategory ? ` / ${item.subcategory}` : ''}
-                                        </p>
+                        <div className="h-64 bg-gray-50 dark:bg-gray-900/60 border-b border-gray-50 dark:border-gray-700/50 overflow-hidden">
+                            {item.local_image_path ? (
+                                <img
+                                    src={resolveImageUrl(item.local_image_path)}
+                                    alt={inventoryDisplayName(item, i18n.language)}
+                                    loading="lazy"
+                                    decoding="async"
+                                    draggable={false}
+                                    className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-300 will-change-transform"
+                                    onError={(e) => {
+                                        if (e.currentTarget.dataset.fallbackApplied) return;
+                                        e.currentTarget.dataset.fallbackApplied = '1';
+                                        e.currentTarget.src = resolveImageUrl('/static/inventory_images/uncategorized.png');
+                                    }}
+                                />
+                            ) : (
+                                <div className="w-full h-full flex items-center justify-center">
+                                    <ArchiveBoxIcon className="h-14 w-14 text-gray-300 dark:text-gray-600" />
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="p-8 flex-grow flex flex-col">
+                            <h2 className="text-lg font-black text-gray-900 dark:text-white tracking-tight leading-snug group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                                {inventoryDisplayName(item, i18n.language)}
+                            </h2>
+
+                            <div className="mt-auto pt-6">
+                                <div className="flex flex-wrap gap-2">
+                                    {item.shop_url_1 && (
+                                        <a 
+                                            href={item.shop_url_1} 
+                                            target="_blank" 
+                                            rel="noopener noreferrer"
+                                            onClick={(e) => e.stopPropagation()}
+                                            className="inline-flex items-center gap-2 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 rounded-xl text-[9px] font-black uppercase tracking-widest border border-indigo-100 dark:border-indigo-900 hover:bg-indigo-100 transition-colors"
+                                        >
+                                            <ShoppingBagIcon className="h-3.5 w-3.5" />
+                                            Ronning
+                                        </a>
+                                    )}
+                                    {item.shop_url_2 && (
+                                        <a 
+                                            href={item.shop_url_2} 
+                                            target="_blank" 
+                                            rel="noopener noreferrer"
+                                            onClick={(e) => e.stopPropagation()}
+                                            className="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 rounded-xl text-[9px] font-black uppercase tracking-widest border border-emerald-100 dark:border-emerald-900 hover:bg-emerald-100 transition-colors"
+                                        >
+                                            <ShoppingBagIcon className="h-3.5 w-3.5" />
+                                            Iskraft
+                                        </a>
+                                    )}
+                                    {item.shop_url_3 && (
+                                        <a 
+                                            href={item.shop_url_3} 
+                                            target="_blank" 
+                                            rel="noopener noreferrer"
+                                            onClick={(e) => e.stopPropagation()}
+                                            className="inline-flex items-center gap-2 px-3 py-1.5 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 rounded-xl text-[9px] font-black uppercase tracking-widest border border-amber-100 dark:border-amber-900 hover:bg-amber-100 transition-colors"
+                                        >
+                                            <ShoppingBagIcon className="h-3.5 w-3.5" />
+                                            Reykjavell
+                                        </a>
                                     )}
                                 </div>
                             </div>
-                            <div className="p-3 bg-gray-50 dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800">
-                                <CubeIcon className="h-5 w-5 text-gray-400" />
-                            </div>
                         </div>
 
-                        {/* Technical Telemetry Body */}
-                        <div className="p-8 flex-grow space-y-6">
-                            <div className="flex items-start gap-4">
-                                <DocumentTextIcon className="h-5 w-5 text-indigo-500 shrink-0 mt-0.5" />
-                                <div>
-                                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1.5">Technical Specs</p>
-                                    <p className="text-xs font-bold text-gray-600 dark:text-gray-300 leading-relaxed line-clamp-3">
-                                        {item.description || 'Registry entry contains no supplementary technical specifications.'}
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div className="flex flex-wrap gap-2">
-                                {item.shop_url_1 && (
-                                    <a 
-                                        href={item.shop_url_1} 
-                                        target="_blank" 
-                                        rel="noopener noreferrer"
-                                        className="inline-flex items-center gap-2 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 rounded-xl text-[9px] font-black uppercase tracking-widest border border-indigo-100 dark:border-indigo-900 hover:bg-indigo-100 transition-colors"
+                        {/* Bottom Actions */}
+                        <div
+                            className="px-8 py-6 bg-gray-50 dark:bg-gray-700/30 flex items-center justify-between border-t border-gray-50 dark:border-gray-700/50"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            {canManageCatalog ? (
+                                <>
+                                    <div className="flex items-center gap-3">
+                                        <button 
+                                            onClick={() => navigate(`/inventory/edit/${item.id}`)}
+                                            className="p-3 bg-white dark:bg-gray-800 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 transition transform active:scale-95"
+                                            title="Modify Specs"
+                                        >
+                                            <PencilIcon className="h-5 w-5" />
+                                        </button>
+                                        <button 
+                                            onClick={() => triggerDelete(item)}
+                                            className="p-3 bg-white dark:bg-gray-800 text-gray-400 hover:text-red-600 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 transition transform active:scale-95"
+                                            title="Purge Entry"
+                                        >
+                                            <TrashIcon className="h-5 w-5" />
+                                        </button>
+                                    </div>
+                                    <Link 
+                                        to={`/inventory/edit/${item.id}`}
+                                        className="flex items-center gap-2 text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-[0.2em] hover:gap-3 transition-all"
                                     >
-                                        <ShoppingBagIcon className="h-3.5 w-3.5" />
-                                        Ronning
-                                    </a>
-                                )}
-                                {item.shop_url_2 && (
-                                    <a 
-                                        href={item.shop_url_2} 
-                                        target="_blank" 
-                                        rel="noopener noreferrer"
-                                        className="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 rounded-xl text-[9px] font-black uppercase tracking-widest border border-emerald-100 dark:border-emerald-900 hover:bg-emerald-100 transition-colors"
-                                    >
-                                        <ShoppingBagIcon className="h-3.5 w-3.5" />
-                                        Iskraft
-                                    </a>
-                                )}
-                                {item.shop_url_3 && (
-                                    <a 
-                                        href={item.shop_url_3} 
-                                        target="_blank" 
-                                        rel="noopener noreferrer"
-                                        className="inline-flex items-center gap-2 px-3 py-1.5 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 rounded-xl text-[9px] font-black uppercase tracking-widest border border-amber-100 dark:border-amber-900 hover:bg-amber-100 transition-colors"
-                                    >
-                                        <ShoppingBagIcon className="h-3.5 w-3.5" />
-                                        Reykjavell
-                                    </a>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Administrative Terminal */}
-                        {canManageCatalog && (
-                            <div
-                                className="px-8 py-6 bg-gray-50 dark:bg-gray-700/30 flex items-center justify-between border-t border-gray-50 dark:border-gray-700/50"
-                                onClick={(e) => e.stopPropagation()}
-                            >
-                                <div className="flex items-center gap-3">
-                                    <button 
-                                        onClick={() => navigate(`/inventory/edit/${item.id}`)}
-                                        className="p-3 bg-white dark:bg-gray-800 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 transition transform active:scale-95"
-                                        title="Modify Specs"
-                                    >
-                                        <PencilIcon className="h-5 w-5" />
-                                    </button>
-                                    <button 
-                                        onClick={() => triggerDelete(item)}
-                                        className="p-3 bg-white dark:bg-gray-800 text-gray-400 hover:text-red-600 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 transition transform active:scale-95"
-                                        title="Purge Entry"
-                                    >
-                                        <TrashIcon className="h-5 w-5" />
-                                    </button>
-                                </div>
-                                <Link 
+                                        Registry Hub <ChevronRightIcon className="h-3.5 w-3.5" />
+                                    </Link>
+                                </>
+                            ) : (
+                                <Link
                                     to={`/inventory/edit/${item.id}`}
-                                    className="flex items-center gap-2 text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-[0.2em] hover:gap-3 transition-all"
+                                    className="ml-auto flex items-center gap-2 text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-[0.2em] hover:gap-3 transition-all"
                                 >
-                                    Registry Hub <ChevronRightIcon className="h-3.5 w-3.5" />
+                                    Open Item <ChevronRightIcon className="h-3.5 w-3.5" />
                                 </Link>
-                            </div>
-                        )}
+                            )}
+                        </div>
                     </div>
                 )) : (
                     <div className="col-span-full py-32 text-center bg-white dark:bg-gray-800 rounded-[3rem] border-2 border-dashed border-gray-100 dark:border-gray-700">

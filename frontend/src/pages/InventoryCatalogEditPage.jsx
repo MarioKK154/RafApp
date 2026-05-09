@@ -30,13 +30,18 @@ function InventoryCatalogEditPage() {
     
     const [formData, setFormData] = useState({
         name: '',
+        name_en: '',
         category: '',
         subcategory: '',
         description: '',
+        description_en: '',
         unit: '',
         shop_url_1: '',
         shop_url_2: '',
         shop_url_3: '',
+        ronning_sku: '',
+        iskraft_sku: '',
+        reykjafell_sku: '',
         local_image_path: '',
     });
     const [isLoadingData, setIsLoadingData] = useState(true);
@@ -62,13 +67,18 @@ function InventoryCatalogEditPage() {
             if (item) {
                 setFormData({
                     name: item.name ?? '',
+                    name_en: item.name_en ?? '',
                     category: item.category ?? '',
                     subcategory: item.subcategory ?? '',
                     description: item.description ?? '',
+                    description_en: item.description_en ?? '',
                     unit: item.unit ?? '',
                     shop_url_1: item.shop_url_1 ?? '',
                     shop_url_2: item.shop_url_2 ?? '',
                     shop_url_3: item.shop_url_3 ?? '',
+                    ronning_sku: item.ronning_sku ?? '',
+                    iskraft_sku: item.iskraft_sku ?? '',
+                    reykjafell_sku: item.reykjafell_sku ?? '',
                     local_image_path: item.local_image_path ?? '',
                 });
             }
@@ -231,6 +241,36 @@ function InventoryCatalogEditPage() {
                                 )}
                             </div>
                         </div>
+
+                        {isSuperuser && (
+                            <div className="space-y-6 pt-2 border-t border-gray-100 dark:border-gray-700">
+                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">English (UI when language is English)</p>
+                                <div className="space-y-1">
+                                    <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">Display name (English)</label>
+                                    <input
+                                        type="text"
+                                        name="name_en"
+                                        value={formData.name_en}
+                                        onChange={handleChange}
+                                        disabled={isSubmitting}
+                                        className="modern-input h-12"
+                                        placeholder="Optional — used in English UI"
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">Technical details (English)</label>
+                                    <textarea
+                                        name="description_en"
+                                        rows={4}
+                                        value={formData.description_en}
+                                        onChange={handleChange}
+                                        disabled={isSubmitting}
+                                        className="modern-input h-auto py-3 resize-none text-sm"
+                                        placeholder="Optional translation of specifications"
+                                    />
+                                </div>
+                            </div>
+                        )}
 
                         {isSuperuser && (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -442,6 +482,44 @@ function InventoryCatalogEditPage() {
                                 )}
                             </div>
                         </div>
+                        {isSuperuser && (
+                            <div className="pt-4 mt-2 border-t border-gray-100 dark:border-gray-700 space-y-3">
+                                <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Supplier article codes</p>
+                                <div className="space-y-1">
+                                    <label className="block text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">Rönning SKU</label>
+                                    <input
+                                        type="text"
+                                        name="ronning_sku"
+                                        value={formData.ronning_sku}
+                                        onChange={handleChange}
+                                        disabled={isSubmitting}
+                                        className="modern-input text-xs font-mono h-10"
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="block text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">Ískraft SKU</label>
+                                    <input
+                                        type="text"
+                                        name="iskraft_sku"
+                                        value={formData.iskraft_sku}
+                                        onChange={handleChange}
+                                        disabled={isSubmitting}
+                                        className="modern-input text-xs font-mono h-10"
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="block text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">Reykjafell SKU</label>
+                                    <input
+                                        type="text"
+                                        name="reykjafell_sku"
+                                        value={formData.reykjafell_sku}
+                                        onChange={handleChange}
+                                        disabled={isSubmitting}
+                                        className="modern-input text-xs font-mono h-10"
+                                    />
+                                </div>
+                            </div>
+                        )}
                     </section>
 
                     {isSuperuser && (

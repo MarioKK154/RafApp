@@ -46,6 +46,7 @@ function AdminToolsPage() {
     const [activeBanner, setActiveBanner] = useState(null);
     const [bannerMessage, setBannerMessage] = useState('');
     const [isLoadingMetrics, setIsLoadingMetrics] = useState(false);
+    const [isSeedingDemo, setIsSeedingDemo] = useState(false);
 
     const isSuperuser = currentUser && currentUser.is_superuser;
 
@@ -133,6 +134,20 @@ function AdminToolsPage() {
         } catch (err) {
             console.error('Failed to update maintenance mode:', err);
             toast.error('Failed to update maintenance mode.');
+        }
+    };
+
+    const handleSeedDemoTenant = async () => {
+        if (!isSuperuser || isSeedingDemo) return;
+        setIsSeedingDemo(true);
+        try {
+            const res = await axiosInstance.post('/admin/super/seed-demo-tenant');
+            const pw = res?.data?.default_password || '12345678';
+            toast.success(`Demo tenant seeded (id=2). Default demo password: ${pw}`);
+        } catch (err) {
+            toast.error(err?.response?.data?.detail || 'Failed to seed demo tenant.');
+        } finally {
+            setIsSeedingDemo(false);
         }
     };
 
@@ -494,6 +509,29 @@ function AdminToolsPage() {
                                 </p>
                             )}
                         </div>
+
+                        {isSuperuser && (
+                            <div className="p-5 bg-blue-50 dark:bg-blue-900/20 rounded-3xl border border-blue-200 dark:border-blue-700">
+                                <div className="flex items-center gap-2 mb-3">
+                                    <BoltIcon className="h-5 w-5 text-blue-600 dark:text-blue-300" />
+                                    <h3 className="text-xs font-black text-gray-800 dark:text-gray-100 uppercase tracking-[0.25em]">
+                                        Demo Tenant Seeder
+                                    </h3>
+                                </div>
+                                <p className="text-xs text-gray-700 dark:text-gray-200 mb-3">
+                                    One click will reset and seed tenant <span className="font-black">ID 2</span> with demo users,
+                                    projects, tasks, cars, tools, and customers for presentations.
+                                </p>
+                                <button
+                                    type="button"
+                                    onClick={handleSeedDemoTenant}
+                                    disabled={isSeedingDemo}
+                                    className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-black uppercase tracking-[0.2em] disabled:opacity-60"
+                                >
+                                    {isSeedingDemo ? 'Seeding...' : 'Seed Demo Tenant'}
+                                </button>
+                            </div>
+                        )}
 
                         <div className="p-5 bg-slate-50 dark:bg-slate-900/30 rounded-3xl border border-slate-200 dark:border-slate-700">
                             <div className="flex items-center gap-2 mb-3">

@@ -1,23 +1,30 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import axiosInstance from '../api/axiosInstance';
+import { useAuth } from '../context/AuthContext';
+import { extractTenantList } from '../utils/tenantUtils';
 import { format, startOfWeek, addDays, eachDayOfInterval } from 'date-fns';
 import { 
     ChevronLeftIcon, 
     ChevronRightIcon, 
     PlusIcon,
     TrashIcon,
-    Squares2X2Icon
+    Squares2X2Icon,
+    BuildingOffice2Icon
 } from '@heroicons/react/24/outline';
 import { toast } from 'react-toastify';
 import AssignmentModal from '../components/AssignmentModal'; 
 
 const SchedulingGridPage = () => {
     const { t } = useTranslation();
+    const { user } = useAuth();
+    const isSuperuser = !!user?.is_superuser;
     const [viewDate, setViewDate] = useState(new Date());
     const [users, setUsers] = useState([]);
     const [assignments, setAssignments] = useState([]);
     const [selectedCity, setSelectedCity] = useState('All');
+    const [selectedTenantId, setSelectedTenantId] = useState('');
+    const [tenants, setTenants] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
 
     const [modalConfig, setModalConfig] = useState({
@@ -36,10 +43,11 @@ const SchedulingGridPage = () => {
         try {
             const startStr = format(days[0], 'yyyy-MM-dd');
             const endStr = format(days[days.length - 1], 'yyyy-MM-dd');
+            const tenantScope = isSuperuser && selectedTenantId ? { tenant_id: selectedTenantId } : {};
             
             const [usersRes, assignRes] = await Promise.all([
-                axiosInstance.get('/users/'),
-                axiosInstance.get(`/assignments/?start=${startStr}&end=${endStr}`)
+                axiosInstance.get('/users/', { params: { ...tenantScope } }),
+                axiosInstance.get('/assignments/', { params: { start: startStr, end: endStr, ...tenantScope } })
             ]);
             
             setUsers(usersRes.data);
@@ -50,9 +58,17 @@ const SchedulingGridPage = () => {
         } finally {
             setIsLoading(false);
         }
-    }, [days]);
+    }, [days, isSuperuser, selectedTenantId]);
 
     useEffect(() => { fetchData(); }, [fetchData]);
+
+    useEffect(() => {
+        if (!isSuperuser) return;
+        axiosInstance
+            .get('/tenants/', { params: { limit: 1000 } })
+            .then((res) => setTenants(extractTenantList(res?.data)))
+            .catch(() => setTenants([]));
+    }, [isSuperuser]);
 
     // Handle Deletion of an Assignment Node
     const handleDeleteAssignment = async (assignmentId, projectName, userName) => {
@@ -81,6 +97,29 @@ const SchedulingGridPage = () => {
         if (selectedCity === 'Unassigned') return users.filter(u => !u.city);
         return users.filter(u => u.city === selectedCity);
     }, [users, selectedCity]);
+    const tenantOptions = useMemo(() => {
+        const byId = new Map();
+        for (const tenant of tenants) {
+            if (tenant?.id != null) byId.set(String(tenant.id), tenant);
+        }
+        for (const u of users) {
+            if (u?.tenant_id == null) continue;
+            const key = String(u.tenant_id);
+            if (!byId.has(key)) {
+                byId.set(key, { id: u.tenant_id, name: u?.tenant?.name || `Tenant ${u.tenant_id}` });
+            }
+        }
+        return Array.from(byId.values()).sort((a, b) =>
+            String(a?.name || a?.company_name || '').localeCompare(String(b?.name || b?.company_name || ''))
+        );
+    }, [tenants, users]);
+    const activeTenantScopeLabel = useMemo(() => {
+        if (!isSuperuser) return null;
+        if (!selectedTenantId) return 'Scope: All Companies';
+        const selected = tenantOptions.find((tenant) => String(tenant.id) === String(selectedTenantId));
+        const tenantName = selected?.name || selected?.company_name || `Tenant ${selectedTenantId}`;
+        return `Scope: ${tenantName}`;
+    }, [isSuperuser, selectedTenantId, tenantOptions]);
 
     const openAssignmentModal = (user, day) => {
         setModalConfig({ isOpen: true, user: user, date: day });
@@ -103,6 +142,11 @@ const SchedulingGridPage = () => {
                         </div>
                         <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">{t('schedule', { defaultValue: 'Schedule' })}</h1>
                     </div>
+                    {activeTenantScopeLabel && (
+                        <div className="px-3 py-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 text-[10px] font-black uppercase tracking-widest text-indigo-700 dark:text-indigo-300">
+                            {activeTenantScopeLabel}
+                        </div>
+                    )}
 
                     <div className="flex items-center gap-4 bg-white dark:bg-gray-800 p-2 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
                     <button onClick={() => setViewDate(addDays(viewDate, -7))} className="p-2.5 rounded-xl transition-all duration-150 ease-out text-gray-400 hover:text-indigo-600 hover:bg-gray-50 dark:hover:bg-gray-700 active:scale-95">
@@ -119,6 +163,23 @@ const SchedulingGridPage = () => {
             </header>
 
             <div className="flex flex-wrap gap-3 mb-8">
+                {isSuperuser && (
+                    <div className="mr-2 mb-2 flex items-center gap-2">
+                        <BuildingOffice2Icon className="h-5 w-5 text-gray-400" />
+                        <select
+                            value={selectedTenantId}
+                            onChange={(e) => setSelectedTenantId(e.target.value)}
+                            className="h-11 rounded-2xl border border-gray-200 dark:border-gray-700 dark:bg-gray-800 px-3 text-[10px] font-black uppercase tracking-widest"
+                        >
+                            <option value="">All Companies</option>
+                            {tenantOptions.map((tenant) => (
+                                <option key={tenant.id} value={tenant.id}>
+                                    {tenant.name || tenant.company_name || `Tenant ${tenant.id}`}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                )}
                 {cities.map(city => {
                     const count = city === 'All' ? users.length : city === 'Unassigned' ? users.filter(u => !u.city).length : users.filter(u => u.city === city).length;
                     return (

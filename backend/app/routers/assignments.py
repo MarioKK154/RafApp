@@ -1,7 +1,7 @@
 # backend/app/routers/assignments.py
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 from datetime import date
 from .. import crud, schemas, models, security
 from ..database import get_db
@@ -15,13 +15,17 @@ router = APIRouter(
 def read_assignments(
     start: date = Query(...),
     end: date = Query(...),
+    tenant_id: Optional[int] = Query(None, description="Superadmin-only tenant scope filter"),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(security.get_current_user)
 ):
     """
     Registry Telemetry: Fetches all project assignments within a specific temporal window.
     """
-    assignments = crud.get_assignments(db, start=start, end=end)
+    effective_tenant_id = current_user.tenant_id
+    if current_user.is_superuser:
+        effective_tenant_id = tenant_id
+    assignments = crud.get_assignments(db, start=start, end=end, tenant_id=effective_tenant_id)
     
     # Enrich the data for the Frontend Grid
     for a in assignments:

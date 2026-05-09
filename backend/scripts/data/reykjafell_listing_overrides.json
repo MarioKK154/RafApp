@@ -1,0 +1,60 @@
+{
+  "overrides": [
+    {
+      "category": "Fjarskiptabúnaður",
+      "subcategory": "Dyrasímar",
+      "sub_subcategory": null,
+      "listing_url": "https://www.reykjafell.is/vorur?category=Fjarskiptab%C3%BAna%C3%B0ur&subcategory=Dyras%C3%ADmar",
+      "note": "GraphQL categories[] must match site spelling; URL query params are the source of truth when Excel labels differ."
+    },
+    {
+      "category": "Fjarskiptabúnaður",
+      "subcategory": "Netbúnaður",
+      "sub_subcategory": null,
+      "listing_url": "https://www.reykjafell.is/vorur?category=Fjarskiptab%C3%BAna%C3%B0ur&subcategory=Netb%C3%BAna%C3%B0ur",
+      "note": "expected 20"
+    },
+    {
+      "category": "Fjarskiptabúnaður",
+      "subcategory": "Varaaflgjafar",
+      "sub_subcategory": null,
+      "listing_url": "https://www.reykjafell.is/vorur?category=Fjarskiptab%C3%BAna%C3%B0ur&subcategory=Varaaflgjafar",
+      "note": "expected 27"
+    },
+    {
+      "category": "Hleðsla rafbíla",
+      "subcategory": "Hleðslustöðvar",
+      "sub_subcategory": null,
+      "listing_url": "https://www.reykjafell.is/vorur?category=Hle%C3%B0sla%20rafb%C3%ADla&subcategory=Hle%C3%B0slust%C3%B6%C3%B0var",
+      "note": "expected 4"
+    },
+    {
+      "category": "Hleðsla rafbíla",
+      "subcategory": "Kaplar og aukahlutir",
+      "sub_subcategory": null,
+      "listing_url": "https://www.reykjafell.is/vorur?category=Hle%C3%B0sla+rafb%C3%ADla&subcategory=Kaplar+og+aukahlutir",
+      "note": "expected 18"
+    },
+    {
+      "category": "Hleðsla rafbíla",
+      "subcategory": "Stýringar",
+      "sub_subcategory": null,
+      "listing_url": "https://www.reykjafell.is/vorur?category=Hle%C3%B0sla+rafb%C3%ADla&subcategory=St%C3%BDringar",
+      "note": "expected 3"
+    },
+    {
+      "category": "Hússtjórnarkerfi",
+      "subcategory": "Dali ljósastýrikerfi",
+      "sub_subcategory": null,
+      "listing_url": "https://www.reykjafell.is/vorur?category=H%C3%BAsstj%C3%B3rnarkerfi&subcategory=Dali%20%20lj%C3%B3sast%C3%BDrikerfi",
+      "note": "expected 61 — site subcategory param uses double space after Dali"
+    },
+    {
+      "category": "Tengibúnaður",
+      "subcategory": "Kapalskör og tengihálkar",
+      "sub_subcategory": null,
+      "listing_url": "https://www.reykjafell.is/vorur?category=Tengib%C3%BAna%C3%B0ur&subcategory=Kapalsk%C3%B3r%20og%20%20tengih%C3%B3lkar",
+      "note": "expected 418 — site spelling/spacing in URL (Kapalskór … tengihólkar)"
+    }
+  ]
+}

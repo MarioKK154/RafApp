@@ -1,0 +1,94 @@
+{
+  "overrides": [
+    {
+      "category": "Afldreifibúnaður",
+      "subcategory": "Spennar og Spennistöðvar",
+      "sub_subcategory": null,
+      "listing_url": "https://iskraft.husa.is/afldreifibunadur/spennar-og-spennistodvar/"
+    },
+    {
+      "category": "Afldreifibúnaður",
+      "subcategory": "Öryggisbúnaður",
+      "sub_subcategory": null,
+      "listing_url": "https://iskraft.husa.is/afldreifibunadur/oryggisbunadur/"
+    },
+    {
+      "category": "Afldreifibúnaður",
+      "subcategory": "Háspennubúnaður",
+      "sub_subcategory": "Öryggisbúnaður háspennu",
+      "listing_url": "https://iskraft.husa.is/afldreifibunadur/haspennubunadur/oryggisbunadur-haspennu/"
+    },
+    {
+      "category": "Afldreifibúnaður",
+      "subcategory": "Háspennubúnaður",
+      "sub_subcategory": "Tengibúnaður háspennu",
+      "listing_url": "https://iskraft.husa.is/afldreifibunadur/haspennubunadur/tengibunadur-haspennu/"
+    },
+    {
+      "category": "Afldreifibúnaður",
+      "subcategory": "Tenglastöðvar",
+      "sub_subcategory": null,
+      "listing_url": "https://iskraft.husa.is/afldreifibunadur/tenglastodvar/"
+    },
+    {
+      "category": "Afldreifibúnaður",
+      "subcategory": "Dreifiskápar og Vinnutöflur",
+      "sub_subcategory": "Dreifiskápar",
+      "listing_url": "https://iskraft.husa.is/afldreifibunadur/dreifiskapar-og-vinnutoflur/dreifiskapar/"
+    },
+    {
+      "category": "Afldreifibúnaður",
+      "subcategory": "Dreifiskápar og Vinnutöflur",
+      "sub_subcategory": "Vinnutöflur",
+      "listing_url": "https://iskraft.husa.is/afldreifibunadur/dreifiskapar-og-vinnutoflur/vinnutoflur/"
+    },
+    {
+      "category": "Afldreifibúnaður",
+      "subcategory": "Dreifiskápar og Vinnutöflur",
+      "sub_subcategory": "Íhlutir og Varahlutir",
+      "listing_url": "https://iskraft.husa.is/afldreifibunadur/dreifiskapar-og-vinnutoflur/ihlutir-og-varahlutir/"
+    },
+    {
+      "category": "Afldreifibúnaður",
+      "subcategory": "Varaaflgjafar",
+      "sub_subcategory": null,
+      "listing_url": "https://iskraft.husa.is/afldreifibunadur/varaaflgjafar/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Öryggisbúnaður",
+      "sub_subcategory": "Endastopp og Lásar",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/oryggisbunadur/endastopp-og-lasar/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Öryggisbúnaður",
+      "sub_subcategory": "Safety Barriers",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/oryggisbunadur/safety-barriers/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Öryggisbúnaður",
+      "sub_subcategory": "Öryggisliðar",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/oryggisbunadur/oryggislidar/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Öryggisbúnaður",
+      "sub_subcategory": "Öryggismottur",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/oryggisbunadur/oryggismottur/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Öryggisbúnaður",
+      "sub_subcategory": "Neyðartogrofar",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/oryggisbunadur/neydartogrofar/"
+    },
+    {
+      "category": "Iðnstýribúnaður",
+      "subcategory": "Öryggisbúnaður",
+      "sub_subcategory": "Öryggisskannar",
+      "listing_url": "https://iskraft.husa.is/idnstyribunadur/oryggisbunadur/oryggisskannar/"
+    }
+  ]
+}

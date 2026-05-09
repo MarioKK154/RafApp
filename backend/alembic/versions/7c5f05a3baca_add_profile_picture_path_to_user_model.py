@@ -52,6 +52,12 @@ def upgrade() -> None:
                existing_type=postgresql.TIMESTAMP(timezone=True),
                nullable=False,
                existing_server_default=sa.text('now()'))
+    op.execute(
+        sa.text(
+            "UPDATE tenants SET updated_at = COALESCE(updated_at, created_at, NOW()) "
+            "WHERE updated_at IS NULL"
+        )
+    )
     op.alter_column('tenants', 'updated_at',
                existing_type=postgresql.TIMESTAMP(timezone=True),
                nullable=False)

@@ -331,6 +331,7 @@ class RiskTemplate(Base):
     __tablename__ = "risk_templates"
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     category: Mapped[Optional[str]] = mapped_column(String, index=True)
+    category_is: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     title: Mapped[str] = mapped_column(String, nullable=False)
     description: Mapped[Optional[str]] = mapped_column(Text)
     default_likelihood: Mapped[str] = mapped_column(String, default="Medium")
@@ -338,19 +339,33 @@ class RiskTemplate(Base):
     default_mitigation: Mapped[Optional[str]] = mapped_column(Text)
     default_status: Mapped[str] = mapped_column(String, default="Open")
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    # Optional bilingual fields for title/description/mitigation
+    title_en: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    title_is: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    description_en: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    description_is: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    default_mitigation_en: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    default_mitigation_is: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
 class InventoryItem(Base):
     __tablename__ = "inventory_items"
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, index=True, nullable=False)
+    # English display (UI language en); primary name/description often Icelandic from suppliers
+    name_en = Column(String, nullable=True, index=True)
     category = Column(String, index=True, nullable=True)
     subcategory = Column(String, index=True, nullable=True)
     description = Column(Text, nullable=True)
+    description_en = Column(Text, nullable=True)
     unit = Column(String, nullable=True)
     low_stock_threshold = Column(Float, nullable=True)
     shop_url_1 = Column(String, nullable=True) 
     shop_url_2 = Column(String, nullable=True) 
     shop_url_3 = Column(String, nullable=True) 
+    # Supplier article codes for imports and multi-supplier merges (shop_url_1 Ronning, 2 Ískraft, 3 Reykjafell)
+    ronning_sku = Column(String, nullable=True, index=True)
+    iskraft_sku = Column(String, nullable=True, index=True)
+    reykjafell_sku = Column(String, nullable=True, index=True)
     local_image_path = Column(String, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
@@ -381,6 +396,7 @@ class LaborCatalogItem(Base):
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id"), nullable=False, index=True)
     description: Mapped[str] = mapped_column(String, nullable=False, index=True)
+    description_en: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     unit: Mapped[str] = mapped_column(String, default="hour")
     category: Mapped[Optional[str]] = mapped_column(String)
     recommended_item_ids: Mapped[Optional[str]] = mapped_column(Text)
@@ -388,7 +404,9 @@ class LaborCatalogItem(Base):
     default_unit_price: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
     # ar.is / verktakarýnin: main category (Aðalflokkur), sub-category (Flokkur), conditions (Aðstæður), reference price (Eining)
     main_category: Mapped[Optional[str]] = mapped_column(String, index=True)
+    main_category_en: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     sub_category: Mapped[Optional[str]] = mapped_column(String, index=True)
+    sub_category_en: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     conditions: Mapped[Optional[str]] = mapped_column(String)
     reference_price: Mapped[Optional[float]] = mapped_column(Float)
     # ar.is Eining time meaning: 4 = 4 units per hour (15 min each), 2 = 30 min, 1 = 1 hour, 0 = hourly rate
@@ -403,6 +421,7 @@ class LaborCatalogItemCondition(Base):
     labor_catalog_item_id: Mapped[int] = mapped_column(ForeignKey("labor_catalog_items.id"), nullable=False, index=True)
     code: Mapped[str] = mapped_column(String, nullable=False, index=True)  # Númer e.g. 01, 02
     condition_description: Mapped[str] = mapped_column(String, nullable=False)  # Ástæður
+    condition_description_en: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     units_per_hour: Mapped[Optional[float]] = mapped_column(Float)  # Eining
     effective_date: Mapped[Optional[str]] = mapped_column(String)  # Tök gildi
     end_date: Mapped[Optional[str]] = mapped_column(String)  # Fell úr gildi
@@ -436,6 +455,7 @@ class LaborMainCategoryRef(Base):
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     code: Mapped[str] = mapped_column(String, unique=True, index=True)
     name: Mapped[str] = mapped_column(String, nullable=False)
+    name_en: Mapped[Optional[str]] = mapped_column(String, nullable=True)
 
 
 class Offer(Base):

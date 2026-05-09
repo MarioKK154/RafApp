@@ -25,13 +25,18 @@ function InventoryCatalogCreatePage() {
     
     const [formData, setFormData] = useState({
         name: '',
+        name_en: '',
         category: '',
         subcategory: '',
         description: '',
+        description_en: '',
         unit: '',
         shop_url_1: '',
         shop_url_2: '',
         shop_url_3: '',
+        ronning_sku: '',
+        iskraft_sku: '',
+        reykjafell_sku: '',
         local_image_path: '',
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -104,6 +109,18 @@ function InventoryCatalogCreatePage() {
                                 onChange={handleChange} 
                                 placeholder="e.g. 3-Phase Circuit Breaker 16A"
                                 className="modern-input h-14 font-black" 
+                            />
+                        </div>
+
+                        <div className="space-y-1">
+                            <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">Display name (English, optional)</label>
+                            <input
+                                type="text"
+                                name="name_en"
+                                value={formData.name_en}
+                                onChange={handleChange}
+                                placeholder="Shown when UI language is English"
+                                className="modern-input h-12"
                             />
                         </div>
 
@@ -214,6 +231,39 @@ function InventoryCatalogCreatePage() {
                                     onChange={handleChange} 
                                     placeholder="https://reykjafell.is/..."
                                     className="modern-input text-xs italic" 
+                                />
+                            </div>
+                        </div>
+                        <div className="pt-4 mt-2 border-t border-gray-100 dark:border-gray-700 space-y-3">
+                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Supplier article codes (optional)</p>
+                            <div>
+                                <label className="block text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">Rönning SKU</label>
+                                <input
+                                    type="text"
+                                    name="ronning_sku"
+                                    value={formData.ronning_sku}
+                                    onChange={handleChange}
+                                    className="modern-input text-xs font-mono h-10"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">Ískraft SKU</label>
+                                <input
+                                    type="text"
+                                    name="iskraft_sku"
+                                    value={formData.iskraft_sku}
+                                    onChange={handleChange}
+                                    className="modern-input text-xs font-mono h-10"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">Reykjafell SKU</label>
+                                <input
+                                    type="text"
+                                    name="reykjafell_sku"
+                                    value={formData.reykjafell_sku}
+                                    onChange={handleChange}
+                                    className="modern-input text-xs font-mono h-10"
                                 />
                             </div>
                         </div>

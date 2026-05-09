@@ -1,0 +1,259 @@
+              Category                           Subcategory                  Sub-subcategory  Number of items
+0     Afldreifibúnaður              Spennar og Spennistöðvar                              NaN              1.0
+1                  NaN                        Öryggisbúnaður                              NaN             14.0
+2                  NaN                       Háspennubúnaður          Öryggisbúnaður háspennu              2.0
+3                  NaN                                   NaN            Tengibúnaður háspennu             15.0
+4                  NaN                         Tenglastöðvar                              NaN             14.0
+5                  NaN           Dreifiskápar og Vinnutöflur                     Dreifiskápar              5.0
+6                  NaN                                   NaN                      Vinnutöflur              8.0
+7                  NaN                                   NaN            Íhlutir og Varahlutir             20.0
+8                  NaN                         Varaaflgjafar                              NaN             12.0
+9    Fjarskiptabúnaður                     Ljósleiðaralagnir       19" skúffur og fylgihlutir             26.0
+10                 NaN                                   NaN          Hreinsiefni og verkfæri             35.0
+11                 NaN                                   NaN    Ljósleiðarastrengir Multimode              8.0
+12                 NaN                                   NaN   Ljósleiðarastrengir Singlemode             13.0
+13                 NaN                                   NaN             Splæsivélar og mælar             29.0
+14                 NaN                                   NaN      Tengi og pigtail Singlemode             18.0
+15                 NaN                                   NaN       Tengi og pigtail Multimode             16.0
+16                 NaN                                   NaN               Tengibox og skápar             31.0
+17                 NaN                                   NaN            Tengisnúrur Multimode             18.0
+18                 NaN                                   NaN           Tengisnúrur Singlemode             39.0
+19                 NaN                           Tölvulagnir                     Cat5e lagnir            109.0
+20                 NaN                                   NaN                      Cat6 lagnir             54.0
+21                 NaN                                   NaN                     Cat6A lagnir             29.0
+22                 NaN                                   NaN                Verkfæri og mælar             22.0
+23                 NaN            Tölvuskápar og fylgihlutir              Legrand Tölvuskápar              9.0
+24                 NaN                                   NaN                 Excel Veggskápar             17.0
+25                 NaN                                   NaN                 Excel Gólfskápar             11.0
+26                 NaN                                   NaN                   Ýmislegt í 19"             17.0
+27                 NaN                            Netbúnaður               Iðnaðar netbúnaður             29.0
+28                 NaN                                   NaN       Ljósbreytur SFP/Standalone             23.0
+29                 NaN                                   NaN                   Unifi Routerar             10.0
+30                 NaN                                   NaN                   PoE netbúnaður             27.0
+31                 NaN                                   NaN                           Switch             43.0
+32                 NaN                                   NaN    Þráðlaus netbúnaður Wifi inni             23.0
+33                 NaN                                   NaN     Þráðlaus netbúnaður Wifi úti              4.0
+34                 NaN                                   NaN                 Annar netbúnaður              5.0
+35                 NaN                                   NaN               UBNT UNIFI búnaður             67.0
+36                 NaN                                   NaN                           Wifi 7              7.0
+37                 NaN                         Loftnetskerfi                  Loftnetstenglar              4.0
+38                 NaN                                   NaN            F-Tengi, TV-klær ofl.              3.0
+39                 NaN                                   NaN                  Loftnetsgreiður              2.0
+40                 NaN                                   NaN            Deilar, magnarar ofl.              3.0
+41                 NaN                         Dyrasímakerfi                    Aðrir Íhlutir             11.0
+42                 NaN                                   NaN                      AMI útistöð              6.0
+43                 NaN                                   NaN                      Audio kerfi              1.0
+44                 NaN                                   NaN            Bjöllur, Hnappar ofl.             16.0
+45                 NaN                                   NaN                      Innistöðvar              5.0
+46                 NaN                                   NaN                 Útistöðvar Audio             14.0
+47                 NaN                                   NaN                 Útistöðvar Video             14.0
+48                 NaN                                   NaN               2 víra video kerfi              5.0
+49                 NaN                                   NaN                     Aðgangskerfi              5.0
+50                 NaN                                   NaN  Stækkanir fyrir PES Pro stöðvar              6.0
+51                 NaN                                   NaN          Akuvox IP Dyrasímakerfi             18.0
+52      Hleðslustöðvar                 Hleðslustöðvar Elinta                              NaN             13.0
+53                 NaN            Hleðslustöðvar EO Charging                              NaN              1.0
+54                 NaN                    Hraðhleðslustöðvar                              NaN              4.0
+55                 NaN                Hleðslutenglar Legrand                              NaN              9.0
+56                 NaN                   Hleðslustöðvar Qudo                             Qudo              1.0
+57                 NaN                                   NaN                  Qudo Aukahlutir             16.0
+58                 NaN                         Hleðslukaplar                              NaN             29.0
+59                 NaN  Staurar fyrir hleðslustöðvar Onepole                              NaN             17.0
+60      Hitunarbúnaður                         Blástursofnar             Elbjörn Hitablásarar              9.0
+61                 NaN                                   NaN             Varahlutir í Elbjörn             19.0
+62                 NaN                      Rafmagnsþilofnar                Olíufylltir ofnar             19.0
+63                 NaN                                   NaN                         Þilofnar             22.0
+64                 NaN                                   NaN               Ýmsar aðrar gerðir             21.0
+65                 NaN                Hitastrengir og mottur                     Hitastrengir             41.0
+66                 NaN                                   NaN                      Fylgihlutir             23.0
+67                 NaN                                   NaN         Hitamottur Ebeco 120W/m2             10.0
+68                 NaN                                   NaN         Hitamottur Ebeco 160W/m2              9.0
+69                 NaN                                   NaN                      Hitastillar             14.0
+70                 NaN                                   NaN                        Hitafilma             10.0
+71                 NaN                     Viftur og íhlutir                              NaN             25.0
+72                 NaN                         Geislahitarar                              NaN             21.0
+73     Iðnstýribúnaður                  Ferjöld og umbreytar                              NaN             14.0
+74                 NaN             Hraðabreytar og Mjúkræsar                        Mjúkræsar             17.0
+75                 NaN                                   NaN        PowerFlex 4M Hraðabreytar             12.0
+76                 NaN                                   NaN       PowerFlex 523 Hraðabreytar              8.0
+77                 NaN                                   NaN       PowerFlex 525 Hraðabreytar             21.0
+78                 NaN                                   NaN           Vacon 100 hraðabreytar             17.0
+79                 NaN                                   NaN            Vacon 20 hraðabreytar             16.0
+80                 NaN                                   NaN            Vacon NX hraðabreytar              4.0
+81                 NaN                                   NaN     PowerFlex 755TS Hraðabreytar             12.0
+82                 NaN                                   NaN            PowerFlex Fylgihlutir              1.0
+83                 NaN                             Iðntölvur                     CompactLogix             71.0
+84                 NaN                                   NaN                     ControlLogix             45.0
+85                 NaN                                   NaN                        Micro 800             23.0
+86                 NaN                                   NaN                       MicroLogix              8.0
+87                 NaN                                   NaN                       Remote I/O             77.0
+88                 NaN                                   NaN                    Industrial PC              1.0
+89                 NaN                    Nemar og skynjarar           Aukabúnaður fyrir nema             91.0
+90                 NaN                                   NaN                        CO2 nemar              3.0
+91                 NaN                                   NaN                        Flotrofar              5.0
+92                 NaN                                   NaN                       Flæðinemar              7.0
+93                 NaN                                   NaN                       Hallanemar              1.0
+94                 NaN                                   NaN                Hita og rakanemar              5.0
+95                 NaN                                   NaN                        Hitanemar             28.0
+96                 NaN                                   NaN                 Hljóðbylgjunemar              5.0
+97                 NaN                                   NaN                         I/O Link             16.0
+98                 NaN                                   NaN                      Leiðninemar              4.0
+99                 NaN                                   NaN                   Massaskynjarar              3.0
+100                NaN                                   NaN                        Ljósnemar              7.0
+101                NaN                                   NaN                    Málmskynjarar              9.0
+102                NaN                                   NaN                      Þrýstinemar             37.0
+103                NaN                                   NaN                    Víbríngsnemar              5.0
+104                NaN                                   NaN         Hæðar- og stöðuskynjarar              6.0
+105                NaN                                   NaN                          Skannar             14.0
+106                NaN                                   NaN                   Radarskynjarar              3.0
+107                NaN                                   NaN                       LED Skjáir              2.0
+108                NaN                                   NaN                   Vatnsgæðamælar             13.0
+109                NaN                                   NaN                  Stokkaskynjarar              7.0
+110                NaN             Snarar, rofar og gaumljós             Baco Snarar og rofar              9.0
+111                NaN                                   NaN                    Rofaefni 22mm             96.0
+112                NaN                                   NaN                  Ljósasúlur 50mm             22.0
+113                NaN                                   NaN               AB Snarar og rofar             10.0
+114                NaN                Spólurofar og smáliðar                       Mótorrofar             48.0
+115                NaN                                   NaN                    Rafeindaliðar              4.0
+116                NaN                                   NaN                         Smáliðar             27.0
+117                NaN                                   NaN                       Spólurofar             69.0
+118                NaN                                   NaN                       Stýriliðar             48.0
+119                NaN                                   NaN                        Tímaliðar              5.0
+120                NaN                                   NaN     Yfirálagsvarnir smáspólurofa             12.0
+121                NaN                                   NaN        Yfirálagsvarnir spólurofa             17.0
+122                NaN                                   NaN                      Rafeindavör             12.0
+123                NaN                                   NaN                      Vaktbúnaður              2.0
+124                NaN                                   NaN                       Mótorræsar              8.0
+125                NaN                          Töfluspennar                       AC spennar             24.0
+126                NaN                                   NaN                       DC spennar             30.0
+127                NaN                                   NaN                    DC varbúnaður             10.0
+128                NaN                      VPN tengibúnaður                              NaN              6.0
+129                NaN                       Öryggisbúnaður                Endastopp og Lásar              8.0
+130                NaN                                   NaN                         Ljóshlið              7.0
+131                NaN                                   NaN                  Safety Barriers              3.0
+132                NaN                                   NaN                     Öryggisliðar              6.0
+133                NaN                                   NaN                    Öryggismottur              2.0
+134                NaN                                   NaN                   Neyðartogrofar             19.0
+135                NaN                                   NaN                   Öryggisskannar             15.0
+136                NaN                                   NaN              AS-i Öryggisbúnaður             11.0
+137                NaN                            Hugbúnaður                              NaN             11.0
+138                NaN                                Skjáir                       OptixPanel              1.0
+139                NaN                                   NaN                         Panel PC              1.0
+140                NaN                                   NaN                        PanelView              7.0
+141                NaN                                   NaN                     Snertiskjáir              1.0
+142                NaN                                   NaN          Fylgihlutir fyrir skjái              6.0
+143                NaN                          Iðnaðarvogir                        Gólfvogir              2.0
+144                NaN                                   NaN                        Borðvogir              2.0
+145                NaN                                   NaN                       Loadsellur              1.0
+146                NaN                                   NaN            Skjáir og fylgihlutir              1.0
+147                NaN                        4G GSM-búnaður                              NaN             20.0
+148       Innlagnaefni                 Dimma- og stýripungar                Dimmapungar í dós             12.0
+149                NaN                                   NaN               Rofaeiningar í dós              7.0
+150                NaN              Fjöltengi,Klær og Hulsur                        Fjöltengi             54.0
+151                NaN                                   NaN               Fjöltengi Úti IP44             16.0
+152                NaN                                   NaN                   Klær og Hulsur             19.0
+153                NaN                                   NaN             Klær og Hulsur Gúmmí              9.0
+154                NaN                                   NaN                       Millitengi              6.0
+155                NaN                                   NaN                    Snúru með Kló              4.0
+156                NaN                      Hússtjórnarkerfi                    Lunatone Dali             10.0
+157                NaN                                   NaN                           Z-wave              1.0
+158                NaN               Iðnaðartengibúnaður CEE            Tengibúnaður CEE IP44             76.0
+159                NaN                                   NaN            Tengibúnaður CEE IP67             46.0
+160                NaN                  Legrand Innlagnaefni                     Mosaic Hvítt             79.0
+161                NaN                                   NaN                     Valena Hvítt             29.0
+162                NaN                                   NaN                     Mosaic Svart             27.0
+163                NaN                                   NaN                   Mosaic Álgrátt             12.0
+164                NaN                   Merten Innlagnaefni                    Grunneiningar             33.0
+165                NaN                                   NaN                   Merten M-Glans             37.0
+166                NaN                                   NaN                    Merten M-Matt             20.0
+167                NaN                                   NaN                        Merten 1M              9.0
+168                NaN                                   NaN                    Merten M-Pure             69.0
+169                NaN                                   NaN                    Merten M-Plan             65.0
+170                NaN                                   NaN                 Merten Aqua IP44             12.0
+171                NaN                                   NaN               Merten M-Plan Gler             10.0
+172                NaN                   Utanáliggjandi efni          ABB Utanáliggjandi efni             13.0
+173                NaN                                   NaN             Hreyfiskynjarar ofl.             44.0
+174                NaN                                   NaN                        Ljósnemar              5.0
+175                NaN                                   NaN             Utanáliggjandi annað              2.0
+176                NaN               Utanáliggjandi Rakahelt                              NaN            125.0
+177                NaN                Þráðlaust innlagnaefni            Merten Þráðlaust efni              0.0
+178                NaN                                   NaN              Elko Þráðlaust Efni             16.0
+179                NaN                                   NaN             Plejd Þráðlaust Efni             23.0
+180                NaN                      ION Innlagnaefni                       ION Dimmer              5.0
+181                NaN                                   NaN                ION Grunneiningar             14.0
+182                NaN                                   NaN                     ION V1 línan             30.0
+183                NaN                                   NaN                     ION J1 línan             25.0
+184                NaN                                   NaN                     ION E1 linan             28.0
+185          Lagnaefni               Bruna-og Vatnsþéttingar                    MCT Þéttingar             12.0
+186                NaN                                   NaN                     Eldvarnarrör              9.0
+187                NaN                                   NaN                   Eldvarnarkítti              1.0
+188                NaN                               Dósalok                  Dósalok Skrúfuð             15.0
+189                NaN                                   NaN                  Dóslalok Smellt              4.0
+190                NaN                                   NaN                        Önnur Lok              6.0
+191                NaN                    Dósir og plastefni                Vegg-og Rofadósir             39.0
+192                NaN                                   NaN                        Loftdósir             12.0
+193                NaN                                   NaN                      Plötustútar             19.0
+194                NaN                                   NaN                      Töflustútar             11.0
+195                NaN                                   NaN                  Dósaíhlutir ABB             16.0
+196                NaN                                   NaN              Halogenbox í Steypu              0.0
+197                NaN                                   NaN                Dósaíhlutir Bjarg             11.0
+198                NaN                                   NaN                Rörastólar steypu              5.0
+199                NaN                             Festiefni                     Kapalspennur             51.0
+200                NaN                                   NaN        Rörastólar og Röraspennur             57.0
+201                NaN                                   NaN                Dragbönd og Girði             28.0
+202                NaN                                   NaN       Múrtappar, rekskrúfur ofl.             20.0
+203                NaN                                   NaN      Múrboltar, Snittteinar ofl.              2.0
+204                NaN                                   NaN            Erico Caddy Festingar             34.0
+205                NaN                                   NaN                  Strengfestingar              9.0
+206                NaN                           Lagnaleiðir            Kapalgrindur Heitgalv             23.0
+207                NaN                                   NaN             Kapalgrindur Rafgalv             54.0
+208                NaN                                   NaN            Kapalgrindur Ryðfríar             36.0
+209                NaN                                   NaN                      Lagnabakkar             28.0
+210                NaN                                   NaN               Límlistar & Rennur             45.0
+211                NaN                                   NaN            Strengstigar Heitgalv             49.0
+212                NaN                                   NaN             Strengstigar Rafgalv             52.0
+213                NaN                                   NaN              Tenglastokkar Plast             46.0
+214                NaN                                   NaN                 Tenglastokkar Ál             26.0
+215                NaN                                   NaN                      Tenglasúlur              6.0
+216                NaN                                   NaN              Gólf-og borðtenglar             74.0
+217                NaN                                   NaN                      Gormarennur              4.0
+218                NaN                        Nipplar og rær           Plastnipplar og Rær MM             44.0
+219                NaN                                   NaN               Málmnipplar og Rær             36.0
+220                NaN                                   NaN                Ex Nipplar og Rær              8.0
+221                NaN                                   NaN         Skermaðir Nipplar og Rær             12.0
+222                NaN                                   NaN        Stækkanir, Þrengingar ofl             23.0
+223                NaN                                   NaN                      Troðnipplar             10.0
+224                NaN                                   NaN                    Rörafóðringar              6.0
+225                NaN                                   NaN              Nipplasamtengi IP68              5.0
+226                NaN                          Rör og Barki                         Plaströr             19.0
+227                NaN                                   NaN                       Plastbarki             25.0
+228                NaN                                   NaN                            Álrör             48.0
+229                NaN                                   NaN                   Ídreginn Barki              7.0
+230                NaN                                   NaN                Hólkar og Beygjur             49.0
+231                NaN                                   NaN                    Jarðvegsbarki             28.0
+232    Lýsingarbúnaður                         Iðnaðarlampar                       Efnaþolnir              3.0
+233                NaN                                   NaN                      Tunnulampar             12.0
+234                NaN                                   NaN                led Iðnaðarlampar             35.0
+235                NaN                                   NaN                    Sprengiheldir             10.0
+236                NaN                          Heimilisljós                    Innfelld ljós             40.0
+237                NaN                                   NaN                           Kúplar             65.0
+238                NaN                                   NaN                         Veggljós             16.0
+239                NaN                                   NaN                  Innréttingaljós             16.0
+240                NaN                                   NaN                         Loftljós             23.0
+241                NaN                                   NaN            Dúkaloft / Hljóðdúkar              6.0
+242                NaN                        Íhlutir í ljós                          Ballast              0.0
+243                NaN                                   NaN                       Fattningar              7.0
+244                NaN            Kastarabrautir og kastarar                   Kastarabrautir             51.0
+245                NaN                                   NaN                   Brautakastarar             17.0
+246                NaN                                   NaN          Einfasa brautir og ljós             23.0
+247                NaN                            LED Borðar                      LED lengjur             38.0
+248                NaN                                   NaN                     LED prófílar             66.0
+249                NaN                                   NaN                         LED LABS             95.0
+250                NaN                                   NaN                 230V led lengjur             11.0
+251                NaN                      Skrifstofulampar                Kerfisloftalampar             17.0
+252                NaN                                   NaN                    Lampar á loft             12.0
+253                NaN                                   NaN                  Hangandi lampar              5.0
+254                NaN                                   NaN                      Skápalampar              5.0
+255                NaN                                   NaN                         Strokkar             12.0
+256                NaN                                   NaN                       Speglaljós              9.0
+257                NaN                            Ljósaperur                        LED perur              NaN

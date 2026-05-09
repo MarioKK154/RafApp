@@ -281,7 +281,19 @@ class ProjectAssignMember(BaseModel):
 
 # --- Task Schemas ---
 
-TaskStatusLiteral = Literal["To Do", "In Progress", "Done", "Blocked", "Awaiting Commissioning", "Commissioned"]
+# Accept both current and legacy task status labels to avoid response validation failures
+# when older seeded/demo data still uses historical values.
+TaskStatusLiteral = Literal[
+    "To Do",
+    "Not Started",
+    "In Progress",
+    "Done",
+    "Blocked",
+    "On Hold",
+    "Awaiting Commissioning",
+    "Commissioned",
+    "Cancelled",
+]
 TaskPriorityLiteral = Literal["Low", "Medium", "High"]
 
 class TaskBase(BaseModel):
@@ -403,6 +415,7 @@ class RiskItemRead(RiskItemBase):
 
 class RiskTemplateBase(BaseModel):
     category: Optional[str] = None
+    category_is: Optional[str] = None
     title: str
     description: Optional[str] = None
     default_likelihood: RiskLikelihoodLiteral = "Medium"
@@ -410,6 +423,13 @@ class RiskTemplateBase(BaseModel):
     default_mitigation: Optional[str] = None
     default_status: RiskStatusLiteral = "Open"
     is_active: bool = True
+    # Optional bilingual fields for UI that wants to choose language
+    title_en: Optional[str] = None
+    title_is: Optional[str] = None
+    description_en: Optional[str] = None
+    description_is: Optional[str] = None
+    default_mitigation_en: Optional[str] = None
+    default_mitigation_is: Optional[str] = None
 
 
 class RiskTemplateCreate(RiskTemplateBase):
@@ -418,6 +438,7 @@ class RiskTemplateCreate(RiskTemplateBase):
 
 class RiskTemplateUpdate(BaseModel):
     category: Optional[str] = None
+    category_is: Optional[str] = None
     title: Optional[str] = None
     description: Optional[str] = None
     default_likelihood: Optional[RiskLikelihoodLiteral] = None
@@ -425,6 +446,12 @@ class RiskTemplateUpdate(BaseModel):
     default_mitigation: Optional[str] = None
     default_status: Optional[RiskStatusLiteral] = None
     is_active: Optional[bool] = None
+    title_en: Optional[str] = None
+    title_is: Optional[str] = None
+    description_en: Optional[str] = None
+    description_is: Optional[str] = None
+    default_mitigation_en: Optional[str] = None
+    default_mitigation_is: Optional[str] = None
 
 
 class RiskTemplateRead(RiskTemplateBase):
@@ -435,14 +462,19 @@ class RiskTemplateRead(RiskTemplateBase):
 
 class InventoryItemBase(BaseModel):
     name: str
+    name_en: Optional[str] = None
     category: Optional[str] = None # ROADMAP: Multi-level hierarchy
     subcategory: Optional[str] = None
     description: Optional[str] = None
+    description_en: Optional[str] = None
     unit: Optional[str] = None
     low_stock_threshold: Optional[float] = None
     shop_url_1: Optional[HttpUrl | str] = None # Ronning
     shop_url_2: Optional[HttpUrl | str] = None # Iskraft
     shop_url_3: Optional[HttpUrl | str] = None # Reykjafell
+    ronning_sku: Optional[str] = None
+    iskraft_sku: Optional[str] = None
+    reykjafell_sku: Optional[str] = None
     local_image_path: Optional[str] = None
 
 class InventoryItemCreate(InventoryItemBase):
@@ -450,14 +482,19 @@ class InventoryItemCreate(InventoryItemBase):
 
 class InventoryItemUpdate(BaseModel):
     name: Optional[str] = None
+    name_en: Optional[str] = None
     category: Optional[str] = None
     subcategory: Optional[str] = None
     description: Optional[str] = None
+    description_en: Optional[str] = None
     unit: Optional[str] = None
     low_stock_threshold: Optional[float] = None
     shop_url_1: Optional[HttpUrl | str] = None
     shop_url_2: Optional[HttpUrl | str] = None
     shop_url_3: Optional[HttpUrl | str] = None
+    ronning_sku: Optional[str] = None
+    iskraft_sku: Optional[str] = None
+    reykjafell_sku: Optional[str] = None
     local_image_path: Optional[str] = None
 
 class InventoryItemRead(InventoryItemBase):
@@ -508,6 +545,7 @@ class InventoryItemUpdateNeededQty(BaseModel):
 class InventoryItemReadForBoQ(BaseModel):
     id: int
     name: str
+    name_en: Optional[str] = None
     unit: Optional[str] = None
     quantity: Optional[float] = None
     model_config = ConfigDict(from_attributes=True)
@@ -892,11 +930,14 @@ class ShoppingListItem(BaseModel):
 
 class LaborCatalogItemBase(BaseModel):
     description: str = Field(..., min_length=1)
+    description_en: Optional[str] = None
     category: Optional[str] = None
     unit: Optional[str] = "hour"
     recommended_item_ids: Optional[str] = None
     main_category: Optional[str] = None   # ar.is Aðalflokkur
+    main_category_en: Optional[str] = None
     sub_category: Optional[str] = None   # ar.is Flokkur
+    sub_category_en: Optional[str] = None
     conditions: Optional[str] = None      # ar.is Aðstæður
     reference_price: Optional[float] = None  # ar.is Eining (unit cost)
     units_per_hour: Optional[float] = None  # ar.is Eining time: 4=15min/unit, 2=30min, 1=1hr, 0=hourly rate
@@ -906,12 +947,15 @@ class LaborCatalogItemCreate(LaborCatalogItemBase):
 
 class LaborCatalogItemUpdate(BaseModel):
     description: Optional[str] = Field(None, min_length=1)
+    description_en: Optional[str] = None
     category: Optional[str] = None
     default_unit_price: Optional[float] = Field(None, ge=0)
     unit: Optional[str] = None
     recommended_item_ids: Optional[str] = None
     main_category: Optional[str] = None
+    main_category_en: Optional[str] = None
     sub_category: Optional[str] = None
+    sub_category_en: Optional[str] = None
     conditions: Optional[str] = None
     reference_price: Optional[float] = Field(None, ge=0)
     units_per_hour: Optional[float] = Field(None, ge=0)
@@ -925,6 +969,9 @@ class TenantLaborPriceRead(BaseModel):
 class LaborCatalogItemRead(LaborCatalogItemBase):
     id: int
     tenant_price: Optional[float] = None  # Injected per tenant by CRUD
+    description_is: Optional[str] = None  # Same as stored Icelandic description (for forms when UI is EN)
+    main_category_display: Optional[str] = None
+    sub_category_display: Optional[str] = None
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -942,6 +989,7 @@ class LaborMainCategoryRefRead(BaseModel):
     id: int
     code: str
     name: str
+    name_en: Optional[str] = None
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -951,6 +999,8 @@ class LaborCatalogItemConditionRead(BaseModel):
     labor_catalog_item_id: int
     code: str
     condition_description: str
+    condition_description_is: Optional[str] = None
+    condition_description_en: Optional[str] = None
     units_per_hour: Optional[float] = None
     effective_date: Optional[str] = None
     end_date: Optional[str] = None

@@ -24,40 +24,42 @@ CONSTRAINT_NAME = 'fk_users_role_id'
 userrole_enum = postgresql.ENUM('admin', 'project_manager', 'team_lead', 'regular_user', 'superuser', name='userrole')
 
 def upgrade() -> None:
-    # ### Manually Re-ordered Upgrade Path ###
+    bind = op.get_bind()
+    insp = sa.inspect(bind)
+    user_cols = {c["name"] for c in insp.get_columns("users")}
 
-    # 1. Drop the linking tables first
-    op.drop_table('user_permission_link')
-    op.drop_table('role_permission_link')
+    op.execute(sa.text("DROP TABLE IF EXISTS user_permission_link CASCADE"))
+    op.execute(sa.text("DROP TABLE IF EXISTS role_permission_link CASCADE"))
+    op.execute(sa.text("DROP TABLE IF EXISTS roles CASCADE"))
+    op.execute(sa.text("DROP TABLE IF EXISTS permissions CASCADE"))
 
-    # 2. Drop the foreign key constraint from 'users' to 'roles'
-    try:
-        op.drop_constraint('users_role_id_fkey', 'users', type_='foreignkey')
-    except Exception:
-        try:
-            op.drop_constraint(CONSTRAINT_NAME, 'users', type_='foreignkey')
-        except Exception as e:
-            print(f"Could not drop foreign key constraint. This might be okay. Error: {e}")
-    
-    # 3. Now drop 'roles' and 'permissions'
-    op.drop_index(op.f('ix_roles_name'), table_name='roles')
-    op.drop_table('roles')
-    op.drop_index(op.f('ix_permissions_key'), table_name='permissions')
-    op.drop_table('permissions')
-    
-    # 4. Drop the old 'role_id' column
-    op.drop_column('users', 'role_id')
+    if "role_id" in user_cols:
+        op.drop_column("users", "role_id")
 
-    # --- THIS IS THE FIX ---
-    # 5. Create the new ENUM type 'userrole' in the database
-    userrole_enum.create(op.get_bind())
-    
-    # 6. Add the 'role' column using the new type
-    op.add_column('users', sa.Column('role', userrole_enum, server_default='regular_user', nullable=False))
-    
-    # 7. Add the 'permission_overrides' column
-    op.add_column('users', sa.Column('permission_overrides', postgresql.JSONB(astext_type=sa.Text()), nullable=True))
-    # ### end Alembic commands ###
+    userrole_enum.create(bind, checkfirst=True)
+
+    if "role" in user_cols:
+        op.drop_column("users", "role")
+
+    op.add_column(
+        "users",
+        sa.Column(
+            "role",
+            userrole_enum,
+            server_default=sa.text("'regular_user'::userrole"),
+            nullable=False,
+        ),
+    )
+
+    if "permission_overrides" not in user_cols:
+        op.add_column(
+            "users",
+            sa.Column(
+                "permission_overrides",
+                postgresql.JSONB(astext_type=sa.Text()),
+                nullable=True,
+            ),
+        )
 
 
 def downgrade() -> None:

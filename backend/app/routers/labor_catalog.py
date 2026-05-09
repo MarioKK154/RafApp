@@ -114,9 +114,10 @@ def read_labor_categories(
     request: Request,
     db: DbDependency,
     current_user: CurrentUserDependency,
+    lang: Optional[str] = None,
 ):
     """Returns category tree for menu: main_category → sub_categories with counts."""
-    return crud.get_labor_catalog_categories(db)
+    return crud.get_labor_catalog_categories(db, lang=lang)
 
 
 @router.post("/consolidate")
@@ -277,6 +278,7 @@ def read_labor_items(
     limit: int = 5000,
     main_category: Optional[str] = None,
     sub_category: Optional[str] = None,
+    lang: Optional[str] = None,
 ):
     """
     Retrieves labor catalog items, optionally filtered by main_category and sub_category.
@@ -287,7 +289,7 @@ def read_labor_items(
         raise HTTPException(status_code=403, detail="Tenant context required for non-superusers.")
     return crud.get_labor_catalog_items(
         db, tenant_id=effective_tenant_id, skip=skip, limit=limit,
-        main_category=main_category, sub_category=sub_category,
+        main_category=main_category, sub_category=sub_category, lang=lang,
     )
 
 @router.get("/{item_id}/conditions", response_model=List[schemas.LaborCatalogItemConditionRead])
@@ -297,10 +299,11 @@ def read_labor_item_conditions(
     item_id: int,
     db: DbDependency,
     current_user: CurrentUserDependency,
+    lang: Optional[str] = None,
 ):
     """List ar.is condition variants (Eining per condition) for this catalog item."""
     get_item_for_user(item_id, db, current_user)
-    return crud.get_labor_catalog_item_conditions(db, labor_catalog_item_id=item_id)
+    return crud.get_labor_catalog_item_conditions(db, labor_catalog_item_id=item_id, lang=lang)
 
 
 @router.post("/{item_id}/import-condition-variants")
@@ -370,7 +373,8 @@ def read_single_labor_item(
     request: Request,
     item_id: int,
     db: DbDependency,
-    current_user: CurrentUserDependency
+    current_user: CurrentUserDependency,
+    lang: Optional[str] = None,
 ):
     """Retrieves a single labor catalog item by ID, with tenant_price injected."""
     db_item = get_item_for_user(item_id, db, current_user)
@@ -383,15 +387,16 @@ def read_single_labor_item(
         ).first()
         if tp:
             tenant_price = tp.price
-    out = {k: v for k, v in db_item.__dict__.items() if not k.startswith("_")}
-    out["tenant_price"] = tenant_price
-    if out.get("units_per_hour") is None:
+    uph_res = None
+    if db_item.units_per_hour is None:
         first_var = db.query(models.LaborCatalogItemCondition).filter(
             models.LaborCatalogItemCondition.labor_catalog_item_id == db_item.id
         ).order_by(models.LaborCatalogItemCondition.code).first()
         if first_var is not None:
-            out["units_per_hour"] = first_var.units_per_hour
-    return out
+            uph_res = first_var.units_per_hour
+    return crud.enrich_labor_item_dict(
+        db_item, tenant_price=tenant_price, units_per_hour_resolved=uph_res, lang=lang
+    )
 
 @router.put("/{item_id}", response_model=schemas.LaborCatalogItemRead)
 @limiter.limit("100/minute")
@@ -411,16 +416,24 @@ def update_labor_item(
             unit=item_update.unit,
         )
     updated = crud.update_labor_catalog_item(db, db_item=db_item, item_update=item_update, tenant_id=tenant_id)
-    out = {k: v for k, v in updated.__dict__.items() if not k.startswith("_")}
-    out["tenant_price"] = None
+    tenant_price = None
     if tenant_id is not None:
         tp = db.query(models.TenantLaborPrice).filter(
             models.TenantLaborPrice.tenant_id == tenant_id,
             models.TenantLaborPrice.labor_item_id == updated.id,
         ).first()
         if tp:
-            out["tenant_price"] = tp.price
-    return out
+            tenant_price = tp.price
+    uph_res = None
+    if updated.units_per_hour is None:
+        first_var = db.query(models.LaborCatalogItemCondition).filter(
+            models.LaborCatalogItemCondition.labor_catalog_item_id == updated.id
+        ).order_by(models.LaborCatalogItemCondition.code).first()
+        if first_var is not None:
+            uph_res = first_var.units_per_hour
+    return crud.enrich_labor_item_dict(
+        updated, tenant_price=tenant_price, units_per_hour_resolved=uph_res, lang="is"
+    )
 
 @router.delete("/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
 @limiter.limit("100/minute")

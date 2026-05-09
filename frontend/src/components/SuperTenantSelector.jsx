@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import axiosInstance from '../api/axiosInstance';
+import { extractTenantList } from '../utils/tenantUtils';
 import { useAuth } from '../context/AuthContext';
 import LoadingSpinner from './LoadingSpinner';
 
@@ -25,7 +26,7 @@ function SuperTenantSelector({ selectedTenantId, onChange, className = '' }) {
         setError('');
         try {
             const res = await axiosInstance.get('/tenants/', { params: { limit: 200 } });
-            setTenants(Array.isArray(res.data) ? res.data : []);
+            setTenants(extractTenantList(res?.data));
         } catch (err) {
             console.error('Tenant scope sync failed:', err);
             const msg = err.response?.data?.detail || t('tenant_sync_failed', { defaultValue: 'Failed to load tenant registry.' });

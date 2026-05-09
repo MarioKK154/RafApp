@@ -1,34 +1,41 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import axiosInstance from '../api/axiosInstance';
 import { toast } from 'react-toastify';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { inventoryDisplayName } from '../utils/inventoryI18n';
 import { 
     CircleStackIcon, 
     MagnifyingGlassIcon, 
     PlusIcon, 
     ChevronRightIcon,
-    ExclamationTriangleIcon,
     CubeIcon,
-    TagIcon,
     AdjustmentsHorizontalIcon,
     ShoppingCartIcon,
     ArchiveBoxIcon,
-    HashtagIcon,
-    PencilSquareIcon
+    ShoppingBagIcon,
+    PencilIcon,
 } from '@heroicons/react/24/outline';
 
 function GlobalInventoryPage() {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const { user } = useAuth();
+    const navigate = useNavigate();
     
     const [items, setItems] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
 
     const canManageInventory = user && (['admin', 'project manager'].includes(user.role) || user.is_superuser);
+    const baseURL = (axiosInstance.defaults.baseURL || '').replace(/\/$/, '');
+    const resolveImageUrl = useCallback((path) => {
+        if (!path) return '';
+        if (typeof path !== 'string') return '';
+        if (path.startsWith('http://') || path.startsWith('https://')) return path;
+        return `${baseURL}${path.startsWith('/') ? '' : '/'}${path}`;
+    }, [baseURL]);
 
     /**
      * Protocol: Synchronize with /inventory/catalog registry
@@ -48,7 +55,7 @@ function GlobalInventoryPage() {
         } finally {
             setIsLoading(false);
         }
-    }, [searchTerm, t]);
+    }, [searchTerm]); // `t` is intentionally omitted to avoid re-fetching on every render
 
     useEffect(() => {
         fetchInventory();
@@ -104,59 +111,112 @@ function GlobalInventoryPage() {
                 </div>
             </div>
 
-            {/* Registry Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+            {/* Registry Grid — same card layout as category catalog drill-down */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {items.length > 0 ? items.map(item => (
-                    <div key={item.id} className="group bg-white dark:bg-gray-800 rounded-[2.5rem] border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-2xl transition-all duration-500 flex flex-col overflow-hidden animate-in zoom-in-95 duration-300">
-                        
-                        <div className="h-44 bg-gray-50 dark:bg-gray-900/50 flex items-center justify-center relative overflow-hidden border-b border-gray-50 dark:border-gray-800">
+                    <div
+                        key={item.id}
+                        onClick={() => navigate(`/inventory/edit/${item.id}`)}
+                        className="group bg-white dark:bg-gray-800 rounded-[2.5rem] border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-500 flex flex-col overflow-hidden cursor-pointer animate-in zoom-in-95 duration-300"
+                    >
+                        <div className="h-64 bg-gray-50 dark:bg-gray-900/60 border-b border-gray-50 dark:border-gray-700/50 overflow-hidden">
                             {item.local_image_path ? (
-                                <img src={item.local_image_path} alt={item.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" />
+                                <img
+                                    src={resolveImageUrl(item.local_image_path)}
+                                    alt={inventoryDisplayName(item, i18n.language)}
+                                    loading="lazy"
+                                    decoding="async"
+                                    draggable={false}
+                                    onError={(e) => {
+                                        if (e.currentTarget.dataset.fallbackApplied) return;
+                                        e.currentTarget.dataset.fallbackApplied = '1';
+                                        e.currentTarget.src = resolveImageUrl('/static/inventory_images/uncategorized.png');
+                                    }}
+                                    className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-300 will-change-transform"
+                                />
                             ) : (
-                                <ArchiveBoxIcon className="h-14 w-14 text-gray-200 dark:text-gray-700" />
-                            )}
-                            
-                            {item.quantity <= (item.low_stock_threshold || 5) && (
-                                <div className="absolute top-4 right-4 bg-red-600 text-white p-2 rounded-xl shadow-2xl animate-pulse flex items-center gap-2 border-2 border-white dark:border-gray-800">
-                                    <ExclamationTriangleIcon className="h-4 w-4" />
-                                    <span className="text-[8px] font-black uppercase tracking-tighter pr-1">Low Stock</span>
+                                <div className="w-full h-full flex items-center justify-center">
+                                    <ArchiveBoxIcon className="h-14 w-14 text-gray-300 dark:text-gray-600" />
                                 </div>
                             )}
                         </div>
 
                         <div className="p-8 flex-grow flex flex-col">
-                            <h2 className="text-md font-black text-gray-900 dark:text-white uppercase tracking-tighter truncate mb-1 italic">
-                                {item.name}
+                            <h2 className="text-lg font-black text-gray-900 dark:text-white tracking-tight leading-snug group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                                {inventoryDisplayName(item, i18n.language)}
                             </h2>
-                            <div className="flex items-center gap-2 mb-6">
-                                <HashtagIcon className="h-3 w-3 text-indigo-500" />
-                                <span className="text-[10px] font-mono font-black text-gray-400 uppercase tracking-widest leading-none pt-0.5">
-                                    SKU-{item.id.toString().padStart(4, '0')}
-                                </span>
-                            </div>
 
-                            <div className="mt-auto space-y-4">
-                                <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900/80 rounded-2xl border border-transparent group-hover:border-indigo-100 transition-colors">
-                                    <div>
-                                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none mb-2">{t('stock_level')}</p>
-                                        <p className={`text-xl font-black tracking-tighter ${item.quantity <= (item.low_stock_threshold || 5) ? 'text-red-600' : 'text-gray-900 dark:text-white'}`}>
-                                            {item.quantity} <span className="text-xs text-gray-400 uppercase font-black ml-1">{item.unit || 'pcs'}</span>
-                                        </p>
-                                    </div>
-                                    <div className="p-2 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700">
-                                        <TagIcon className="h-5 w-5 text-indigo-500" />
-                                    </div>
+                            <div className="mt-auto pt-6">
+                                <div className="flex flex-wrap gap-2">
+                                    {item.shop_url_1 && (
+                                        <a
+                                            href={item.shop_url_1}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            onClick={(e) => e.stopPropagation()}
+                                            className="inline-flex items-center gap-2 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 rounded-xl text-[9px] font-black uppercase tracking-widest border border-indigo-100 dark:border-indigo-900 hover:bg-indigo-100 transition-colors"
+                                        >
+                                            <ShoppingBagIcon className="h-3.5 w-3.5" />
+                                            Ronning
+                                        </a>
+                                    )}
+                                    {item.shop_url_2 && (
+                                        <a
+                                            href={item.shop_url_2}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            onClick={(e) => e.stopPropagation()}
+                                            className="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 rounded-xl text-[9px] font-black uppercase tracking-widest border border-emerald-100 dark:border-emerald-900 hover:bg-emerald-100 transition-colors"
+                                        >
+                                            <ShoppingBagIcon className="h-3.5 w-3.5" />
+                                            Iskraft
+                                        </a>
+                                    )}
+                                    {item.shop_url_3 && (
+                                        <a
+                                            href={item.shop_url_3}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            onClick={(e) => e.stopPropagation()}
+                                            className="inline-flex items-center gap-2 px-3 py-1.5 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 rounded-xl text-[9px] font-black uppercase tracking-widest border border-amber-100 dark:border-amber-900 hover:bg-amber-100 transition-colors"
+                                        >
+                                            <ShoppingBagIcon className="h-3.5 w-3.5" />
+                                            Reykjavell
+                                        </a>
+                                    )}
                                 </div>
-
-                                <Link 
-                                    to={`/inventory/edit/${item.id}`}
-                                    className="flex items-center justify-center gap-3 w-full h-12 bg-gray-900 dark:bg-gray-700 text-white hover:bg-indigo-600 transition-all rounded-[1.25rem] shadow-lg"
-                                >
-                                    <PencilSquareIcon className="h-4 w-4" />
-                                    <span className="text-[10px] font-black uppercase tracking-[0.2em]">{t('edit')}</span>
-                                    <ChevronRightIcon className="h-4 w-4 stroke-[3px]" />
-                                </Link>
                             </div>
+                        </div>
+
+                        <div
+                            className="px-8 py-6 bg-gray-50 dark:bg-gray-700/30 flex items-center justify-between border-t border-gray-50 dark:border-gray-700/50"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            {canManageInventory ? (
+                                <div className="flex w-full items-center justify-between gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => navigate(`/inventory/edit/${item.id}`)}
+                                        className="p-3 bg-white dark:bg-gray-800 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 transition transform active:scale-95"
+                                        title={t('edit')}
+                                    >
+                                        <PencilIcon className="h-5 w-5" />
+                                    </button>
+                                    <Link
+                                        to={`/inventory/edit/${item.id}`}
+                                        className="flex items-center gap-2 text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-[0.2em] hover:gap-3 transition-all"
+                                    >
+                                        {t('edit')} <ChevronRightIcon className="h-3.5 w-3.5" />
+                                    </Link>
+                                </div>
+                            ) : (
+                                <Link
+                                    to={`/inventory/edit/${item.id}`}
+                                    className="ml-auto flex items-center gap-2 text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-[0.2em] hover:gap-3 transition-all"
+                                >
+                                    {t('open', { defaultValue: 'Open item' })} <ChevronRightIcon className="h-3.5 w-3.5" />
+                                </Link>
+                            )}
                         </div>
                     </div>
                 )) : (

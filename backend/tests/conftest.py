@@ -1,4 +1,9 @@
 # backend/tests/conftest.py
+"""API tests use SQLite by default so TEST_DATABASE_URL / DATABASE_URL from .env do not touch dev Postgres."""
+
+import os
+
+os.environ.setdefault("DATABASE_URL", "sqlite:///./test.db")
 
 import pytest
 from typing import Generator, Dict, Any
@@ -11,12 +16,14 @@ from app.database import Base, get_db
 from app import crud, schemas
 from app.security import create_access_token
 
-# Use a local SQLite database for testing
-SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
+SQLALCHEMY_DATABASE_URL = os.environ["DATABASE_URL"]
 
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
-)
+if SQLALCHEMY_DATABASE_URL.startswith("sqlite"):
+    engine = create_engine(
+        SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
+    )
+else:
+    engine = create_engine(SQLALCHEMY_DATABASE_URL, pool_pre_ping=True)
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 # Ensure the test schema always matches the current models

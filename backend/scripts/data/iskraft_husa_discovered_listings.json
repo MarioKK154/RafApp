@@ -1,0 +1,3602 @@
+[
+  {
+    "url": "https://iskraft.husa.is/fjarskiptabunadur/",
+    "path": "/fjarskiptabunadur",
+    "label": "fjarskiptabunadur",
+    "depth": 0
+  },
+  {
+    "url": "https://iskraft.husa.is/hledslustodvar/",
+    "path": "/hledslustodvar",
+    "label": "hledslustodvar",
+    "depth": 0
+  },
+  {
+    "url": "https://iskraft.husa.is/hitunarbunadur/",
+    "path": "/hitunarbunadur",
+    "label": "hitunarbunadur",
+    "depth": 0
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/",
+    "path": "/idnstyribunadur",
+    "label": "idnstyribunadur",
+    "depth": 0
+  },
+  {
+    "url": "https://iskraft.husa.is/innlagnaefni/",
+    "path": "/innlagnaefni",
+    "label": "innlagnaefni",
+    "depth": 0
+  },
+  {
+    "url": "https://iskraft.husa.is/lagnaefni/",
+    "path": "/lagnaefni",
+    "label": "lagnaefni",
+    "depth": 0
+  },
+  {
+    "url": "https://iskraft.husa.is/lysingarbunadur/",
+    "path": "/lysingarbunadur",
+    "label": "lysingarbunadur",
+    "depth": 0
+  },
+  {
+    "url": "https://iskraft.husa.is/skapar-og-tengikassar/",
+    "path": "/skapar-og-tengikassar",
+    "label": "skapar og tengikassar",
+    "depth": 0
+  },
+  {
+    "url": "https://iskraft.husa.is/strengir/",
+    "path": "/strengir",
+    "label": "strengir",
+    "depth": 0
+  },
+  {
+    "url": "https://iskraft.husa.is/tengibunadur/",
+    "path": "/tengibunadur",
+    "label": "tengibunadur",
+    "depth": 0
+  },
+  {
+    "url": "https://iskraft.husa.is/toflubunadur/",
+    "path": "/toflubunadur",
+    "label": "toflubunadur",
+    "depth": 0
+  },
+  {
+    "url": "https://iskraft.husa.is/verkfaeri/",
+    "path": "/verkfaeri",
+    "label": "verkfaeri",
+    "depth": 0
+  },
+  {
+    "url": "https://iskraft.husa.is/oryggis-og-snjalllausnir/",
+    "path": "/oryggis-og-snjalllausnir",
+    "label": "oryggis og snjalllausnir",
+    "depth": 0
+  },
+  {
+    "url": "https://iskraft.husa.is/afldreifibunadur/",
+    "path": "/afldreifibunadur",
+    "label": "afldreifibunadur",
+    "depth": 0
+  },
+  {
+    "url": "https://iskraft.husa.is/fjarskiptabunadur/ljosleidaralagnir/",
+    "path": "/fjarskiptabunadur/ljosleidaralagnir",
+    "label": "Ljósleiðaralagnir",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/fjarskiptabunadur/tolvulagnir/",
+    "path": "/fjarskiptabunadur/tolvulagnir",
+    "label": "Tölvulagnir",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/fjarskiptabunadur/tolvuskapar-og-fylgihlutir/",
+    "path": "/fjarskiptabunadur/tolvuskapar-og-fylgihlutir",
+    "label": "Tölvuskápar og fylgihlutir",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/fjarskiptabunadur/netbunadur/",
+    "path": "/fjarskiptabunadur/netbunadur",
+    "label": "Netbúnaður",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/fjarskiptabunadur/loftnetskerfi/",
+    "path": "/fjarskiptabunadur/loftnetskerfi",
+    "label": "Loftnetskerfi",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/fjarskiptabunadur/dyrasimakerfi/",
+    "path": "/fjarskiptabunadur/dyrasimakerfi",
+    "label": "Dyrasímakerfi",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/hledslustodvar/hledslustodvar-elinta/",
+    "path": "/hledslustodvar/hledslustodvar-elinta",
+    "label": "Hleðslustöðvar Elinta",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/hledslustodvar/hledslustodvar-eo-charging/",
+    "path": "/hledslustodvar/hledslustodvar-eo-charging",
+    "label": "Hleðslustöðvar EO Charging",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/hledslustodvar/hradhledslustodvar/",
+    "path": "/hledslustodvar/hradhledslustodvar",
+    "label": "Hraðhleðslustöðvar",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/hledslustodvar/hledslutenglar-legrand/",
+    "path": "/hledslustodvar/hledslutenglar-legrand",
+    "label": "Hleðslutenglar Legrand",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/hledslustodvar/hledslustodvar-qudo/",
+    "path": "/hledslustodvar/hledslustodvar-qudo",
+    "label": "Hleðslustöðvar Qudo",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/hledslustodvar/hledslukaplar/",
+    "path": "/hledslustodvar/hledslukaplar",
+    "label": "Hleðslukaplar",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/hledslustodvar/staurar-fyrir-hledslustodvar-onepole/",
+    "path": "/hledslustodvar/staurar-fyrir-hledslustodvar-onepole",
+    "label": "Staurar fyrir hleðslustöðvar Onepole",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/hitunarbunadur/blastursofnar/",
+    "path": "/hitunarbunadur/blastursofnar",
+    "label": "Blástursofnar",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/hitunarbunadur/rafmagnsthilofnar/",
+    "path": "/hitunarbunadur/rafmagnsthilofnar",
+    "label": "Rafmagnsþilofnar",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/hitunarbunadur/hitastrengir-og-mottur/",
+    "path": "/hitunarbunadur/hitastrengir-og-mottur",
+    "label": "Hitastrengir og mottur",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/hitunarbunadur/viftur-og-ihlutir/",
+    "path": "/hitunarbunadur/viftur-og-ihlutir",
+    "label": "Viftur og íhlutir",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/hitunarbunadur/geislahitarar/",
+    "path": "/hitunarbunadur/geislahitarar",
+    "label": "Geislahitarar",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/ferjold-og-umbreytar/",
+    "path": "/idnstyribunadur/ferjold-og-umbreytar",
+    "label": "Ferjöld og umbreytar",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/hradabreytar-og-mjukraesar/",
+    "path": "/idnstyribunadur/hradabreytar-og-mjukraesar",
+    "label": "Hraðabreytar og Mjúkræsar",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/idntolvur/",
+    "path": "/idnstyribunadur/idntolvur",
+    "label": "Iðntölvur",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/nemar-og-skynjarar/",
+    "path": "/idnstyribunadur/nemar-og-skynjarar",
+    "label": "Nemar og skynjarar",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/snarar-rofar-og-gaumljos/",
+    "path": "/idnstyribunadur/snarar-rofar-og-gaumljos",
+    "label": "Snarar, rofar og gaumljós",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/spolurofar-og-smalidar/",
+    "path": "/idnstyribunadur/spolurofar-og-smalidar",
+    "label": "Spólurofar og smáliðar",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/tofluspennar/",
+    "path": "/idnstyribunadur/tofluspennar",
+    "label": "Töfluspennar",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/vpn-tengibunadur/",
+    "path": "/idnstyribunadur/vpn-tengibunadur",
+    "label": "VPN tengibúnaður",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/oryggisbunadur/",
+    "path": "/idnstyribunadur/oryggisbunadur",
+    "label": "Öryggisbúnaður -",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/hugbunadur/",
+    "path": "/idnstyribunadur/hugbunadur",
+    "label": "Hugbúnaður",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/skjair/",
+    "path": "/idnstyribunadur/skjair",
+    "label": "Skjáir",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/idnadarvogir/",
+    "path": "/idnstyribunadur/idnadarvogir",
+    "label": "Iðnaðarvogir",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/4g-gsm-bunadur/",
+    "path": "/idnstyribunadur/4g-gsm-bunadur",
+    "label": "4G GSM-búnaður",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/innlagnaefni/dimma-og-styripungar/",
+    "path": "/innlagnaefni/dimma-og-styripungar",
+    "label": "Dimma- og stýripungar",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/innlagnaefni/fjoltengiklaer-og-hulsur/",
+    "path": "/innlagnaefni/fjoltengiklaer-og-hulsur",
+    "label": "Fjöltengi,Klær og Hulsur",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/innlagnaefni/husstjornarkerfi/",
+    "path": "/innlagnaefni/husstjornarkerfi",
+    "label": "Hússtjórnarkerfi",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/innlagnaefni/idnadartengibunadur-cee/",
+    "path": "/innlagnaefni/idnadartengibunadur-cee",
+    "label": "Iðnaðartengibúnaður CEE",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/innlagnaefni/legrand-innlagnaefni/",
+    "path": "/innlagnaefni/legrand-innlagnaefni",
+    "label": "Legrand Innlagnaefni",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/innlagnaefni/merten-innlagnaefni/",
+    "path": "/innlagnaefni/merten-innlagnaefni",
+    "label": "Merten Innlagnaefni",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/innlagnaefni/utanaliggjandi-efni/",
+    "path": "/innlagnaefni/utanaliggjandi-efni",
+    "label": "Utanáliggjandi efni",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/innlagnaefni/utanaliggjandi-rakahelt/",
+    "path": "/innlagnaefni/utanaliggjandi-rakahelt",
+    "label": "Utanáliggjandi Rakahelt",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/innlagnaefni/thradlaust-innlagnaefni/",
+    "path": "/innlagnaefni/thradlaust-innlagnaefni",
+    "label": "Þráðlaust innlagnaefni",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/innlagnaefni/ion-innlagnaefni/",
+    "path": "/innlagnaefni/ion-innlagnaefni",
+    "label": "ION Innlagnaefni",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/lagnaefni/bruna-og-vatnsthettingar/",
+    "path": "/lagnaefni/bruna-og-vatnsthettingar",
+    "label": "Bruna-og Vatnsþéttingar",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/lagnaefni/dosalok/",
+    "path": "/lagnaefni/dosalok",
+    "label": "Dósalok",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/lagnaefni/dosir-og-plastefni/",
+    "path": "/lagnaefni/dosir-og-plastefni",
+    "label": "Dósir og plastefni",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/lagnaefni/festiefni/",
+    "path": "/lagnaefni/festiefni",
+    "label": "Festiefni",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/lagnaefni/lagnaleidir/",
+    "path": "/lagnaefni/lagnaleidir",
+    "label": "Lagnaleiðir",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/lagnaefni/nipplar-og-raer/",
+    "path": "/lagnaefni/nipplar-og-raer",
+    "label": "Nipplar og rær",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/lagnaefni/ror-og-barki/",
+    "path": "/lagnaefni/ror-og-barki",
+    "label": "Rör og Barki",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/lysingarbunadur/idnadarlampar/",
+    "path": "/lysingarbunadur/idnadarlampar",
+    "label": "Iðnaðarlampar",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/lysingarbunadur/heimilisljos/",
+    "path": "/lysingarbunadur/heimilisljos",
+    "label": "Heimilisljós",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/lysingarbunadur/ihlutir-i-ljos/",
+    "path": "/lysingarbunadur/ihlutir-i-ljos",
+    "label": "Íhlutir í ljós",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/lysingarbunadur/kastarabrautir-og-kastarar/",
+    "path": "/lysingarbunadur/kastarabrautir-og-kastarar",
+    "label": "Kastarabrautir og kastarar",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/lysingarbunadur/led-bordar/",
+    "path": "/lysingarbunadur/led-bordar",
+    "label": "LED Borðar",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/lysingarbunadur/skrifstofulampar/",
+    "path": "/lysingarbunadur/skrifstofulampar",
+    "label": "Skrifstofulampar",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/lysingarbunadur/ljosaperur/",
+    "path": "/lysingarbunadur/ljosaperur",
+    "label": "Ljósaperur",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/lysingarbunadur/neydarlysing/",
+    "path": "/lysingarbunadur/neydarlysing",
+    "label": "Neyðarlýsing",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/lysingarbunadur/utiljos/",
+    "path": "/lysingarbunadur/utiljos",
+    "label": "Útiljós",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/lysingarbunadur/philips-hue/",
+    "path": "/lysingarbunadur/philips-hue",
+    "label": "Philips Hue",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/lysingarbunadur/spennar/",
+    "path": "/lysingarbunadur/spennar",
+    "label": "Spennar",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/lysingarbunadur/vinnulysing/",
+    "path": "/lysingarbunadur/vinnulysing",
+    "label": "Vinnulýsing",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/lysingarbunadur/valdar-allt/",
+    "path": "/lysingarbunadur/valdar-allt",
+    "label": "Valdar Allt",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/skapar-og-tengikassar/botnplotuskapar/",
+    "path": "/skapar-og-tengikassar/botnplotuskapar",
+    "label": "Botnplötuskápar",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/skapar-og-tengikassar/golfskapar-og-gotuskapar/",
+    "path": "/skapar-og-tengikassar/golfskapar-og-gotuskapar",
+    "label": "Gólfskápar og götuskápar",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/skapar-og-tengikassar/greinatoflur/",
+    "path": "/skapar-og-tengikassar/greinatoflur",
+    "label": "Greinatöflur",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/skapar-og-tengikassar/tengikassar-og-box/",
+    "path": "/skapar-og-tengikassar/tengikassar-og-box",
+    "label": "Tengikassar og box",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/skapar-og-tengikassar/maelaskapar/",
+    "path": "/skapar-og-tengikassar/maelaskapar",
+    "label": "Mælaskápar",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/skapar-og-tengikassar/smaspennutoflur/",
+    "path": "/skapar-og-tengikassar/smaspennutoflur",
+    "label": "Smáspennutöflur",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/skapar-og-tengikassar/f-tronic-greintoflur/",
+    "path": "/skapar-og-tengikassar/f-tronic-greintoflur",
+    "label": "F-Tronic Greintöflur",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/strengir/afl-og-jardstrengir/",
+    "path": "/strengir/afl-og-jardstrengir",
+    "label": "Afl - og jarðstrengir",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/strengir/plaststrengir/",
+    "path": "/strengir/plaststrengir",
+    "label": "Plaststrengir",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/strengir/idrattar-og-tofluvir/",
+    "path": "/strengir/idrattar-og-tofluvir",
+    "label": "Ídráttar-og Töfluvír",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/strengir/taekja-og-lampasnurur/",
+    "path": "/strengir/taekja-og-lampasnurur",
+    "label": "Tækja og Lampasnúrur",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/strengir/gummistrengur/",
+    "path": "/strengir/gummistrengur",
+    "label": "Gúmmístrengur",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/strengir/styristrengur/",
+    "path": "/strengir/styristrengur",
+    "label": "Stýristrengur",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/strengir/smaspennustrengir/",
+    "path": "/strengir/smaspennustrengir",
+    "label": "Smáspennustrengir",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/strengir/skipastrengir/",
+    "path": "/strengir/skipastrengir",
+    "label": "Skipastrengir",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/tengibunadur/dreifiklossar/",
+    "path": "/tengibunadur/dreifiklossar",
+    "label": "Dreifiklossar",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/tengibunadur/herpiefni-og-adrag/",
+    "path": "/tengibunadur/herpiefni-og-adrag",
+    "label": "Herpiefni og Ádrag",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/tengibunadur/jardtengiefni/",
+    "path": "/tengibunadur/jardtengiefni",
+    "label": "Jarðtengiefni",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/tengibunadur/kapalskor-og-holkar/",
+    "path": "/tengibunadur/kapalskor-og-holkar",
+    "label": "Kapalskór og Hólkar",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/tengibunadur/radtengi/",
+    "path": "/tengibunadur/radtengi",
+    "label": "Raðtengi",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/tengibunadur/vira-og-tengjamerking/",
+    "path": "/tengibunadur/vira-og-tengjamerking",
+    "label": "Víra- og tengjamerking",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/tengibunadur/viratengi/",
+    "path": "/tengibunadur/viratengi",
+    "label": "Víratengi",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/tengibunadur/stauratengi-og-box/",
+    "path": "/tengibunadur/stauratengi-og-box",
+    "label": "Stauratengi og box",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/tengibunadur/kapalsamtengi/",
+    "path": "/tengibunadur/kapalsamtengi",
+    "label": "Kapalsamtengi",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/toflubunadur/aflrofar/",
+    "path": "/toflubunadur/aflrofar",
+    "label": "Aflrofar",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/toflubunadur/gripvor-og-braedivor/",
+    "path": "/toflubunadur/gripvor-og-braedivor",
+    "label": "Gripvör og Bræðivör",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/toflubunadur/lekalidar/",
+    "path": "/toflubunadur/lekalidar",
+    "label": "Lekaliðar",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/toflubunadur/maelabunadur/",
+    "path": "/toflubunadur/maelabunadur",
+    "label": "Mælabúnaður",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/toflubunadur/sjalfvor/",
+    "path": "/toflubunadur/sjalfvor",
+    "label": "Sjálfvör",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/toflubunadur/skilrofar/",
+    "path": "/toflubunadur/skilrofar",
+    "label": "Skilrofar",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/toflubunadur/tofluihlutir/",
+    "path": "/toflubunadur/tofluihlutir",
+    "label": "Töfluíhlutir",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/toflubunadur/toflustyring/",
+    "path": "/toflubunadur/toflustyring",
+    "label": "Töflustýring",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/verkfaeri/verkfaeri-annar-bunadur/",
+    "path": "/verkfaeri/verkfaeri-annar-bunadur",
+    "label": "Verkfæri & annar búnaður",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/verkfaeri/maelitaeki/",
+    "path": "/verkfaeri/maelitaeki",
+    "label": "Mælitæki",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/verkfaeri/rafmagnsverkfaeri/",
+    "path": "/verkfaeri/rafmagnsverkfaeri",
+    "label": "Rafmagnsverkfæri",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/verkfaeri/idrattarfjadrir/",
+    "path": "/verkfaeri/idrattarfjadrir",
+    "label": "Ídráttarfjaðrir",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/verkfaeri/veitubunadur/",
+    "path": "/verkfaeri/veitubunadur",
+    "label": "Veitubúnaður",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/verkfaeri/kapalkefli-og-framlengingar/",
+    "path": "/verkfaeri/kapalkefli-og-framlengingar",
+    "label": "Kapalkefli og Framlengingar",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/verkfaeri/verkfaeri-fyrir-netkerfi/",
+    "path": "/verkfaeri/verkfaeri-fyrir-netkerfi",
+    "label": "Verkfæri fyrir netkerfi",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/verkfaeri/merkivelar-og-merkingar/",
+    "path": "/verkfaeri/merkivelar-og-merkingar",
+    "label": "Merkivélar og merkingar",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/verkfaeri/vinnuljos/",
+    "path": "/verkfaeri/vinnuljos",
+    "label": "Vinnuljós",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/verkfaeri/vasaljos-hofudljos-ofl/",
+    "path": "/verkfaeri/vasaljos-hofudljos-ofl",
+    "label": "Vasaljós, höfuðljós ofl.",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/oryggis-og-snjalllausnir/oryggiskerfi/",
+    "path": "/oryggis-og-snjalllausnir/oryggiskerfi",
+    "label": "Öryggiskerfi",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/oryggis-og-snjalllausnir/myndavelakerfi-ip/",
+    "path": "/oryggis-og-snjalllausnir/myndavelakerfi-ip",
+    "label": "Myndavélakerfi IP",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/oryggis-og-snjalllausnir/snjallheimili/",
+    "path": "/oryggis-og-snjalllausnir/snjallheimili",
+    "label": "Snjallheimili",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/afldreifibunadur/spennar-og-spennistodvar/",
+    "path": "/afldreifibunadur/spennar-og-spennistodvar",
+    "label": "Spennar og Spennistöðvar",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/afldreifibunadur/oryggisbunadur/",
+    "path": "/afldreifibunadur/oryggisbunadur",
+    "label": "Öryggisbúnaður",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/afldreifibunadur/haspennubunadur/",
+    "path": "/afldreifibunadur/haspennubunadur",
+    "label": "Háspennubúnaður",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/afldreifibunadur/tenglastodvar/",
+    "path": "/afldreifibunadur/tenglastodvar",
+    "label": "Tenglastöðvar",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/afldreifibunadur/dreifiskapar-og-vinnutoflur/",
+    "path": "/afldreifibunadur/dreifiskapar-og-vinnutoflur",
+    "label": "Dreifiskápar og Vinnutöflur",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/afldreifibunadur/varaaflgjafar/",
+    "path": "/afldreifibunadur/varaaflgjafar",
+    "label": "Varaaflgjafar",
+    "depth": 1
+  },
+  {
+    "url": "https://iskraft.husa.is/fjarskiptabunadur/ljosleidaralagnir/19-skuffur-og-fylgihlutir/",
+    "path": "/fjarskiptabunadur/ljosleidaralagnir/19-skuffur-og-fylgihlutir",
+    "label": "19\" skúffur og fylgihlutir",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/fjarskiptabunadur/ljosleidaralagnir/hreinsiefni-og-verkfaeri/",
+    "path": "/fjarskiptabunadur/ljosleidaralagnir/hreinsiefni-og-verkfaeri",
+    "label": "Hreinsiefni og verkfæri",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/fjarskiptabunadur/ljosleidaralagnir/ljosleidarastrengir-multimode/",
+    "path": "/fjarskiptabunadur/ljosleidaralagnir/ljosleidarastrengir-multimode",
+    "label": "Ljósleiðarastrengir Multimode",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/fjarskiptabunadur/ljosleidaralagnir/ljosleidarastrengir-singlemode/",
+    "path": "/fjarskiptabunadur/ljosleidaralagnir/ljosleidarastrengir-singlemode",
+    "label": "Ljósleiðarastrengir Singlemode",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/fjarskiptabunadur/ljosleidaralagnir/splaesivelar-og-maelar/",
+    "path": "/fjarskiptabunadur/ljosleidaralagnir/splaesivelar-og-maelar",
+    "label": "Splæsivélar og mælar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/fjarskiptabunadur/ljosleidaralagnir/tengi-og-pigtail-singlemode/",
+    "path": "/fjarskiptabunadur/ljosleidaralagnir/tengi-og-pigtail-singlemode",
+    "label": "Tengi og pigtail Singlemode",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/fjarskiptabunadur/ljosleidaralagnir/tengi-og-pigtail-multimode/",
+    "path": "/fjarskiptabunadur/ljosleidaralagnir/tengi-og-pigtail-multimode",
+    "label": "Tengi og pigtail Multimode",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/fjarskiptabunadur/ljosleidaralagnir/tengibox-og-skapar/",
+    "path": "/fjarskiptabunadur/ljosleidaralagnir/tengibox-og-skapar",
+    "label": "Tengibox og skápar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/fjarskiptabunadur/ljosleidaralagnir/tengisnurur-multimode/",
+    "path": "/fjarskiptabunadur/ljosleidaralagnir/tengisnurur-multimode",
+    "label": "Tengisnúrur Multimode",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/fjarskiptabunadur/ljosleidaralagnir/tengisnurur-singlemode/",
+    "path": "/fjarskiptabunadur/ljosleidaralagnir/tengisnurur-singlemode",
+    "label": "Tengisnúrur Singlemode",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/fjarskiptabunadur/tolvulagnir/cat5e-lagnir/",
+    "path": "/fjarskiptabunadur/tolvulagnir/cat5e-lagnir",
+    "label": "Cat5e lagnir",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/fjarskiptabunadur/tolvulagnir/cat6-lagnir/",
+    "path": "/fjarskiptabunadur/tolvulagnir/cat6-lagnir",
+    "label": "Cat6 lagnir",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/fjarskiptabunadur/tolvulagnir/cat6a-lagnir/",
+    "path": "/fjarskiptabunadur/tolvulagnir/cat6a-lagnir",
+    "label": "Cat6A lagnir",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/fjarskiptabunadur/tolvulagnir/verkfaeri-og-maelar/",
+    "path": "/fjarskiptabunadur/tolvulagnir/verkfaeri-og-maelar",
+    "label": "Verkfæri og mælar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/fjarskiptabunadur/tolvuskapar-og-fylgihlutir/legrand-tolvuskapar/",
+    "path": "/fjarskiptabunadur/tolvuskapar-og-fylgihlutir/legrand-tolvuskapar",
+    "label": "Legrand Tölvuskápar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/fjarskiptabunadur/tolvuskapar-og-fylgihlutir/excel-veggskapar/",
+    "path": "/fjarskiptabunadur/tolvuskapar-og-fylgihlutir/excel-veggskapar",
+    "label": "Excel Veggskápar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/fjarskiptabunadur/tolvuskapar-og-fylgihlutir/excel-golfskapar/",
+    "path": "/fjarskiptabunadur/tolvuskapar-og-fylgihlutir/excel-golfskapar",
+    "label": "Excel Gólfskápar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/fjarskiptabunadur/tolvuskapar-og-fylgihlutir/ymislegt-i-19/",
+    "path": "/fjarskiptabunadur/tolvuskapar-og-fylgihlutir/ymislegt-i-19",
+    "label": "Ýmislegt í 19\"",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/fjarskiptabunadur/netbunadur/idnadar-netbunadur/",
+    "path": "/fjarskiptabunadur/netbunadur/idnadar-netbunadur",
+    "label": "Iðnaðar netbúnaður",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/fjarskiptabunadur/netbunadur/ljosbreytur-sfpstandalone/",
+    "path": "/fjarskiptabunadur/netbunadur/ljosbreytur-sfpstandalone",
+    "label": "Ljósbreytur SFP/Standalone",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/fjarskiptabunadur/netbunadur/unifi-routerar/",
+    "path": "/fjarskiptabunadur/netbunadur/unifi-routerar",
+    "label": "Unifi Routerar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/fjarskiptabunadur/netbunadur/poe-netbunadur/",
+    "path": "/fjarskiptabunadur/netbunadur/poe-netbunadur",
+    "label": "PoE netbúnaður",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/fjarskiptabunadur/netbunadur/switch/",
+    "path": "/fjarskiptabunadur/netbunadur/switch",
+    "label": "Switch",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/fjarskiptabunadur/netbunadur/thradlaus-netbunadur-wifi-inni/",
+    "path": "/fjarskiptabunadur/netbunadur/thradlaus-netbunadur-wifi-inni",
+    "label": "Þráðlaus netbúnaður Wifi inni",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/fjarskiptabunadur/netbunadur/thradlaus-netbunadur-wifi-uti/",
+    "path": "/fjarskiptabunadur/netbunadur/thradlaus-netbunadur-wifi-uti",
+    "label": "Þráðlaus netbúnaður Wifi úti",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/fjarskiptabunadur/netbunadur/annar-netbunadur/",
+    "path": "/fjarskiptabunadur/netbunadur/annar-netbunadur",
+    "label": "Annar netbúnaður",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/fjarskiptabunadur/netbunadur/ubnt-unifi-bunadur/",
+    "path": "/fjarskiptabunadur/netbunadur/ubnt-unifi-bunadur",
+    "label": "UBNT UNIFI búnaður",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/fjarskiptabunadur/netbunadur/wifi-7/",
+    "path": "/fjarskiptabunadur/netbunadur/wifi-7",
+    "label": "Wifi 7",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/fjarskiptabunadur/loftnetskerfi/loftnetstenglar/",
+    "path": "/fjarskiptabunadur/loftnetskerfi/loftnetstenglar",
+    "label": "Loftnetstenglar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/fjarskiptabunadur/loftnetskerfi/f-tengi-tv-klaer-ofl/",
+    "path": "/fjarskiptabunadur/loftnetskerfi/f-tengi-tv-klaer-ofl",
+    "label": "F-Tengi, TV-klær ofl.",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/fjarskiptabunadur/loftnetskerfi/loftnetsgreidur/",
+    "path": "/fjarskiptabunadur/loftnetskerfi/loftnetsgreidur",
+    "label": "Loftnetsgreiður",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/fjarskiptabunadur/loftnetskerfi/deilar-magnarar-ofl/",
+    "path": "/fjarskiptabunadur/loftnetskerfi/deilar-magnarar-ofl",
+    "label": "Deilar, magnarar ofl.",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/fjarskiptabunadur/dyrasimakerfi/adrir-ihlutir/",
+    "path": "/fjarskiptabunadur/dyrasimakerfi/adrir-ihlutir",
+    "label": "Aðrir Íhlutir",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/fjarskiptabunadur/dyrasimakerfi/ami-utistod/",
+    "path": "/fjarskiptabunadur/dyrasimakerfi/ami-utistod",
+    "label": "AMI útistöð",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/fjarskiptabunadur/dyrasimakerfi/audio-kerfi/",
+    "path": "/fjarskiptabunadur/dyrasimakerfi/audio-kerfi",
+    "label": "Audio kerfi",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/fjarskiptabunadur/dyrasimakerfi/bjollur-hnappar-ofl/",
+    "path": "/fjarskiptabunadur/dyrasimakerfi/bjollur-hnappar-ofl",
+    "label": "Bjöllur, Hnappar ofl.",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/fjarskiptabunadur/dyrasimakerfi/innistodvar/",
+    "path": "/fjarskiptabunadur/dyrasimakerfi/innistodvar",
+    "label": "Innistöðvar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/fjarskiptabunadur/dyrasimakerfi/utistodvar-audio/",
+    "path": "/fjarskiptabunadur/dyrasimakerfi/utistodvar-audio",
+    "label": "Útistöðvar Audio",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/fjarskiptabunadur/dyrasimakerfi/utistodvar-video/",
+    "path": "/fjarskiptabunadur/dyrasimakerfi/utistodvar-video",
+    "label": "Útistöðvar Video",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/fjarskiptabunadur/dyrasimakerfi/2-vira-video-kerfi/",
+    "path": "/fjarskiptabunadur/dyrasimakerfi/2-vira-video-kerfi",
+    "label": "2 víra video kerfi",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/fjarskiptabunadur/dyrasimakerfi/adgangskerfi/",
+    "path": "/fjarskiptabunadur/dyrasimakerfi/adgangskerfi",
+    "label": "Aðgangskerfi",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/fjarskiptabunadur/dyrasimakerfi/staekkanir-fyrir-pes-pro-stodvar/",
+    "path": "/fjarskiptabunadur/dyrasimakerfi/staekkanir-fyrir-pes-pro-stodvar",
+    "label": "Stækkanir fyrir PES Pro stöðvar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/fjarskiptabunadur/dyrasimakerfi/akuvox-ip-dyrasimakerfi/",
+    "path": "/fjarskiptabunadur/dyrasimakerfi/akuvox-ip-dyrasimakerfi",
+    "label": "Akuvox IP Dyrasímakerfi",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/hledslustodvar/hledslustodvar-elinta/elinta-sokkull-20x40x80-160kg/",
+    "path": "/hledslustodvar/hledslustodvar-elinta/elinta-sokkull-20x40x80-160kg",
+    "label": "elinta sokkull 20x40x80 160kg",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/hledslustodvar/hradhledslustodvar/hyc200-2-200kw-med-2xccs/",
+    "path": "/hledslustodvar/hradhledslustodvar/hyc200-2-200kw-med-2xccs",
+    "label": "hyc200 2 200kw med 2xccs",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/hledslustodvar/hradhledslustodvar/kempower-t800p40cc5as-2ccs/",
+    "path": "/hledslustodvar/hradhledslustodvar/kempower-t800p40cc5as-2ccs",
+    "label": "kempower t800p40cc5as 2ccs",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/hledslustodvar/hledslustodvar-qudo/qudo/",
+    "path": "/hledslustodvar/hledslustodvar-qudo/qudo",
+    "label": "Qudo",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/hledslustodvar/hledslustodvar-qudo/qudo-aukahlutir/",
+    "path": "/hledslustodvar/hledslustodvar-qudo/qudo-aukahlutir",
+    "label": "Qudo Aukahlutir",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/hitunarbunadur/blastursofnar/elbjorn-hitablasarar/",
+    "path": "/hitunarbunadur/blastursofnar/elbjorn-hitablasarar",
+    "label": "Elbjörn Hitablásarar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/hitunarbunadur/blastursofnar/varahlutir-i-elbjorn/",
+    "path": "/hitunarbunadur/blastursofnar/varahlutir-i-elbjorn",
+    "label": "Varahlutir í Elbjörn",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/hitunarbunadur/rafmagnsthilofnar/oliufylltir-ofnar/",
+    "path": "/hitunarbunadur/rafmagnsthilofnar/oliufylltir-ofnar",
+    "label": "Olíufylltir ofnar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/hitunarbunadur/rafmagnsthilofnar/thilofnar/",
+    "path": "/hitunarbunadur/rafmagnsthilofnar/thilofnar",
+    "label": "Þilofnar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/hitunarbunadur/rafmagnsthilofnar/ymsar-adrar-gerdir/",
+    "path": "/hitunarbunadur/rafmagnsthilofnar/ymsar-adrar-gerdir",
+    "label": "Ýmsar aðrar gerðir",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/hitunarbunadur/hitastrengir-og-mottur/hitastrengir/",
+    "path": "/hitunarbunadur/hitastrengir-og-mottur/hitastrengir",
+    "label": "Hitastrengir",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/hitunarbunadur/hitastrengir-og-mottur/fylgihlutir/",
+    "path": "/hitunarbunadur/hitastrengir-og-mottur/fylgihlutir",
+    "label": "Fylgihlutir",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/hitunarbunadur/hitastrengir-og-mottur/hitamottur-ebeco-120wm2/",
+    "path": "/hitunarbunadur/hitastrengir-og-mottur/hitamottur-ebeco-120wm2",
+    "label": "Hitamottur Ebeco 120W/m2",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/hitunarbunadur/hitastrengir-og-mottur/hitamottur-ebeco-160wm2/",
+    "path": "/hitunarbunadur/hitastrengir-og-mottur/hitamottur-ebeco-160wm2",
+    "label": "Hitamottur Ebeco 160W/m2",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/hitunarbunadur/hitastrengir-og-mottur/hitastillar/",
+    "path": "/hitunarbunadur/hitastrengir-og-mottur/hitastillar",
+    "label": "Hitastillar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/hitunarbunadur/hitastrengir-og-mottur/hitafilma/",
+    "path": "/hitunarbunadur/hitastrengir-og-mottur/hitafilma",
+    "label": "Hitafilma",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/ferjold-og-umbreytar/einangrunarmagnari-4-20ma4-20ma/",
+    "path": "/idnstyribunadur/ferjold-og-umbreytar/einangrunarmagnari-4-20ma4-20ma",
+    "label": "einangrunarmagnari 4 20ma4 20ma",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/ferjold-og-umbreytar/breytir-0-10v-i-4-20ma/",
+    "path": "/idnstyribunadur/ferjold-og-umbreytar/breytir-0-10v-i-4-20ma",
+    "label": "breytir 0 10v i 4 20ma",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/ferjold-og-umbreytar/ferjald-pt100-din-forritanlegt/",
+    "path": "/idnstyribunadur/ferjold-og-umbreytar/ferjald-pt100-din-forritanlegt",
+    "label": "ferjald pt100 din forritanlegt",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/ferjold-og-umbreytar/ferjald-tc-inhead-pc-forritanlegt/",
+    "path": "/idnstyribunadur/ferjold-og-umbreytar/ferjald-tc-inhead-pc-forritanlegt",
+    "label": "ferjald tc inhead pc forritanlegt",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/hradabreytar-og-mjukraesar/mjukraesar/",
+    "path": "/idnstyribunadur/hradabreytar-og-mjukraesar/mjukraesar",
+    "label": "Mjúkræsar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/hradabreytar-og-mjukraesar/powerflex-4m-hradabreytar/",
+    "path": "/idnstyribunadur/hradabreytar-og-mjukraesar/powerflex-4m-hradabreytar",
+    "label": "PowerFlex 4M Hraðabreytar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/hradabreytar-og-mjukraesar/powerflex-523-hradabreytar/",
+    "path": "/idnstyribunadur/hradabreytar-og-mjukraesar/powerflex-523-hradabreytar",
+    "label": "PowerFlex 523 Hraðabreytar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/hradabreytar-og-mjukraesar/powerflex-525-hradabreytar/",
+    "path": "/idnstyribunadur/hradabreytar-og-mjukraesar/powerflex-525-hradabreytar",
+    "label": "PowerFlex 525 Hraðabreytar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/hradabreytar-og-mjukraesar/vacon-100-hradabreytar/",
+    "path": "/idnstyribunadur/hradabreytar-og-mjukraesar/vacon-100-hradabreytar",
+    "label": "Vacon 100 hraðabreytar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/hradabreytar-og-mjukraesar/vacon-20-hradabreytar/",
+    "path": "/idnstyribunadur/hradabreytar-og-mjukraesar/vacon-20-hradabreytar",
+    "label": "Vacon 20 hraðabreytar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/hradabreytar-og-mjukraesar/vacon-nx-hradabreytar/",
+    "path": "/idnstyribunadur/hradabreytar-og-mjukraesar/vacon-nx-hradabreytar",
+    "label": "Vacon NX hraðabreytar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/hradabreytar-og-mjukraesar/powerflex-755ts-hradabreytar/",
+    "path": "/idnstyribunadur/hradabreytar-og-mjukraesar/powerflex-755ts-hradabreytar",
+    "label": "PowerFlex 755TS Hraðabreytar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/hradabreytar-og-mjukraesar/powerflex-fylgihlutir/",
+    "path": "/idnstyribunadur/hradabreytar-og-mjukraesar/powerflex-fylgihlutir",
+    "label": "PowerFlex Fylgihlutir",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/idntolvur/compactlogix/",
+    "path": "/idnstyribunadur/idntolvur/compactlogix",
+    "label": "CompactLogix",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/idntolvur/controllogix/",
+    "path": "/idnstyribunadur/idntolvur/controllogix",
+    "label": "ControlLogix",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/idntolvur/micro-800/",
+    "path": "/idnstyribunadur/idntolvur/micro-800",
+    "label": "Micro 800",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/idntolvur/micrologix/",
+    "path": "/idnstyribunadur/idntolvur/micrologix",
+    "label": "MicroLogix",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/idntolvur/remote-io/",
+    "path": "/idnstyribunadur/idntolvur/remote-io",
+    "label": "Remote I/O",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/idntolvur/industrial-pc/",
+    "path": "/idnstyribunadur/idntolvur/industrial-pc",
+    "label": "Industrial PC",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/nemar-og-skynjarar/aukabunadur-fyrir-nema/",
+    "path": "/idnstyribunadur/nemar-og-skynjarar/aukabunadur-fyrir-nema",
+    "label": "Aukabúnaður fyrir nema",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/nemar-og-skynjarar/co2-nemar/",
+    "path": "/idnstyribunadur/nemar-og-skynjarar/co2-nemar",
+    "label": "CO2 nemar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/nemar-og-skynjarar/flotrofar/",
+    "path": "/idnstyribunadur/nemar-og-skynjarar/flotrofar",
+    "label": "Flotrofar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/nemar-og-skynjarar/flaedinemar/",
+    "path": "/idnstyribunadur/nemar-og-skynjarar/flaedinemar",
+    "label": "Flæðinemar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/nemar-og-skynjarar/hallanemar/",
+    "path": "/idnstyribunadur/nemar-og-skynjarar/hallanemar",
+    "label": "Hallanemar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/nemar-og-skynjarar/hita-og-rakanemar/",
+    "path": "/idnstyribunadur/nemar-og-skynjarar/hita-og-rakanemar",
+    "label": "Hita og rakanemar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/nemar-og-skynjarar/hitanemar/",
+    "path": "/idnstyribunadur/nemar-og-skynjarar/hitanemar",
+    "label": "Hitanemar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/nemar-og-skynjarar/hljodbylgjunemar/",
+    "path": "/idnstyribunadur/nemar-og-skynjarar/hljodbylgjunemar",
+    "label": "Hljóðbylgjunemar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/nemar-og-skynjarar/io-link/",
+    "path": "/idnstyribunadur/nemar-og-skynjarar/io-link",
+    "label": "I/O Link",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/nemar-og-skynjarar/leidninemar/",
+    "path": "/idnstyribunadur/nemar-og-skynjarar/leidninemar",
+    "label": "Leiðninemar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/nemar-og-skynjarar/massaskynjarar/",
+    "path": "/idnstyribunadur/nemar-og-skynjarar/massaskynjarar",
+    "label": "Massaskynjarar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/nemar-og-skynjarar/ljosnemar/",
+    "path": "/idnstyribunadur/nemar-og-skynjarar/ljosnemar",
+    "label": "Ljósnemar.",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/nemar-og-skynjarar/malmskynjarar/",
+    "path": "/idnstyribunadur/nemar-og-skynjarar/malmskynjarar",
+    "label": "Málmskynjarar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/nemar-og-skynjarar/thrystinemar/",
+    "path": "/idnstyribunadur/nemar-og-skynjarar/thrystinemar",
+    "label": "Þrýstinemar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/nemar-og-skynjarar/vibringsnemar/",
+    "path": "/idnstyribunadur/nemar-og-skynjarar/vibringsnemar",
+    "label": "Víbríngsnemar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/nemar-og-skynjarar/haedar-og-stoduskynjarar/",
+    "path": "/idnstyribunadur/nemar-og-skynjarar/haedar-og-stoduskynjarar",
+    "label": "Hæðar- og stöðuskynjarar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/nemar-og-skynjarar/skannar/",
+    "path": "/idnstyribunadur/nemar-og-skynjarar/skannar",
+    "label": "Skannar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/nemar-og-skynjarar/radarskynjarar/",
+    "path": "/idnstyribunadur/nemar-og-skynjarar/radarskynjarar",
+    "label": "Radarskynjarar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/nemar-og-skynjarar/led-skjair/",
+    "path": "/idnstyribunadur/nemar-og-skynjarar/led-skjair",
+    "label": "LED Skjáir",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/nemar-og-skynjarar/vatnsgaedamaelar/",
+    "path": "/idnstyribunadur/nemar-og-skynjarar/vatnsgaedamaelar",
+    "label": "Vatnsgæðamælar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/nemar-og-skynjarar/stokkaskynjarar/",
+    "path": "/idnstyribunadur/nemar-og-skynjarar/stokkaskynjarar",
+    "label": "Stokkaskynjarar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/snarar-rofar-og-gaumljos/baco-snarar-og-rofar/",
+    "path": "/idnstyribunadur/snarar-rofar-og-gaumljos/baco-snarar-og-rofar",
+    "label": "Baco Snarar og rofar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/snarar-rofar-og-gaumljos/rofaefni-22mm/",
+    "path": "/idnstyribunadur/snarar-rofar-og-gaumljos/rofaefni-22mm",
+    "label": "Rofaefni 22mm",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/snarar-rofar-og-gaumljos/ljosasulur-50mm/",
+    "path": "/idnstyribunadur/snarar-rofar-og-gaumljos/ljosasulur-50mm",
+    "label": "Ljósasúlur 50mm",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/snarar-rofar-og-gaumljos/ab-snarar-og-rofar/",
+    "path": "/idnstyribunadur/snarar-rofar-og-gaumljos/ab-snarar-og-rofar",
+    "label": "AB Snarar og rofar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/spolurofar-og-smalidar/motorrofar/",
+    "path": "/idnstyribunadur/spolurofar-og-smalidar/motorrofar",
+    "label": "Mótorrofar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/spolurofar-og-smalidar/rafeindalidar/",
+    "path": "/idnstyribunadur/spolurofar-og-smalidar/rafeindalidar",
+    "label": "Rafeindaliðar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/spolurofar-og-smalidar/smalidar/",
+    "path": "/idnstyribunadur/spolurofar-og-smalidar/smalidar",
+    "label": "Smáliðar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/spolurofar-og-smalidar/spolurofar/",
+    "path": "/idnstyribunadur/spolurofar-og-smalidar/spolurofar",
+    "label": "Spólurofar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/spolurofar-og-smalidar/styrilidar/",
+    "path": "/idnstyribunadur/spolurofar-og-smalidar/styrilidar",
+    "label": "Stýriliðar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/spolurofar-og-smalidar/timalidar/",
+    "path": "/idnstyribunadur/spolurofar-og-smalidar/timalidar",
+    "label": "Tímaliðar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/spolurofar-og-smalidar/yfiralagsvarnir-smaspolurofa/",
+    "path": "/idnstyribunadur/spolurofar-og-smalidar/yfiralagsvarnir-smaspolurofa",
+    "label": "Yfirálagsvarnir smáspólurofa",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/spolurofar-og-smalidar/yfiralagsvarnir-spolurofa/",
+    "path": "/idnstyribunadur/spolurofar-og-smalidar/yfiralagsvarnir-spolurofa",
+    "label": "Yfirálagsvarnir spólurofa",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/spolurofar-og-smalidar/rafeindavor/",
+    "path": "/idnstyribunadur/spolurofar-og-smalidar/rafeindavor",
+    "label": "Rafeindavör",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/spolurofar-og-smalidar/vaktbunadur/",
+    "path": "/idnstyribunadur/spolurofar-og-smalidar/vaktbunadur",
+    "label": "Vaktbúnaður",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/spolurofar-og-smalidar/motorraesar/",
+    "path": "/idnstyribunadur/spolurofar-og-smalidar/motorraesar",
+    "label": "Mótorræsar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/tofluspennar/ac-spennar/",
+    "path": "/idnstyribunadur/tofluspennar/ac-spennar",
+    "label": "AC spennar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/tofluspennar/dc-spennar/",
+    "path": "/idnstyribunadur/tofluspennar/dc-spennar",
+    "label": "DC spennar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/tofluspennar/dc-varbunadur/",
+    "path": "/idnstyribunadur/tofluspennar/dc-varbunadur",
+    "label": "DC varbúnaður",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/oryggisbunadur/endastopp-og-lasar/",
+    "path": "/idnstyribunadur/oryggisbunadur/endastopp-og-lasar",
+    "label": "Endastopp og Lásar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/oryggisbunadur/ljoshlid/",
+    "path": "/idnstyribunadur/oryggisbunadur/ljoshlid",
+    "label": "Ljóshlið",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/oryggisbunadur/safety-barriers/",
+    "path": "/idnstyribunadur/oryggisbunadur/safety-barriers",
+    "label": "Safety Barriers",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/oryggisbunadur/oryggislidar/",
+    "path": "/idnstyribunadur/oryggisbunadur/oryggislidar",
+    "label": "Öryggisliðar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/oryggisbunadur/oryggismottur/",
+    "path": "/idnstyribunadur/oryggisbunadur/oryggismottur",
+    "label": "Öryggismottur",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/oryggisbunadur/neydartogrofar/",
+    "path": "/idnstyribunadur/oryggisbunadur/neydartogrofar",
+    "label": "Neyðartogrofar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/oryggisbunadur/oryggisskannar/",
+    "path": "/idnstyribunadur/oryggisbunadur/oryggisskannar",
+    "label": "Öryggisskannar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/oryggisbunadur/as-i-oryggisbunadur/",
+    "path": "/idnstyribunadur/oryggisbunadur/as-i-oryggisbunadur",
+    "label": "AS-i Öryggisbúnaður",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/skjair/optixpanel/",
+    "path": "/idnstyribunadur/skjair/optixpanel",
+    "label": "OptixPanel",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/skjair/panel-pc/",
+    "path": "/idnstyribunadur/skjair/panel-pc",
+    "label": "Panel PC",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/skjair/panelview/",
+    "path": "/idnstyribunadur/skjair/panelview",
+    "label": "PanelView",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/skjair/snertiskjair/",
+    "path": "/idnstyribunadur/skjair/snertiskjair",
+    "label": "Snertiskjáir",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/skjair/fylgihlutir-fyrir-skjai/",
+    "path": "/idnstyribunadur/skjair/fylgihlutir-fyrir-skjai",
+    "label": "Fylgihlutir fyrir skjái",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/idnadarvogir/golfvogir/",
+    "path": "/idnstyribunadur/idnadarvogir/golfvogir",
+    "label": "Gólfvogir",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/idnadarvogir/bordvogir/",
+    "path": "/idnstyribunadur/idnadarvogir/bordvogir",
+    "label": "Borðvogir",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/idnadarvogir/loadsellur/",
+    "path": "/idnstyribunadur/idnadarvogir/loadsellur",
+    "label": "Loadsellur",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/idnadarvogir/skjair-og-fylgihlutir/",
+    "path": "/idnstyribunadur/idnadarvogir/skjair-og-fylgihlutir",
+    "label": "Skjáir og fylgihlutir",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/innlagnaefni/dimma-og-styripungar/dimmapungar-i-dos/",
+    "path": "/innlagnaefni/dimma-og-styripungar/dimmapungar-i-dos",
+    "label": "Dimmapungar í dós",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/innlagnaefni/dimma-og-styripungar/rofaeiningar-i-dos/",
+    "path": "/innlagnaefni/dimma-og-styripungar/rofaeiningar-i-dos",
+    "label": "Rofaeiningar í dós",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/innlagnaefni/fjoltengiklaer-og-hulsur/fjoltengi/",
+    "path": "/innlagnaefni/fjoltengiklaer-og-hulsur/fjoltengi",
+    "label": "Fjöltengi",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/innlagnaefni/fjoltengiklaer-og-hulsur/fjoltengi-uti-ip44/",
+    "path": "/innlagnaefni/fjoltengiklaer-og-hulsur/fjoltengi-uti-ip44",
+    "label": "Fjöltengi Úti IP44",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/innlagnaefni/fjoltengiklaer-og-hulsur/klaer-og-hulsur/",
+    "path": "/innlagnaefni/fjoltengiklaer-og-hulsur/klaer-og-hulsur",
+    "label": "Klær og Hulsur",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/innlagnaefni/fjoltengiklaer-og-hulsur/klaer-og-hulsur-gummi/",
+    "path": "/innlagnaefni/fjoltengiklaer-og-hulsur/klaer-og-hulsur-gummi",
+    "label": "Klær og Hulsur Gúmmí",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/innlagnaefni/fjoltengiklaer-og-hulsur/millitengi/",
+    "path": "/innlagnaefni/fjoltengiklaer-og-hulsur/millitengi",
+    "label": "Millitengi",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/innlagnaefni/fjoltengiklaer-og-hulsur/snuru-med-klo/",
+    "path": "/innlagnaefni/fjoltengiklaer-og-hulsur/snuru-med-klo",
+    "label": "Snúru með Kló",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/innlagnaefni/husstjornarkerfi/lunatone-dali/",
+    "path": "/innlagnaefni/husstjornarkerfi/lunatone-dali",
+    "label": "Lunatone Dali",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/innlagnaefni/husstjornarkerfi/z-wave/",
+    "path": "/innlagnaefni/husstjornarkerfi/z-wave",
+    "label": "Z-wave",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/innlagnaefni/idnadartengibunadur-cee/tengibunadur-cee-ip44/",
+    "path": "/innlagnaefni/idnadartengibunadur-cee/tengibunadur-cee-ip44",
+    "label": "Tengibúnaður CEE IP44",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/innlagnaefni/idnadartengibunadur-cee/tengibunadur-cee-ip67/",
+    "path": "/innlagnaefni/idnadartengibunadur-cee/tengibunadur-cee-ip67",
+    "label": "Tengibúnaður CEE IP67",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/innlagnaefni/legrand-innlagnaefni/mosaic-hvitt/",
+    "path": "/innlagnaefni/legrand-innlagnaefni/mosaic-hvitt",
+    "label": "Mosaic Hvítt",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/innlagnaefni/legrand-innlagnaefni/valena-hvitt/",
+    "path": "/innlagnaefni/legrand-innlagnaefni/valena-hvitt",
+    "label": "Valena Hvítt",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/innlagnaefni/legrand-innlagnaefni/mosaic-svart/",
+    "path": "/innlagnaefni/legrand-innlagnaefni/mosaic-svart",
+    "label": "Mosaic Svart",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/innlagnaefni/legrand-innlagnaefni/mosaic-algratt/",
+    "path": "/innlagnaefni/legrand-innlagnaefni/mosaic-algratt",
+    "label": "Mosaic Álgrátt",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/innlagnaefni/merten-innlagnaefni/grunneiningar/",
+    "path": "/innlagnaefni/merten-innlagnaefni/grunneiningar",
+    "label": "Grunneiningar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/innlagnaefni/merten-innlagnaefni/merten-m-glans/",
+    "path": "/innlagnaefni/merten-innlagnaefni/merten-m-glans",
+    "label": "Merten M-Glans",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/innlagnaefni/merten-innlagnaefni/merten-m-matt/",
+    "path": "/innlagnaefni/merten-innlagnaefni/merten-m-matt",
+    "label": "Merten M-Matt",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/innlagnaefni/merten-innlagnaefni/merten-1m/",
+    "path": "/innlagnaefni/merten-innlagnaefni/merten-1m",
+    "label": "Merten 1M",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/innlagnaefni/merten-innlagnaefni/merten-m-pure/",
+    "path": "/innlagnaefni/merten-innlagnaefni/merten-m-pure",
+    "label": "Merten M-Pure",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/innlagnaefni/merten-innlagnaefni/merten-m-plan/",
+    "path": "/innlagnaefni/merten-innlagnaefni/merten-m-plan",
+    "label": "Merten M-Plan",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/innlagnaefni/merten-innlagnaefni/merten-aqua-ip44/",
+    "path": "/innlagnaefni/merten-innlagnaefni/merten-aqua-ip44",
+    "label": "Merten Aqua IP44",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/innlagnaefni/merten-innlagnaefni/merten-m-plan-gler/",
+    "path": "/innlagnaefni/merten-innlagnaefni/merten-m-plan-gler",
+    "label": "Merten M-Plan Gler",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/innlagnaefni/utanaliggjandi-efni/abb-utanaliggjandi-efni/",
+    "path": "/innlagnaefni/utanaliggjandi-efni/abb-utanaliggjandi-efni",
+    "label": "ABB Utanáliggjandi efni",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/innlagnaefni/utanaliggjandi-efni/hreyfiskynjarar-ofl/",
+    "path": "/innlagnaefni/utanaliggjandi-efni/hreyfiskynjarar-ofl",
+    "label": "Hreyfiskynjarar ofl.",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/innlagnaefni/utanaliggjandi-efni/ljosnemar/",
+    "path": "/innlagnaefni/utanaliggjandi-efni/ljosnemar",
+    "label": "Ljósnemar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/innlagnaefni/utanaliggjandi-efni/utanaliggjandi-annad/",
+    "path": "/innlagnaefni/utanaliggjandi-efni/utanaliggjandi-annad",
+    "label": "Utanáliggjandi annað",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/innlagnaefni/thradlaust-innlagnaefni/merten-thradlaust-efni/",
+    "path": "/innlagnaefni/thradlaust-innlagnaefni/merten-thradlaust-efni",
+    "label": "Merten Þráðlaust efni",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/innlagnaefni/thradlaust-innlagnaefni/elko-thradlaust-efni/",
+    "path": "/innlagnaefni/thradlaust-innlagnaefni/elko-thradlaust-efni",
+    "label": "Elko Þráðlaust Efni",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/innlagnaefni/thradlaust-innlagnaefni/plejd-thradlaust-efni/",
+    "path": "/innlagnaefni/thradlaust-innlagnaefni/plejd-thradlaust-efni",
+    "label": "Plejd Þráðlaust Efni",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/innlagnaefni/ion-innlagnaefni/ion-dimmer/",
+    "path": "/innlagnaefni/ion-innlagnaefni/ion-dimmer",
+    "label": "ION Dimmer",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/innlagnaefni/ion-innlagnaefni/ion-grunneiningar/",
+    "path": "/innlagnaefni/ion-innlagnaefni/ion-grunneiningar",
+    "label": "ION Grunneiningar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/innlagnaefni/ion-innlagnaefni/ion-v1-linan/",
+    "path": "/innlagnaefni/ion-innlagnaefni/ion-v1-linan",
+    "label": "ION V1 línan",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/innlagnaefni/ion-innlagnaefni/ion-j1-linan/",
+    "path": "/innlagnaefni/ion-innlagnaefni/ion-j1-linan",
+    "label": "ION J1 línan",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/innlagnaefni/ion-innlagnaefni/ion-e1-linan/",
+    "path": "/innlagnaefni/ion-innlagnaefni/ion-e1-linan",
+    "label": "ION E1 linan",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lagnaefni/bruna-og-vatnsthettingar/mct-thettingar/",
+    "path": "/lagnaefni/bruna-og-vatnsthettingar/mct-thettingar",
+    "label": "MCT Þéttingar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lagnaefni/bruna-og-vatnsthettingar/eldvarnarror/",
+    "path": "/lagnaefni/bruna-og-vatnsthettingar/eldvarnarror",
+    "label": "Eldvarnarrör",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lagnaefni/bruna-og-vatnsthettingar/eldvarnarkitti/",
+    "path": "/lagnaefni/bruna-og-vatnsthettingar/eldvarnarkitti",
+    "label": "Eldvarnarkítti",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lagnaefni/dosalok/dosalok-skrufud/",
+    "path": "/lagnaefni/dosalok/dosalok-skrufud",
+    "label": "Dósalok Skrúfuð",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lagnaefni/dosalok/doslalok-smellt/",
+    "path": "/lagnaefni/dosalok/doslalok-smellt",
+    "label": "Dóslalok Smellt",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lagnaefni/dosalok/onnur-lok/",
+    "path": "/lagnaefni/dosalok/onnur-lok",
+    "label": "Önnur Lok",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lagnaefni/dosir-og-plastefni/vegg-og-rofadosir/",
+    "path": "/lagnaefni/dosir-og-plastefni/vegg-og-rofadosir",
+    "label": "Vegg-og Rofadósir",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lagnaefni/dosir-og-plastefni/loftdosir/",
+    "path": "/lagnaefni/dosir-og-plastefni/loftdosir",
+    "label": "Loftdósir",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lagnaefni/dosir-og-plastefni/plotustutar/",
+    "path": "/lagnaefni/dosir-og-plastefni/plotustutar",
+    "label": "Plötustútar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lagnaefni/dosir-og-plastefni/toflustutar/",
+    "path": "/lagnaefni/dosir-og-plastefni/toflustutar",
+    "label": "Töflustútar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lagnaefni/dosir-og-plastefni/dosaihlutir-abb/",
+    "path": "/lagnaefni/dosir-og-plastefni/dosaihlutir-abb",
+    "label": "Dósaíhlutir ABB",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lagnaefni/dosir-og-plastefni/halogenbox-i-steypu/",
+    "path": "/lagnaefni/dosir-og-plastefni/halogenbox-i-steypu",
+    "label": "Halogenbox í Steypu",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lagnaefni/dosir-og-plastefni/dosaihlutir-bjarg/",
+    "path": "/lagnaefni/dosir-og-plastefni/dosaihlutir-bjarg",
+    "label": "Dósaíhlutir Bjarg",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lagnaefni/dosir-og-plastefni/rorastolar-steypu/",
+    "path": "/lagnaefni/dosir-og-plastefni/rorastolar-steypu",
+    "label": "Rörastólar steypu",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lagnaefni/festiefni/kapalspennur/",
+    "path": "/lagnaefni/festiefni/kapalspennur",
+    "label": "Kapalspennur",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lagnaefni/festiefni/rorastolar-og-roraspennur/",
+    "path": "/lagnaefni/festiefni/rorastolar-og-roraspennur",
+    "label": "Rörastólar og Röraspennur",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lagnaefni/festiefni/dragbond-og-girdi/",
+    "path": "/lagnaefni/festiefni/dragbond-og-girdi",
+    "label": "Dragbönd og Girði",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lagnaefni/festiefni/murtappar-rekskrufur-ofl/",
+    "path": "/lagnaefni/festiefni/murtappar-rekskrufur-ofl",
+    "label": "Múrtappar, rekskrúfur ofl.",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lagnaefni/festiefni/murboltar-snittteinar-ofl/",
+    "path": "/lagnaefni/festiefni/murboltar-snittteinar-ofl",
+    "label": "Múrboltar, Snittteinar ofl.",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lagnaefni/festiefni/erico-caddy-festingar/",
+    "path": "/lagnaefni/festiefni/erico-caddy-festingar",
+    "label": "Erico Caddy Festingar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lagnaefni/festiefni/strengfestingar/",
+    "path": "/lagnaefni/festiefni/strengfestingar",
+    "label": "Strengfestingar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lagnaefni/lagnaleidir/kapalgrindur-heitgalv/",
+    "path": "/lagnaefni/lagnaleidir/kapalgrindur-heitgalv",
+    "label": "Kapalgrindur Heitgalv",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lagnaefni/lagnaleidir/kapalgrindur-rafgalv/",
+    "path": "/lagnaefni/lagnaleidir/kapalgrindur-rafgalv",
+    "label": "Kapalgrindur Rafgalv",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lagnaefni/lagnaleidir/kapalgrindur-rydfriar/",
+    "path": "/lagnaefni/lagnaleidir/kapalgrindur-rydfriar",
+    "label": "Kapalgrindur Ryðfríar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lagnaefni/lagnaleidir/lagnabakkar/",
+    "path": "/lagnaefni/lagnaleidir/lagnabakkar",
+    "label": "Lagnabakkar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lagnaefni/lagnaleidir/limlistar-rennur/",
+    "path": "/lagnaefni/lagnaleidir/limlistar-rennur",
+    "label": "Límlistar & Rennur",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lagnaefni/lagnaleidir/strengstigar-heitgalv/",
+    "path": "/lagnaefni/lagnaleidir/strengstigar-heitgalv",
+    "label": "Strengstigar Heitgalv",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lagnaefni/lagnaleidir/strengstigar-rafgalv/",
+    "path": "/lagnaefni/lagnaleidir/strengstigar-rafgalv",
+    "label": "Strengstigar Rafgalv",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lagnaefni/lagnaleidir/tenglastokkar-plast/",
+    "path": "/lagnaefni/lagnaleidir/tenglastokkar-plast",
+    "label": "Tenglastokkar Plast",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lagnaefni/lagnaleidir/tenglastokkar-al/",
+    "path": "/lagnaefni/lagnaleidir/tenglastokkar-al",
+    "label": "Tenglastokkar Ál",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lagnaefni/lagnaleidir/tenglasulur/",
+    "path": "/lagnaefni/lagnaleidir/tenglasulur",
+    "label": "Tenglasúlur",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lagnaefni/lagnaleidir/golf-og-bordtenglar/",
+    "path": "/lagnaefni/lagnaleidir/golf-og-bordtenglar",
+    "label": "Gólf-og borðtenglar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lagnaefni/lagnaleidir/gormarennur/",
+    "path": "/lagnaefni/lagnaleidir/gormarennur",
+    "label": "Gormarennur",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lagnaefni/nipplar-og-raer/plastnipplar-og-raer-mm/",
+    "path": "/lagnaefni/nipplar-og-raer/plastnipplar-og-raer-mm",
+    "label": "Plastnipplar og Rær MM",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lagnaefni/nipplar-og-raer/malmnipplar-og-raer/",
+    "path": "/lagnaefni/nipplar-og-raer/malmnipplar-og-raer",
+    "label": "Málmnipplar og Rær",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lagnaefni/nipplar-og-raer/ex-nipplar-og-raer/",
+    "path": "/lagnaefni/nipplar-og-raer/ex-nipplar-og-raer",
+    "label": "Ex Nipplar og Rær",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lagnaefni/nipplar-og-raer/skermadir-nipplar-og-raer/",
+    "path": "/lagnaefni/nipplar-og-raer/skermadir-nipplar-og-raer",
+    "label": "Skermaðir Nipplar og Rær",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lagnaefni/nipplar-og-raer/staekkanir-threngingar-ofl/",
+    "path": "/lagnaefni/nipplar-og-raer/staekkanir-threngingar-ofl",
+    "label": "Stækkanir, Þrengingar ofl",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lagnaefni/nipplar-og-raer/trodnipplar/",
+    "path": "/lagnaefni/nipplar-og-raer/trodnipplar",
+    "label": "Troðnipplar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lagnaefni/nipplar-og-raer/rorafodringar/",
+    "path": "/lagnaefni/nipplar-og-raer/rorafodringar",
+    "label": "Rörafóðringar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lagnaefni/nipplar-og-raer/nipplasamtengi-ip68/",
+    "path": "/lagnaefni/nipplar-og-raer/nipplasamtengi-ip68",
+    "label": "Nipplasamtengi IP68",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lagnaefni/ror-og-barki/plastror/",
+    "path": "/lagnaefni/ror-og-barki/plastror",
+    "label": "Plaströr",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lagnaefni/ror-og-barki/plastbarki/",
+    "path": "/lagnaefni/ror-og-barki/plastbarki",
+    "label": "Plastbarki",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lagnaefni/ror-og-barki/alror/",
+    "path": "/lagnaefni/ror-og-barki/alror",
+    "label": "Álrör",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lagnaefni/ror-og-barki/idreginn-barki/",
+    "path": "/lagnaefni/ror-og-barki/idreginn-barki",
+    "label": "Ídreginn Barki",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lagnaefni/ror-og-barki/holkar-og-beygjur/",
+    "path": "/lagnaefni/ror-og-barki/holkar-og-beygjur",
+    "label": "Hólkar og Beygjur",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lagnaefni/ror-og-barki/jardvegsbarki/",
+    "path": "/lagnaefni/ror-og-barki/jardvegsbarki",
+    "label": "Jarðvegsbarki",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lysingarbunadur/idnadarlampar/efnatholnir/",
+    "path": "/lysingarbunadur/idnadarlampar/efnatholnir",
+    "label": "Efnaþolnir",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lysingarbunadur/idnadarlampar/tunnulampar/",
+    "path": "/lysingarbunadur/idnadarlampar/tunnulampar",
+    "label": "Tunnulampar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lysingarbunadur/idnadarlampar/led-idnadarlampar/",
+    "path": "/lysingarbunadur/idnadarlampar/led-idnadarlampar",
+    "label": "led Iðnaðarlampar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lysingarbunadur/idnadarlampar/sprengiheldir/",
+    "path": "/lysingarbunadur/idnadarlampar/sprengiheldir",
+    "label": "Sprengiheldir",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lysingarbunadur/heimilisljos/innfelld-ljos/",
+    "path": "/lysingarbunadur/heimilisljos/innfelld-ljos",
+    "label": "Innfelld ljós",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lysingarbunadur/heimilisljos/kuplar/",
+    "path": "/lysingarbunadur/heimilisljos/kuplar",
+    "label": "Kúplar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lysingarbunadur/heimilisljos/veggljos/",
+    "path": "/lysingarbunadur/heimilisljos/veggljos",
+    "label": "Veggljós",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lysingarbunadur/heimilisljos/innrettingaljos/",
+    "path": "/lysingarbunadur/heimilisljos/innrettingaljos",
+    "label": "Innréttingaljós",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lysingarbunadur/heimilisljos/loftljos/",
+    "path": "/lysingarbunadur/heimilisljos/loftljos",
+    "label": "Loftljós",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lysingarbunadur/heimilisljos/dukaloft-hljoddukar/",
+    "path": "/lysingarbunadur/heimilisljos/dukaloft-hljoddukar",
+    "label": "Dúkaloft / Hljóðdúkar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lysingarbunadur/ihlutir-i-ljos/ballast/",
+    "path": "/lysingarbunadur/ihlutir-i-ljos/ballast",
+    "label": "Ballast",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lysingarbunadur/ihlutir-i-ljos/fattningar/",
+    "path": "/lysingarbunadur/ihlutir-i-ljos/fattningar",
+    "label": "Fattningar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lysingarbunadur/kastarabrautir-og-kastarar/kastarabrautir/",
+    "path": "/lysingarbunadur/kastarabrautir-og-kastarar/kastarabrautir",
+    "label": "Kastarabrautir",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lysingarbunadur/kastarabrautir-og-kastarar/brautakastarar/",
+    "path": "/lysingarbunadur/kastarabrautir-og-kastarar/brautakastarar",
+    "label": "Brautakastarar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lysingarbunadur/kastarabrautir-og-kastarar/einfasa-brautir-og-ljos/",
+    "path": "/lysingarbunadur/kastarabrautir-og-kastarar/einfasa-brautir-og-ljos",
+    "label": "Einfasa brautir og ljós",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lysingarbunadur/led-bordar/led-lengjur/",
+    "path": "/lysingarbunadur/led-bordar/led-lengjur",
+    "label": "LED lengjur",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lysingarbunadur/led-bordar/led-profilar/",
+    "path": "/lysingarbunadur/led-bordar/led-profilar",
+    "label": "LED prófílar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lysingarbunadur/led-bordar/led-labs/",
+    "path": "/lysingarbunadur/led-bordar/led-labs",
+    "label": "LED LABS",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lysingarbunadur/led-bordar/230v-led-lengjur/",
+    "path": "/lysingarbunadur/led-bordar/230v-led-lengjur",
+    "label": "230V led lengjur",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lysingarbunadur/skrifstofulampar/kerfisloftalampar/",
+    "path": "/lysingarbunadur/skrifstofulampar/kerfisloftalampar",
+    "label": "Kerfisloftalampar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lysingarbunadur/skrifstofulampar/lampar-a-loft/",
+    "path": "/lysingarbunadur/skrifstofulampar/lampar-a-loft",
+    "label": "Lampar á loft",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lysingarbunadur/skrifstofulampar/hangandi-lampar/",
+    "path": "/lysingarbunadur/skrifstofulampar/hangandi-lampar",
+    "label": "Hangandi lampar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lysingarbunadur/skrifstofulampar/skapalampar/",
+    "path": "/lysingarbunadur/skrifstofulampar/skapalampar",
+    "label": "Skápalampar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lysingarbunadur/skrifstofulampar/strokkar/",
+    "path": "/lysingarbunadur/skrifstofulampar/strokkar",
+    "label": "Strokkar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lysingarbunadur/skrifstofulampar/speglaljos/",
+    "path": "/lysingarbunadur/skrifstofulampar/speglaljos",
+    "label": "Speglaljós",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lysingarbunadur/ljosaperur/led-perur/",
+    "path": "/lysingarbunadur/ljosaperur/led-perur",
+    "label": "LED perur",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lysingarbunadur/ljosaperur/retroperur/",
+    "path": "/lysingarbunadur/ljosaperur/retroperur",
+    "label": "Retroperur",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lysingarbunadur/ljosaperur/serperur/",
+    "path": "/lysingarbunadur/ljosaperur/serperur",
+    "label": "Sérperur",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lysingarbunadur/neydarlysing/utljos/",
+    "path": "/lysingarbunadur/neydarlysing/utljos",
+    "label": "Útljós",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lysingarbunadur/neydarlysing/neydarljos/",
+    "path": "/lysingarbunadur/neydarlysing/neydarljos",
+    "label": "Neyðarljós",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lysingarbunadur/neydarlysing/rafhlodur/",
+    "path": "/lysingarbunadur/neydarlysing/rafhlodur",
+    "label": "Rafhlöður",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lysingarbunadur/utiljos/loftljos-uti/",
+    "path": "/lysingarbunadur/utiljos/loftljos-uti",
+    "label": "Loftljós úti",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lysingarbunadur/utiljos/veggljos-uti/",
+    "path": "/lysingarbunadur/utiljos/veggljos-uti",
+    "label": "Veggljós úti",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lysingarbunadur/utiljos/nidurgrafin-utiljos/",
+    "path": "/lysingarbunadur/utiljos/nidurgrafin-utiljos",
+    "label": "Niðurgrafin útiljós",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lysingarbunadur/utiljos/pollar/",
+    "path": "/lysingarbunadur/utiljos/pollar",
+    "label": "Pollar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lysingarbunadur/utiljos/gotuljos/",
+    "path": "/lysingarbunadur/utiljos/gotuljos",
+    "label": "Götuljós",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lysingarbunadur/utiljos/utikastarar/",
+    "path": "/lysingarbunadur/utiljos/utikastarar",
+    "label": "Útikastarar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lysingarbunadur/utiljos/loftljos-innfelld/",
+    "path": "/lysingarbunadur/utiljos/loftljos-innfelld",
+    "label": "Loftljós (Innfelld)",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lysingarbunadur/utiljos/veggljos-innfelld/",
+    "path": "/lysingarbunadur/utiljos/veggljos-innfelld",
+    "label": "Veggljós (Innfelld)",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lysingarbunadur/utiljos/saunalampar/",
+    "path": "/lysingarbunadur/utiljos/saunalampar",
+    "label": "Saunalampar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lysingarbunadur/utiljos/gardurinn/",
+    "path": "/lysingarbunadur/utiljos/gardurinn",
+    "label": "Garðurinn",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lysingarbunadur/philips-hue/phs-hue/",
+    "path": "/lysingarbunadur/philips-hue/phs-hue",
+    "label": "PHS Hue",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lysingarbunadur/philips-hue/hue-aukahlutir/",
+    "path": "/lysingarbunadur/philips-hue/hue-aukahlutir",
+    "label": "HUE Aukahlutir",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lysingarbunadur/philips-hue/hue-bordar/",
+    "path": "/lysingarbunadur/philips-hue/hue-bordar",
+    "label": "HUE Borðar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lysingarbunadur/philips-hue/hue-lampar/",
+    "path": "/lysingarbunadur/philips-hue/hue-lampar",
+    "label": "HUE Lampar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lysingarbunadur/philips-hue/hue-perur/",
+    "path": "/lysingarbunadur/philips-hue/hue-perur",
+    "label": "HUE Perur",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lysingarbunadur/philips-hue/hue-start-pakkar/",
+    "path": "/lysingarbunadur/philips-hue/hue-start-pakkar",
+    "label": "HUE Start pakkar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lysingarbunadur/philips-hue/hue-utiljos/",
+    "path": "/lysingarbunadur/philips-hue/hue-utiljos",
+    "label": "HUE Útiljós",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lysingarbunadur/spennar/halogenspennar/",
+    "path": "/lysingarbunadur/spennar/halogenspennar",
+    "label": "Halógenspennar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lysingarbunadur/spennar/led-spennar/",
+    "path": "/lysingarbunadur/spennar/led-spennar",
+    "label": "LED spennar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/lysingarbunadur/spennar/dimmapungar/",
+    "path": "/lysingarbunadur/spennar/dimmapungar",
+    "label": "Dimmapungar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/skapar-og-tengikassar/botnplotuskapar/botnplotur-og-din-einingar/",
+    "path": "/skapar-og-tengikassar/botnplotuskapar/botnplotur-og-din-einingar",
+    "label": "Botnplötur og Din Einingar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/skapar-og-tengikassar/botnplotuskapar/fylgihlutir-veggskapa/",
+    "path": "/skapar-og-tengikassar/botnplotuskapar/fylgihlutir-veggskapa",
+    "label": "Fylgihlutir Veggskápa",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/skapar-og-tengikassar/botnplotuskapar/veggskapar-polymel/",
+    "path": "/skapar-og-tengikassar/botnplotuskapar/veggskapar-polymel",
+    "label": "Veggskápar Polymel",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/skapar-og-tengikassar/botnplotuskapar/veggskapar-rydfriir/",
+    "path": "/skapar-og-tengikassar/botnplotuskapar/veggskapar-rydfriir",
+    "label": "Veggskápar Ryðfríir",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/skapar-og-tengikassar/botnplotuskapar/veggskapar-stal/",
+    "path": "/skapar-og-tengikassar/botnplotuskapar/veggskapar-stal",
+    "label": "Veggskápar Stál",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/skapar-og-tengikassar/golfskapar-og-gotuskapar/golfskapar-heilar-hlidar/",
+    "path": "/skapar-og-tengikassar/golfskapar-og-gotuskapar/golfskapar-heilar-hlidar",
+    "label": "Gólfskápar, heilar hliðar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/skapar-og-tengikassar/golfskapar-og-gotuskapar/gotuskapar/",
+    "path": "/skapar-og-tengikassar/golfskapar-og-gotuskapar/gotuskapar",
+    "label": "Götuskápar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/skapar-og-tengikassar/golfskapar-og-gotuskapar/fylgihlutir-golf-og-gotuskapa/",
+    "path": "/skapar-og-tengikassar/golfskapar-og-gotuskapar/fylgihlutir-golf-og-gotuskapa",
+    "label": "Fylgihlutir Gólf-og götuskápa",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/skapar-og-tengikassar/greinatoflur/abb-greinatoflur/",
+    "path": "/skapar-og-tengikassar/greinatoflur/abb-greinatoflur",
+    "label": "ABB Greinatöflur",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/skapar-og-tengikassar/greinatoflur/fylgihli-greinatoflur/",
+    "path": "/skapar-og-tengikassar/greinatoflur/fylgihli-greinatoflur",
+    "label": "Fylgihl.í Greinatöflur",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/skapar-og-tengikassar/greinatoflur/innfelldar-greinatoflur/",
+    "path": "/skapar-og-tengikassar/greinatoflur/innfelldar-greinatoflur",
+    "label": "Innfelldar greinatöflur",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/skapar-og-tengikassar/greinatoflur/utanaliggjandi-greinatoflur/",
+    "path": "/skapar-og-tengikassar/greinatoflur/utanaliggjandi-greinatoflur",
+    "label": "Utanáliggjandi greinatöflur",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/skapar-og-tengikassar/tengikassar-og-box/malm-tengibox/",
+    "path": "/skapar-og-tengikassar/tengikassar-og-box/malm-tengibox",
+    "label": "Málm tengibox",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/skapar-og-tengikassar/tengikassar-og-box/plastbox-og-kassar/",
+    "path": "/skapar-og-tengikassar/tengikassar-og-box/plastbox-og-kassar",
+    "label": "Plastbox og kassar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/skapar-og-tengikassar/tengikassar-og-box/tengidosir-utanaliggjandi/",
+    "path": "/skapar-og-tengikassar/tengikassar-og-box/tengidosir-utanaliggjandi",
+    "label": "Tengidósir Utanáliggjandi",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/skapar-og-tengikassar/tengikassar-og-box/tengidosir-innfelldar/",
+    "path": "/skapar-og-tengikassar/tengikassar-og-box/tengidosir-innfelldar",
+    "label": "Tengidósir Innfelldar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/skapar-og-tengikassar/f-tronic-greintoflur/greinatoflur-fylgihlutir/",
+    "path": "/skapar-og-tengikassar/f-tronic-greintoflur/greinatoflur-fylgihlutir",
+    "label": "Greinatöflur Fylgihlutir",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/skapar-og-tengikassar/f-tronic-greintoflur/greinatoflur-innfeldar/",
+    "path": "/skapar-og-tengikassar/f-tronic-greintoflur/greinatoflur-innfeldar",
+    "label": "Greinatöflur Innfeldar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/skapar-og-tengikassar/f-tronic-greintoflur/greinatoflur-utanaliggjandi/",
+    "path": "/skapar-og-tengikassar/f-tronic-greintoflur/greinatoflur-utanaliggjandi",
+    "label": "Greinatöflur Utanáliggjandi",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/strengir/afl-og-jardstrengir/alstrengir-1kv/",
+    "path": "/strengir/afl-og-jardstrengir/alstrengir-1kv",
+    "label": "Álstrengir 1kV",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/strengir/afl-og-jardstrengir/ber-jardvir-hk/",
+    "path": "/strengir/afl-og-jardstrengir/ber-jardvir-hk",
+    "label": "Ber Jarðvír HK",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/strengir/afl-og-jardstrengir/halogenfriir-aflstrengir/",
+    "path": "/strengir/afl-og-jardstrengir/halogenfriir-aflstrengir",
+    "label": "Halógenfríir Aflstrengir",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/strengir/afl-og-jardstrengir/koparstrengir-1kv/",
+    "path": "/strengir/afl-og-jardstrengir/koparstrengir-1kv",
+    "label": "Koparstrengir 1kV",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/strengir/afl-og-jardstrengir/brunatholnir-strengir/",
+    "path": "/strengir/afl-og-jardstrengir/brunatholnir-strengir",
+    "label": "Brunaþolnir strengir",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/strengir/afl-og-jardstrengir/hradabreytastrengir/",
+    "path": "/strengir/afl-og-jardstrengir/hradabreytastrengir",
+    "label": "Hraðabreytastrengir",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/strengir/plaststrengir/hvitur-mmj/",
+    "path": "/strengir/plaststrengir/hvitur-mmj",
+    "label": "Hvítur MMJ",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/strengir/plaststrengir/grar-nym/",
+    "path": "/strengir/plaststrengir/grar-nym",
+    "label": "Grár NYM",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/strengir/plaststrengir/halogenfriir-plaststrengir/",
+    "path": "/strengir/plaststrengir/halogenfriir-plaststrengir",
+    "label": "Halógenfríir plaststrengir",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/strengir/idrattar-og-tofluvir/idrattarvir-einthattungur/",
+    "path": "/strengir/idrattar-og-tofluvir/idrattarvir-einthattungur",
+    "label": "Ídráttarvír Einþáttungur",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/strengir/idrattar-og-tofluvir/idrattarvir-fathattungur/",
+    "path": "/strengir/idrattar-og-tofluvir/idrattarvir-fathattungur",
+    "label": "Ídráttarvír fáþáttungur",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/strengir/idrattar-og-tofluvir/tofluvir/",
+    "path": "/strengir/idrattar-og-tofluvir/tofluvir",
+    "label": "Töfluvír",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/strengir/taekja-og-lampasnurur/lampasnurur/",
+    "path": "/strengir/taekja-og-lampasnurur/lampasnurur",
+    "label": "Lampasnúrur",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/strengir/taekja-og-lampasnurur/taekjasnurur/",
+    "path": "/strengir/taekja-og-lampasnurur/taekjasnurur",
+    "label": "Tækjasnúrur",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/strengir/taekja-og-lampasnurur/hitatholin-taekjasnurur/",
+    "path": "/strengir/taekja-og-lampasnurur/hitatholin-taekjasnurur",
+    "label": "Hitaþolin Tækjasnúrur",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/strengir/gummistrengur/adrir-gummistrengir/",
+    "path": "/strengir/gummistrengur/adrir-gummistrengir",
+    "label": "Aðrir Gúmmístrengir",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/strengir/gummistrengur/h07rn-f-450750v/",
+    "path": "/strengir/gummistrengur/h07rn-f-450750v",
+    "label": "H07RN-F 450/750V",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/strengir/gummistrengur/rafsudustrengur/",
+    "path": "/strengir/gummistrengur/rafsudustrengur",
+    "label": "Rafsuðustrengur",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/strengir/styristrengur/oskermadir-styristrengir/",
+    "path": "/strengir/styristrengur/oskermadir-styristrengir",
+    "label": "Óskermaðir Stýristrengir",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/strengir/styristrengur/skermadir-styristrengir/",
+    "path": "/strengir/styristrengur/skermadir-styristrengir",
+    "label": "Skermaðir Stýristrengir",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/strengir/styristrengur/halogenfriir-styristrengir/",
+    "path": "/strengir/styristrengur/halogenfriir-styristrengir",
+    "label": "Halógenfríir Stýristrengir",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/strengir/smaspennustrengir/tolvustrengir/",
+    "path": "/strengir/smaspennustrengir/tolvustrengir",
+    "label": "Tölvustrengir",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/strengir/smaspennustrengir/ljosleidarar/",
+    "path": "/strengir/smaspennustrengir/ljosleidarar",
+    "label": "Ljósleiðarar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/strengir/smaspennustrengir/brunakerfastrengir/",
+    "path": "/strengir/smaspennustrengir/brunakerfastrengir",
+    "label": "Brunakerfastrengir",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/strengir/smaspennustrengir/koax-og-hatalarstrengir/",
+    "path": "/strengir/smaspennustrengir/koax-og-hatalarstrengir",
+    "label": "Kóax og Hátalarstrengir",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/strengir/smaspennustrengir/dyra-og-simastrengir/",
+    "path": "/strengir/smaspennustrengir/dyra-og-simastrengir",
+    "label": "Dyra- og Símastrengir",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/tengibunadur/dreifiklossar/pollmann-dreifiklossar/",
+    "path": "/tengibunadur/dreifiklossar/pollmann-dreifiklossar",
+    "label": "Pollmann Dreifiklossar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/tengibunadur/dreifiklossar/ensto-dreifiklossar/",
+    "path": "/tengibunadur/dreifiklossar/ensto-dreifiklossar",
+    "label": "Ensto Dreifiklossar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/tengibunadur/dreifiklossar/legrand-dreifiklossar/",
+    "path": "/tengibunadur/dreifiklossar/legrand-dreifiklossar",
+    "label": "Legrand Dreifiklossar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/tengibunadur/herpiefni-og-adrag/cast-resin-og-gel-gt/",
+    "path": "/tengibunadur/herpiefni-og-adrag/cast-resin-og-gel-gt",
+    "label": "Cast Resin og Gel GT",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/tengibunadur/herpiefni-og-adrag/herpiholkar-gt/",
+    "path": "/tengibunadur/herpiefni-og-adrag/herpiholkar-gt",
+    "label": "Herpihólkar GT",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/tengibunadur/herpiefni-og-adrag/herpiadrag/",
+    "path": "/tengibunadur/herpiefni-og-adrag/herpiadrag",
+    "label": "Herpiádrag",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/tengibunadur/herpiefni-og-adrag/herpisett/",
+    "path": "/tengibunadur/herpiefni-og-adrag/herpisett",
+    "label": "Herpisett",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/tengibunadur/herpiefni-og-adrag/einangrunarband/",
+    "path": "/tengibunadur/herpiefni-og-adrag/einangrunarband",
+    "label": "Einangrunarband",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/tengibunadur/herpiefni-og-adrag/adrag/",
+    "path": "/tengibunadur/herpiefni-og-adrag/adrag",
+    "label": "Ádrag",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/tengibunadur/jardtengiefni/jardvirstengi-og-klemmur/",
+    "path": "/tengibunadur/jardtengiefni/jardvirstengi-og-klemmur",
+    "label": "Jarðvírstengi og Klemmur",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/tengibunadur/jardtengiefni/jardteinar-ofl/",
+    "path": "/tengibunadur/jardtengiefni/jardteinar-ofl",
+    "label": "Jarðteinar ofl",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/tengibunadur/jardtengiefni/cadweld-sudur-mot-ofl/",
+    "path": "/tengibunadur/jardtengiefni/cadweld-sudur-mot-ofl",
+    "label": "Cadweld Suður, Mót ofl.",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/tengibunadur/jardtengiefni/eldingavarnarefni/",
+    "path": "/tengibunadur/jardtengiefni/eldingavarnarefni",
+    "label": "Eldingavarnarefni",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/tengibunadur/jardtengiefni/jardbindibordar/",
+    "path": "/tengibunadur/jardtengiefni/jardbindibordar",
+    "label": "Jarðbindiborðar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/tengibunadur/kapalskor-og-holkar/kapalskor/",
+    "path": "/tengibunadur/kapalskor-og-holkar/kapalskor",
+    "label": "Kapalskór",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/tengibunadur/kapalskor-og-holkar/tengiholkar/",
+    "path": "/tengibunadur/kapalskor-og-holkar/tengiholkar",
+    "label": "Tengihólkar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/tengibunadur/kapalskor-og-holkar/kapalskor-og-holkar-med-slitboltum/",
+    "path": "/tengibunadur/kapalskor-og-holkar/kapalskor-og-holkar-med-slitboltum",
+    "label": "Kapalskór og Hólkar með slitboltum",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/tengibunadur/kapalskor-og-holkar/c-klemmur/",
+    "path": "/tengibunadur/kapalskor-og-holkar/c-klemmur",
+    "label": "C-Klemmur",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/tengibunadur/kapalskor-og-holkar/virendahulsur/",
+    "path": "/tengibunadur/kapalskor-og-holkar/virendahulsur",
+    "label": "Vírendahulsur",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/tengibunadur/kapalskor-og-holkar/einangr-skor-og-hulsur/",
+    "path": "/tengibunadur/kapalskor-og-holkar/einangr-skor-og-hulsur",
+    "label": "Einangr. Skór og Hulsur",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/tengibunadur/kapalskor-og-holkar/einangr-tengiholkar/",
+    "path": "/tengibunadur/kapalskor-og-holkar/einangr-tengiholkar",
+    "label": "Einangr. Tengihólkar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/tengibunadur/radtengi/skermbunadur/",
+    "path": "/tengibunadur/radtengi/skermbunadur",
+    "label": "Skermbúnaður",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/tengibunadur/radtengi/allen-bradley-greinatengi/",
+    "path": "/tengibunadur/radtengi/allen-bradley-greinatengi",
+    "label": "Allen Bradley Greinatengi",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/tengibunadur/radtengi/allen-bradley-radtengi-skrufud/",
+    "path": "/tengibunadur/radtengi/allen-bradley-radtengi-skrufud",
+    "label": "Allen Bradley Raðtengi Skrúfuð",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/tengibunadur/radtengi/allen-bradley-radtengi-stungin/",
+    "path": "/tengibunadur/radtengi/allen-bradley-radtengi-stungin",
+    "label": "Allen Bradley Raðtengi Stungin",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/tengibunadur/radtengi/allen-bradley-radtengi-fylgihlutir/",
+    "path": "/tengibunadur/radtengi/allen-bradley-radtengi-fylgihlutir",
+    "label": "Allen Bradley Raðtengi Fylgihlutir",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/tengibunadur/radtengi/allen-bradley-skynjaratengi/",
+    "path": "/tengibunadur/radtengi/allen-bradley-skynjaratengi",
+    "label": "Allen Bradley Skynjaratengi",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/tengibunadur/radtengi/allen-bradley-radtengi-mini/",
+    "path": "/tengibunadur/radtengi/allen-bradley-radtengi-mini",
+    "label": "Allen Bradley Raðtengi Mini",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/tengibunadur/vira-og-tengjamerking/legrand-merkingar/",
+    "path": "/tengibunadur/vira-og-tengjamerking/legrand-merkingar",
+    "label": "Legrand Merkingar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/tengibunadur/vira-og-tengjamerking/brother-merkingar/",
+    "path": "/tengibunadur/vira-og-tengjamerking/brother-merkingar",
+    "label": "Brother merkingar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/tengibunadur/viratengi/smaspennutengi/",
+    "path": "/tengibunadur/viratengi/smaspennutengi",
+    "label": "Smáspennutengi",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/tengibunadur/viratengi/dosatengi/",
+    "path": "/tengibunadur/viratengi/dosatengi",
+    "label": "Dósatengi",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/tengibunadur/viratengi/maelatengi-ofl/",
+    "path": "/tengibunadur/viratengi/maelatengi-ofl",
+    "label": "Mælatengi ofl",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/tengibunadur/viratengi/motortengi/",
+    "path": "/tengibunadur/viratengi/motortengi",
+    "label": "Mótortengi",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/tengibunadur/viratengi/tengiklemmur/",
+    "path": "/tengibunadur/viratengi/tengiklemmur",
+    "label": "Tengiklemmur",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/tengibunadur/stauratengi-og-box/festilum-tengill/",
+    "path": "/tengibunadur/stauratengi-og-box/festilum-tengill",
+    "label": "festilum tengill",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/tengibunadur/stauratengi-og-box/festilum-klo-bein/",
+    "path": "/tengibunadur/stauratengi-og-box/festilum-klo-bein",
+    "label": "festilum klo bein",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/toflubunadur/aflrofar/legrand-aflrofar/",
+    "path": "/toflubunadur/aflrofar/legrand-aflrofar",
+    "label": "Legrand Aflrofar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/toflubunadur/aflrofar/terasaki-aflrofar/",
+    "path": "/toflubunadur/aflrofar/terasaki-aflrofar",
+    "label": "Terasaki Aflrofar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/toflubunadur/aflrofar/legrand-fylghl/",
+    "path": "/toflubunadur/aflrofar/legrand-fylghl",
+    "label": "Legrand Fylghl.",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/toflubunadur/aflrofar/terasaki-fylgihl/",
+    "path": "/toflubunadur/aflrofar/terasaki-fylgihl",
+    "label": "Terasaki Fylgihl.",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/toflubunadur/aflrofar/legrand-aflrofarpluslekal/",
+    "path": "/toflubunadur/aflrofar/legrand-aflrofarpluslekal",
+    "label": "Legrand Aflrofar+Lekal.",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/toflubunadur/gripvor-og-braedivor/siba-gripvor-staerd-000-1/",
+    "path": "/toflubunadur/gripvor-og-braedivor/siba-gripvor-staerd-000-1",
+    "label": "Siba Gripvör Stærð 000-1",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/toflubunadur/gripvor-og-braedivor/neozed-tappa-og-minivor/",
+    "path": "/toflubunadur/gripvor-og-braedivor/neozed-tappa-og-minivor",
+    "label": "Neozed, tappa- og mínívör",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/toflubunadur/gripvor-og-braedivor/glervor/",
+    "path": "/toflubunadur/gripvor-og-braedivor/glervor",
+    "label": "Glervör",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/toflubunadur/gripvor-og-braedivor/siba-gripvor-staerd-2-3/",
+    "path": "/toflubunadur/gripvor-og-braedivor/siba-gripvor-staerd-2-3",
+    "label": "Siba Gripvör Stærð 2-3",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/toflubunadur/gripvor-og-braedivor/siba-haspennuvor/",
+    "path": "/toflubunadur/gripvor-og-braedivor/siba-haspennuvor",
+    "label": "Siba Háspennuvör",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/toflubunadur/lekalidar/lekalidar-legrand/",
+    "path": "/toflubunadur/lekalidar/lekalidar-legrand",
+    "label": "Lekaliðar Legrand",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/toflubunadur/lekalidar/lekalidar-gewiss/",
+    "path": "/toflubunadur/lekalidar/lekalidar-gewiss",
+    "label": "Lekaliðar Gewiss",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/toflubunadur/lekalidar/sjalfvarslekalidar/",
+    "path": "/toflubunadur/lekalidar/sjalfvarslekalidar",
+    "label": "Sjálfvarslekaliðar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/toflubunadur/lekalidar/fylgihlutir-lekalidasjalfvara/",
+    "path": "/toflubunadur/lekalidar/fylgihlutir-lekalidasjalfvara",
+    "label": "Fylgihlutir Lekaliða/Sjálfvara",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/toflubunadur/lekalidar/adrir-lekastraumsrofar/",
+    "path": "/toflubunadur/lekalidar/adrir-lekastraumsrofar",
+    "label": "Aðrir Lekastraumsrofar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/toflubunadur/maelabunadur/maelar-i-panel/",
+    "path": "/toflubunadur/maelabunadur/maelar-i-panel",
+    "label": "Mælar í Panel",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/toflubunadur/maelabunadur/maelar-a-dinskinnu/",
+    "path": "/toflubunadur/maelabunadur/maelar-a-dinskinnu",
+    "label": "Mælar á Dinskinnu",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/toflubunadur/maelabunadur/maelastodvar/",
+    "path": "/toflubunadur/maelabunadur/maelastodvar",
+    "label": "Mælastöðvar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/toflubunadur/maelabunadur/straumspennar/",
+    "path": "/toflubunadur/maelabunadur/straumspennar",
+    "label": "Straumspennar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/toflubunadur/sjalfvor/legrand-sjalfvor/",
+    "path": "/toflubunadur/sjalfvor/legrand-sjalfvor",
+    "label": "Legrand Sjálfvör",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/toflubunadur/sjalfvor/gewiss-sjalfvor/",
+    "path": "/toflubunadur/sjalfvor/gewiss-sjalfvor",
+    "label": "Gewiss Sjálfvör",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/toflubunadur/sjalfvor/fylgihlutir-sjalfvara/",
+    "path": "/toflubunadur/sjalfvor/fylgihlutir-sjalfvara",
+    "label": "Fylgihlutir Sjálfvara",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/toflubunadur/skilrofar/alagsskilrofar/",
+    "path": "/toflubunadur/skilrofar/alagsskilrofar",
+    "label": "Álagsskilrofar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/toflubunadur/skilrofar/oryggisrofar/",
+    "path": "/toflubunadur/skilrofar/oryggisrofar",
+    "label": "Öryggisrofar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/toflubunadur/skilrofar/varrofar/",
+    "path": "/toflubunadur/skilrofar/varrofar",
+    "label": "Varrofar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/toflubunadur/skilrofar/baco-snarar/",
+    "path": "/toflubunadur/skilrofar/baco-snarar",
+    "label": "Baco Snarar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/toflubunadur/skilrofar/netskiptir/",
+    "path": "/toflubunadur/skilrofar/netskiptir",
+    "label": "Netskiptir",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/toflubunadur/tofluihlutir/din-skinnur-og-virarennur/",
+    "path": "/toflubunadur/tofluihlutir/din-skinnur-og-virarennur",
+    "label": "DIN-Skinnur og Vírarennur",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/toflubunadur/tofluihlutir/safnskinnur/",
+    "path": "/toflubunadur/tofluihlutir/safnskinnur",
+    "label": "Safnskinnur",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/toflubunadur/tofluihlutir/null-og-jardklossar/",
+    "path": "/toflubunadur/tofluihlutir/null-og-jardklossar",
+    "label": "Núll og Jarðklossar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/toflubunadur/tofluihlutir/einangrarar/",
+    "path": "/toflubunadur/tofluihlutir/einangrarar",
+    "label": "Einangrarar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/toflubunadur/tofluihlutir/dreifi-og-tengiklossar/",
+    "path": "/toflubunadur/tofluihlutir/dreifi-og-tengiklossar",
+    "label": "Dreifi- og Tengiklossar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/toflubunadur/toflustyring/spolurofi/",
+    "path": "/toflubunadur/toflustyring/spolurofi",
+    "label": "Spólurofi",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/toflubunadur/toflustyring/pulslidar/",
+    "path": "/toflubunadur/toflustyring/pulslidar",
+    "label": "Púlsliðar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/toflubunadur/toflustyring/toflulidar/",
+    "path": "/toflubunadur/toflustyring/toflulidar",
+    "label": "Töfluliðar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/toflubunadur/toflustyring/rofaklukkur/",
+    "path": "/toflubunadur/toflustyring/rofaklukkur",
+    "label": "Rofaklukkur",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/toflubunadur/toflustyring/tofludimmar/",
+    "path": "/toflubunadur/toflustyring/tofludimmar",
+    "label": "Töfludimmar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/verkfaeri/verkfaeri-annar-bunadur/skrufjarn/",
+    "path": "/verkfaeri/verkfaeri-annar-bunadur/skrufjarn",
+    "label": "Skrúfjárn",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/verkfaeri/verkfaeri-annar-bunadur/bitarar-og-klippur/",
+    "path": "/verkfaeri/verkfaeri-annar-bunadur/bitarar-og-klippur",
+    "label": "Bítarar og Klippur",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/verkfaeri/verkfaeri-annar-bunadur/handverkfaeri/",
+    "path": "/verkfaeri/verkfaeri-annar-bunadur/handverkfaeri",
+    "label": "Handverkfæri",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/verkfaeri/verkfaeri-annar-bunadur/borar-og-threpaborar/",
+    "path": "/verkfaeri/verkfaeri-annar-bunadur/borar-og-threpaborar",
+    "label": "Borar og Þrepaborar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/verkfaeri/verkfaeri-annar-bunadur/annar-bunadur/",
+    "path": "/verkfaeri/verkfaeri-annar-bunadur/annar-bunadur",
+    "label": "Annar Búnaður",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/verkfaeri/verkfaeri-annar-bunadur/vinnuhanskar/",
+    "path": "/verkfaeri/verkfaeri-annar-bunadur/vinnuhanskar",
+    "label": "Vinnuhanskar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/verkfaeri/verkfaeri-annar-bunadur/verkfaeratoskur/",
+    "path": "/verkfaeri/verkfaeri-annar-bunadur/verkfaeratoskur",
+    "label": "Verkfæratöskur",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/verkfaeri/maelitaeki/fluke-maelar/",
+    "path": "/verkfaeri/maelitaeki/fluke-maelar",
+    "label": "Fluke Mælar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/verkfaeri/maelitaeki/amprobe-maelar/",
+    "path": "/verkfaeri/maelitaeki/amprobe-maelar",
+    "label": "Amprobe Mælar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/verkfaeri/maelitaeki/testboy-maelitaeki/",
+    "path": "/verkfaeri/maelitaeki/testboy-maelitaeki",
+    "label": "Testboy mælitæki",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/verkfaeri/rafmagnsverkfaeri/hitaskeri-lodboltar-ofl/",
+    "path": "/verkfaeri/rafmagnsverkfaeri/hitaskeri-lodboltar-ofl",
+    "label": "Hitaskeri, Lóðboltar ofl.",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/verkfaeri/rafmagnsverkfaeri/fjarlaegdarmaelar/",
+    "path": "/verkfaeri/rafmagnsverkfaeri/fjarlaegdarmaelar",
+    "label": "Fjarlægðarmælar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/verkfaeri/idrattarfjadrir/plast-fiber-stal-fjadrir-ofl/",
+    "path": "/verkfaeri/idrattarfjadrir/plast-fiber-stal-fjadrir-ofl",
+    "label": "Plast-Fíber-Stál Fjaðrir ofl",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/verkfaeri/idrattarfjadrir/idrattarfeiti/",
+    "path": "/verkfaeri/idrattarfjadrir/idrattarfeiti",
+    "label": "Ídráttarfeiti",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/verkfaeri/idrattarfjadrir/runpotec-fjadrir/",
+    "path": "/verkfaeri/idrattarfjadrir/runpotec-fjadrir",
+    "label": "Runpotec Fjaðrir",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/verkfaeri/veitubunadur/keflakrokar/",
+    "path": "/verkfaeri/veitubunadur/keflakrokar",
+    "label": "Keflakrókar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/verkfaeri/veitubunadur/drattarsokkar/",
+    "path": "/verkfaeri/veitubunadur/drattarsokkar",
+    "label": "Dráttarsokkar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/verkfaeri/veitubunadur/keflabukkar/",
+    "path": "/verkfaeri/veitubunadur/keflabukkar",
+    "label": "Keflabúkkar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/verkfaeri/veitubunadur/kapalutdrattarhjol/",
+    "path": "/verkfaeri/veitubunadur/kapalutdrattarhjol",
+    "label": "Kapalútdráttarhjól",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/verkfaeri/verkfaeri-fyrir-netkerfi/fujikura-ct-50/",
+    "path": "/verkfaeri/verkfaeri-fyrir-netkerfi/fujikura-ct-50",
+    "label": "fujikura ct 50",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/verkfaeri/merkivelar-og-merkingar/brother/",
+    "path": "/verkfaeri/merkivelar-og-merkingar/brother",
+    "label": "Brother",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/oryggis-og-snjalllausnir/oryggiskerfi/sikkerthjem/",
+    "path": "/oryggis-og-snjalllausnir/oryggiskerfi/sikkerthjem",
+    "label": "Sikkerthjem",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/oryggis-og-snjalllausnir/myndavelakerfi-ip/ip-myndavelar-inni/",
+    "path": "/oryggis-og-snjalllausnir/myndavelakerfi-ip/ip-myndavelar-inni",
+    "label": "IP myndavélar inni",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/oryggis-og-snjalllausnir/myndavelakerfi-ip/ip-myndavelar-uti/",
+    "path": "/oryggis-og-snjalllausnir/myndavelakerfi-ip/ip-myndavelar-uti",
+    "label": "IP myndavélar úti",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/oryggis-og-snjalllausnir/myndavelakerfi-ip/ip-upptokubunadur/",
+    "path": "/oryggis-og-snjalllausnir/myndavelakerfi-ip/ip-upptokubunadur",
+    "label": "IP Upptökubúnaður",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/oryggis-og-snjalllausnir/snjallheimili/netatmo/",
+    "path": "/oryggis-og-snjalllausnir/snjallheimili/netatmo",
+    "label": "Netatmo",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/oryggis-og-snjalllausnir/snjallheimili/plejd/",
+    "path": "/oryggis-og-snjalllausnir/snjallheimili/plejd",
+    "label": "Plejd",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/oryggis-og-snjalllausnir/snjallheimili/shelly/",
+    "path": "/oryggis-og-snjalllausnir/snjallheimili/shelly",
+    "label": "Shelly",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/oryggis-og-snjalllausnir/snjallheimili/casambi/",
+    "path": "/oryggis-og-snjalllausnir/snjallheimili/casambi",
+    "label": "Casambi",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/afldreifibunadur/spennar-og-spennistodvar/flex-3-spennahus/",
+    "path": "/afldreifibunadur/spennar-og-spennistodvar/flex-3-spennahus",
+    "label": "flex 3 spennahus",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/afldreifibunadur/oryggisbunadur/stauraskor-12-16-ego-lett/",
+    "path": "/afldreifibunadur/oryggisbunadur/stauraskor-12-16-ego-lett",
+    "label": "stauraskor 12 16 ego lett",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/afldreifibunadur/oryggisbunadur/oryggislas-blar-cabs-38-az/",
+    "path": "/afldreifibunadur/oryggisbunadur/oryggislas-blar-cabs-38-az",
+    "label": "oryggislas blar cabs 38 az",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/afldreifibunadur/oryggisbunadur/oryggislas-raudur-cabs-38-rj/",
+    "path": "/afldreifibunadur/oryggisbunadur/oryggislas-raudur-cabs-38-rj",
+    "label": "oryggislas raudur cabs 38 rj",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/afldreifibunadur/oryggisbunadur/oryggislas-gulur-cabs-38-am/",
+    "path": "/afldreifibunadur/oryggisbunadur/oryggislas-gulur-cabs-38-am",
+    "label": "oryggislas gulur cabs 38 am",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/afldreifibunadur/haspennubunadur/oryggisbunadur-haspennu/",
+    "path": "/afldreifibunadur/haspennubunadur/oryggisbunadur-haspennu",
+    "label": "Öryggisbúnaður háspennu",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/afldreifibunadur/haspennubunadur/tengibunadur-haspennu/",
+    "path": "/afldreifibunadur/haspennubunadur/tengibunadur-haspennu",
+    "label": "Tengibúnaður háspennu",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/afldreifibunadur/tenglastodvar/garo-tenglastodvar/",
+    "path": "/afldreifibunadur/tenglastodvar/garo-tenglastodvar",
+    "label": "Garo Tenglastöðvar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/afldreifibunadur/dreifiskapar-og-vinnutoflur/dreifiskapar/",
+    "path": "/afldreifibunadur/dreifiskapar-og-vinnutoflur/dreifiskapar",
+    "label": "Dreifiskápar",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/afldreifibunadur/dreifiskapar-og-vinnutoflur/vinnutoflur/",
+    "path": "/afldreifibunadur/dreifiskapar-og-vinnutoflur/vinnutoflur",
+    "label": "Vinnutöflur",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/afldreifibunadur/dreifiskapar-og-vinnutoflur/ihlutir-og-varahlutir/",
+    "path": "/afldreifibunadur/dreifiskapar-og-vinnutoflur/ihlutir-og-varahlutir",
+    "label": "Íhlutir og Varahlutir",
+    "depth": 2
+  },
+  {
+    "url": "https://iskraft.husa.is/fjarskiptabunadur/ljosleidaralagnir/19-skuffur-og-fylgihlutir/ljoslsplaesikasettulok-hpluss-lok-fyrir-splaesikasettu/",
+    "path": "/fjarskiptabunadur/ljosleidaralagnir/19-skuffur-og-fylgihlutir/ljoslsplaesikasettulok-hpluss-lok-fyrir-splaesikasettu",
+    "label": "ljoslsplaesikasettulok hpluss lok fyrir splaesikasettu",
+    "depth": 3
+  },
+  {
+    "url": "https://iskraft.husa.is/fjarskiptabunadur/ljosleidaralagnir/hreinsiefni-og-verkfaeri/jonard-jic-375-skraelari-gulur/",
+    "path": "/fjarskiptabunadur/ljosleidaralagnir/hreinsiefni-og-verkfaeri/jonard-jic-375-skraelari-gulur",
+    "label": "jonard jic 375 skraelari gulur",
+    "depth": 3
+  },
+  {
+    "url": "https://iskraft.husa.is/fjarskiptabunadur/ljosleidaralagnir/hreinsiefni-og-verkfaeri/skraelari-fht-702-graenn/",
+    "path": "/fjarskiptabunadur/ljosleidaralagnir/hreinsiefni-og-verkfaeri/skraelari-fht-702-graenn",
+    "label": "skraelari fht 702 graenn",
+    "depth": 3
+  },
+  {
+    "url": "https://iskraft.husa.is/fjarskiptabunadur/ljosleidaralagnir/hreinsiefni-og-verkfaeri/miller-ks-1-kevlar-skaeri/",
+    "path": "/fjarskiptabunadur/ljosleidaralagnir/hreinsiefni-og-verkfaeri/miller-ks-1-kevlar-skaeri",
+    "label": "miller ks 1 kevlar skaeri",
+    "depth": 3
+  },
+  {
+    "url": "https://iskraft.husa.is/fjarskiptabunadur/ljosleidaralagnir/splaesivelar-og-maelar/ljoslfsm-90s-rafhlada-btr-15/",
+    "path": "/fjarskiptabunadur/ljosleidaralagnir/splaesivelar-og-maelar/ljoslfsm-90s-rafhlada-btr-15",
+    "label": "ljoslfsm 90s rafhlada btr 15",
+    "depth": 3
+  },
+  {
+    "url": "https://iskraft.husa.is/fjarskiptabunadur/ljosleidaralagnir/splaesivelar-og-maelar/fujikura-fh-70-250/",
+    "path": "/fjarskiptabunadur/ljosleidaralagnir/splaesivelar-og-maelar/fujikura-fh-70-250",
+    "label": "fujikura fh 70 250",
+    "depth": 3
+  },
+  {
+    "url": "https://iskraft.husa.is/fjarskiptabunadur/ljosleidaralagnir/splaesivelar-og-maelar/fujikura-fh-60-lt900/",
+    "path": "/fjarskiptabunadur/ljosleidaralagnir/splaesivelar-og-maelar/fujikura-fh-60-lt900",
+    "label": "fujikura fh 60 lt900",
+    "depth": 3
+  },
+  {
+    "url": "https://iskraft.husa.is/fjarskiptabunadur/ljosleidaralagnir/splaesivelar-og-maelar/fujikura-elct2-20a-elektrodur/",
+    "path": "/fjarskiptabunadur/ljosleidaralagnir/splaesivelar-og-maelar/fujikura-elct2-20a-elektrodur",
+    "label": "fujikura elct2 20a elektrodur",
+    "depth": 3
+  },
+  {
+    "url": "https://iskraft.husa.is/fjarskiptabunadur/ljosleidaralagnir/splaesivelar-og-maelar/fujikura-elct2-12-elektrodur/",
+    "path": "/fjarskiptabunadur/ljosleidaralagnir/splaesivelar-og-maelar/fujikura-elct2-12-elektrodur",
+    "label": "fujikura elct2 12 elektrodur",
+    "depth": 3
+  },
+  {
+    "url": "https://iskraft.husa.is/fjarskiptabunadur/ljosleidaralagnir/splaesivelar-og-maelar/fujikura-btr-09-rafhlada/",
+    "path": "/fjarskiptabunadur/ljosleidaralagnir/splaesivelar-og-maelar/fujikura-btr-09-rafhlada",
+    "label": "fujikura btr 09 rafhlada",
+    "depth": 3
+  },
+  {
+    "url": "https://iskraft.husa.is/fjarskiptabunadur/ljosleidaralagnir/splaesivelar-og-maelar/fujikura-adc-18-spennugjafi/",
+    "path": "/fjarskiptabunadur/ljosleidaralagnir/splaesivelar-og-maelar/fujikura-adc-18-spennugjafi",
+    "label": "fujikura adc 18 spennugjafi",
+    "depth": 3
+  },
+  {
+    "url": "https://iskraft.husa.is/fjarskiptabunadur/ljosleidaralagnir/splaesivelar-og-maelar/power-meter-tm103n/",
+    "path": "/fjarskiptabunadur/ljosleidaralagnir/splaesivelar-og-maelar/power-meter-tm103n",
+    "label": "power meter tm103n",
+    "depth": 3
+  },
+  {
+    "url": "https://iskraft.husa.is/fjarskiptabunadur/ljosleidaralagnir/tengisnurur-multimode/ljosltengisn-st-st-3m-mm-tvof/",
+    "path": "/fjarskiptabunadur/ljosleidaralagnir/tengisnurur-multimode/ljosltengisn-st-st-3m-mm-tvof",
+    "label": "ljosltengisn st st 3m mm tvof",
+    "depth": 3
+  },
+  {
+    "url": "https://iskraft.husa.is/fjarskiptabunadur/tolvulagnir/verkfaeri-og-maelar/tong-fyrir-kronelsa-plus-tengingu-gra/",
+    "path": "/fjarskiptabunadur/tolvulagnir/verkfaeri-og-maelar/tong-fyrir-kronelsa-plus-tengingu-gra",
+    "label": "tong fyrir kronelsa plus tengingu gra",
+    "depth": 3
+  },
+  {
+    "url": "https://iskraft.husa.is/fjarskiptabunadur/netbunadur/unifi-routerar/ubiquiti-unifi-uxg-lite-gateway-lite/",
+    "path": "/fjarskiptabunadur/netbunadur/unifi-routerar/ubiquiti-unifi-uxg-lite-gateway-lite",
+    "label": "ubiquiti unifi uxg lite gateway lite",
+    "depth": 3
+  },
+  {
+    "url": "https://iskraft.husa.is/fjarskiptabunadur/loftnetskerfi/f-tengi-tv-klaer-ofl/samtengi-ff-tengi-ff-ff-ff-ff-loftn/",
+    "path": "/fjarskiptabunadur/loftnetskerfi/f-tengi-tv-klaer-ofl/samtengi-ff-tengi-ff-ff-ff-ff-loftn",
+    "label": "samtengi ff tengi ff ff ff ff loftn",
+    "depth": 3
+  },
+  {
+    "url": "https://iskraft.husa.is/fjarskiptabunadur/dyrasimakerfi/adrir-ihlutir/relay-bre2-eb-forritunarlegt/",
+    "path": "/fjarskiptabunadur/dyrasimakerfi/adrir-ihlutir/relay-bre2-eb-forritunarlegt",
+    "label": "relay bre2 eb forritunarlegt",
+    "depth": 3
+  },
+  {
+    "url": "https://iskraft.husa.is/fjarskiptabunadur/dyrasimakerfi/akuvox-ip-dyrasimakerfi/akuvox-s532-on-wall-bracket/",
+    "path": "/fjarskiptabunadur/dyrasimakerfi/akuvox-ip-dyrasimakerfi/akuvox-s532-on-wall-bracket",
+    "label": "akuvox s532 on wall bracket",
+    "depth": 3
+  },
+  {
+    "url": "https://iskraft.husa.is/fjarskiptabunadur/dyrasimakerfi/akuvox-ip-dyrasimakerfi/akuvox-r20a-in-wall-bracket/",
+    "path": "/fjarskiptabunadur/dyrasimakerfi/akuvox-ip-dyrasimakerfi/akuvox-r20a-in-wall-bracket",
+    "label": "akuvox r20a in wall bracket",
+    "depth": 3
+  },
+  {
+    "url": "https://iskraft.husa.is/fjarskiptabunadur/dyrasimakerfi/akuvox-ip-dyrasimakerfi/akuvox-s562-ip-innistod-7-poe/",
+    "path": "/fjarskiptabunadur/dyrasimakerfi/akuvox-ip-dyrasimakerfi/akuvox-s562-ip-innistod-7-poe",
+    "label": "akuvox s562 ip innistod 7 poe",
+    "depth": 3
+  },
+  {
+    "url": "https://iskraft.husa.is/fjarskiptabunadur/dyrasimakerfi/akuvox-ip-dyrasimakerfi/akuvox-s562w-ip-innistod-7-wifi/",
+    "path": "/fjarskiptabunadur/dyrasimakerfi/akuvox-ip-dyrasimakerfi/akuvox-s562w-ip-innistod-7-wifi",
+    "label": "akuvox s562w ip innistod 7 wifi",
+    "depth": 3
+  },
+  {
+    "url": "https://iskraft.husa.is/fjarskiptabunadur/dyrasimakerfi/akuvox-ip-dyrasimakerfi/akuvox-s560-ip-innistod-tol-poe/",
+    "path": "/fjarskiptabunadur/dyrasimakerfi/akuvox-ip-dyrasimakerfi/akuvox-s560-ip-innistod-tol-poe",
+    "label": "akuvox s560 ip innistod tol poe",
+    "depth": 3
+  },
+  {
+    "url": "https://iskraft.husa.is/hledslustodvar/hledslustodvar-qudo/qudo-aukahlutir/onepole-pro-blindplata-qb1wh/",
+    "path": "/hledslustodvar/hledslustodvar-qudo/qudo-aukahlutir/onepole-pro-blindplata-qb1wh",
+    "label": "onepole pro blindplata qb1wh",
+    "depth": 3
+  },
+  {
+    "url": "https://iskraft.husa.is/hledslustodvar/hledslustodvar-qudo/qudo-aukahlutir/onepole-pro-base-mount-qbb2p/",
+    "path": "/hledslustodvar/hledslustodvar-qudo/qudo-aukahlutir/onepole-pro-base-mount-qbb2p",
+    "label": "onepole pro base mount qbb2p",
+    "depth": 3
+  },
+  {
+    "url": "https://iskraft.husa.is/hledslustodvar/hledslustodvar-qudo/qudo-aukahlutir/onepole-pro-side-by-side-bracket/",
+    "path": "/hledslustodvar/hledslustodvar-qudo/qudo-aukahlutir/onepole-pro-side-by-side-bracket",
+    "label": "onepole pro side by side bracket",
+    "depth": 3
+  },
+  {
+    "url": "https://iskraft.husa.is/hledslustodvar/hledslustodvar-qudo/qudo-aukahlutir/onepole-bakplata-qudo-q9mwd/",
+    "path": "/hledslustodvar/hledslustodvar-qudo/qudo-aukahlutir/onepole-bakplata-qudo-q9mwd",
+    "label": "onepole bakplata qudo q9mwd",
+    "depth": 3
+  },
+  {
+    "url": "https://iskraft.husa.is/hitunarbunadur/blastursofnar/varahlutir-i-elbjorn/hofudrofi-vf21-114060/",
+    "path": "/hitunarbunadur/blastursofnar/varahlutir-i-elbjorn/hofudrofi-vf21-114060",
+    "label": "hofudrofi vf21 114060",
+    "depth": 3
+  },
+  {
+    "url": "https://iskraft.husa.is/hitunarbunadur/rafmagnsthilofnar/thilofnar/stativ-ephbac1-beta-thilofna/",
+    "path": "/hitunarbunadur/rafmagnsthilofnar/thilofnar/stativ-ephbac1-beta-thilofna",
+    "label": "stativ ephbac1 beta thilofna",
+    "depth": 3
+  },
+  {
+    "url": "https://iskraft.husa.is/hitunarbunadur/rafmagnsthilofnar/ymsar-adrar-gerdir/tansun-x-festing-fyrir-hitara/",
+    "path": "/hitunarbunadur/rafmagnsthilofnar/ymsar-adrar-gerdir/tansun-x-festing-fyrir-hitara",
+    "label": "tansun x festing fyrir hitara",
+    "depth": 3
+  },
+  {
+    "url": "https://iskraft.husa.is/hitunarbunadur/rafmagnsthilofnar/ymsar-adrar-gerdir/tansun-x-remote/",
+    "path": "/hitunarbunadur/rafmagnsthilofnar/ymsar-adrar-gerdir/tansun-x-remote",
+    "label": "tansun x remote",
+    "depth": 3
+  },
+  {
+    "url": "https://iskraft.husa.is/hitunarbunadur/hitastrengir-og-mottur/fylgihlutir/foler-uti-tz-3-3m-fyrir-tev-1/",
+    "path": "/hitunarbunadur/hitastrengir-og-mottur/fylgihlutir/foler-uti-tz-3-3m-fyrir-tev-1",
+    "label": "foler uti tz 3 3m fyrir tev 1",
+    "depth": 3
+  },
+  {
+    "url": "https://iskraft.husa.is/hitunarbunadur/hitastrengir-og-mottur/fylgihlutir/heatit-motorloki-230vac/",
+    "path": "/hitunarbunadur/hitastrengir-og-mottur/fylgihlutir/heatit-motorloki-230vac",
+    "label": "heatit motorloki 230vac",
+    "depth": 3
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/hradabreytar-og-mjukraesar/powerflex-4m-hradabreytar/a-b-pf-4m-hradabreytir-04kw-15a/",
+    "path": "/idnstyribunadur/hradabreytar-og-mjukraesar/powerflex-4m-hradabreytar/a-b-pf-4m-hradabreytir-04kw-15a",
+    "label": "a b pf 4m hradabreytir 04kw 15a",
+    "depth": 3
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/hradabreytar-og-mjukraesar/powerflex-4m-hradabreytar/a-b-pf-4m-hradabreytir-15kw-42a/",
+    "path": "/idnstyribunadur/hradabreytar-og-mjukraesar/powerflex-4m-hradabreytar/a-b-pf-4m-hradabreytir-15kw-42a",
+    "label": "a b pf 4m hradabreytir 15kw 42a",
+    "depth": 3
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/hradabreytar-og-mjukraesar/powerflex-4m-hradabreytar/a-b-pf-4m-hradabreytir-22kw-60a/",
+    "path": "/idnstyribunadur/hradabreytar-og-mjukraesar/powerflex-4m-hradabreytar/a-b-pf-4m-hradabreytir-22kw-60a",
+    "label": "a b pf 4m hradabreytir 22kw 60a",
+    "depth": 3
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/hradabreytar-og-mjukraesar/powerflex-4m-hradabreytar/a-b-pf-4m-hradabreytir-37kw-87a/",
+    "path": "/idnstyribunadur/hradabreytar-og-mjukraesar/powerflex-4m-hradabreytar/a-b-pf-4m-hradabreytir-37kw-87a",
+    "label": "a b pf 4m hradabreytir 37kw 87a",
+    "depth": 3
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/hradabreytar-og-mjukraesar/powerflex-525-hradabreytar/25b-ctm1-pf-525-stjornbord/",
+    "path": "/idnstyribunadur/hradabreytar-og-mjukraesar/powerflex-525-hradabreytar/25b-ctm1-pf-525-stjornbord",
+    "label": "25b ctm1 pf 525 stjornbord",
+    "depth": 3
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/hradabreytar-og-mjukraesar/vacon-100-hradabreytar/vacon-100-pan-skjar/",
+    "path": "/idnstyribunadur/hradabreytar-og-mjukraesar/vacon-100-hradabreytar/vacon-100-pan-skjar",
+    "label": "vacon 100 pan skjar",
+    "depth": 3
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/hradabreytar-og-mjukraesar/vacon-100-hradabreytar/vacon-io-bord-optbh-v/",
+    "path": "/idnstyribunadur/hradabreytar-og-mjukraesar/vacon-100-hradabreytar/vacon-io-bord-optbh-v",
+    "label": "vacon io bord optbh v",
+    "depth": 3
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/hradabreytar-og-mjukraesar/vacon-100-hradabreytar/vacon-100-vifta-fyrir-mr04/",
+    "path": "/idnstyribunadur/hradabreytar-og-mjukraesar/vacon-100-hradabreytar/vacon-100-vifta-fyrir-mr04",
+    "label": "vacon 100 vifta fyrir mr04",
+    "depth": 3
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/hradabreytar-og-mjukraesar/vacon-100-hradabreytar/vacon-100-vifta-fyrir-mr05/",
+    "path": "/idnstyribunadur/hradabreytar-og-mjukraesar/vacon-100-hradabreytar/vacon-100-vifta-fyrir-mr05",
+    "label": "vacon 100 vifta fyrir mr05",
+    "depth": 3
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/hradabreytar-og-mjukraesar/vacon-nx-hradabreytar/vacon-nxs-pan-a-skjar-skjar-a-nxs/",
+    "path": "/idnstyribunadur/hradabreytar-og-mjukraesar/vacon-nx-hradabreytar/vacon-nxs-pan-a-skjar-skjar-a-nxs",
+    "label": "vacon nxs pan a skjar skjar a nxs",
+    "depth": 3
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/hradabreytar-og-mjukraesar/vacon-nx-hradabreytar/vacon-nx-vifta-fyrir-mf4/",
+    "path": "/idnstyribunadur/hradabreytar-og-mjukraesar/vacon-nx-hradabreytar/vacon-nx-vifta-fyrir-mf4",
+    "label": "vacon nx vifta fyrir mf4",
+    "depth": 3
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/hradabreytar-og-mjukraesar/vacon-nx-hradabreytar/vacon-nx-vifta-fyrir-mf5/",
+    "path": "/idnstyribunadur/hradabreytar-og-mjukraesar/vacon-nx-hradabreytar/vacon-nx-vifta-fyrir-mf5",
+    "label": "vacon nx vifta fyrir mf5",
+    "depth": 3
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/hradabreytar-og-mjukraesar/vacon-nx-hradabreytar/vacon-nx-vifta-fyrir-mf6/",
+    "path": "/idnstyribunadur/hradabreytar-og-mjukraesar/vacon-nx-hradabreytar/vacon-nx-vifta-fyrir-mf6",
+    "label": "vacon nx vifta fyrir mf6",
+    "depth": 3
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/idntolvur/industrial-pc/asem-6300b-box-pc/",
+    "path": "/idnstyribunadur/idntolvur/industrial-pc/asem-6300b-box-pc",
+    "label": "asem 6300b box pc",
+    "depth": 3
+  },
+  {
+    "url": "https://iskraft.husa.is/idnstyribunadur/nemar-og-skynjarar/aukabunadur-fyrir-nema/forriturarbunadur-fyrir-io-link-skynjara/",
+    "path": "/idnstyribunadur/nemar-og-skynjarar/aukabunadur-fyrir-nema/forriturarbunadur-fyrir-io-link-skynjara",
+    "label": "forriturarbunadur fyrir io link skynjara",
+    "depth": 3
+  }
+]

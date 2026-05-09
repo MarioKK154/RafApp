@@ -24,6 +24,11 @@ class GlobalInventoryItem(BaseModel):
     inventory_item: schemas.InventoryItemRead
     total_quantity: float
 
+
+class InventoryCatalogFilter(BaseModel):
+    category: str
+    subcategories: List[str]
+
 @router.get("/global-summary", response_model=List[GlobalInventoryItem])
 @limiter.limit("100/minute")
 def get_global_inventory(
@@ -55,6 +60,8 @@ async def read_catalog_items(
     request: Request, 
     db: DbDependency, 
     search: Optional[str] = Query(None), # FIXED: Added search parameter to prevent 422
+    category: Optional[str] = Query(None),
+    subcategory: Optional[str] = Query(None),
     skip: int = Query(0, ge=0), 
     limit: int = Query(100, ge=1, le=1000)
 ):
@@ -62,7 +69,26 @@ async def read_catalog_items(
     Telemetry: Fetch all SKU definitions.
     Supports optional search filtering to reduce registry noise.
     """
-    return crud.get_inventory_items(db=db, search=search, skip=skip, limit=limit)
+    return crud.get_inventory_items(
+        db=db,
+        search=search,
+        category=category,
+        subcategory=subcategory,
+        skip=skip,
+        limit=limit,
+    )
+
+
+@router.get("/catalog/filters", response_model=List[InventoryCatalogFilter])
+@limiter.limit("30/minute")
+async def read_catalog_filters(
+    request: Request,
+    db: DbDependency,
+):
+    """
+    Fetch distinct category/subcategory pairs for the catalog UI.
+    """
+    return crud.get_inventory_catalog_filters(db=db)
 
 @router.get("/catalog/{item_id}", response_model=schemas.InventoryItemRead)
 @limiter.limit("100/minute")

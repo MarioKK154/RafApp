@@ -4,6 +4,7 @@ from sqlalchemy import func, text
 from typing import Annotated, List, Optional
 from datetime import datetime, timedelta
 import time
+from scripts.seed_demo_tenant import seed_demo_tenant, TENANT_ID, DEFAULT_PASSWORD
 
 from .. import crud, models, schemas, security
 from ..database import get_db
@@ -18,6 +19,34 @@ DbDependency = Annotated[Session, Depends(get_db)]
 SuperUserDependency = Annotated[models.User, Depends(security.require_superuser)]
 # Dependency for general dashboard access
 ManagerOrAdminDependency = Annotated[models.User, Depends(security.require_role(["admin", "project manager"]))]
+
+
+@router.post("/super/seed-demo-tenant")
+@limiter.limit("5/minute")
+async def seed_demo_tenant_presentation(
+    request: Request,
+    db: DbDependency,
+    current_user: SuperUserDependency,
+):
+    """
+    One-click presentation dataset.
+    Rebuilds tenant id=2 with demo users/projects/tasks/cars/tools/customers.
+    Superuser only.
+    """
+    # Function manages its own DB session safely; keep this endpoint thin.
+    try:
+        seed_demo_tenant(reset_existing=True)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to seed demo tenant: {str(e)}",
+        )
+    return {
+        "ok": True,
+        "tenant_id": TENANT_ID,
+        "default_password": DEFAULT_PASSWORD,
+        "message": "Demo tenant seeded successfully.",
+    }
 
 @router.get("/stats", response_model=schemas.DashboardStats)
 @limiter.limit("60/minute")

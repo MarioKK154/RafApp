@@ -1,14 +1,16 @@
 # backend/app/main.py
-from fastapi import FastAPI, Depends, Request
+from fastapi import FastAPI, Depends, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 from slowapi.errors import RateLimitExceeded
 from slowapi import _rate_limit_exceeded_handler
+from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from .limiter import limiter
 from . import models
-from .database import engine
+from .config import get_settings
+from .database import engine, is_sqlite
 
 # 1. Import all routers
 from .routers import (
@@ -24,98 +26,61 @@ from .routers import (
     system,
 )
 
-# 2. Create database tables
-models.Base.metadata.create_all(bind=engine)
+# 2. Database schema
+# SQLite (local dev): ensure tables exist via create_all.
+# PostgreSQL: apply schema with `alembic upgrade head` — avoid create_all fighting migrations.
+if is_sqlite():
+    models.Base.metadata.create_all(bind=engine)
 
-# 2b. Migrate existing DBs: add users.last_login_at if missing (for churn/tenant health)
-try:
+# Legacy SQLite-only migrations (old single-file DBs that predated full models).
+# PostgreSQL: use Alembic + model definitions; skip ad hoc ALTERs.
+if is_sqlite():
     from sqlalchemy import text
-    with engine.connect() as conn:
-        conn.execute(text("ALTER TABLE users ADD COLUMN last_login_at DATETIME"))
-        conn.commit()
-except Exception as e:
-    msg = str(e).lower()
-    if "duplicate column name" in msg or "already exists" in msg:
-        pass  # Column already there
-    else:
-        raise  # Unexpected error
 
-# 2c. Migrate labor_catalog_items: ar.is fields (main_category, sub_category, conditions, reference_price)
-for col in ("main_category", "sub_category", "conditions"):
+    def _dup_col(e: Exception) -> bool:
+        msg = str(e).lower()
+        return (
+            "duplicate column name" in msg
+            or "already exists" in msg
+            or "duplicate column" in msg
+        )
+
     try:
         with engine.connect() as conn:
-            conn.execute(text(f"ALTER TABLE labor_catalog_items ADD COLUMN {col} VARCHAR"))
+            conn.execute(text("ALTER TABLE users ADD COLUMN last_login_at DATETIME"))
             conn.commit()
     except Exception as e:
-        msg = str(e).lower()
-        if "duplicate column name" in msg or "already exists" in msg:
-            pass
-        else:
+        if not _dup_col(e):
             raise
-try:
-    with engine.connect() as conn:
-        conn.execute(text("ALTER TABLE labor_catalog_items ADD COLUMN reference_price FLOAT"))
-        conn.commit()
-except Exception as e:
-    msg = str(e).lower()
-    if "duplicate column name" in msg or "already exists" in msg:
-        pass
-    else:
-        raise
-try:
-    with engine.connect() as conn:
-        conn.execute(text("ALTER TABLE labor_catalog_items ADD COLUMN default_unit_price FLOAT NOT NULL DEFAULT 0"))
-        conn.commit()
-except Exception as e:
-    msg = str(e).lower()
-    if "duplicate column name" in msg or "already exists" in msg:
-        pass
-    else:
-        raise
-try:
-    with engine.connect() as conn:
-        conn.execute(text("ALTER TABLE labor_catalog_items ADD COLUMN tenant_id INTEGER NOT NULL DEFAULT 1"))
-        conn.commit()
-except Exception as e:
-    msg = str(e).lower()
-    if "duplicate column name" in msg or "already exists" in msg:
-        pass
-    else:
-        raise
-try:
-    with engine.connect() as conn:
-        conn.execute(text("ALTER TABLE labor_catalog_items ADD COLUMN units_per_hour FLOAT"))
-        conn.commit()
-except Exception as e:
-    msg = str(e).lower()
-    if "duplicate column name" in msg or "already exists" in msg:
-        pass
-    else:
-        raise
-try:
-    with engine.connect() as conn:
-        conn.execute(text("ALTER TABLE projects ADD COLUMN work_load_ratio_codes TEXT"))
-        conn.commit()
-except Exception as e:
-    msg = str(e).lower()
-    if "duplicate column name" in msg or "already exists" in msg:
-        pass
-    else:
-        raise
-try:
-    with engine.connect() as conn:
-        conn.execute(text("ALTER TABLE offers ADD COLUMN work_load_ratio_codes TEXT"))
-        conn.commit()
-except Exception as e:
-    msg = str(e).lower()
-    if "duplicate column name" in msg or "already exists" in msg:
-        pass
-    else:
-        raise
-# ar.is condition variants: one catalog item can have multiple (condition, Eining) rows
-try:
-    with engine.connect() as conn:
-        conn.execute(text("""
+
+    for col in ("main_category", "sub_category", "conditions"):
+        try:
+            with engine.connect() as conn:
+                conn.execute(text(f"ALTER TABLE labor_catalog_items ADD COLUMN {col} VARCHAR"))
+                conn.commit()
+        except Exception as e:
+            if not _dup_col(e):
+                raise
+    for stmt in (
+        "ALTER TABLE labor_catalog_items ADD COLUMN reference_price FLOAT",
+        "ALTER TABLE labor_catalog_items ADD COLUMN default_unit_price FLOAT NOT NULL DEFAULT 0",
+        "ALTER TABLE labor_catalog_items ADD COLUMN tenant_id INTEGER NOT NULL DEFAULT 1",
+        "ALTER TABLE labor_catalog_items ADD COLUMN units_per_hour FLOAT",
+        "ALTER TABLE projects ADD COLUMN work_load_ratio_codes TEXT",
+        "ALTER TABLE offers ADD COLUMN work_load_ratio_codes TEXT",
+    ):
+        try:
+            with engine.connect() as conn:
+                conn.execute(text(stmt))
+                conn.commit()
+        except Exception as e:
+            if not _dup_col(e):
+                raise
+    try:
+        with engine.connect() as conn:
+            conn.execute(
+                text(
+                    """
             CREATE TABLE IF NOT EXISTS labor_catalog_item_conditions (
                 id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
                 labor_catalog_item_id INTEGER NOT NULL REFERENCES labor_catalog_items(id),
@@ -125,10 +90,43 @@ try:
                 effective_date VARCHAR,
                 end_date VARCHAR
             )
-        """))
-        conn.commit()
-except Exception:
-    pass
+        """
+                )
+            )
+            conn.commit()
+    except Exception:
+        pass
+
+    def _add_column_if_missing(column_sql: str) -> None:
+        try:
+            with engine.connect() as conn:
+                conn.execute(text(column_sql))
+                conn.commit()
+        except Exception as e:
+            if not _dup_col(e):
+                raise
+
+    for _col_stmt in (
+        "ALTER TABLE inventory_items ADD COLUMN iskraft_sku VARCHAR",
+        "ALTER TABLE inventory_items ADD COLUMN ronning_sku VARCHAR",
+        "ALTER TABLE inventory_items ADD COLUMN reykjafell_sku VARCHAR",
+        "ALTER TABLE inventory_items ADD COLUMN name_en VARCHAR",
+        "ALTER TABLE inventory_items ADD COLUMN description_en TEXT",
+    ):
+        _add_column_if_missing(_col_stmt)
+
+    for _idx_stmt in (
+        "CREATE INDEX IF NOT EXISTS ix_inventory_items_iskraft_sku ON inventory_items (iskraft_sku)",
+        "CREATE INDEX IF NOT EXISTS ix_inventory_items_ronning_sku ON inventory_items (ronning_sku)",
+        "CREATE INDEX IF NOT EXISTS ix_inventory_items_reykjafell_sku ON inventory_items (reykjafell_sku)",
+        "CREATE INDEX IF NOT EXISTS ix_inventory_items_name_en ON inventory_items (name_en)",
+    ):
+        try:
+            with engine.connect() as conn:
+                conn.execute(text(_idx_stmt))
+                conn.commit()
+        except Exception:
+            pass
 
 app = FastAPI(
     title="RafApp API",
@@ -139,11 +137,14 @@ app = FastAPI(
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
+_settings = get_settings()
+if _settings.trusted_hosts:
+    app.add_middleware(TrustedHostMiddleware, allowed_hosts=_settings.trusted_hosts)
+
 # 3. CORS Middleware configuration
-origins = ["http://localhost:5173", "http://127.0.0.1:5173"]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=_settings.cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -160,7 +161,8 @@ subdirs = [
     "task_photos", 
     "payslips", 
     "licenses",
-    "tenant_assets"
+    "tenant_assets",
+    "inventory_images/iskraft_images",
 ]
 for folder in subdirs:
     (STATIC_DIR / folder).mkdir(parents=True, exist_ok=True)
@@ -199,8 +201,40 @@ app.include_router(admin_tools.router)
 app.include_router(system.router)
 app.include_router(risk_assessments.router)
 
+
+@app.on_event("startup")
+def _normalize_legacy_task_statuses() -> None:
+    """
+    Backward compatibility: normalize legacy task status labels to current ones.
+    Prevents response validation errors in timeline/calendar views.
+    """
+    from sqlalchemy import text
+
+    try:
+        with engine.begin() as conn:
+            conn.execute(text("UPDATE tasks SET status = 'To Do' WHERE status = 'Not Started'"))
+    except Exception:
+        # Non-fatal: app should still boot even if this compatibility step fails.
+        pass
+
 # 6. Root Endpoint
 @app.get("/")
 @limiter.limit("5/minute")
 def read_root(request: Request):
     return {"message": "Welcome to the Raf-App API"}
+
+
+@app.get("/health/db")
+@limiter.limit("60/minute")
+def health_db(request: Request):
+    from .database import healthcheck_db, healthcheck_by_role, database_layout
+
+    if not healthcheck_db():
+        raise HTTPException(status_code=503, detail="database unavailable")
+    return {
+        "status": "ok",
+        "database": "reachable",
+        "app_env": _settings.app_env,
+        "roles": healthcheck_by_role(),
+        "layout": database_layout(),
+    }

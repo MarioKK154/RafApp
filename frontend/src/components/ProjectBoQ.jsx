@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { inventoryDisplayName } from '../utils/inventoryI18n';
 import axiosInstance from '../api/axiosInstance';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
@@ -14,7 +15,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 function ProjectBoQ({ projectId }) {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const [boq, setBoq] = useState(null);
     const [inventoryItems, setInventoryItems] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -160,7 +161,7 @@ function ProjectBoQ({ projectId }) {
                                 >
                                     <option value="">-- SELECT FROM CATALOG --</option>
                                     {availableInventoryItems.map(item => (
-                                        <option key={item.id} value={item.id}>{item.name} ({item.sku || 'NO-SKU'})</option>
+                                        <option key={item.id} value={item.id}>{inventoryDisplayName(item, i18n.language)} ({item.sku || 'NO-SKU'})</option>
                                     ))}
                                 </select>
                             </div>
@@ -208,7 +209,7 @@ function ProjectBoQ({ projectId }) {
                                 return (
                                     <tr key={item.id} className="group hover:bg-gray-50/50 dark:hover:bg-gray-750 transition-colors">
                                         <td className="py-5 px-8">
-                                            <div className="font-bold text-gray-900 dark:text-white text-sm tracking-tight">{item.inventory_item?.name}</div>
+                                            <div className="font-bold text-gray-900 dark:text-white text-sm tracking-tight">{inventoryDisplayName(item.inventory_item, i18n.language)}</div>
                                             <div className="text-[9px] text-indigo-500 font-black uppercase tracking-widest mt-1">REF: {item.inventory_item?.sku || 'GENERIC'}</div>
                                         </td>
                                         <td className="py-5 px-6 text-right font-black text-gray-900 dark:text-white text-sm">{item.quantity_required}</td>
@@ -230,7 +231,7 @@ function ProjectBoQ({ projectId }) {
                                         {canManageBoQ && (
                                             <td className="py-5 px-8 text-center">
                                                 <button 
-                                                    onClick={() => handleRemoveItem(item.id, item.inventory_item?.name)} 
+                                                    onClick={() => handleRemoveItem(item.id, inventoryDisplayName(item.inventory_item, i18n.language))} 
                                                     className="p-2.5 text-gray-300 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all"
                                                 >
                                                     <TrashIcon className="h-5 w-5" />

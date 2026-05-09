@@ -5,6 +5,7 @@ import axiosInstance from '../api/axiosInstance';
 import { toast } from 'react-toastify';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { Link } from 'react-router-dom';
+import { inventoryDisplayName } from '../utils/inventoryI18n';
 import { 
     ShoppingCartIcon, 
     BriefcaseIcon, 
@@ -17,7 +18,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 function ShoppingListPage() {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const [shoppingList, setShoppingList] = useState([]);
     const [materialRequests, setMaterialRequests] = useState([]);
     const [projects, setProjects] = useState([]);
@@ -216,7 +217,7 @@ function ShoppingListPage() {
                                                         <CubeIcon className="h-5 w-5 text-gray-400 group-hover:text-indigo-600" />
                                                     </div>
                                                     <div>
-                                                        <p className="font-bold text-gray-900 dark:text-white">{item.inventory_item.name}</p>
+                                                        <p className="font-bold text-gray-900 dark:text-white">{inventoryDisplayName(item.inventory_item, i18n.language)}</p>
                                                         <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">{item.unit || 'Standard Unit'}</p>
                                                     </div>
                                                 </div>
@@ -292,7 +293,7 @@ function ShoppingListPage() {
                                                     to={req.inventory_item ? `/inventory/edit/${req.inventory_item.id}` : '#'}
                                                     className={`font-bold text-gray-900 dark:text-white hover:text-indigo-600 transition-colors ${!req.inventory_item ? 'pointer-events-none cursor-default opacity-60' : ''}`}
                                                 >
-                                                    {req.inventory_item?.name || 'Unknown material'}
+                                                    {req.inventory_item ? inventoryDisplayName(req.inventory_item, i18n.language) : 'Unknown material'}
                                                 </Link>
                                                 <div className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mt-1">
                                                     ID: {req.inventory_item?.id ?? '—'}

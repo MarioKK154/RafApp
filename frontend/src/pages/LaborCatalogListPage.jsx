@@ -60,7 +60,8 @@ function einingFullLabel(unitsPerHour) {
 }
 
 function LaborCatalogListPage() {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
+    const apiLang = i18n.language?.toLowerCase().startsWith('en') ? 'en' : 'is';
     const navigate = useNavigate();
     const { user } = useAuth();
 
@@ -88,7 +89,7 @@ function LaborCatalogListPage() {
         setCategoriesLoading(true);
         setError('');
         try {
-            const res = await axiosInstance.get('/labor-catalog/categories');
+            const res = await axiosInstance.get('/labor-catalog/categories', { params: { lang: apiLang } });
             setCategories(res.data || []);
         } catch (err) {
             console.error('Categories fetch error:', err);
@@ -97,13 +98,13 @@ function LaborCatalogListPage() {
         } finally {
             setCategoriesLoading(false);
         }
-    }, [t]);
+    }, [t, apiLang]);
 
     const fetchItems = useCallback(async (mainCat, subCat) => {
         setItemsLoading(true);
         setError('');
         try {
-            const params = { limit: 5000 };
+            const params = { limit: 5000, lang: apiLang };
             if (mainCat != null) params.main_category = mainCat === '' ? '' : mainCat;
             if (subCat != null) params.sub_category = subCat === '' ? '' : subCat;
             const res = await axiosInstance.get('/labor-catalog/', { params });
@@ -116,11 +117,26 @@ function LaborCatalogListPage() {
         } finally {
             setItemsLoading(false);
         }
-    }, [t]);
+    }, [t, apiLang]);
 
     useEffect(() => {
         fetchCategories();
     }, [fetchCategories]);
+
+    // First paint: nothing loads until both main + sub are chosen — users see an empty list.
+    // Auto-select the first subcategory when categories arrive so the catalog is visible immediately.
+    useEffect(() => {
+        if (categoriesLoading || categories.length === 0) return;
+        if (selectedMain !== null && selectedSub !== null) return;
+        const first = categories[0];
+        const mainKey = first.main_category ?? '';
+        const subs = first.sub_categories || [];
+        if (subs.length === 0) return;
+        const subKey = subs[0].sub_category ?? '';
+        setExpandedMain(mainKey);
+        setSelectedMain(mainKey);
+        setSelectedSub(subKey);
+    }, [categories, categoriesLoading, selectedMain, selectedSub]);
 
     useEffect(() => {
         if (selectedMain !== null && selectedSub !== null) {
@@ -163,8 +179,8 @@ function LaborCatalogListPage() {
         if (!main) return [selectedMain || '(Uncategorized)', selectedSub || '(Uncategorized)'].join(' → ');
         const sub = main.sub_categories?.find((s) => (s.sub_category || '') === (selectedSub || ''));
         return [
-            main.main_category || '(Uncategorized)',
-            sub?.sub_category ?? selectedSub ?? '(Uncategorized)',
+            main.display_name || main.main_category || '(Uncategorized)',
+            sub?.display_name ?? sub?.sub_category ?? selectedSub ?? '(Uncategorized)',
         ].join(' → ');
     };
 
@@ -454,7 +470,7 @@ function LaborCatalogListPage() {
                                                                     }`}
                                                                 >
                                                                     <span className="truncate">
-                                                                        {sub.sub_category || '(Uncategorized)'}
+                                                                        {sub.display_name || sub.sub_category || '(Uncategorized)'}
                                                                     </span>
                                                                     <span className="text-xs font-bold text-gray-400 dark:text-gray-500 flex-shrink-0">
                                                                         {sub.count}

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import axiosInstance from '../api/axiosInstance';
+import { extractTenantList } from '../utils/tenantUtils';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -56,7 +57,7 @@ function UserCreatePage() {
         if (isSuperuser) {
             try {
                 const response = await axiosInstance.get('/tenants/');
-                setTenants(response.data);
+                setTenants(extractTenantList(response?.data));
             } catch (error) {
                 console.error('Fetch tenants failed:', error);
                 toast.error("Failed to load infrastructure nodes (tenants).");

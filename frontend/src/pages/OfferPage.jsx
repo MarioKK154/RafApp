@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { inventoryDisplayDescription, inventoryDisplayName } from '../utils/inventoryI18n';
 import axiosInstance from '../api/axiosInstance';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
@@ -85,6 +87,8 @@ const LABOR_UNIT_OPTIONS = [
 ];
 
 function OfferPage() {
+    const { i18n } = useTranslation();
+    const laborApiLang = i18n.language?.toLowerCase().startsWith('en') ? 'en' : 'is';
     const { offerId } = useParams();
     const navigate = useNavigate();
     const { user } = useAuth();
@@ -192,7 +196,7 @@ function OfferPage() {
         try {
             const [invRes, laborRes, ratiosRes] = await Promise.allSettled([
                 axiosInstance.get('/inventory/catalog', { params: { limit: 1000 } }),
-                axiosInstance.get('/labor-catalog/', { params: { limit: 5000 } }),
+                axiosInstance.get('/labor-catalog/', { params: { limit: 5000, lang: laborApiLang } }),
                 axiosInstance.get('/labor-catalog/work-load-ratios', { params: { active_only: false } }),
             ]);
             const invData = invRes.status === 'fulfilled' ? invRes.value?.data : null;
@@ -206,26 +210,26 @@ function OfferPage() {
             setLaborCatalog([]);
             setWorkLoadRatios([]);
         }
-    }, [offerId]);
+    }, [offerId, laborApiLang]);
 
     useEffect(() => { fetchOfferAndCatalogs(); }, [fetchOfferAndCatalogs]);
 
     const fetchLaborCategories = useCallback(async () => {
         setCategoriesLoading(true);
         try {
-            const res = await axiosInstance.get('/labor-catalog/categories');
+            const res = await axiosInstance.get('/labor-catalog/categories', { params: { lang: laborApiLang } });
             setLaborCategories(res.data || []);
         } catch (_) {
             setLaborCategories([]);
         } finally {
             setCategoriesLoading(false);
         }
-    }, []);
+    }, [laborApiLang]);
 
     const fetchCategoryItems = useCallback(async (mainCat, subCat) => {
         setCategoryItemsLoading(true);
         try {
-            const params = { limit: 5000 };
+            const params = { limit: 5000, lang: laborApiLang };
             if (mainCat != null) params.main_category = mainCat === '' ? '' : mainCat;
             if (subCat != null) params.sub_category = subCat === '' ? '' : subCat;
             const res = await axiosInstance.get('/labor-catalog/', { params });
@@ -235,7 +239,7 @@ function OfferPage() {
         } finally {
             setCategoryItemsLoading(false);
         }
-    }, []);
+    }, [laborApiLang]);
 
     useEffect(() => {
         if (canEditOffer && newItemType === 'Labor' && !showCustomLaborForm) {
@@ -260,11 +264,11 @@ function OfferPage() {
         }
         setSelectedVariant(null);
         setVariantsLoading(true);
-        axiosInstance.get(`/labor-catalog/${selectedCatalogItem.id}/conditions`).then((res) => {
+        axiosInstance.get(`/labor-catalog/${selectedCatalogItem.id}/conditions`, { params: { lang: laborApiLang } }).then((res) => {
             const list = Array.isArray(res.data) ? res.data : [];
             setItemVariants(list);
         }).catch(() => setItemVariants([])).finally(() => setVariantsLoading(false));
-    }, [selectedCatalogItem?.id]);
+    }, [selectedCatalogItem?.id, laborApiLang]);
 
     const offerRatioCodes = useMemo(() => {
         if (!offer?.work_load_ratio_codes) return [];
@@ -782,7 +786,7 @@ function OfferPage() {
                                                                         key={item.id}
                                                                         onClick={() => {
                                                                             setNewItemInventoryId(item.id.toString());
-                                                                            setNewItemDesc(item.name);
+                                                                            setNewItemDesc(inventoryDisplayName(item, i18n.language));
                                                                             setNewItemPrice(item.unit_price ?? 0);
                                                                         }}
                                                                         className={`p-4 rounded-xl border cursor-pointer transition text-left ${
@@ -792,7 +796,7 @@ function OfferPage() {
                                                                         }`}
                                                                     >
                                                                         <p className="font-bold text-gray-900 dark:text-white text-sm truncate">
-                                                                            {item.name}
+                                                                            {inventoryDisplayName(item, i18n.language)}
                                                                         </p>
                                                                         <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mt-1">
                                                                             {item.unit || 'unit'}{' '}
@@ -804,9 +808,9 @@ function OfferPage() {
                                                                                   }`
                                                                                 : ''}
                                                                         </p>
-                                                                        {item.description && (
+                                                                        {inventoryDisplayDescription(item, i18n.language) && (
                                                                             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
-                                                                                {item.description}
+                                                                                {inventoryDisplayDescription(item, i18n.language)}
                                                                             </p>
                                                                         )}
                                                                         {hasShops && (
@@ -953,7 +957,7 @@ function OfferPage() {
                                                                     <button type="button" onClick={() => setExpandedMain(isExpanded ? null : mainKey)} className="w-full flex items-center justify-between gap-2 px-4 py-3 text-left hover:bg-gray-100 dark:hover:bg-gray-700/50 transition">
                                                                         <span className="flex items-center gap-2 font-bold text-gray-900 dark:text-white truncate text-sm">
                                                                             {isExpanded ? <FolderOpenIcon className="h-5 w-5 text-indigo-500 flex-shrink-0" /> : <FolderIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />}
-                                                                            {cat.main_category || '(Uncategorized)'}
+                                                                            {cat.display_name || cat.main_category || '(Uncategorized)'}
                                                                         </span>
                                                                         <ChevronRightIcon className={`h-5 w-5 text-gray-400 flex-shrink-0 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
                                                                     </button>
@@ -965,7 +969,7 @@ function OfferPage() {
                                                                                 return (
                                                                                     <li key={subKey || 'uncat'}>
                                                                                         <button type="button" onClick={() => { setSelectedMain(mainKey); setSelectedSub(subKey); setSelectedCatalogItem(null); }} className={`w-full flex justify-between gap-2 pl-10 pr-4 py-2.5 text-left text-sm transition ${isSelected ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-800 dark:text-indigo-200 font-semibold' : 'hover:bg-gray-100 dark:hover:bg-gray-700/50 text-gray-700 dark:text-gray-300'}`}>
-                                                                                            <span className="truncate">{sub.sub_category || '(Uncategorized)'}</span>
+                                                                                            <span className="truncate">{sub.display_name || sub.sub_category || '(Uncategorized)'}</span>
                                                                                             <span className="text-xs font-bold text-gray-400">{sub.count}</span>
                                                                                         </button>
                                                                                     </li>

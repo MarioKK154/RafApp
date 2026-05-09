@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import axiosInstance from '../api/axiosInstance';
 import { useAuth } from '../context/AuthContext';
+import { extractTenantList } from '../utils/tenantUtils';
 import { toast } from 'react-toastify';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { 
@@ -46,6 +47,8 @@ function UserListPage() {
     // Filters
     const [searchTerm, setSearchTerm] = useState('');
     const [cityFilter, setCityFilter] = useState(''); 
+    const [tenantFilter, setTenantFilter] = useState('');
+    const [tenants, setTenants] = useState([]);
     const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
     const isSuperuser = currentUser?.is_superuser;
@@ -54,16 +57,43 @@ function UserListPage() {
     const fetchUsers = useCallback(() => {
         setIsLoading(true);
         setError('');
-        axiosInstance.get('/users/', { params: { limit: 1000 } })
+        const params = { limit: 1000 };
+        if (isSuperuser && tenantFilter) {
+            params.tenant_id = parseInt(tenantFilter, 10);
+        }
+        axiosInstance.get('/users/', { params })
             .then(response => setUsers(response.data))
             .catch(() => {
                 setError(t('sync_workforce_failed'));
                 toast.error(t('error_loading_users'));
             })
             .finally(() => setIsLoading(false));
-    }, [t]);
+    }, [t, isSuperuser, tenantFilter]);
 
     useEffect(() => { fetchUsers(); }, [fetchUsers]);
+
+    useEffect(() => {
+        if (!isSuperuser) return;
+        axiosInstance.get('/tenants/', { params: { limit: 1000 } })
+            .then((res) => setTenants(extractTenantList(res?.data)))
+            .catch(() => setTenants([]));
+    }, [isSuperuser]);
+
+    const tenantOptions = useMemo(() => {
+        const byId = new Map();
+        for (const t of tenants) {
+            if (t?.id != null) byId.set(String(t.id), { id: t.id, name: t.name || `Tenant ${t.id}` });
+        }
+        // Fallback: infer tenant list from loaded users if tenant endpoint shape/auth differs.
+        for (const u of users) {
+            if (u?.tenant_id == null) continue;
+            const key = String(u.tenant_id);
+            if (!byId.has(key)) {
+                byId.set(key, { id: u.tenant_id, name: u?.tenant?.name || `Tenant ${u.tenant_id}` });
+            }
+        }
+        return Array.from(byId.values()).sort((a, b) => String(a.name).localeCompare(String(b.name)));
+    }, [tenants, users]);
 
     // SYNC FIX: Extract unique locations by checking both 'city' and 'location' fields
     const cities = useMemo(() => {
@@ -84,9 +114,10 @@ function UserListPage() {
                 (u.tenant?.name?.toLowerCase().includes(lowerSearch))
             );
             const matchesCity = !cityFilter || userLocation === cityFilter;
-            return matchesSearch && matchesCity;
+            const matchesTenant = !tenantFilter || String(u.tenant_id) === String(tenantFilter);
+            return matchesSearch && matchesCity && matchesTenant;
         });
-    }, [users, debouncedSearchTerm, cityFilter]);
+    }, [users, debouncedSearchTerm, cityFilter, tenantFilter]);
 
     const handleToggleActiveStatus = async (userToToggle) => {
         if (userToToggle.id === currentUser.id) {
@@ -157,7 +188,7 @@ function UserListPage() {
 
             {/* Tactical Filter Console */}
             <div className="mb-10 grid grid-cols-1 lg:grid-cols-12 gap-6">
-                <div className="lg:col-span-6 relative group">
+                <div className="lg:col-span-5 relative group">
                     <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-indigo-500 transition-colors" />
                     <input
                         type="text"
@@ -178,7 +209,21 @@ function UserListPage() {
                         {cities.map(city => <option key={city} value={city}>{city}</option>)}
                     </select>
                 </div>
-                <div className="lg:col-span-3 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-[1.25rem] px-6 flex items-center justify-center gap-3 text-[10px] font-black uppercase tracking-widest text-gray-400 shadow-sm">
+                <div className="lg:col-span-2 relative">
+                    <BuildingOfficeIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-orange-500 pointer-events-none" />
+                    <select
+                        value={tenantFilter}
+                        onChange={(e) => setTenantFilter(e.target.value)}
+                        disabled={!isSuperuser}
+                        className="modern-input pl-12 h-14 !rounded-[1.25rem] text-[10px] font-black uppercase tracking-widest cursor-pointer appearance-none disabled:opacity-60"
+                    >
+                        <option value="">{t('all_companies', { defaultValue: 'All Companies' })}</option>
+                        {tenantOptions.map((tenant) => (
+                            <option key={tenant.id} value={tenant.id}>{tenant.name}</option>
+                        ))}
+                    </select>
+                </div>
+                <div className="lg:col-span-2 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-[1.25rem] px-6 flex items-center justify-center gap-3 text-[10px] font-black uppercase tracking-widest text-gray-400 shadow-sm">
                     <AdjustmentsHorizontalIcon className="h-4 w-4 text-indigo-500" /> 
                     <span className="text-gray-900 dark:text-gray-100">{t('users_found', { count: filteredUsers.length })}</span>
                 </div>
@@ -211,7 +256,27 @@ function UserListPage() {
                                 <div className="flex items-center gap-2 mt-1">
                                     <ShieldCheckIcon className="h-3.5 w-3.5 text-indigo-500" />
                                     <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">
-                                        {u.is_superuser ? t('root_admin') : u.role?.replace('_', ' ')}
+                                        {u.is_superuser
+                                            ? t('root_admin')
+                                            : (() => {
+                                                const roleKey = (u.role || '').toLowerCase();
+                                                switch (roleKey) {
+                                                    case 'admin':
+                                                        return t('role_admin');
+                                                    case 'project manager':
+                                                        return t('role_project_manager');
+                                                    case 'team leader':
+                                                        return t('role_team_leader');
+                                                    case 'electrician':
+                                                        return t('role_electrician');
+                                                    case 'accountant':
+                                                        return t('role_accountant');
+                                                    case 'subcontractor':
+                                                        return t('role_subcontractor');
+                                                    default:
+                                                        return u.role || '';
+                                                }
+                                            })()}
                                     </span>
                                 </div>
                                 <div className="flex items-center gap-2 mt-2">

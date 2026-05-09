@@ -56,13 +56,16 @@ def get_events_in_range(
     db: DbDependency,           # Moved Up
     current_user: CurrentUserDependency, # Moved Up
     start: datetime = Query(...), # Moved Down
-    end: datetime = Query(...)    # Moved Down
+    end: datetime = Query(...),    # Moved Down
+    tenant_id: Optional[int] = Query(None, description="Superadmin-only tenant scope filter"),
 ):
     """
     Oversight: Retrieves all events within a specific temporal window.
     Isolation: Superadmins see system-wide; regular users see tenant-specific sequences.
     """
     effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
+    if current_user.is_superuser and tenant_id is not None:
+        effective_tenant_id = tenant_id
 
     if not current_user.is_superuser and effective_tenant_id is None:
         raise HTTPException(

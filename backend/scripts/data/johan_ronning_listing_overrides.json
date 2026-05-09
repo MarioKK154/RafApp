@@ -1,0 +1,32 @@
+{
+  "overrides": [
+    {
+      "category": "Rafstrengir",
+      "subcategory": null,
+      "sub_subcategory": null,
+      "listing_url": "https://ronning.is/voruflokkar/60/",
+      "note": "Top-level Rafstrengir (category only in sheet)"
+    },
+    {
+      "category": "Rafstrengir",
+      "subcategory": "Aflstrengir",
+      "sub_subcategory": null,
+      "listing_url": "https://ronning.is/voruflokkar/61/",
+      "note": "Rafstrengir → Aflstrengir"
+    },
+    {
+      "category": "Rafstrengir",
+      "subcategory": "Aflstrengir",
+      "sub_subcategory": "Koparstrengir 1kV",
+      "listing_url": "https://ronning.is/voruflokkar/62/",
+      "note": "Koparstrengir 1kV"
+    },
+    {
+      "category": "Rafstrengir",
+      "subcategory": "Aflstrengir",
+      "sub_subcategory": "Koparstrengir halogenfríir 1kV",
+      "listing_url": "https://ronning.is/voruflokkar/63/",
+      "note": "Koparstrengir halogenfríir 1kV"
+    }
+  ]
+}

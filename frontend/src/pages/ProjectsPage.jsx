@@ -120,6 +120,27 @@ const ProjectsPage = () => {
         }));
     }, [projects, statusFilter]);
 
+    const projectTelemetry = useMemo(() => {
+        const counts = { total: 0, active: 0, planning: 0, commissioned: 0, completed: 0 };
+        const all = projects.map(proj => {
+            const startDate = proj.start_date ? parseISO(proj.start_date) : null;
+            const isStarted = startDate && (isPast(startDate) || isToday(startDate));
+            let displayStatus = proj.status;
+            if (['Planning', 'Active'].includes(proj.status)) {
+                displayStatus = isStarted ? 'Active' : 'Planning';
+            }
+            return displayStatus;
+        });
+        for (const s of all) {
+            counts.total += 1;
+            if (s === 'Active') counts.active += 1;
+            else if (s === 'Planning') counts.planning += 1;
+            else if (s === 'Commissioned') counts.commissioned += 1;
+            else if (s === 'Completed') counts.completed += 1;
+        }
+        return counts;
+    }, [projects]);
+
     const handleArchive = async (projectId) => {
         try {
             await axiosInstance.post(`/projects/${projectId}/archive`);
@@ -215,6 +236,31 @@ const ProjectsPage = () => {
                 </div>
             </div>
 
+            {/* Progress Overview */}
+            <div className={`mb-10 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-[2rem] border border-gray-100 dark:border-gray-700 shadow-sm p-6 ${isSuperuser && !selectedTenantId ? 'opacity-40 pointer-events-none' : ''}`}>
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                    <div>
+                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.22em] mb-2">
+                            {t('status_distribution', { defaultValue: 'Status distribution' })}
+                        </p>
+                        <StackedBar
+                            segments={[
+                                { label: 'Planning', value: projectTelemetry.planning, className: 'bg-orange-500' },
+                                { label: 'Active', value: projectTelemetry.active, className: 'bg-emerald-600' },
+                                { label: 'Commissioned', value: projectTelemetry.commissioned, className: 'bg-indigo-600' },
+                                { label: 'Completed', value: projectTelemetry.completed, className: 'bg-gray-900' },
+                            ]}
+                        />
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                        <Pill label={t('planning_phase', { defaultValue: 'Planning' })} value={projectTelemetry.planning} tone="orange" />
+                        <Pill label={t('active_operations', { defaultValue: 'Active' })} value={projectTelemetry.active} tone="green" />
+                        <Pill label={t('commissioned_review', { defaultValue: 'Commissioned' })} value={projectTelemetry.commissioned} tone="indigo" />
+                        <Pill label={t('archived_verified', { defaultValue: 'Completed' })} value={projectTelemetry.completed} tone="gray" />
+                    </div>
+                </div>
+            </div>
+
             {/* Tree Rendering */}
             <div className="space-y-8">
                 {structuredProjects.length > 0 ? structuredProjects.map(parent => (
@@ -303,6 +349,8 @@ function ProjectCard({ project, isChild = false, isAdmin, onArchive, onDelete })
                         <DetailRow icon={<CalendarIcon />} label="System Init" value={project?.start_date ? new Date(project.start_date).toLocaleDateString() : 'N/A'} />
                         <DetailRow icon={<UserIcon />} label="Lead Personnel" value={project?.project_manager?.full_name || 'UNASSIGNED'} />
                     </div>
+
+                    <ProjectTimelineProgress project={project} />
                 </div>
 
                 <div className="flex items-center gap-3 flex-shrink-0 w-full lg:w-auto pt-6 lg:pt-0 border-t lg:border-t-0 border-gray-50 dark:border-gray-700">
@@ -347,6 +395,57 @@ function DetailRow({ icon, label, value }) {
                 </p>
             </div>
         </div>
+    );
+}
+
+function ProjectTimelineProgress({ project }) {
+    const start = project?.start_date ? new Date(project.start_date) : null;
+    const end = project?.end_date ? new Date(project.end_date) : null;
+    if (!start || Number.isNaN(start.getTime()) || !end || Number.isNaN(end.getTime()) || end <= start) return null;
+
+    const now = new Date();
+    const pct = Math.max(0, Math.min(100, Math.round(((now - start) / (end - start)) * 100)));
+    const tone =
+        pct >= 100 ? 'bg-gray-900' : pct >= 66 ? 'bg-emerald-600' : pct >= 33 ? 'bg-indigo-600' : 'bg-orange-500';
+
+    return (
+        <div className="mt-6 ml-1">
+            <div className="flex items-center justify-between gap-4 mb-2">
+                <p className="text-[8px] font-black text-gray-400 uppercase tracking-[0.2em]">Timeline</p>
+                <p className="text-[8px] font-black text-gray-400 uppercase tracking-[0.2em]">{pct}%</p>
+            </div>
+            <div className="h-2.5 rounded-full bg-gray-100 dark:bg-gray-700 overflow-hidden border border-gray-100 dark:border-gray-700">
+                <div className={`h-full ${tone} rounded-full transition-[width] duration-500`} style={{ width: `${pct}%` }} />
+            </div>
+        </div>
+    );
+}
+
+function StackedBar({ segments }) {
+    const total = segments.reduce((sum, s) => sum + (s.value || 0), 0) || 1;
+    return (
+        <div className="h-3 w-full rounded-full overflow-hidden bg-gray-100 dark:bg-gray-700 border border-gray-100 dark:border-gray-700 flex">
+            {segments.map((s) => {
+                const pct = Math.max(0, Math.round(((s.value || 0) / total) * 100));
+                if (pct <= 0) return null;
+                return <div key={s.label} className={s.className} style={{ width: `${pct}%` }} title={`${s.label}: ${s.value}`} />;
+            })}
+        </div>
+    );
+}
+
+function Pill({ label, value, tone }) {
+    const tones = {
+        gray: 'bg-gray-50 text-gray-700 border-gray-100',
+        indigo: 'bg-indigo-50 text-indigo-700 border-indigo-100',
+        green: 'bg-emerald-50 text-emerald-700 border-emerald-100',
+        orange: 'bg-orange-50 text-orange-700 border-orange-100',
+    };
+    return (
+        <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${tones[tone] || tones.gray}`}>
+            <span>{label}</span>
+            <span className="text-gray-900/70">{value}</span>
+        </span>
     );
 }
 

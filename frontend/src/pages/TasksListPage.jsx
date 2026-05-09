@@ -199,6 +199,44 @@ function TasksListPage() {
         { value: 'Blocked', label: t('status_blocked', { defaultValue: 'Blocked' }) },
     ];
 
+    const taskTelemetry = useMemo(() => {
+        const counts = {
+            total: 0,
+            todo: 0,
+            inProgress: 0,
+            awaiting: 0,
+            blocked: 0,
+            commissioned: 0,
+            doneLike: 0, // awaiting + done (if any)
+            overdue: 0,
+        };
+
+        const now = new Date();
+
+        for (const task of tasks) {
+            counts.total += 1;
+            const status = (task?.status || '').toLowerCase();
+            if (status === 'to do') counts.todo += 1;
+            else if (status === 'in progress') counts.inProgress += 1;
+            else if (status === 'awaiting commissioning') counts.awaiting += 1;
+            else if (status === 'blocked') counts.blocked += 1;
+            else if (status === 'commissioned') counts.commissioned += 1;
+
+            // treat Awaiting Commissioning as "done-like" in the active list
+            if (status === 'awaiting commissioning' || status === 'done') counts.doneLike += 1;
+
+            if (task?.due_date && status !== 'commissioned') {
+                const due = new Date(task.due_date);
+                if (!Number.isNaN(due.getTime()) && due < now && status !== 'awaiting commissioning') {
+                    counts.overdue += 1;
+                }
+            }
+        }
+
+        const completionPct = counts.total > 0 ? Math.round((counts.doneLike / counts.total) * 100) : 0;
+        return { counts, completionPct };
+    }, [tasks]);
+
     return (
         <div className="container mx-auto p-4 md:p-8 max-w-7xl animate-in fade-in duration-500">
             {/* Header Area */}
@@ -264,6 +302,72 @@ function TasksListPage() {
                     {error}
                 </div>
             )}
+
+            {/* Progress Telemetry */}
+            <div className="mb-8 grid grid-cols-1 lg:grid-cols-3 gap-4">
+                <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-[2rem] border border-gray-100 dark:border-gray-700 shadow-sm p-6">
+                    <div className="flex items-center justify-between gap-4 mb-3">
+                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.22em]">
+                            {t('task_progress', { defaultValue: 'Task progress' })}
+                        </p>
+                        <p className="text-[10px] font-black text-indigo-600 uppercase tracking-[0.22em]">
+                            {taskTelemetry.completionPct}%
+                        </p>
+                    </div>
+                    <div className="h-3 rounded-full bg-gray-100 dark:bg-gray-700 overflow-hidden border border-gray-100 dark:border-gray-700">
+                        <div
+                            className="h-full bg-indigo-600 rounded-full transition-[width] duration-500"
+                            style={{ width: `${taskTelemetry.completionPct}%` }}
+                        />
+                    </div>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                        <Pill label={t('todo', { defaultValue: 'To Do' })} value={taskTelemetry.counts.todo} tone="gray" />
+                        <Pill label={t('in_progress', { defaultValue: 'In Progress' })} value={taskTelemetry.counts.inProgress} tone="indigo" />
+                        <Pill label={t('awaiting', { defaultValue: 'Awaiting' })} value={taskTelemetry.counts.awaiting} tone="green" />
+                        <Pill label={t('blocked', { defaultValue: 'Blocked' })} value={taskTelemetry.counts.blocked} tone="red" />
+                    </div>
+                </div>
+
+                <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-[2rem] border border-gray-100 dark:border-gray-700 shadow-sm p-6">
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.22em] mb-3">
+                        {t('status_distribution', { defaultValue: 'Status distribution' })}
+                    </p>
+                    <StackedBar
+                        segments={[
+                            { label: 'To Do', value: taskTelemetry.counts.todo, className: 'bg-gray-400' },
+                            { label: 'In Progress', value: taskTelemetry.counts.inProgress, className: 'bg-indigo-600' },
+                            { label: 'Awaiting', value: taskTelemetry.counts.awaiting, className: 'bg-emerald-600' },
+                            { label: 'Blocked', value: taskTelemetry.counts.blocked, className: 'bg-red-500' },
+                        ]}
+                    />
+                    <p className="mt-4 text-[10px] font-black text-gray-400 uppercase tracking-[0.22em]">
+                        {t('tasks_in_view', { defaultValue: 'Tasks in view' })}: <span className="text-gray-900 dark:text-gray-100">{taskTelemetry.counts.total}</span>
+                    </p>
+                </div>
+
+                <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-[2rem] border border-gray-100 dark:border-gray-700 shadow-sm p-6">
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.22em] mb-3">
+                        {t('attention', { defaultValue: 'Attention' })}
+                    </p>
+                    <div className="flex items-center justify-between p-4 rounded-2xl border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40">
+                        <div className="min-w-0">
+                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">
+                                {t('overdue', { defaultValue: 'Overdue' })}
+                            </p>
+                            <p className="text-2xl font-black tracking-tighter text-red-600">
+                                {taskTelemetry.counts.overdue}
+                            </p>
+                        </div>
+                        <div className="h-10 w-10 rounded-2xl bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800" />
+                    </div>
+                    {activeLog?.project?.name && (
+                        <p className="mt-4 text-[10px] font-black text-gray-400 uppercase tracking-[0.22em]">
+                            {t('locked_to_project', { defaultValue: 'Locked to project' })}:{' '}
+                            <span className="text-gray-900 dark:text-gray-100">{activeLog.project.name}</span>
+                        </p>
+                    )}
+                </div>
+            </div>
 
             {/* Tactical Control Bar */}
             <div className="mb-8 grid grid-cols-1 xl:grid-cols-12 gap-4 bg-white dark:bg-gray-800 p-6 rounded-[2.5rem] border border-gray-100 dark:border-gray-700 shadow-sm">
@@ -360,6 +464,34 @@ function TasksListPage() {
                 </div>
             )}
         </div>
+    );
+}
+
+function StackedBar({ segments }) {
+    const total = segments.reduce((sum, s) => sum + (s.value || 0), 0) || 1;
+    return (
+        <div className="h-3 w-full rounded-full overflow-hidden bg-gray-100 dark:bg-gray-700 border border-gray-100 dark:border-gray-700 flex">
+            {segments.map((s) => {
+                const pct = Math.max(0, Math.round(((s.value || 0) / total) * 100));
+                if (pct <= 0) return null;
+                return <div key={s.label} className={s.className} style={{ width: `${pct}%` }} title={`${s.label}: ${s.value}`} />;
+            })}
+        </div>
+    );
+}
+
+function Pill({ label, value, tone }) {
+    const tones = {
+        gray: 'bg-gray-50 text-gray-600 border-gray-100',
+        indigo: 'bg-indigo-50 text-indigo-700 border-indigo-100',
+        green: 'bg-emerald-50 text-emerald-700 border-emerald-100',
+        red: 'bg-red-50 text-red-700 border-red-100',
+    };
+    return (
+        <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${tones[tone] || tones.gray}`}>
+            <span>{label}</span>
+            <span className="text-gray-900/70">{value}</span>
+        </span>
     );
 }
 

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import axiosInstance from '../api/axiosInstance';
+import { extractTenantList } from '../utils/tenantUtils';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -52,6 +53,15 @@ const PERMISSION_OPTIONS = [
 
     { value: 'handover.generate', label: 'Client handover – generate packages' },
 ];
+
+const ROLE_LABEL_KEYS = {
+    admin: 'role_admin',
+    'project manager': 'role_project_manager',
+    'team leader': 'role_team_leader',
+    electrician: 'role_electrician',
+    accountant: 'role_accountant',
+    subcontractor: 'role_subcontractor',
+};
 
 function UserEditPage() {
     const { t } = useTranslation();
@@ -129,7 +139,7 @@ function UserEditPage() {
 
                 if (isSuperuserEditing) {
                     const tenantRes = await axiosInstance.get('/tenants/');
-                    setAllTenants(tenantRes.data);
+                    setAllTenants(extractTenantList(tenantRes?.data));
                 }
 
                 // Phase 3: Active Membership Cross-Reference
@@ -295,30 +305,34 @@ function UserEditPage() {
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <Field label="Full Legal Name" icon={<UserIcon />}>
+                            <Field label={t('full_legal_name')} icon={<UserIcon />}>
                                 <input type="text" name="full_name" value={formData.full_name} onChange={handleChange} disabled={!canSaveChanges} className="modern-input h-14 font-black" />
                             </Field>
-                            <Field label="Personnel Email*" icon={<EnvelopeIcon />}>
+                            <Field label={`${t('personnel_email')}*`} icon={<EnvelopeIcon />}>
                                 <input type="email" name="email" required value={formData.email} onChange={handleChange} disabled={!canSaveChanges} className="modern-input h-14" />
                             </Field>
-                            <Field label="Kennitala (ID Number)" icon={<FingerPrintIcon />}>
+                            <Field label="Kennitala (ID)" icon={<FingerPrintIcon />}>
                                 <input type="text" name="kennitala" value={formData.kennitala} onChange={handleChange} disabled={!canSaveChanges} className="modern-input h-14 font-mono text-indigo-600" />
                             </Field>
-                            <Field label="Internal Identifier" icon={<HashtagIcon />}>
+                            <Field label={t('employee_id_label')} icon={<HashtagIcon />}>
                                 <input type="text" name="employee_id" value={formData.employee_id} onChange={handleChange} disabled={!canSaveChanges} className="modern-input h-14 font-bold" />
                             </Field>
-                            <Field label="Mobile Tactical Link" icon={<PhoneIcon />}>
+                            <Field label={t('mobile_tactical_link')} icon={<PhoneIcon />}>
                                 <input type="tel" name="phone_number" value={formData.phone_number} onChange={handleChange} disabled={!canSaveChanges} className="modern-input h-14" />
                             </Field>
-                            <Field label="Deployment Base (City)" icon={<MapIcon />}>
+                            <Field label={t('deployment_base')} icon={<MapIcon />}>
                                 <input type="text" name="city" value={formData.city} onChange={handleChange} disabled={!canSaveChanges} className="modern-input h-14 font-bold" />
                             </Field>
-                            <Field label="Assigned Operational Role*" icon={<BriefcaseIcon />}>
+                            <Field label={`${t('assigned_role')}*`} icon={<BriefcaseIcon />}>
                                 <select name="role" required value={formData.role} onChange={handleChange} disabled={!canSaveChanges} className="modern-input h-14 font-black uppercase text-[11px] tracking-widest appearance-none">
-                                    {ROLES_LIST.map(r => <option key={r} value={r}>{r.toUpperCase()}</option>)}
+                                    {ROLES_LIST.map(r => (
+                                        <option key={r} value={r}>
+                                            {t(ROLE_LABEL_KEYS[r] || r)}
+                                        </option>
+                                    ))}
                                 </select>
                             </Field>
-                            <Field label="Hourly Labor Value (ISK)" icon={<BanknotesIcon />}>
+                            <Field label={t('hourly_labor_value')} icon={<BanknotesIcon />}>
                                 <input type="number" name="hourly_rate" value={formData.hourly_rate} onChange={handleChange} disabled={!canSaveChanges} className="modern-input h-14 font-mono text-emerald-600 font-black" />
                             </Field>
                         </div>
