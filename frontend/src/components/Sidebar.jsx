@@ -32,6 +32,7 @@ import {
     LanguageIcon,
     BellIcon,
     Squares2X2Icon,
+    GlobeAltIcon,
     ShieldExclamationIcon as ShieldExclamationOutlineIcon
 } from '@heroicons/react/24/outline';
 
@@ -68,7 +69,7 @@ function Sidebar() {
 
             {/* Header: Identity Terminal - FIXED OVERFLOW */}
             <div className="flex items-center justify-between px-4 h-24 border-b border-gray-50 dark:border-gray-800 relative overflow-visible">
-                <Link to="/" className={`flex items-center gap-3 ${isCollapsed ? 'hidden' : 'animate-in fade-in duration-500'}`}>
+                <Link to="/dashboard" className={`flex items-center gap-3 ${isCollapsed ? 'hidden' : 'animate-in fade-in duration-500'}`}>
                     <div className="h-12 w-12 flex-shrink-0 bg-gray-50 dark:bg-gray-800 rounded-2xl p-1.5 border border-gray-100 dark:border-gray-700 shadow-sm">
                         <img
                             src={logoToDisplay}
@@ -102,7 +103,8 @@ function Sidebar() {
                 <div>
                     {!isCollapsed && <p className="px-3 text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-4">{t('core_operations')}</p>}
                     <div className="space-y-1">
-                        <NavItem to="/" icon={<HomeIcon />} label={t('dashboard')} collapsed={isCollapsed} end />
+                        <NavItem to="/dashboard" icon={<HomeIcon />} label={t('dashboard')} collapsed={isCollapsed} end />
+                        <NavItem to="/" icon={<GlobeAltIcon />} label={t('home')} collapsed={isCollapsed} end />
                         <NavItem to="/notifications" icon={<BellIcon />} label={t('notifications')} collapsed={isCollapsed} />
                         {isManagement && (
                             <NavItem to="/scheduling" icon={<Squares2X2Icon />} label={t('schedule')} collapsed={isCollapsed} />
@@ -204,7 +206,8 @@ function Sidebar() {
                     </NavLink>
 
                     <button
-                        onClick={logout}
+                        type="button"
+                        onClick={() => logout()}
                         className="flex items-center px-3 py-3 text-[10px] font-black uppercase tracking-[0.2em] text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-2xl w-full transition-all group"
                     >
                         <ArrowRightOnRectangleIcon className="h-5 w-5 flex-shrink-0 group-hover:translate-x-1 transition-transform" />

@@ -45,10 +45,46 @@ function AdminToolsPage() {
     const [tenantHealth, setTenantHealth] = useState([]);
     const [activeBanner, setActiveBanner] = useState(null);
     const [bannerMessage, setBannerMessage] = useState('');
+    const [landingFeed, setLandingFeed] = useState({
+        news: [],
+        updates: [],
+        tools: [],
+        interesting: [],
+        background_image_urls: [],
+        background_slide_seconds: 8,
+    });
+    const [landingVisibility, setLandingVisibility] = useState({
+        show_news: true,
+        show_updates: true,
+        show_tools: true,
+        show_interesting: true,
+    });
+    const [draggedItem, setDraggedItem] = useState(null);
     const [isLoadingMetrics, setIsLoadingMetrics] = useState(false);
     const [isSeedingDemo, setIsSeedingDemo] = useState(false);
+    const [isUploadingLandingBg, setIsUploadingLandingBg] = useState(false);
 
     const isSuperuser = currentUser && currentUser.is_superuser;
+
+    const toLocalInputValue = (value) => {
+        if (!value) return '';
+        const dt = new Date(value);
+        if (Number.isNaN(dt.getTime())) return '';
+        const pad = (n) => String(n).padStart(2, '0');
+        return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+    };
+
+    const hydrateFeedItems = (items) =>
+        (Array.isArray(items) ? items : []).map((item) => ({
+            ...item,
+            source: item?.source || '',
+            image_url: item?.image_url || '',
+            link_url: item?.link_url || '',
+            link_label: item?.link_label || '',
+            is_pinned: !!item?.is_pinned,
+            starts_at: toLocalInputValue(item?.starts_at),
+            ends_at: toLocalInputValue(item?.ends_at),
+        }));
 
     useEffect(() => {
         if (!authIsLoading) {
@@ -67,7 +103,7 @@ function AdminToolsPage() {
             if (!isSuperuser) return;
             setIsLoadingMetrics(true);
             try {
-                const [heatmapRes, growthRes, loadRes, billingRes, statusRes, logsRes, auditRes, healthRes, bannerRes] = await Promise.all([
+                const [heatmapRes, growthRes, loadRes, billingRes, statusRes, logsRes, auditRes, healthRes, bannerRes, landingFeedRes] = await Promise.all([
                     axiosInstance.get('/admin/super/tenant-heatmap'),
                     axiosInstance.get('/admin/super/growth-metrics'),
                     axiosInstance.get('/admin/super/system-load'),
@@ -77,6 +113,7 @@ function AdminToolsPage() {
                     axiosInstance.get('/admin/audit-logs', { params: { limit: 200 } }),
                     axiosInstance.get('/admin/super/tenant-health'),
                     axiosInstance.get('/system/banner'),
+                    axiosInstance.get('/system/landing-feed'),
                 ]);
                 setHeatmap(heatmapRes.data);
                 setGrowth(growthRes.data);
@@ -88,6 +125,24 @@ function AdminToolsPage() {
                 setAuditLogs(Array.isArray(auditRes.data) ? auditRes.data : []);
                 setTenantHealth(Array.isArray(healthRes.data) ? healthRes.data : []);
                 setActiveBanner(bannerRes.data || null);
+                const lf = landingFeedRes.data || {};
+                setLandingFeed({
+                    news: hydrateFeedItems(lf.news),
+                    updates: hydrateFeedItems(lf.updates),
+                    tools: hydrateFeedItems(lf.tools),
+                    interesting: hydrateFeedItems(Array.isArray(lf.interesting) ? lf.interesting : lf.random),
+                    background_image_urls: Array.isArray(lf.background_image_urls) ? lf.background_image_urls : [],
+                    background_slide_seconds:
+                        typeof lf.background_slide_seconds === 'number' && !Number.isNaN(lf.background_slide_seconds)
+                            ? lf.background_slide_seconds
+                            : Math.min(600, Math.max(3, parseInt(lf.background_slide_seconds, 10) || 8)),
+                });
+                setLandingVisibility({
+                    show_news: lf.show_news !== false,
+                    show_updates: lf.show_updates !== false,
+                    show_tools: lf.show_tools !== false,
+                    show_interesting: lf.show_interesting !== false,
+                });
             } catch (err) {
                 console.error('Admin metrics fetch failed:', err);
                 toast.error('Failed to load platform metrics.');
@@ -113,6 +168,202 @@ function AdminToolsPage() {
             toast.error(err.response?.data?.detail || 'Failed to create banner.');
         }
     };
+
+    const handleSaveLandingFeed = async () => {
+        try {
+            const normalizeItems = (items) =>
+                (items || []).map((item) => ({
+                    ...item,
+                    starts_at: item.starts_at ? item.starts_at : null,
+                    ends_at: item.ends_at ? item.ends_at : null,
+                    source: item.source || null,
+                    image_url: item.image_url || null,
+                    link_url: item.link_url || null,
+                    link_label: item.link_label || null,
+                    is_pinned: !!item.is_pinned,
+                }));
+            const bgUrls = (landingFeed.background_image_urls || [])
+                .map((u) => (typeof u === 'string' ? u.trim() : ''))
+                .filter(Boolean);
+            const slideRaw = Number(landingFeed.background_slide_seconds);
+            const slideSec = Number.isFinite(slideRaw) ? Math.min(600, Math.max(3, slideRaw)) : 8;
+            const payload = {
+                news: normalizeItems(landingFeed.news),
+                updates: normalizeItems(landingFeed.updates),
+                tools: normalizeItems(landingFeed.tools),
+                interesting: normalizeItems(landingFeed.interesting),
+                show_news: landingVisibility.show_news !== false,
+                show_updates: landingVisibility.show_updates !== false,
+                show_tools: landingVisibility.show_tools !== false,
+                show_interesting: landingVisibility.show_interesting !== false,
+                background_image_urls: bgUrls,
+                background_slide_seconds: slideSec,
+            };
+            const res = await axiosInstance.post('/system/landing-feed', payload);
+            const lf = res.data || payload;
+            setLandingFeed({
+                news: hydrateFeedItems(lf.news),
+                updates: hydrateFeedItems(lf.updates),
+                tools: hydrateFeedItems(lf.tools),
+                interesting: hydrateFeedItems(lf.interesting),
+                background_image_urls: Array.isArray(lf.background_image_urls) ? lf.background_image_urls : [],
+                background_slide_seconds:
+                    typeof lf.background_slide_seconds === 'number' && !Number.isNaN(lf.background_slide_seconds)
+                        ? lf.background_slide_seconds
+                        : Math.min(600, Math.max(3, parseInt(lf.background_slide_seconds, 10) || 8)),
+            });
+            setLandingVisibility({
+                show_news: lf.show_news !== false,
+                show_updates: lf.show_updates !== false,
+                show_tools: lf.show_tools !== false,
+                show_interesting: lf.show_interesting !== false,
+            });
+            toast.success('Landing page feed updated.');
+        } catch (err) {
+            toast.error(err.response?.data?.detail || 'Failed to update landing feed.');
+        }
+    };
+
+    const upsertFeedItem = (section, index, key, value) => {
+        setLandingFeed(prev => {
+            const next = { ...prev };
+            const arr = [...(next[section] || [])];
+            const row = { ...(arr[index] || { title: '', text: '', link_url: '', link_label: '', image_url: '' }) };
+            row[key] = value;
+            arr[index] = row;
+            next[section] = arr;
+            return next;
+        });
+    };
+
+    const addFeedItem = (section) => {
+        setLandingFeed(prev => ({
+            ...prev,
+            [section]: [
+                ...(prev[section] || []),
+                { title: '', text: '', link_url: '', link_label: '', image_url: '', source: '', is_pinned: false, starts_at: '', ends_at: '' },
+            ],
+        }));
+    };
+
+    const addTemplateItem = (section, kind) => {
+        const templates = {
+            release: {
+                title: 'Release Note',
+                text: 'Briefly summarize what changed and why it matters.',
+                link_label: 'Read update',
+            },
+            tool: {
+                title: 'Tool Spotlight',
+                text: 'New electrical tool added to field workflow and recommended usage.',
+                link_label: 'Tool details',
+                source: 'Manufacturer',
+            },
+            tip: {
+                title: 'Tip of the Week',
+                text: 'Practical field tip for faster and safer installation work.',
+                link_label: 'Read tip',
+            },
+        };
+        const tpl = templates[kind] || templates.release;
+        setLandingFeed((prev) => ({
+            ...prev,
+            [section]: [
+                ...(prev[section] || []),
+                {
+                    title: tpl.title,
+                    text: tpl.text,
+                    link_url: '',
+                    link_label: tpl.link_label || '',
+                    image_url: '',
+                    source: tpl.source || '',
+                    is_pinned: false,
+                    starts_at: '',
+                    ends_at: '',
+                },
+            ],
+        }));
+    };
+
+    const removeFeedItem = (section, index) => {
+        setLandingFeed(prev => ({
+            ...prev,
+            [section]: (prev[section] || []).filter((_, i) => i !== index),
+        }));
+    };
+
+    const moveFeedItem = (section, fromIndex, toIndex) => {
+        if (fromIndex === toIndex) return;
+        setLandingFeed(prev => {
+            const arr = [...(prev[section] || [])];
+            if (fromIndex < 0 || toIndex < 0 || fromIndex >= arr.length || toIndex >= arr.length) return prev;
+            const [item] = arr.splice(fromIndex, 1);
+            arr.splice(toIndex, 0, item);
+            return { ...prev, [section]: arr };
+        });
+    };
+
+    const onFeedDragStart = (section, index) => {
+        setDraggedItem({ section, index });
+    };
+
+    const onFeedDrop = (section, index) => {
+        if (!draggedItem || draggedItem.section !== section) return;
+        moveFeedItem(section, draggedItem.index, index);
+        setDraggedItem(null);
+    };
+
+    const addLandingBackgroundUrl = () => {
+        setLandingFeed((prev) => ({
+            ...prev,
+            background_image_urls: [...(prev.background_image_urls || []), ''],
+        }));
+    };
+
+    const updateLandingBackgroundUrl = (index, value) => {
+        setLandingFeed((prev) => {
+            const arr = [...(prev.background_image_urls || [])];
+            arr[index] = value;
+            return { ...prev, background_image_urls: arr };
+        });
+    };
+
+    const removeLandingBackgroundUrl = (index) => {
+        setLandingFeed((prev) => ({
+            ...prev,
+            background_image_urls: (prev.background_image_urls || []).filter((_, i) => i !== index),
+        }));
+    };
+
+    const handleLandingBackgroundUpload = async (e) => {
+        const file = e.target.files?.[0];
+        if (e.target) e.target.value = '';
+        if (!file) return;
+        setIsUploadingLandingBg(true);
+        try {
+            const fd = new FormData();
+            fd.append('file', file);
+            const res = await axiosInstance.post('/system/landing-background', fd);
+            const url = res.data?.url;
+            if (!url) throw new Error('No URL returned');
+            setLandingFeed((prev) => ({
+                ...prev,
+                background_image_urls: [...(prev.background_image_urls || []), url],
+            }));
+            toast.success('Image uploaded. Click Save landing feed to publish.');
+        } catch (err) {
+            toast.error(err.response?.data?.detail || err.message || 'Upload failed.');
+        } finally {
+            setIsUploadingLandingBg(false);
+        }
+    };
+
+    const landingPreviewSections = [
+        { key: 'news', label: 'News', visibleKey: 'show_news' },
+        { key: 'updates', label: 'Updates', visibleKey: 'show_updates' },
+        { key: 'tools', label: 'Electrical tools', visibleKey: 'show_tools' },
+        { key: 'interesting', label: 'Interesting stuff', visibleKey: 'show_interesting' },
+    ];
 
     const handleDismissBanner = async () => {
         if (!activeBanner?.id) return;
@@ -615,6 +866,302 @@ function AdminToolsPage() {
                                     </button>
                                 </div>
                             )}
+                        </div>
+
+                        <div className="p-5 bg-sky-50 dark:bg-sky-900/20 rounded-3xl border border-sky-200 dark:border-sky-700">
+                            <div className="flex items-center gap-2 mb-3">
+                                <GlobeAltIcon className="h-5 w-5 text-sky-600 dark:text-sky-300" />
+                                <h3 className="text-xs font-black text-gray-800 dark:text-gray-100 uppercase tracking-[0.25em]">
+                                    Landing page feed
+                                </h3>
+                            </div>
+                            <p className="text-[10px] text-gray-600 dark:text-gray-300 mb-3">
+                                Add card entries for home page sections. Links are optional.
+                            </p>
+                            <div className="mb-4 rounded-2xl border border-sky-200 dark:border-sky-700 p-3 bg-white/80 dark:bg-gray-800/60">
+                                <h4 className="text-[11px] font-black uppercase tracking-widest text-sky-700 dark:text-sky-200 mb-2">
+                                    Background photos
+                                </h4>
+                                <p className="text-[10px] text-gray-500 dark:text-gray-400 mb-2">
+                                    Upload a static image file (stored on this server) or paste image URLs. With multiple backgrounds, the public landing page crossfades between them on a timer.
+                                </p>
+                                <div className="mb-3 flex flex-wrap items-center gap-2">
+                                    <input
+                                        id="landing-bg-upload-input"
+                                        type="file"
+                                        accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp"
+                                        className="sr-only"
+                                        disabled={isUploadingLandingBg}
+                                        onChange={handleLandingBackgroundUpload}
+                                    />
+                                    <label
+                                        htmlFor="landing-bg-upload-input"
+                                        className={`inline-flex cursor-pointer items-center rounded-lg px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-white ${
+                                            isUploadingLandingBg ? 'bg-sky-400' : 'bg-sky-600 hover:bg-sky-700'
+                                        }`}
+                                    >
+                                        {isUploadingLandingBg ? 'Uploading…' : 'Upload static image'}
+                                    </label>
+                                    <span className="text-[9px] text-gray-500 dark:text-gray-400">PNG, JPG, WebP · max 10MB</span>
+                                </div>
+                                {(landingFeed.background_image_urls || []).map((url, idx) => (
+                                    <div key={`landing-bg-${idx}`} className="flex gap-2 mb-2">
+                                        <input
+                                            value={url}
+                                            onChange={(e) => updateLandingBackgroundUrl(idx, e.target.value)}
+                                            placeholder="https://… or /static/…"
+                                            className="flex-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-2 py-1.5 text-xs"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => removeLandingBackgroundUrl(idx)}
+                                            className="shrink-0 px-2 py-1 rounded-lg border border-red-200 text-red-600 text-[10px] font-black uppercase tracking-widest hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-900/20"
+                                        >
+                                            Remove
+                                        </button>
+                                    </div>
+                                ))}
+                                <button
+                                    type="button"
+                                    onClick={addLandingBackgroundUrl}
+                                    className="mb-3 px-2 py-1 rounded-lg bg-sky-500 hover:bg-sky-600 text-white text-[10px] font-black uppercase tracking-widest"
+                                >
+                                    Add background URL
+                                </button>
+                                <label className="flex flex-col gap-1 text-[10px] font-black uppercase tracking-widest text-gray-500">
+                                    Seconds between slides (3–600)
+                                    <input
+                                        type="number"
+                                        min={3}
+                                        max={600}
+                                        value={landingFeed.background_slide_seconds ?? 8}
+                                        onChange={(e) => {
+                                            const v = parseInt(e.target.value, 10);
+                                            setLandingFeed((prev) => ({
+                                                ...prev,
+                                                background_slide_seconds: Number.isFinite(v) ? Math.min(600, Math.max(3, v)) : 8,
+                                            }));
+                                        }}
+                                        className="max-w-[120px] rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-2 py-1.5 text-xs font-bold normal-case"
+                                    />
+                                </label>
+                            </div>
+                            {[
+                                { key: 'news', label: 'News', visibleKey: 'show_news' },
+                                { key: 'updates', label: 'Updates', visibleKey: 'show_updates' },
+                                { key: 'tools', label: 'Electrical tools', visibleKey: 'show_tools' },
+                                { key: 'interesting', label: 'Interesting stuff', visibleKey: 'show_interesting' },
+                            ].map((section) => (
+                                <div key={section.key} className="mb-4 rounded-2xl border border-sky-200 dark:border-sky-700 p-3 bg-white/80 dark:bg-gray-800/60">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <div className="flex items-center gap-3">
+                                            <h4 className="text-[11px] font-black uppercase tracking-widest text-sky-700 dark:text-sky-200">
+                                                {section.label}
+                                            </h4>
+                                            <label className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-gray-500">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={landingVisibility[section.visibleKey] !== false}
+                                                    onChange={(e) =>
+                                                        setLandingVisibility((prev) => ({ ...prev, [section.visibleKey]: e.target.checked }))
+                                                    }
+                                                />
+                                                Published
+                                            </label>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => addFeedItem(section.key)}
+                                            className="px-2 py-1 rounded-lg bg-sky-600 hover:bg-sky-700 text-white text-[10px] font-black uppercase tracking-widest"
+                                        >
+                                            Add item
+                                        </button>
+                                    </div>
+                                    <div className="flex flex-wrap gap-2 mb-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => addTemplateItem(section.key, 'release')}
+                                            className="px-2 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-[9px] font-black uppercase tracking-widest"
+                                        >
+                                            + Release template
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => addTemplateItem(section.key, 'tool')}
+                                            className="px-2 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[9px] font-black uppercase tracking-widest"
+                                        >
+                                            + Tool template
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => addTemplateItem(section.key, 'tip')}
+                                            className="px-2 py-1 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-[9px] font-black uppercase tracking-widest"
+                                        >
+                                            + Tip template
+                                        </button>
+                                    </div>
+                                    {(landingFeed[section.key] || []).length === 0 && (
+                                        <p className="text-[10px] text-gray-500 italic">No items yet.</p>
+                                    )}
+                                    {(landingFeed[section.key] || []).map((item, idx) => (
+                                        <div
+                                            key={`${section.key}-${idx}`}
+                                            draggable
+                                            onDragStart={() => onFeedDragStart(section.key, idx)}
+                                            onDragOver={(e) => e.preventDefault()}
+                                            onDrop={() => onFeedDrop(section.key, idx)}
+                                            className="mb-2 p-2 rounded-xl border border-sky-100 dark:border-sky-800 bg-white dark:bg-gray-800 cursor-move"
+                                        >
+                                            <div className="grid grid-cols-1 gap-2">
+                                                <p className="text-[9px] font-black uppercase tracking-widest text-gray-400">
+                                                    Drag to reorder
+                                                </p>
+                                                <input
+                                                    value={item.title || ''}
+                                                    onChange={(e) => upsertFeedItem(section.key, idx, 'title', e.target.value)}
+                                                    placeholder="Title"
+                                                    className="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-2 py-1.5 text-xs"
+                                                />
+                                                <textarea
+                                                    value={item.text || ''}
+                                                    onChange={(e) => upsertFeedItem(section.key, idx, 'text', e.target.value)}
+                                                    placeholder="Description"
+                                                    rows={2}
+                                                    className="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-2 py-1.5 text-xs"
+                                                />
+                                                <input
+                                                    value={item.link_url || ''}
+                                                    onChange={(e) => upsertFeedItem(section.key, idx, 'link_url', e.target.value)}
+                                                    placeholder="Link URL (optional)"
+                                                    className="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-2 py-1.5 text-xs"
+                                                />
+                                                <input
+                                                    value={item.image_url || ''}
+                                                    onChange={(e) => upsertFeedItem(section.key, idx, 'image_url', e.target.value)}
+                                                    placeholder="Image URL (optional thumbnail)"
+                                                    className="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-2 py-1.5 text-xs"
+                                                />
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                                    <input
+                                                        value={item.source || ''}
+                                                        onChange={(e) => upsertFeedItem(section.key, idx, 'source', e.target.value)}
+                                                        placeholder="Source tag (e.g. Manufacturer, YouTube, Article)"
+                                                        className="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-2 py-1.5 text-xs"
+                                                    />
+                                                    <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-500 border border-gray-200 dark:border-gray-700 rounded-lg px-2 py-1.5">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={!!item.is_pinned}
+                                                            onChange={(e) => upsertFeedItem(section.key, idx, 'is_pinned', e.target.checked)}
+                                                        />
+                                                        Pinned
+                                                    </label>
+                                                </div>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                                    <input
+                                                        type="datetime-local"
+                                                        value={item.starts_at || ''}
+                                                        onChange={(e) => upsertFeedItem(section.key, idx, 'starts_at', e.target.value)}
+                                                        className="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-2 py-1.5 text-xs"
+                                                    />
+                                                    <input
+                                                        type="datetime-local"
+                                                        value={item.ends_at || ''}
+                                                        onChange={(e) => upsertFeedItem(section.key, idx, 'ends_at', e.target.value)}
+                                                        className="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-2 py-1.5 text-xs"
+                                                    />
+                                                </div>
+                                                {item.image_url && (
+                                                    <img
+                                                        src={item.image_url}
+                                                        alt={item.title || 'preview'}
+                                                        className="w-full h-24 object-cover rounded-lg border border-gray-100 dark:border-gray-700"
+                                                    />
+                                                )}
+                                                <div className="flex items-center gap-2">
+                                                    <input
+                                                        value={item.link_label || ''}
+                                                        onChange={(e) => upsertFeedItem(section.key, idx, 'link_label', e.target.value)}
+                                                        placeholder="Link label (optional)"
+                                                        className="flex-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-2 py-1.5 text-xs"
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => removeFeedItem(section.key, idx)}
+                                                        className="px-2 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-[10px] font-black uppercase tracking-widest"
+                                                    >
+                                                        Remove
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ))}
+                            <button
+                                type="button"
+                                onClick={handleSaveLandingFeed}
+                                className="mt-3 w-full py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold uppercase tracking-wider"
+                            >
+                                Save landing feed
+                            </button>
+
+                            <div className="mt-5 pt-4 border-t border-sky-200 dark:border-sky-700">
+                                <h4 className="text-[11px] font-black uppercase tracking-widest text-sky-700 dark:text-sky-200 mb-3">
+                                    Live preview
+                                </h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    {landingPreviewSections
+                                        .filter((s) => landingVisibility[s.visibleKey] !== false)
+                                        .map((section) => (
+                                            <div
+                                                key={`preview-${section.key}`}
+                                                className="rounded-xl border border-sky-100 dark:border-sky-800 bg-white dark:bg-gray-800 p-3"
+                                            >
+                                                <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">
+                                                    {section.label}
+                                                </p>
+                                                {(landingFeed[section.key] || []).length === 0 ? (
+                                                    <p className="text-xs text-gray-400 italic">No items.</p>
+                                                ) : (
+                                                    <div className="space-y-2">
+                                                        {(landingFeed[section.key] || [])
+                                                            .slice()
+                                                            .sort((a, b) => Number(!!b.is_pinned) - Number(!!a.is_pinned))
+                                                            .slice(0, 3)
+                                                            .map((item, idx) => (
+                                                                <div key={`preview-item-${section.key}-${idx}`} className="text-xs">
+                                                                    <div className="flex items-center gap-2">
+                                                                        <p className="font-bold text-gray-900 dark:text-gray-100">
+                                                                            {item.title || 'Untitled'}
+                                                                        </p>
+                                                                        {item.is_pinned && (
+                                                                            <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200">
+                                                                                Pinned
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
+                                                                    <p className="text-gray-600 dark:text-gray-300">
+                                                                        {item.text || 'No description'}
+                                                                    </p>
+                                                                    {item.link_url && (
+                                                                        <p className="text-[10px] font-black uppercase tracking-widest text-indigo-600 mt-1">
+                                                                            {item.link_label || 'Open Link'}
+                                                                        </p>
+                                                                    )}
+                                                                    {item.source && (
+                                                                        <p className="text-[9px] uppercase tracking-widest text-gray-400 mt-1">
+                                                                            Source: {item.source}
+                                                                        </p>
+                                                                    )}
+                                                                </div>
+                                                            ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))}
+                                </div>
+                            </div>
                         </div>
 
                         <div className="p-5 bg-red-50 dark:bg-red-900/20 rounded-3xl border border-red-200 dark:border-red-700">

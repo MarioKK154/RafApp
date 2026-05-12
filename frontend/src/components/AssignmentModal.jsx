@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import axiosInstance from '../api/axiosInstance';
 import { useAuth } from '../context/AuthContext';
 import { XMarkIcon, CalendarDaysIcon, BriefcaseIcon } from '@heroicons/react/24/outline';
 import { format } from 'date-fns';
 import { toast } from 'react-toastify';
 
-const AssignmentModal = ({ isOpen, onClose, selectedUser, selectedDate, onAssignmentCreated }) => {
+const AssignmentModal = ({ isOpen, onClose, selectedUser, selectedDate, onAssignmentCreated, leaveBlocks = [] }) => {
     const { user: currentUser } = useAuth();
 
     const isSuperuser = currentUser?.is_superuser;
@@ -25,6 +25,20 @@ const AssignmentModal = ({ isOpen, onClose, selectedUser, selectedDate, onAssign
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isLoadingOptions, setIsLoadingOptions] = useState(false);
+
+    const leaveConflict = useMemo(() => {
+        if (!selectedUser?.id || !leaveBlocks?.length || !formData.start_date || !formData.end_date) {
+            return null;
+        }
+        const s = formData.start_date;
+        const e = formData.end_date;
+        return (
+            leaveBlocks.find((b) => {
+                if (b.user_id !== selectedUser.id) return false;
+                return s <= String(b.end_date) && e >= String(b.start_date);
+            }) || null
+        );
+    }, [selectedUser, leaveBlocks, formData.start_date, formData.end_date]);
 
     // Sync form with the date clicked on the grid
     useEffect(() => {
@@ -182,6 +196,25 @@ const AssignmentModal = ({ isOpen, onClose, selectedUser, selectedDate, onAssign
                 </header>
 
                 <form onSubmit={handleSubmit} className="p-8 space-y-6">
+                    {leaveConflict && (
+                        <div className="flex gap-3 p-4 rounded-2xl border border-amber-200 bg-amber-50 dark:bg-amber-950/40 dark:border-amber-700/80 text-amber-900 dark:text-amber-100">
+                            <CalendarDaysIcon className="h-6 w-6 flex-shrink-0 text-amber-600 dark:text-amber-400" />
+                            <div>
+                                <p className="text-[10px] font-black uppercase tracking-widest text-amber-800 dark:text-amber-200">
+                                    Listed as unavailable (approved leave)
+                                </p>
+                                <p className="text-xs font-bold mt-1">
+                                    {leaveConflict.leave_type}{' '}
+                                    <span className="font-mono opacity-90">
+                                        ({String(leaveConflict.start_date)} → {String(leaveConflict.end_date)})
+                                    </span>
+                                </p>
+                                <p className="text-[10px] font-semibold mt-2 opacity-80">
+                                    Assignment can still proceed—confirm with HR if needed.
+                                </p>
+                            </div>
+                        </div>
+                    )}
                     {/* Project Selection */}
                     {/* Project / Task Selection */}
                     {isProjectManager && activeProject && tasks.length > 0 ? (

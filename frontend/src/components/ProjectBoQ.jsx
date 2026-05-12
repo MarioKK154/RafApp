@@ -4,7 +4,9 @@ import { inventoryDisplayName } from '../utils/inventoryI18n';
 import axiosInstance from '../api/axiosInstance';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
+import { useInventoryCatalogShopFilter } from '../hooks/useInventoryCatalogShopFilter';
 import LoadingSpinner from './LoadingSpinner';
+import InventoryCatalogShopFilters from './InventoryCatalogShopFilters';
 import { 
     PlusIcon, 
     TrashIcon, 
@@ -30,6 +32,14 @@ function ProjectBoQ({ projectId }) {
     // Authorization Clearance
     const canManageBoQ = user && (['admin', 'project manager'].includes(user.role) || user.is_superuser);
 
+    const {
+        selectedShops,
+        toggleShop,
+        shopMatchMode,
+        setShopMatchMode,
+        buildCatalogParams,
+    } = useInventoryCatalogShopFilter();
+
     /**
      * Protocol: Synchronize Bill of Quantities with Warehouse Catalog
      */
@@ -40,8 +50,9 @@ function ProjectBoQ({ projectId }) {
         try {
             const [boqResponse, inventoryResponse] = await Promise.all([
                 axiosInstance.get(`/boq/project/${projectId}`),
-                // FIXED: Direct link to new robust catalog endpoint
-                axiosInstance.get('/inventory/catalog', { params: { limit: 1000 } })
+                axiosInstance.get('/inventory/catalog', {
+                    params: buildCatalogParams({ limit: 4000 }),
+                }),
             ]);
             setBoq(boqResponse.data);
             setInventoryItems(Array.isArray(inventoryResponse.data) ? inventoryResponse.data : []);
@@ -52,7 +63,7 @@ function ProjectBoQ({ projectId }) {
         } finally {
             setIsLoading(false);
         }
-    }, [projectId]);
+    }, [projectId, buildCatalogParams]);
 
     useEffect(() => {
         fetchData();
@@ -150,6 +161,14 @@ function ProjectBoQ({ projectId }) {
                         <div className="flex items-center gap-2 mb-6 ml-1">
                             <PlusIcon className="h-4 w-4 text-emerald-500 stroke-[3px]" />
                             <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Register Material Requirement</h3>
+                        </div>
+                        <div className="mb-6 p-4 rounded-2xl bg-white dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700">
+                            <InventoryCatalogShopFilters
+                                selected={selectedShops}
+                                onToggleShop={toggleShop}
+                                shopMatch={shopMatchMode}
+                                onShopMatchChange={setShopMatchMode}
+                            />
                         </div>
                         <form onSubmit={handleAddItem} className="grid grid-cols-1 md:grid-cols-12 gap-6 items-end">
                             <div className="md:col-span-6 space-y-2">

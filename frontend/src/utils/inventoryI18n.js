@@ -20,3 +20,15 @@ export function inventoryDisplayDescription(item, lang) {
     }
     return item.description || '';
 }
+
+/** Category + subcategory line for cards (respects *_en when UI language is English). */
+export function inventoryCategoryLine(item, lang) {
+    if (!item) return '—';
+    const l = (lang || 'is').toLowerCase();
+    const useEn = l.startsWith('en');
+    const cat = useEn && item.category_en?.trim() ? String(item.category_en).trim() : (item.category || '').trim();
+    const subFull =
+        useEn && item.subcategory_en?.trim() ? String(item.subcategory_en).trim() : (item.subcategory || '').trim();
+    if (!cat && !subFull) return '—';
+    return [cat, subFull].filter(Boolean).join(' · ');
+}

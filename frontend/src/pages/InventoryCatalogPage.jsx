@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, Fragment } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
@@ -6,7 +6,8 @@ import axiosInstance from '../api/axiosInstance';
 import { toast } from 'react-toastify';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ConfirmationModal from '../components/ConfirmationModal';
-import { inventoryDisplayDescription, inventoryDisplayName } from '../utils/inventoryI18n';
+import InventoryCatalogShopFilters from '../components/InventoryCatalogShopFilters';
+import { inventoryDisplayName, inventoryCategoryLine } from '../utils/inventoryI18n';
 import { 
     CubeIcon, 
     PlusIcon, 
@@ -61,44 +62,82 @@ function InventoryCatalogPage() {
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [selectedVariant, setSelectedVariant] = useState(null);
 
+    const [selectedShops, setSelectedShops] = useState(() => new Set());
+    const [shopMatchMode, setShopMatchMode] = useState('any'); // any | all
+    const [globalSearchItems, setGlobalSearchItems] = useState(null);
+    const [globalSearchLoading, setGlobalSearchLoading] = useState(false);
+    const [catalogRefreshTrigger, setCatalogRefreshTrigger] = useState(0);
+
     const isSuperuser = user?.is_superuser;
     const canManageCatalog = !!isSuperuser;
 
-    const fetchItems = useCallback(async (categoryParam, subcategoryParam) => {
-        setIsLoading(true);
-        setError('');
-        try {
-            // Align with backend: /inventory/catalog
-            const response = await axiosInstance.get('/inventory/catalog', {
-                params: {
-                    limit: 1000,
-                    ...(categoryParam ? { category: categoryParam } : {}),
-                    ...(subcategoryParam ? { subcategory: subcategoryParam } : {}),
-                },
-            });
-            setItems(response.data);
-        } catch (err) {
-            console.error("Catalog Sync Error:", err);
-            setError('Operational Error: Failed to synchronize material database.');
-            toast.error('Registry sync failed.');
-        } finally {
-            setIsLoading(false);
-        }
+    const shopsKey = useMemo(() => [...selectedShops].sort().join(','), [selectedShops]);
+
+    const toggleShop = useCallback((id) => {
+        setSelectedShops((prev) => {
+            const next = new Set(prev);
+            if (next.has(id)) next.delete(id);
+            else next.add(id);
+            return next;
+        });
     }, []);
+
+    const buildCatalogParams = useCallback((base = {}) => {
+        const params = { ...base };
+        if (shopsKey) {
+            params.shops = shopsKey;
+            params.shop_match = shopMatchMode;
+        }
+        return params;
+    }, [shopsKey, shopMatchMode]);
+
+    const fetchItems = useCallback(
+        async (categoryParam, subcategoryParam) => {
+            setIsLoading(true);
+            setError('');
+            try {
+                const response = await axiosInstance.get('/inventory/catalog', {
+                    params: buildCatalogParams({
+                        limit: 3000,
+                        ...(categoryParam ? { category: categoryParam } : {}),
+                        ...(subcategoryParam ? { subcategory: subcategoryParam } : {}),
+                    }),
+                });
+                setItems(response.data);
+            } catch (err) {
+                console.error('Catalog Sync Error:', err);
+                setError('Operational Error: Failed to synchronize material database.');
+                toast.error('Registry sync failed.');
+            } finally {
+                setIsLoading(false);
+            }
+        },
+        [buildCatalogParams],
+    );
 
     const fetchFilters = useCallback(async () => {
         try {
-            const res = await axiosInstance.get('/inventory/catalog/filters');
+            const res = await axiosInstance.get('/inventory/catalog/filters', {
+                params: { lang: i18n.language },
+            });
             setCategoryTree(res.data || []);
         } catch (err) {
             console.error('Catalog filters fetch failed:', err);
         }
-    }, []);
+    }, [i18n.language]);
 
     // Read navigation state from URL (hard navigation via query params)
     const searchParams = new URLSearchParams(location.search);
     const selectedCategory = searchParams.get('category');
     const selectedSubcategory = searchParams.get('subcategory');
+
+    const categoryMeta = useMemo(() => {
+        const node = categoryTree.find((c) => c.category === selectedCategory);
+        const categoryTitle = node?.category_display || selectedCategory || '';
+        const subEntry = node?.subcategories?.find((s) => s.key === selectedSubcategory);
+        const subTitle = subEntry?.label || selectedSubcategory || '';
+        return { categoryTitle, subTitle };
+    }, [categoryTree, selectedCategory, selectedSubcategory]);
 
     // Reset sub-variant filter when changing category or subcategory
     useEffect(() => {
@@ -110,10 +149,37 @@ function InventoryCatalogPage() {
     }, [fetchFilters]);
 
     useEffect(() => {
-        // Fetch items for the selected category/subcategory.
-        // Without this, the UI can miss categories if the catalog endpoint caps results.
+        if (debouncedSearch.trim()) return;
         fetchItems(selectedCategory, selectedSubcategory);
-    }, [fetchItems, selectedCategory, selectedSubcategory]);
+    }, [fetchItems, selectedCategory, selectedSubcategory, debouncedSearch, shopsKey, shopMatchMode]);
+
+    useEffect(() => {
+        const q = debouncedSearch.trim();
+        if (!q) {
+            setGlobalSearchItems(null);
+            setGlobalSearchLoading(false);
+            return;
+        }
+        const controller = new AbortController();
+        setGlobalSearchLoading(true);
+        (async () => {
+            try {
+                const response = await axiosInstance.get('/inventory/catalog', {
+                    params: buildCatalogParams({ search: q, limit: 4000 }),
+                    signal: controller.signal,
+                });
+                setGlobalSearchItems(Array.isArray(response.data) ? response.data : []);
+            } catch (err) {
+                if (controller.signal.aborted || err.code === 'ERR_CANCELED') return;
+                console.error('Global catalog search failed:', err);
+                toast.error(err.response?.data?.detail || 'Search failed.');
+                setGlobalSearchItems([]);
+            } finally {
+                if (!controller.signal.aborted) setGlobalSearchLoading(false);
+            }
+        })();
+        return () => controller.abort();
+    }, [debouncedSearch, buildCatalogParams, shopsKey, shopMatchMode, catalogRefreshTrigger]);
 
     // Base items for current category + subcategory (ignores search & variant)
     const baseItems = useMemo(() => {
@@ -140,10 +206,9 @@ function InventoryCatalogPage() {
         return Array.from(set).sort();
     }, [baseItems]);
 
-    // Final visible items with search + optional variant filter applied
+    // Variant filter only (text search uses full-database API when the search box has a value)
     const visibleItems = useMemo(() => {
         if (!selectedCategory || !selectedSubcategory) return [];
-        const query = debouncedSearch ? debouncedSearch.toLowerCase() : '';
 
         return baseItems.filter((item) => {
             const rawSub = (item.subcategory || '').trim();
@@ -151,15 +216,9 @@ function InventoryCatalogPage() {
             const variant = parts.length > 1 ? parts.slice(1).join(' / ') : null;
 
             if (selectedVariant && variant !== selectedVariant) return false;
-
-            if (!query) return true;
-            const nameMatch = item.name?.toLowerCase().includes(query)
-                || item.name_en?.toLowerCase().includes(query);
-            const descMatch = item.description?.toLowerCase().includes(query)
-                || item.description_en?.toLowerCase().includes(query);
-            return nameMatch || descMatch;
+            return true;
         });
-    }, [baseItems, debouncedSearch, selectedCategory, selectedSubcategory, selectedVariant]);
+    }, [baseItems, selectedCategory, selectedSubcategory, selectedVariant]);
 
     const triggerDelete = (item) => {
         if (!canManageCatalog) return;
@@ -172,7 +231,8 @@ function InventoryCatalogPage() {
         try {
             await axiosInstance.delete(`/inventory/catalog/${itemToDelete.id}`);
             toast.success(`Registry entry purged: "${itemToDelete.name}"`);
-            fetchItems();
+            fetchItems(selectedCategory, selectedSubcategory);
+            setCatalogRefreshTrigger((n) => n + 1);
         } catch (err) {
             toast.error(err.response?.data?.detail || 'Purge protocol failed.');
         } finally {
@@ -181,12 +241,134 @@ function InventoryCatalogPage() {
         }
     };
 
-    if (isLoading && items.length === 0) {
+    const isGlobalSearch = debouncedSearch.trim().length > 0;
+
+    if (!isGlobalSearch && isLoading && items.length === 0) {
         return <LoadingSpinner text="Accessing Master Catalog Registry..." size="lg" />;
     }
 
     const hasCategory = !!selectedCategory;
     const hasSubcategory = !!selectedSubcategory;
+
+    const renderProductCard = (item) => (
+        <div
+            onClick={() => navigate(`/inventory/edit/${item.id}`)}
+            className="group bg-white dark:bg-gray-800 rounded-[2.5rem] border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-500 flex flex-col overflow-hidden cursor-pointer"
+        >
+            <div className="h-64 bg-gray-50 dark:bg-gray-900/60 border-b border-gray-50 dark:border-gray-700/50 overflow-hidden">
+                {item.local_image_path ? (
+                    <img
+                        src={resolveImageUrl(item.local_image_path)}
+                        alt={inventoryDisplayName(item, i18n.language)}
+                        loading="lazy"
+                        decoding="async"
+                        draggable={false}
+                        className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-300 will-change-transform"
+                        onError={(e) => {
+                            if (e.currentTarget.dataset.fallbackApplied) return;
+                            e.currentTarget.dataset.fallbackApplied = '1';
+                            e.currentTarget.src = resolveImageUrl('/static/inventory_images/uncategorized.png');
+                        }}
+                    />
+                ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                        <ArchiveBoxIcon className="h-14 w-14 text-gray-300 dark:text-gray-600" />
+                    </div>
+                )}
+            </div>
+
+            <div className="p-8 flex-grow flex flex-col">
+                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest truncate mb-1">
+                    {inventoryCategoryLine(item, i18n.language)}
+                </p>
+                <h2 className="text-lg font-black text-gray-900 dark:text-white tracking-tight leading-snug group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                    {inventoryDisplayName(item, i18n.language)}
+                </h2>
+
+                <div className="mt-auto pt-6">
+                    <div className="flex flex-wrap gap-2">
+                        {item.shop_url_1 && (
+                            <a
+                                href={item.shop_url_1}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                                className="inline-flex items-center gap-2 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 rounded-xl text-[9px] font-black uppercase tracking-widest border border-indigo-100 dark:border-indigo-900 hover:bg-indigo-100 transition-colors"
+                            >
+                                <ShoppingBagIcon className="h-3.5 w-3.5" />
+                                Ronning
+                            </a>
+                        )}
+                        {item.shop_url_2 && (
+                            <a
+                                href={item.shop_url_2}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                                className="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 rounded-xl text-[9px] font-black uppercase tracking-widest border border-emerald-100 dark:border-emerald-900 hover:bg-emerald-100 transition-colors"
+                            >
+                                <ShoppingBagIcon className="h-3.5 w-3.5" />
+                                Ískraft
+                            </a>
+                        )}
+                        {item.shop_url_3 && (
+                            <a
+                                href={item.shop_url_3}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                                className="inline-flex items-center gap-2 px-3 py-1.5 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 rounded-xl text-[9px] font-black uppercase tracking-widest border border-amber-100 dark:border-amber-900 hover:bg-amber-100 transition-colors"
+                            >
+                                <ShoppingBagIcon className="h-3.5 w-3.5" />
+                                Reykjafell
+                            </a>
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            <div
+                className="px-8 py-6 bg-gray-50 dark:bg-gray-700/30 flex items-center justify-between border-t border-gray-50 dark:border-gray-700/50"
+                onClick={(e) => e.stopPropagation()}
+            >
+                {canManageCatalog ? (
+                    <>
+                        <div className="flex items-center gap-3">
+                            <button
+                                type="button"
+                                onClick={() => navigate(`/inventory/edit/${item.id}`)}
+                                className="p-3 bg-white dark:bg-gray-800 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 transition transform active:scale-95"
+                                title="Modify Specs"
+                            >
+                                <PencilIcon className="h-5 w-5" />
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => triggerDelete(item)}
+                                className="p-3 bg-white dark:bg-gray-800 text-gray-400 hover:text-red-600 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 transition transform active:scale-95"
+                                title="Purge Entry"
+                            >
+                                <TrashIcon className="h-5 w-5" />
+                            </button>
+                        </div>
+                        <Link
+                            to={`/inventory/edit/${item.id}`}
+                            className="flex items-center gap-2 text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-[0.2em] hover:gap-3 transition-all"
+                        >
+                            Registry Hub <ChevronRightIcon className="h-3.5 w-3.5" />
+                        </Link>
+                    </>
+                ) : (
+                    <Link
+                        to={`/inventory/edit/${item.id}`}
+                        className="ml-auto flex items-center gap-2 text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-[0.2em] hover:gap-3 transition-all"
+                    >
+                        Open Item <ChevronRightIcon className="h-3.5 w-3.5" />
+                    </Link>
+                )}
+            </div>
+        </div>
+    );
 
     return (
         <div className="container mx-auto p-4 md:p-8 max-w-7xl animate-in fade-in duration-500">
@@ -200,9 +382,13 @@ function InventoryCatalogPage() {
                         <div>
                             <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">{t('global_inventory')}</h1>
                             <p className="text-[10px] text-gray-400 uppercase tracking-[0.2em] mt-1">
-                                {!hasCategory && !hasSubcategory && 'Select a category to drill down.'}
-                                {hasCategory && !hasSubcategory && `Category: ${selectedCategory}`}
-                                {hasCategory && hasSubcategory && `Category: ${selectedCategory} / ${selectedSubcategory}`}
+                                {isGlobalSearch && t('catalog_full_search_banner', { defaultValue: 'Searching the entire material database.' })}
+                                {!isGlobalSearch && !hasCategory && !hasSubcategory && 'Select a category to drill down.'}
+                                {!isGlobalSearch && hasCategory && !hasSubcategory && `Category: ${categoryMeta.categoryTitle}`}
+                                {!isGlobalSearch &&
+                                    hasCategory &&
+                                    hasSubcategory &&
+                                    `Category: ${categoryMeta.categoryTitle} / ${categoryMeta.subTitle}`}
                             </p>
                         </div>
                     </div>
@@ -217,16 +403,27 @@ function InventoryCatalogPage() {
                 </div>
             </header>
 
-            {/* Global search (kept for quick lookup) */}
-            <div className="mb-6 max-w-xl relative group">
-                <MagnifyingGlassIcon className="h-5 w-5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2 group-focus-within:text-indigo-500 transition-colors" />
-                <input
-                    type="text"
-                    placeholder="Search by Material Designation or Specifications..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="modern-input pl-12 h-14 !rounded-[1.25rem] font-bold"
-                />
+            <div className="mb-6 grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+                <div className="xl:col-span-8 relative group">
+                    <MagnifyingGlassIcon className="h-5 w-5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2 group-focus-within:text-indigo-500 transition-colors" />
+                    <input
+                        type="text"
+                        placeholder={t('catalog_search_full_db', {
+                            defaultValue: 'Search names, SKU, cable codes across the entire catalog…',
+                        })}
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="modern-input pl-12 h-14 !rounded-[1.25rem] font-bold w-full"
+                    />
+                </div>
+                <div className="xl:col-span-4 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-[1.25rem] p-5 shadow-sm">
+                    <InventoryCatalogShopFilters
+                        selected={selectedShops}
+                        onToggleShop={toggleShop}
+                        shopMatch={shopMatchMode}
+                        onShopMatchChange={setShopMatchMode}
+                    />
+                </div>
             </div>
 
             {error && (
@@ -235,14 +432,54 @@ function InventoryCatalogPage() {
                 </div>
             )}
 
-            {/* LEVEL 1: Category Grid */}
-            {!hasCategory && (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
-                    {categoryTree.map(({ category }) => (
+            {isGlobalSearch && (
+                <>
+                    <div className="mb-4 flex items-center justify-between text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">
                         <button
-                            key={category}
                             type="button"
-                            onClick={() => navigate(`/inventory?category=${encodeURIComponent(category)}`)}
+                            onClick={() => setSearchTerm('')}
+                            className="hover:text-indigo-600"
+                        >
+                            ← {t('clear_search', { defaultValue: 'Clear search' })}
+                        </button>
+                        <span className="text-gray-900 dark:text-gray-200">
+                            {globalSearchLoading && t('searching')}
+                            {!globalSearchLoading &&
+                                globalSearchItems &&
+                                `${globalSearchItems.length} ${t('results', { defaultValue: 'results' })}`}
+                        </span>
+                    </div>
+                    {globalSearchLoading && (
+                        <div className="py-16 flex justify-center">
+                            <LoadingSpinner text={t('searching')} size="md" />
+                        </div>
+                    )}
+                    {!globalSearchLoading && globalSearchItems && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
+                            {globalSearchItems.length > 0 ? (
+                                globalSearchItems.map((item) => (
+                                    <Fragment key={item.id}>{renderProductCard(item)}</Fragment>
+                                ))
+                            ) : (
+                                <div className="col-span-full py-32 text-center bg-white dark:bg-gray-800 rounded-[3rem] border-2 border-dashed border-gray-100 dark:border-gray-700">
+                                    <CubeIcon className="h-16 w-16 text-gray-200 dark:text-gray-700 mx-auto mb-6" />
+                                    <h3 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">
+                                        {t('no_results')}
+                                    </h3>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </>
+            )}
+
+            {!isGlobalSearch && !hasCategory && (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
+                    {categoryTree.map((catNode) => (
+                        <button
+                            key={catNode.category}
+                            type="button"
+                            onClick={() => navigate(`/inventory?category=${encodeURIComponent(catNode.category)}`)}
                             className="group bg-white dark:bg-gray-800 rounded-[2.5rem] border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 p-8 flex items-center justify-between"
                         >
                             <div className="text-left">
@@ -250,7 +487,7 @@ function InventoryCatalogPage() {
                                     {t('category') || 'Category'}
                                 </p>
                                 <h2 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic group-hover:text-indigo-600 dark:group-hover:text-indigo-400">
-                                    {category}
+                                    {catNode.category_display || catNode.category}
                                 </h2>
                             </div>
                             <div className="p-3 bg-indigo-50 dark:bg-indigo-900/40 rounded-2xl border border-indigo-100 dark:border-indigo-800">
@@ -261,8 +498,7 @@ function InventoryCatalogPage() {
                 </div>
             )}
 
-            {/* LEVEL 2: Subcategory Grid */}
-            {hasCategory && !hasSubcategory && (
+            {!isGlobalSearch && hasCategory && !hasSubcategory && (
                 <div className="mt-4">
                     <button
                         type="button"
@@ -273,12 +509,16 @@ function InventoryCatalogPage() {
                     </button>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {categoryTree
-                            .find(c => c.category === selectedCategory)?.subcategories
-                            .map(sub => (
+                            .find((c) => c.category === selectedCategory)
+                            ?.subcategories?.map((sub) => (
                                 <button
-                                    key={sub}
+                                    key={sub.key}
                                     type="button"
-                                    onClick={() => navigate(`/inventory?category=${encodeURIComponent(selectedCategory)}&subcategory=${encodeURIComponent(sub)}`)}
+                                    onClick={() =>
+                                        navigate(
+                                            `/inventory?category=${encodeURIComponent(selectedCategory)}&subcategory=${encodeURIComponent(sub.key)}`,
+                                        )
+                                    }
                                     className="group bg-white dark:bg-gray-800 rounded-[2.5rem] border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 p-8 flex items-center justify-between"
                                 >
                                     <div className="text-left">
@@ -286,7 +526,7 @@ function InventoryCatalogPage() {
                                             {t('subcategory') || 'Subcategory'}
                                         </p>
                                         <h2 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic group-hover:text-indigo-600 dark:group-hover:text-indigo-400">
-                                            {sub}
+                                            {sub.label}
                                         </h2>
                                     </div>
                                     <div className="p-3 bg-amber-50 dark:bg-amber-900/40 rounded-2xl border border-amber-100 dark:border-amber-800">
@@ -298,8 +538,7 @@ function InventoryCatalogPage() {
                 </div>
             )}
 
-            {/* LEVEL 3: Item Grid for selected category + subcategory */}
-            {hasCategory && hasSubcategory && (
+            {!isGlobalSearch && hasCategory && hasSubcategory && (
                 <>
                     <div className="mt-2 mb-4 flex items-center justify-between text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">
                         <button
@@ -345,128 +584,21 @@ function InventoryCatalogPage() {
                     )}
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {visibleItems.length > 0 ? visibleItems.map(item => (
-                    <div
-                        key={item.id}
-                        onClick={() => navigate(`/inventory/edit/${item.id}`)}
-                        className="group bg-white dark:bg-gray-800 rounded-[2.5rem] border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-500 flex flex-col overflow-hidden cursor-pointer"
-                    >
-                        <div className="h-64 bg-gray-50 dark:bg-gray-900/60 border-b border-gray-50 dark:border-gray-700/50 overflow-hidden">
-                            {item.local_image_path ? (
-                                <img
-                                    src={resolveImageUrl(item.local_image_path)}
-                                    alt={inventoryDisplayName(item, i18n.language)}
-                                    loading="lazy"
-                                    decoding="async"
-                                    draggable={false}
-                                    className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-300 will-change-transform"
-                                    onError={(e) => {
-                                        if (e.currentTarget.dataset.fallbackApplied) return;
-                                        e.currentTarget.dataset.fallbackApplied = '1';
-                                        e.currentTarget.src = resolveImageUrl('/static/inventory_images/uncategorized.png');
-                                    }}
-                                />
-                            ) : (
-                                <div className="w-full h-full flex items-center justify-center">
-                                    <ArchiveBoxIcon className="h-14 w-14 text-gray-300 dark:text-gray-600" />
-                                </div>
-                            )}
-                        </div>
-
-                        <div className="p-8 flex-grow flex flex-col">
-                            <h2 className="text-lg font-black text-gray-900 dark:text-white tracking-tight leading-snug group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-                                {inventoryDisplayName(item, i18n.language)}
-                            </h2>
-
-                            <div className="mt-auto pt-6">
-                                <div className="flex flex-wrap gap-2">
-                                    {item.shop_url_1 && (
-                                        <a 
-                                            href={item.shop_url_1} 
-                                            target="_blank" 
-                                            rel="noopener noreferrer"
-                                            onClick={(e) => e.stopPropagation()}
-                                            className="inline-flex items-center gap-2 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 rounded-xl text-[9px] font-black uppercase tracking-widest border border-indigo-100 dark:border-indigo-900 hover:bg-indigo-100 transition-colors"
-                                        >
-                                            <ShoppingBagIcon className="h-3.5 w-3.5" />
-                                            Ronning
-                                        </a>
-                                    )}
-                                    {item.shop_url_2 && (
-                                        <a 
-                                            href={item.shop_url_2} 
-                                            target="_blank" 
-                                            rel="noopener noreferrer"
-                                            onClick={(e) => e.stopPropagation()}
-                                            className="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 rounded-xl text-[9px] font-black uppercase tracking-widest border border-emerald-100 dark:border-emerald-900 hover:bg-emerald-100 transition-colors"
-                                        >
-                                            <ShoppingBagIcon className="h-3.5 w-3.5" />
-                                            Iskraft
-                                        </a>
-                                    )}
-                                    {item.shop_url_3 && (
-                                        <a 
-                                            href={item.shop_url_3} 
-                                            target="_blank" 
-                                            rel="noopener noreferrer"
-                                            onClick={(e) => e.stopPropagation()}
-                                            className="inline-flex items-center gap-2 px-3 py-1.5 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 rounded-xl text-[9px] font-black uppercase tracking-widest border border-amber-100 dark:border-amber-900 hover:bg-amber-100 transition-colors"
-                                        >
-                                            <ShoppingBagIcon className="h-3.5 w-3.5" />
-                                            Reykjavell
-                                        </a>
-                                    )}
-                                </div>
+                        {visibleItems.length > 0 ? (
+                            visibleItems.map((item) => (
+                                <Fragment key={item.id}>{renderProductCard(item)}</Fragment>
+                            ))
+                        ) : (
+                            <div className="col-span-full py-32 text-center bg-white dark:bg-gray-800 rounded-[3rem] border-2 border-dashed border-gray-100 dark:border-gray-700">
+                                <CubeIcon className="h-16 w-16 text-gray-200 dark:text-gray-700 mx-auto mb-6" />
+                                <h3 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">
+                                    No registry matches detected
+                                </h3>
+                                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-2">
+                                    {t('adjust_filters_or_new_material')}
+                                </p>
                             </div>
-                        </div>
-
-                        {/* Bottom Actions */}
-                        <div
-                            className="px-8 py-6 bg-gray-50 dark:bg-gray-700/30 flex items-center justify-between border-t border-gray-50 dark:border-gray-700/50"
-                            onClick={(e) => e.stopPropagation()}
-                        >
-                            {canManageCatalog ? (
-                                <>
-                                    <div className="flex items-center gap-3">
-                                        <button 
-                                            onClick={() => navigate(`/inventory/edit/${item.id}`)}
-                                            className="p-3 bg-white dark:bg-gray-800 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 transition transform active:scale-95"
-                                            title="Modify Specs"
-                                        >
-                                            <PencilIcon className="h-5 w-5" />
-                                        </button>
-                                        <button 
-                                            onClick={() => triggerDelete(item)}
-                                            className="p-3 bg-white dark:bg-gray-800 text-gray-400 hover:text-red-600 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 transition transform active:scale-95"
-                                            title="Purge Entry"
-                                        >
-                                            <TrashIcon className="h-5 w-5" />
-                                        </button>
-                                    </div>
-                                    <Link 
-                                        to={`/inventory/edit/${item.id}`}
-                                        className="flex items-center gap-2 text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-[0.2em] hover:gap-3 transition-all"
-                                    >
-                                        Registry Hub <ChevronRightIcon className="h-3.5 w-3.5" />
-                                    </Link>
-                                </>
-                            ) : (
-                                <Link
-                                    to={`/inventory/edit/${item.id}`}
-                                    className="ml-auto flex items-center gap-2 text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-[0.2em] hover:gap-3 transition-all"
-                                >
-                                    Open Item <ChevronRightIcon className="h-3.5 w-3.5" />
-                                </Link>
-                            )}
-                        </div>
-                    </div>
-                )) : (
-                    <div className="col-span-full py-32 text-center bg-white dark:bg-gray-800 rounded-[3rem] border-2 border-dashed border-gray-100 dark:border-gray-700">
-                        <CubeIcon className="h-16 w-16 text-gray-200 dark:text-gray-700 mx-auto mb-6" />
-                        <h3 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">No registry matches detected</h3>
-                        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-2">{t('adjust_filters_or_new_material')}</p>
-                    </div>
-                )}
+                        )}
                     </div>
                 </>
             )}

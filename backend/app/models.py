@@ -161,12 +161,18 @@ class Tenant(Base):
 
 class User(Base):
     __tablename__ = "users"
+    __table_args__ = (
+        UniqueConstraint("tenant_id", "email", name="uq_users_tenant_email"),
+        UniqueConstraint("tenant_id", "employee_id", name="uq_users_tenant_employee_id"),
+        UniqueConstraint("tenant_id", "kennitala", name="uq_users_tenant_kennitala"),
+    )
+
     id = Column(Integer, primary_key=True, index=True)
-    email = Column(String, unique=True, index=True, nullable=False)
+    email = Column(String, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
     full_name = Column(String, index=True, nullable=True)
-    employee_id = Column(String, unique=True, index=True, nullable=True)
-    kennitala = Column(String, unique=True, index=True, nullable=True)
+    employee_id = Column(String, index=True, nullable=True)
+    kennitala = Column(String, index=True, nullable=True)
     profile_picture_path = Column(String, nullable=True)
     hourly_rate = Column(Float, nullable=True)
     phone_number = Column(String, nullable=True)
@@ -181,6 +187,9 @@ class User(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     last_login_at = Column(DateTime(timezone=True), nullable=True)
+    # TOTP (authenticator app) — secret is provisional until verified; cleared when disabled
+    totp_secret = Column(String, nullable=True)
+    totp_enabled = Column(Boolean, default=False, nullable=False)
 
     tenant = relationship("Tenant", back_populates="users")
     tools_checked_out: Mapped[list["Tool"]] = relationship(back_populates="current_user")
@@ -355,6 +364,8 @@ class InventoryItem(Base):
     name_en = Column(String, nullable=True, index=True)
     category = Column(String, index=True, nullable=True)
     subcategory = Column(String, index=True, nullable=True)
+    category_en = Column(String, nullable=True, index=True)
+    subcategory_en = Column(String, nullable=True, index=True)
     description = Column(Text, nullable=True)
     description_en = Column(Text, nullable=True)
     unit = Column(String, nullable=True)
@@ -367,6 +378,8 @@ class InventoryItem(Base):
     iskraft_sku = Column(String, nullable=True, index=True)
     reykjafell_sku = Column(String, nullable=True, index=True)
     local_image_path = Column(String, nullable=True)
+    # Central warehouse stock (not allocated to any project). Project lines hold site stock.
+    warehouse_quantity = Column(Float, nullable=False, default=0.0, server_default="0")
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     project_allocations: Mapped[List["ProjectInventoryItem"]] = relationship(back_populates="inventory_item")

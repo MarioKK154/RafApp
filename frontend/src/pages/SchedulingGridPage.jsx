@@ -4,13 +4,15 @@ import axiosInstance from '../api/axiosInstance';
 import { useAuth } from '../context/AuthContext';
 import { extractTenantList } from '../utils/tenantUtils';
 import { format, startOfWeek, addDays, eachDayOfInterval } from 'date-fns';
-import { 
-    ChevronLeftIcon, 
-    ChevronRightIcon, 
+import {
+    ChevronLeftIcon,
+    ChevronRightIcon,
     PlusIcon,
     TrashIcon,
     Squares2X2Icon,
-    BuildingOffice2Icon
+    BuildingOffice2Icon,
+    ExclamationTriangleIcon,
+    UserMinusIcon,
 } from '@heroicons/react/24/outline';
 import { toast } from 'react-toastify';
 import AssignmentModal from '../components/AssignmentModal'; 
@@ -26,6 +28,8 @@ const SchedulingGridPage = () => {
     const [selectedTenantId, setSelectedTenantId] = useState('');
     const [tenants, setTenants] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [leaveBlocks, setLeaveBlocks] = useState([]);
+    const [showLeaveOverlay, setShowLeaveOverlay] = useState(false);
 
     const [modalConfig, setModalConfig] = useState({
         isOpen: false,
@@ -45,13 +49,20 @@ const SchedulingGridPage = () => {
             const endStr = format(days[days.length - 1], 'yyyy-MM-dd');
             const tenantScope = isSuperuser && selectedTenantId ? { tenant_id: selectedTenantId } : {};
             
-            const [usersRes, assignRes] = await Promise.all([
+            const leaveParams = {
+                start: startStr,
+                end: endStr,
+                ...(isSuperuser && selectedTenantId ? { tenant_id: selectedTenantId } : {}),
+            };
+            const [usersRes, assignRes, leaveRes] = await Promise.all([
                 axiosInstance.get('/users/', { params: { ...tenantScope } }),
-                axiosInstance.get('/assignments/', { params: { start: startStr, end: endStr, ...tenantScope } })
+                axiosInstance.get('/assignments/', { params: { start: startStr, end: endStr, ...tenantScope } }),
+                axiosInstance.get('/accounting/leave-requests/calendar', { params: leaveParams }),
             ]);
-            
+
             setUsers(usersRes.data);
             setAssignments(assignRes.data);
+            setLeaveBlocks(Array.isArray(leaveRes.data) ? leaveRes.data : []);
         } catch (error) {
             console.error('Scheduling grid sync failed:', error);
             toast.error("Failed to sync resource grid.");
@@ -125,6 +136,22 @@ const SchedulingGridPage = () => {
         setModalConfig({ isOpen: true, user: user, date: day });
     };
 
+    const leaveOnDay = useCallback(
+        (userId, day) => {
+            if (!showLeaveOverlay || !leaveBlocks.length) return null;
+            const ds = format(day, 'yyyy-MM-dd');
+            return (
+                leaveBlocks.find(
+                    (b) =>
+                        b.user_id === userId &&
+                        String(b.start_date) <= ds &&
+                        String(b.end_date) >= ds,
+                ) || null
+            );
+        },
+        [leaveBlocks, showLeaveOverlay],
+    );
+
     return (
         <div className="p-6 md:p-10 animate-in fade-in duration-500">
             {isLoading && (
@@ -188,7 +215,32 @@ const SchedulingGridPage = () => {
                         </button>
                     );
                 })}
+                <button
+                    type="button"
+                    onClick={() => setShowLeaveOverlay((v) => !v)}
+                    title={t('schedule_leave_overlay_hint', {
+                        defaultValue: 'Show approved sick leave, vacation, and other leave on the grid',
+                    })}
+                    className={`px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-[0.15em] border transition-all duration-150 ease-out inline-flex items-center gap-2 ${
+                        showLeaveOverlay
+                            ? 'bg-rose-600 border-rose-600 text-white shadow-lg'
+                            : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-500 hover:text-rose-600'
+                    }`}
+                >
+                    <UserMinusIcon className="h-4 w-4" />
+                    {t('schedule_show_leave', { defaultValue: 'Away overlay' })}
+                </button>
             </div>
+
+            {showLeaveOverlay && (
+                <p className="text-[9px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                    <ExclamationTriangleIcon className="h-4 w-4 text-amber-500" />
+                    {t('schedule_leave_overlay_legend', {
+                        defaultValue:
+                            'Striped / tinted cells: approved leave (vacation, sick, …). You can still assign—check conflicts in the assignment panel.',
+                    })}
+                </p>
+            )}
 
             <div className="bg-white dark:bg-gray-900 rounded-[2.5rem] border border-gray-100 dark:border-gray-800 shadow-2xl overflow-hidden overflow-x-auto">
                 <table className="w-full border-collapse">
@@ -225,13 +277,29 @@ const SchedulingGridPage = () => {
                                         new Date(a.start_date) <= day && 
                                         new Date(a.end_date) >= day
                                     );
+                                    const leaveHit = leaveOnDay(user.id, day);
 
                                     return (
                                         <td key={day.toString()} className="p-2 border-r border-gray-50 dark:border-gray-800 relative h-24 group/cell">
+                                            {leaveHit && (
+                                                <div
+                                                    className="absolute inset-1 rounded-2xl pointer-events-none z-[1] border border-rose-300/70 dark:border-rose-500/40 bg-rose-500/10 dark:bg-rose-950/35"
+                                                    style={{
+                                                        backgroundImage:
+                                                            'repeating-linear-gradient(-45deg, transparent, transparent 4px, rgba(244,63,94,0.12) 4px, rgba(244,63,94,0.12) 8px)',
+                                                    }}
+                                                    title={leaveHit.leave_type}
+                                                />
+                                            )}
+                                            {leaveHit && (
+                                                <span className="absolute bottom-1 left-1/2 -translate-x-1/2 z-[2] px-1.5 py-0.5 rounded-md text-[7px] font-black uppercase tracking-tighter text-rose-800 dark:text-rose-200 bg-rose-100/90 dark:bg-rose-900/80 max-w-[95%] truncate pointer-events-none">
+                                                    {leaveHit.leave_type}
+                                                </span>
+                                            )}
                                             {userAssign ? (
                                                 <div 
                                                     onClick={() => handleDeleteAssignment(userAssign.id, userAssign.project_name, user.full_name)}
-                                                    className="absolute inset-1.5 bg-indigo-600 hover:bg-red-600 rounded-2xl p-3 shadow-lg shadow-indigo-100 dark:shadow-none flex flex-col justify-center overflow-hidden cursor-pointer hover:scale-[1.03] active:scale-95 transition-all group/assign"
+                                                    className="absolute inset-1.5 z-[5] bg-indigo-600 hover:bg-red-600 rounded-2xl p-3 shadow-lg shadow-indigo-100 dark:shadow-none flex flex-col justify-center overflow-hidden cursor-pointer hover:scale-[1.03] active:scale-95 transition-all group/assign"
                                                 >
                                                     <div className="group-hover/assign:hidden animate-in fade-in duration-300">
                                                         <p className="text-[8px] font-black text-indigo-200 uppercase tracking-tighter truncate mb-1">
@@ -249,7 +317,7 @@ const SchedulingGridPage = () => {
                                             ) : (
                                                 <button 
                                                     onClick={() => openAssignmentModal(user, day)}
-                                                    className="w-full h-full opacity-0 group-hover/cell:opacity-100 flex items-center justify-center text-indigo-300 hover:text-indigo-600 hover:scale-125 transition-all"
+                                                    className="w-full h-full relative z-[6] opacity-0 group-hover/cell:opacity-100 flex items-center justify-center text-indigo-300 hover:text-indigo-600 hover:scale-125 transition-all"
                                                 >
                                                     <PlusIcon className="h-6 w-6 stroke-[2.5px]" />
                                                 </button>
@@ -268,6 +336,7 @@ const SchedulingGridPage = () => {
                 onClose={() => setModalConfig({ ...modalConfig, isOpen: false })}
                 selectedUser={modalConfig.user}
                 selectedDate={modalConfig.date}
+                leaveBlocks={leaveBlocks}
                 onAssignmentCreated={fetchData}
             />
         </div>

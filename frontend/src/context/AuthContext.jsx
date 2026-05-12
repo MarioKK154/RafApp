@@ -1,17 +1,21 @@
-import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
-import axiosInstance from '../api/axiosInstance';
+import React, { createContext, useState, useContext, useEffect, useCallback, useRef } from 'react';
+import axiosInstance, { AUTH_LOGOUT_EVENT } from '../api/axiosInstance';
 import { toast } from 'react-toastify';
 
 const AuthContext = createContext(null);
 
 const IMPERSONATION_ORIGINAL_TOKEN = 'impersonationOriginalToken';
 const IMPERSONATION_LOG_ID = 'impersonationLogId';
+const STORAGE_REMEMBER = 'authRememberMe';
+const IDLE_NO_REMEMBER_MS = 30 * 60 * 1000;
+const IDLE_REMEMBER_MS = 7 * 24 * 60 * 60 * 1000;
 
 export const AuthProvider = ({ children }) => {
     const [token, setToken] = useState(() => localStorage.getItem('accessToken'));
     const [user, setUser] = useState(null);
     const [isAuthenticated, setIsAuthenticated] = useState(() => !!localStorage.getItem('accessToken'));
     const [isLoading, setIsLoading] = useState(true);
+    const lastActivityRef = useRef(Date.now());
 
     /**
      * Fetches the current user profile from the backend.
@@ -24,6 +28,7 @@ export const AuthProvider = ({ children }) => {
             setIsAuthenticated(false);
             setIsLoading(false);
             localStorage.removeItem('accessToken');
+            localStorage.removeItem(STORAGE_REMEMBER);
             sessionStorage.removeItem(IMPERSONATION_ORIGINAL_TOKEN);
             sessionStorage.removeItem(IMPERSONATION_LOG_ID);
             return;
@@ -35,16 +40,66 @@ export const AuthProvider = ({ children }) => {
             setUser(response.data);
             setIsAuthenticated(true);
         } catch (error) {
+            const is401 = error.response?.status === 401;
             console.error("Authentication error:", error);
             setToken(null);
             setUser(null);
             setIsAuthenticated(false);
             localStorage.removeItem('accessToken');
-            // We only show a toast if there was a token but it's now invalid
-            if (currentToken) {
+            localStorage.removeItem(STORAGE_REMEMBER);
+            if (currentToken && !is401) {
                 toast.error("Session expired. Please log in again.");
             }
         } finally {
+            setIsLoading(false);
+        }
+    }, []);
+
+    const logoutImpl = useCallback((reason) => {
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem(STORAGE_REMEMBER);
+        sessionStorage.removeItem(IMPERSONATION_ORIGINAL_TOKEN);
+        sessionStorage.removeItem(IMPERSONATION_LOG_ID);
+        setToken(null);
+        setUser(null);
+        setIsAuthenticated(false);
+        if (reason === 'session') {
+            toast.error('Session expired. Please log in again.', { toastId: 'session-expired' });
+        } else if (reason === 'idle') {
+            toast.warning('Signed out due to inactivity.', { toastId: 'idle-logout' });
+        } else if (reason !== 'silent') {
+            toast.info('You have been logged out.');
+        }
+    }, []);
+
+    const logoutRef = useRef(logoutImpl);
+    logoutRef.current = logoutImpl;
+
+    /**
+     * Clears all auth state and local storage.
+     */
+    const logout = useCallback((reason) => {
+        logoutImpl(reason);
+    }, [logoutImpl]);
+
+    /**
+     * Handles the login process by storing the token and initiating a user fetch.
+     * options.rememberMe controls idle timeout behavior (paired with JWT lifetime on server).
+     */
+    const login = useCallback(async (newToken, options = {}) => {
+        const rememberMe = Boolean(options.rememberMe);
+        if (newToken) {
+            localStorage.setItem('accessToken', newToken);
+            localStorage.setItem(STORAGE_REMEMBER, rememberMe ? 'true' : 'false');
+            lastActivityRef.current = Date.now();
+            setIsLoading(true);
+            setToken(newToken);
+        } else {
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem(STORAGE_REMEMBER);
+            setToken(null);
+            setUser(null);
+            setIsAuthenticated(false);
             setIsLoading(false);
         }
     }, []);
@@ -58,35 +113,12 @@ export const AuthProvider = ({ children }) => {
         }
     }, [token, fetchUser]);
 
-    /**
-     * Handles the login process by storing the token and initiating a user fetch.
-     */
-    const login = useCallback(async (newToken) => {
-        if (newToken) {
-            localStorage.setItem('accessToken', newToken);
-            setIsLoading(true);
-            setToken(newToken);
-            // fetchUser will be triggered by the useEffect above
-        } else {
-            localStorage.removeItem('accessToken');
-            setToken(null);
-            setUser(null);
-            setIsAuthenticated(false);
-            setIsLoading(false);
-        }
-    }, []);
-
-    /**
-     * Clears all auth state and local storage.
-     */
-    const logout = useCallback(() => {
-        localStorage.removeItem('accessToken');
-        sessionStorage.removeItem(IMPERSONATION_ORIGINAL_TOKEN);
-        sessionStorage.removeItem(IMPERSONATION_LOG_ID);
-        setToken(null);
-        setUser(null);
-        setIsAuthenticated(false);
-        toast.info("You have been logged out.");
+    useEffect(() => {
+        const onSessionInvalid = () => {
+            logoutRef.current?.('session');
+        };
+        window.addEventListener(AUTH_LOGOUT_EVENT, onSessionInvalid);
+        return () => window.removeEventListener(AUTH_LOGOUT_EVENT, onSessionInvalid);
     }, []);
 
     /**
@@ -98,6 +130,7 @@ export const AuthProvider = ({ children }) => {
         sessionStorage.setItem(IMPERSONATION_ORIGINAL_TOKEN, original_token);
         sessionStorage.setItem(IMPERSONATION_LOG_ID, String(impersonation_log_id));
         localStorage.setItem('accessToken', access_token);
+        lastActivityRef.current = Date.now();
         setIsLoading(true);
         setToken(access_token);
         toast.info(`Now viewing as ${response.impersonated_user?.full_name || response.impersonated_user?.email}.`);
@@ -130,10 +163,38 @@ export const AuthProvider = ({ children }) => {
         sessionStorage.removeItem(IMPERSONATION_ORIGINAL_TOKEN);
         sessionStorage.removeItem(IMPERSONATION_LOG_ID);
         localStorage.setItem('accessToken', originalToken);
+        lastActivityRef.current = Date.now();
         setIsLoading(true);
         setToken(originalToken);
         toast.info('Impersonation ended. Restored to your account.');
     }, []);
+
+    useEffect(() => {
+        if (!token) return;
+        const mark = () => { lastActivityRef.current = Date.now(); };
+        const opts = { passive: true };
+        const evs = ['mousedown', 'keydown', 'touchstart', 'scroll', 'wheel', 'mousemove'];
+        evs.forEach((ev) => window.addEventListener(ev, mark, opts));
+        const onVis = () => {
+            if (document.visibilityState === 'visible') mark();
+        };
+        document.addEventListener('visibilitychange', onVis);
+
+        const intervalId = window.setInterval(() => {
+            if (!localStorage.getItem('accessToken')) return;
+            const remember = localStorage.getItem(STORAGE_REMEMBER) === 'true';
+            const limit = remember ? IDLE_REMEMBER_MS : IDLE_NO_REMEMBER_MS;
+            if (Date.now() - lastActivityRef.current >= limit) {
+                logoutRef.current?.('idle');
+            }
+        }, 15000);
+
+        return () => {
+            evs.forEach((ev) => window.removeEventListener(ev, mark, opts));
+            document.removeEventListener('visibilitychange', onVis);
+            window.clearInterval(intervalId);
+        };
+    }, [token]);
 
     /**
      * Useful for updating the current user's state (e.g., after changing profile settings)

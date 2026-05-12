@@ -1,5 +1,5 @@
 # backend/app/routers/accounting.py
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form, Request
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form, Request, Query
 from fastapi.responses import FileResponse, StreamingResponse
 from sqlalchemy.orm import Session
 from typing import Annotated, List, Optional
@@ -234,6 +234,50 @@ async def create_leave_request(
 @limiter.limit("50/minute")
 async def get_my_leave_requests(request: Request, db: DbDependency, current_user: CurrentUserDependency):
     return crud.get_leave_requests_for_user(db, user_id=current_user.id)
+
+
+@router.get("/leave-requests/calendar", response_model=List[schemas.LeaveCalendarBlock])
+@limiter.limit("120/minute")
+async def get_leave_calendar_blocks(
+    request: Request,
+    db: DbDependency,
+    current_user: CurrentUserDependency,
+    start: date = Query(..., description="Range start (inclusive)"),
+    end: date = Query(..., description="Range end (inclusive)"),
+    tenant_id: Optional[int] = Query(
+        None,
+        description="Superuser-only: filter tenant; omit for all tenants.",
+    ),
+):
+    """
+    Approved leave only, for scheduling / calendar overlays (sick, vacation, etc.).
+    Mirrors assignment list tenant scope: superuser may pass tenant_id; others are tenant-scoped.
+    """
+    if start > end:
+        raise HTTPException(status_code=400, detail="start must be <= end.")
+
+    effective_tenant_id = current_user.tenant_id
+    if current_user.is_superuser:
+        effective_tenant_id = tenant_id
+
+    rows = crud.get_approved_leave_in_date_range(db, start, end, effective_tenant_id)
+    out: List[schemas.LeaveCalendarBlock] = []
+    for r in rows:
+        u = r.user
+        user_name = (u.full_name or u.email) if u else "Unknown"
+        out.append(
+            schemas.LeaveCalendarBlock(
+                id=r.id,
+                user_id=r.user_id,
+                tenant_id=r.tenant_id,
+                user_name=user_name,
+                leave_type=r.leave_type,
+                start_date=r.start_date,
+                end_date=r.end_date,
+            )
+        )
+    return out
+
 
 @router.get("/leave-requests/pending", response_model=List[schemas.LeaveRequestRead])
 @limiter.limit("50/minute")

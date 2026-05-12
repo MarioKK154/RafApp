@@ -98,6 +98,67 @@ async def change_current_user_password(request: Request, password_data: schemas.
     )
     return None
 
+
+_TOTP_ISSUER = os.getenv("TOTP_ISSUER", "RafApp")
+
+
+@router.post("/me/totp/setup", response_model=schemas.TotpSetupResponse)
+@limiter.limit("10/minute")
+async def setup_totp_for_current_user(request: Request, db: DbDependency, current_user: CurrentUserDependency):
+    """Generate and store a TOTP secret (not active until verified with /me/totp/verify-setup)."""
+    secret = security.generate_totp_secret()
+    crud.set_user_totp_secret(db, current_user, secret)
+    otpauth_uri = security.totp_provisioning_uri(
+        secret=secret,
+        account_email=current_user.email or str(current_user.id),
+        issuer=_TOTP_ISSUER,
+    )
+    return schemas.TotpSetupResponse(secret=secret, otpauth_uri=otpauth_uri)
+
+
+@router.post("/me/totp/verify-setup", response_model=schemas.UserRead)
+@limiter.limit("20/minute")
+async def verify_totp_setup(request: Request, db: DbDependency, current_user: CurrentUserDependency, body: schemas.TotpVerifySetupBody):
+    if not current_user.totp_secret:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No pending authenticator setup. Start setup first.")
+    if current_user.totp_enabled:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Authenticator is already enabled.")
+    if not security.verify_totp_code(current_user.totp_secret, body.code):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid authenticator code.")
+    crud.enable_user_totp(db, current_user)
+    crud.create_audit_log(
+        db,
+        action_type="totp_enabled",
+        actor_user_id=current_user.id,
+        actor_email=current_user.email,
+        tenant_id=current_user.tenant_id,
+        target_ref=f"user:{current_user.id}",
+        details="User enabled two-factor authentication",
+    )
+    return schemas.UserRead.model_validate(current_user)
+
+
+@router.post("/me/totp/disable", response_model=schemas.UserRead)
+@limiter.limit("10/minute")
+async def disable_totp_for_current_user(request: Request, db: DbDependency, current_user: CurrentUserDependency, body: schemas.TotpDisableBody):
+    if not current_user.totp_enabled:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Two-factor authentication is not enabled.")
+    if not security.verify_password(body.password, current_user.hashed_password):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Incorrect password.")
+    if not security.verify_totp_code(current_user.totp_secret, body.totp_code):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid authenticator code.")
+    crud.disable_user_totp(db, current_user)
+    crud.create_audit_log(
+        db,
+        action_type="totp_disabled",
+        actor_user_id=current_user.id,
+        actor_email=current_user.email,
+        tenant_id=current_user.tenant_id,
+        target_ref=f"user:{current_user.id}",
+        details="User disabled two-factor authentication",
+    )
+    return schemas.UserRead.model_validate(current_user)
+
 # --- User Management Endpoints ---
 
 @router.get("/", response_model=List[schemas.UserRead])
@@ -153,6 +214,36 @@ async def create_new_user_by_admin(request: Request, user_create_data: schemas.U
         if not crud.get_tenant(db, tenant_id=user_create_data.tenant_id):
             raise HTTPException(status_code=404, detail=f"Tenant ID {user_create_data.tenant_id} not found.")
 
+    tid = user_create_data.tenant_id
+    if tid is not None:
+        if crud.get_user_by_email_and_tenant(db, email=user_create_data.email, tenant_id=tid):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="A user with this email already exists in this organization.",
+            )
+        if user_create_data.employee_id:
+            clash_e = (
+                db.query(models.User)
+                .filter(models.User.tenant_id == tid, models.User.employee_id == user_create_data.employee_id)
+                .first()
+            )
+            if clash_e:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="A user with this employee ID already exists in this organization.",
+                )
+        if user_create_data.kennitala:
+            clash_k = (
+                db.query(models.User)
+                .filter(models.User.tenant_id == tid, models.User.kennitala == user_create_data.kennitala)
+                .first()
+            )
+            if clash_k:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="A user with this kennitala already exists in this organization.",
+                )
+
     return crud.create_user_by_admin(db=db, user_data=user_create_data)
 
 @router.get("/{user_id_to_view}", response_model=Union[schemas.UserReadAdmin, schemas.UserRead])
@@ -182,7 +273,48 @@ async def update_user_details_by_admin(request: Request, user_id_to_update: int,
     
     if db_user_to_update.is_superuser and user_update_data.is_active is False:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="A superuser account cannot be deactivated.")
-    
+
+    tid = db_user_to_update.tenant_id
+    if tid is not None:
+        patch = user_update_data.model_dump(exclude_unset=True)
+        if patch.get("email") and patch["email"] != db_user_to_update.email:
+            clash = crud.get_user_by_email_and_tenant(db, email=patch["email"], tenant_id=tid)
+            if clash and clash.id != db_user_to_update.id:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="A user with this email already exists in this organization.",
+                )
+        if patch.get("employee_id"):
+            clash_e = (
+                db.query(models.User)
+                .filter(
+                    models.User.tenant_id == tid,
+                    models.User.employee_id == patch["employee_id"],
+                    models.User.id != db_user_to_update.id,
+                )
+                .first()
+            )
+            if clash_e:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="A user with this employee ID already exists in this organization.",
+                )
+        if patch.get("kennitala"):
+            clash_k = (
+                db.query(models.User)
+                .filter(
+                    models.User.tenant_id == tid,
+                    models.User.kennitala == patch["kennitala"],
+                    models.User.id != db_user_to_update.id,
+                )
+                .first()
+            )
+            if clash_k:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="A user with this kennitala already exists in this organization.",
+                )
+
     return crud.update_user_by_admin(db=db, user_to_update=db_user_to_update, user_data=user_update_data)
 
 @router.post("/{user_id_to_update}/set-password", status_code=status.HTTP_204_NO_CONTENT)

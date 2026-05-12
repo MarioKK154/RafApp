@@ -16,13 +16,20 @@ import {
     CloudArrowUpIcon,
     ArrowPathIcon,
     EnvelopeIcon,
-    UserCircleIcon
+    UserCircleIcon,
+    FingerPrintIcon,
 } from '@heroicons/react/24/outline';
 
 function AccountSettingsPage() {
     const { t } = useTranslation();
     const { user, isAuthenticated, isLoading: authIsLoading, logout, updateUser } = useAuth();
     const navigate = useNavigate();
+
+    const [totpSetupPayload, setTotpSetupPayload] = useState(null);
+    const [totpActivateCode, setTotpActivateCode] = useState('');
+    const [totpBusy, setTotpBusy] = useState(false);
+    const [totpDisablePassword, setTotpDisablePassword] = useState('');
+    const [totpDisableCode, setTotpDisableCode] = useState('');
 
     // Password Terminal State
     const [currentPassword, setCurrentPassword] = useState('');
@@ -113,6 +120,59 @@ function AccountSettingsPage() {
             toast.error(t('upload_failed', { defaultValue: 'Registry sync failed.' }));
         } finally {
             setIsUploading(false);
+        }
+    };
+
+    const handleTotpStartSetup = async () => {
+        setTotpBusy(true);
+        try {
+            const res = await axiosInstance.post('/users/me/totp/setup');
+            setTotpSetupPayload(res.data);
+            setTotpActivateCode('');
+            toast.success(t('totp_scan_hint', { defaultValue: 'Add the account to your authenticator app using the QR link or manual secret, then confirm with a code.' }));
+        } catch (error) {
+            console.error('TOTP setup failed:', error);
+            toast.error(error.response?.data?.detail || t('update_failed'));
+        } finally {
+            setTotpBusy(false);
+        }
+    };
+
+    const handleTotpConfirmSetup = async (e) => {
+        e.preventDefault();
+        if (totpActivateCode.replace(/\s/g, '').length < 6) return;
+        setTotpBusy(true);
+        try {
+            const res = await axiosInstance.post('/users/me/totp/verify-setup', { code: totpActivateCode.replace(/\s/g, '') });
+            updateUser(res.data);
+            setTotpSetupPayload(null);
+            setTotpActivateCode('');
+            toast.success(t('totp_enabled', { defaultValue: 'Two-factor authentication is now enabled.' }));
+        } catch (error) {
+            console.error('TOTP verify setup failed:', error);
+            toast.error(error.response?.data?.detail || t('update_failed'));
+        } finally {
+            setTotpBusy(false);
+        }
+    };
+
+    const handleTotpDisable = async (e) => {
+        e.preventDefault();
+        setTotpBusy(true);
+        try {
+            const res = await axiosInstance.post('/users/me/totp/disable', {
+                password: totpDisablePassword,
+                totp_code: totpDisableCode.replace(/\s/g, ''),
+            });
+            updateUser(res.data);
+            setTotpDisablePassword('');
+            setTotpDisableCode('');
+            toast.success(t('totp_disabled', { defaultValue: 'Two-factor authentication has been disabled.' }));
+        } catch (error) {
+            console.error('TOTP disable failed:', error);
+            toast.error(error.response?.data?.detail || t('update_failed'));
+        } finally {
+            setTotpBusy(false);
         }
     };
 
@@ -210,6 +270,128 @@ function AccountSettingsPage() {
                                 </button>
                             </div>
                         </form>
+                    </div>
+
+                    <div className="bg-white dark:bg-gray-800 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+                        <div className="p-8 border-b border-gray-50 dark:border-gray-700 flex items-center gap-3">
+                            <FingerPrintIcon className="h-5 w-5 text-indigo-600" />
+                            <h2 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-widest">
+                                {t('two_factor', { defaultValue: 'Two-factor authentication' })}
+                            </h2>
+                        </div>
+                        <div className="p-8 space-y-6">
+                            {user.totp_enabled ? (
+                                <>
+                                    <p className="text-[11px] text-gray-600 dark:text-gray-300 font-semibold uppercase tracking-tight">
+                                        {t('totp_status_on', { defaultValue: 'Your account signs in with your password plus a code from an authenticator app.' })}
+                                    </p>
+                                    <form onSubmit={handleTotpDisable} className="space-y-4">
+                                        <div>
+                                            <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">{t('current_password')}</label>
+                                            <input
+                                                type="password"
+                                                required
+                                                value={totpDisablePassword}
+                                                onChange={(e) => setTotpDisablePassword(e.target.value)}
+                                                className="modern-input"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">
+                                                {t('totp_code', { defaultValue: 'Authenticator code' })}
+                                            </label>
+                                            <input
+                                                type="text"
+                                                inputMode="numeric"
+                                                autoComplete="one-time-code"
+                                                required
+                                                value={totpDisableCode}
+                                                onChange={(e) => setTotpDisableCode(e.target.value)}
+                                                className="modern-input tracking-widest font-mono"
+                                                placeholder="000000"
+                                                maxLength={12}
+                                            />
+                                        </div>
+                                        <button
+                                            type="submit"
+                                            disabled={totpBusy}
+                                            className="inline-flex items-center gap-2 px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition disabled:opacity-50"
+                                        >
+                                            {totpBusy ? <ArrowPathIcon className="h-5 w-5 animate-spin" /> : null}
+                                            {t('disable_totp', { defaultValue: 'Disable 2FA' })}
+                                        </button>
+                                    </form>
+                                </>
+                            ) : (
+                                <>
+                                    <p className="text-[11px] text-gray-600 dark:text-gray-300 leading-relaxed">
+                                        {t('totp_intro', {
+                                            defaultValue:
+                                                'Add a second step at sign-in using any TOTP authenticator app (Google Authenticator, Microsoft Authenticator, etc.).',
+                                        })}
+                                    </p>
+                                    {!totpSetupPayload && (
+                                        <button
+                                            type="button"
+                                            disabled={totpBusy}
+                                            onClick={handleTotpStartSetup}
+                                            className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition disabled:opacity-50"
+                                        >
+                                            {totpBusy ? <ArrowPathIcon className="h-5 w-5 animate-spin" /> : <ShieldCheckIcon className="h-5 w-5" />}
+                                            {t('start_totp_setup', { defaultValue: 'Begin setup' })}
+                                        </button>
+                                    )}
+                                    {totpSetupPayload && (
+                                        <form onSubmit={handleTotpConfirmSetup} className="space-y-4 pt-2">
+                                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('totp_manual_secret')}</p>
+                                            <div className="p-4 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-700 font-mono text-xs break-all text-gray-900 dark:text-gray-100">
+                                                {totpSetupPayload.secret}
+                                            </div>
+                                            <a
+                                                href={totpSetupPayload.otpauth_uri}
+                                                className="block text-[11px] font-bold text-indigo-600 dark:text-indigo-400 underline"
+                                            >
+                                                {t('open_in_authenticator', { defaultValue: 'Open otpauth link (mobile)' })}
+                                            </a>
+                                            <div>
+                                                <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">
+                                                    {t('totp_confirm_code', { defaultValue: 'Confirm with 6-digit code' })}
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    inputMode="numeric"
+                                                    autoComplete="one-time-code"
+                                                    required
+                                                    value={totpActivateCode}
+                                                    onChange={(e) => setTotpActivateCode(e.target.value)}
+                                                    className="modern-input tracking-widest font-mono text-center text-lg font-black"
+                                                    maxLength={12}
+                                                    placeholder="000000"
+                                                />
+                                            </div>
+                                            <div className="flex flex-wrap gap-3 pt-2">
+                                                <button
+                                                    type="submit"
+                                                    disabled={totpBusy}
+                                                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition disabled:opacity-50"
+                                                >
+                                                    {totpBusy ? <ArrowPathIcon className="h-5 w-5 animate-spin" /> : null}
+                                                    {t('activate_totp', { defaultValue: 'Verify and enable' })}
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    disabled={totpBusy}
+                                                    onClick={() => { setTotpSetupPayload(null); setTotpActivateCode(''); }}
+                                                    className="px-5 py-2.5 text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-gray-800 dark:hover:text-white"
+                                                >
+                                                    {t('cancel', { defaultValue: 'Cancel' })}
+                                                </button>
+                                            </div>
+                                        </form>
+                                    )}
+                                </>
+                            )}
+                        </div>
                     </div>
                 </div>
 

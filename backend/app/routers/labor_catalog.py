@@ -292,6 +292,18 @@ def read_labor_items(
         main_category=main_category, sub_category=sub_category, lang=lang,
     )
 
+
+@router.post("/super/mirror-is-to-en")
+@limiter.limit("5/minute")
+def mirror_labor_catalog_is_to_en_endpoint(
+    request: Request,
+    db: DbDependency,
+    current_user: SuperUserDependency,
+):
+    """Fill empty English labor fields from Icelandic primaries (bulk). Superuser only."""
+    return crud.mirror_labor_catalog_is_to_en(db)
+
+
 @router.get("/{item_id}/conditions", response_model=List[schemas.LaborCatalogItemConditionRead])
 @limiter.limit("100/minute")
 def read_labor_item_conditions(

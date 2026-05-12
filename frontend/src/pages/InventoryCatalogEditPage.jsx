@@ -33,6 +33,8 @@ function InventoryCatalogEditPage() {
         name_en: '',
         category: '',
         subcategory: '',
+        category_en: '',
+        subcategory_en: '',
         description: '',
         description_en: '',
         unit: '',
@@ -43,6 +45,7 @@ function InventoryCatalogEditPage() {
         iskraft_sku: '',
         reykjafell_sku: '',
         local_image_path: '',
+        warehouse_quantity: '',
     });
     const [isLoadingData, setIsLoadingData] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -70,6 +73,8 @@ function InventoryCatalogEditPage() {
                     name_en: item.name_en ?? '',
                     category: item.category ?? '',
                     subcategory: item.subcategory ?? '',
+                    category_en: item.category_en ?? '',
+                    subcategory_en: item.subcategory_en ?? '',
                     description: item.description ?? '',
                     description_en: item.description_en ?? '',
                     unit: item.unit ?? '',
@@ -80,6 +85,8 @@ function InventoryCatalogEditPage() {
                     iskraft_sku: item.iskraft_sku ?? '',
                     reykjafell_sku: item.reykjafell_sku ?? '',
                     local_image_path: item.local_image_path ?? '',
+                    warehouse_quantity:
+                        item.warehouse_quantity != null ? String(item.warehouse_quantity) : '',
                 });
             }
         } catch (err) {
@@ -109,8 +116,14 @@ function InventoryCatalogEditPage() {
 
         setIsSubmitting(true);
         try {
+            const payload = { ...formData };
+            if (payload.warehouse_quantity === '' || payload.warehouse_quantity == null) {
+                delete payload.warehouse_quantity;
+            } else {
+                payload.warehouse_quantity = parseFloat(payload.warehouse_quantity);
+            }
             // FIXED: Path aligned with backend @router.put("/catalog/{item_id}")
-            await axiosInstance.put(`/inventory/catalog/${itemId}`, formData);
+            await axiosInstance.put(`/inventory/catalog/${itemId}`, payload);
             toast.success(`Registry node updated: ${formData.name}`);
             navigate('/inventory'); 
         } catch (err) {
@@ -215,6 +228,25 @@ function InventoryCatalogEditPage() {
                                         />
                                     </div>
                                 </div>
+                                <div className="space-y-1 md:col-span-2">
+                                    <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">
+                                        Central warehouse quantity
+                                    </label>
+                                    <input
+                                        type="number"
+                                        name="warehouse_quantity"
+                                        min="0"
+                                        step="any"
+                                        value={formData.warehouse_quantity}
+                                        onChange={handleChange}
+                                        disabled={isSubmitting}
+                                        className="modern-input h-14 font-mono text-sm"
+                                        placeholder="0"
+                                    />
+                                    <p className="text-[9px] text-gray-400 mt-1 font-medium">
+                                        Stock held centrally before issuing to projects (admin / superuser).
+                                    </p>
+                                </div>
                             </div>
                         )}
 
@@ -275,7 +307,7 @@ function InventoryCatalogEditPage() {
                         {isSuperuser && (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                 <div className="space-y-1">
-                                    <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">Category</label>
+                                    <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">Category (IS / primary)</label>
                                     <input 
                                         type="text" 
                                         name="category" 
@@ -286,7 +318,19 @@ function InventoryCatalogEditPage() {
                                     />
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">Subcategory</label>
+                                    <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">Category (EN)</label>
+                                    <input 
+                                        type="text" 
+                                        name="category_en" 
+                                        value={formData.category_en} 
+                                        onChange={handleChange} 
+                                        disabled={isSubmitting}
+                                        className="modern-input h-12" 
+                                        placeholder="English label for menus"
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">Subcategory (IS / primary)</label>
                                     <input 
                                         type="text" 
                                         name="subcategory" 
@@ -294,6 +338,18 @@ function InventoryCatalogEditPage() {
                                         onChange={handleChange} 
                                         disabled={isSubmitting}
                                         className="modern-input h-12" 
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">Subcategory (EN)</label>
+                                    <input 
+                                        type="text" 
+                                        name="subcategory_en" 
+                                        value={formData.subcategory_en} 
+                                        onChange={handleChange} 
+                                        disabled={isSubmitting}
+                                        className="modern-input h-12" 
+                                        placeholder="English label (full path if using /)"
                                     />
                                 </div>
                             </div>

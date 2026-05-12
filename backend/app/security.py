@@ -1,6 +1,11 @@
 # backend/app/security.py
 # ABSOLUTELY FINAL Meticulously Checked Uncondensed Version
+import json
+import os
+import re
 from datetime import datetime, timedelta, timezone
+
+import pyotp
 from typing import Annotated, Optional, List, Iterable
 
 from fastapi import Depends, HTTPException, status
@@ -17,9 +22,16 @@ from .database import get_db
 # --- Configuration ---
 # For production, these should come from environment variables
 # Generate a strong secret key, e.g., using: openssl rand -hex 32
-SECRET_KEY = "YOUR_VERY_SECRET_KEY_SHOULD_BE_LONG_AND_RANDOM_AND_STORED_SAFELY"
+SECRET_KEY = os.getenv("SECRET_KEY", "YOUR_VERY_SECRET_KEY_SHOULD_BE_LONG_AND_RANDOM_AND_STORED_SAFELY")
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 # Token valid for 24 hours
+# Default: 12h session vs 14d when "keep me signed in" is checked
+JWT_SESSION_MINUTES = int(os.getenv("JWT_SESSION_MINUTES", str(60 * 12)))
+JWT_REMEMBER_MINUTES = int(os.getenv("JWT_REMEMBER_MINUTES", str(60 * 24 * 14)))
+JWT_2FA_PENDING_MINUTES = int(os.getenv("JWT_2FA_PENDING_MINUTES", "5"))
+ACCESS_TOKEN_EXPIRE_MINUTES = JWT_REMEMBER_MINUTES  # legacy default for callers that omit delta
+
+# Pending 2FA tokens must not authenticate normal API routes
+SCOPE_2FA_PENDING = "2fa_pending"
 
 # --- Password Hashing ---
 # Using bcrypt as the scheme for password hashing
@@ -51,6 +63,48 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     return encoded_jwt
 
 
+def access_token_expires_delta(remember_me: bool) -> timedelta:
+    minutes = JWT_REMEMBER_MINUTES if remember_me else JWT_SESSION_MINUTES
+    return timedelta(minutes=minutes)
+
+
+def create_two_factor_pending_token(user_id: int, remember_me: bool, tenant_id: int) -> str:
+    return create_access_token(
+        data={"sub": str(user_id), "scope": SCOPE_2FA_PENDING, "rm": remember_me, "tid": tenant_id},
+        expires_delta=timedelta(minutes=JWT_2FA_PENDING_MINUTES),
+    )
+
+
+def normalize_totp_code(raw: str) -> str:
+    return re.sub(r"\s+", "", (raw or "").strip())
+
+
+def generate_totp_secret() -> str:
+    return pyotp.random_base32()
+
+
+def totp_provisioning_uri(*, secret: str, account_email: str, issuer: str) -> str:
+    return pyotp.TOTP(secret).provisioning_uri(name=account_email, issuer_name=issuer)
+
+
+def verify_totp_code(secret: Optional[str], code: str, *, valid_window: int = 1) -> bool:
+    if not secret:
+        return False
+    c = normalize_totp_code(code)
+    if len(c) < 6:
+        return False
+    return bool(pyotp.TOTP(secret).verify(c, valid_window=valid_window))
+
+
+def issue_access_token_for_user(user_id: int, remember_me: bool) -> tuple[str, int]:
+    delta = access_token_expires_delta(remember_me)
+    token = create_access_token(
+        data={"sub": str(user_id), "rm": remember_me},
+        expires_delta=delta,
+    )
+    return token, int(delta.total_seconds())
+
+
 def decode_token_payload(token: str) -> Optional[dict]:
     """Decode JWT and return payload dict, or None if invalid."""
     try:
@@ -73,14 +127,21 @@ async def get_current_user(
     )
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        email: Optional[str] = payload.get("sub") # "sub" (subject) should be the user's email
-        if email is None:
+        if payload.get("scope") == SCOPE_2FA_PENDING:
             raise credentials_exception
-        # No need to create TokenData schema instance here if just using email
+        sub = payload.get("sub")
+        if sub is None:
+            raise credentials_exception
     except JWTError:
         raise credentials_exception
     from . import crud
-    user = crud.get_user_by_email(db, email=email) # Fetch user by email from token
+    user = None
+    sub_str = str(sub).strip()
+    if sub_str.isdigit():
+        user = crud.get_user(db, user_id=int(sub_str))
+    if user is None:
+        # Legacy tokens used email as subject
+        user = crud.get_user_by_email(db, email=sub_str)
     if user is None:
         raise credentials_exception
     return user

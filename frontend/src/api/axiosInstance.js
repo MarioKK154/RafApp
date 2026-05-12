@@ -1,8 +1,9 @@
 // frontend/src/api/axiosInstance.js
-// Uncondensed and Manually Checked
 import axios from 'axios';
 
 const API_BASE_URL = 'http://localhost:8000';
+
+export const AUTH_LOGOUT_EVENT = 'rafapp:auth-logout';
 
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
@@ -14,27 +15,22 @@ axiosInstance.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    console.log('Axios Interceptor: Sending request with headers:', config.headers); // DEBUG LOG
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
-// Optional response interceptor (as provided before for 401 handling)
 axiosInstance.interceptors.response.use(
-  (response) => {
-    return response;
-  },
+  (response) => response,
   (error) => {
     if (error.response && error.response.status === 401) {
-      console.error("Axios Interceptor: Unauthorized request (401). Token might be invalid or expired.");
-      // Optionally, trigger a global logout event here
-      // localStorage.removeItem('accessToken');
-      // if (window.location.pathname !== '/login') { // Avoid redirect loop
-      //    window.location.href = '/login';
-      // }
+      const path = window.location.pathname || '';
+      const onLogin = path === '/login' || path.startsWith('/login');
+      if (!onLogin) {
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('authRememberMe');
+        window.dispatchEvent(new CustomEvent(AUTH_LOGOUT_EVENT, { detail: { reason: 'session' } }));
+      }
     }
     return Promise.reject(error);
   }

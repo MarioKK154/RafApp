@@ -83,8 +83,45 @@ class Token(BaseModel):
     access_token: str
     token_type: str
 
+
+class LoginTokenResponse(BaseModel):
+    """/oauth/token style reply; supports 2FA step before access_token is issued."""
+    token_type: str = "bearer"
+    access_token: Optional[str] = None
+    temp_token: Optional[str] = None
+    two_factor_required: bool = False
+    expires_in_seconds: Optional[int] = None
+    remember_me: Optional[bool] = None
+
+
+class LoginTenantOption(BaseModel):
+    id: int
+    name: str
+    logo_url: Optional[str] = None
+
+
 class TokenData(BaseModel):
     email: Optional[str] = None
+
+
+class CompleteTwoFactorBody(BaseModel):
+    temp_token: str
+    totp_code: str = Field(..., min_length=6, max_length=12)
+
+
+class TotpSetupResponse(BaseModel):
+    secret: str
+    otpauth_uri: str
+
+
+class TotpVerifySetupBody(BaseModel):
+    code: str = Field(..., min_length=6, max_length=12)
+
+
+class TotpDisableBody(BaseModel):
+    password: str
+    totp_code: str = Field(..., min_length=6, max_length=12)
+
 
 # --- Tenant Schemas ---
 
@@ -148,6 +185,7 @@ class UserRead(UserBase):
     id: int
     is_active: bool
     is_superuser: bool
+    totp_enabled: bool = False
     role: str
     tenant_id: Optional[int] = None
     tenant: Optional[TenantReadBasic] = None
@@ -465,6 +503,8 @@ class InventoryItemBase(BaseModel):
     name_en: Optional[str] = None
     category: Optional[str] = None # ROADMAP: Multi-level hierarchy
     subcategory: Optional[str] = None
+    category_en: Optional[str] = None
+    subcategory_en: Optional[str] = None
     description: Optional[str] = None
     description_en: Optional[str] = None
     unit: Optional[str] = None
@@ -476,6 +516,7 @@ class InventoryItemBase(BaseModel):
     iskraft_sku: Optional[str] = None
     reykjafell_sku: Optional[str] = None
     local_image_path: Optional[str] = None
+    warehouse_quantity: float = Field(0.0, ge=0)
 
 class InventoryItemCreate(InventoryItemBase):
     pass
@@ -485,6 +526,8 @@ class InventoryItemUpdate(BaseModel):
     name_en: Optional[str] = None
     category: Optional[str] = None
     subcategory: Optional[str] = None
+    category_en: Optional[str] = None
+    subcategory_en: Optional[str] = None
     description: Optional[str] = None
     description_en: Optional[str] = None
     unit: Optional[str] = None
@@ -496,6 +539,7 @@ class InventoryItemUpdate(BaseModel):
     iskraft_sku: Optional[str] = None
     reykjafell_sku: Optional[str] = None
     local_image_path: Optional[str] = None
+    warehouse_quantity: Optional[float] = Field(None, ge=0)
 
 class InventoryItemRead(InventoryItemBase):
     id: int
@@ -538,6 +582,33 @@ class ProjectInventoryItemRead(ProjectInventoryItemBase):
     project_id: int
     inventory_item: InventoryItemRead 
     model_config = ConfigDict(from_attributes=True)
+
+
+class IssueFromWarehouseToProjectBody(BaseModel):
+    project_id: int
+    inventory_item_id: int
+    quantity: float = Field(..., gt=0)
+    location: Optional[str] = None
+
+
+class ReturnFromProjectToWarehouseBody(BaseModel):
+    project_id: int
+    inventory_item_id: int
+    quantity: float = Field(..., gt=0)
+
+
+class TransferInventoryBetweenProjectsBody(BaseModel):
+    from_project_id: int
+    to_project_id: int
+    inventory_item_id: int
+    quantity: float = Field(..., gt=0)
+    location: Optional[str] = None
+
+
+class ReturnToWarehouseResult(BaseModel):
+    warehouse_quantity: float
+    project_inventory: Optional[ProjectInventoryItemRead] = None
+
 
 class InventoryItemUpdateNeededQty(BaseModel):
     quantity_needed: float = Field(..., ge=0)
@@ -898,6 +969,33 @@ class SystemStatus(BaseModel):
     maintenance: bool
     message: Optional[str] = None
 
+
+class LandingFeedItem(BaseModel):
+    title: str
+    text: str
+    link_url: Optional[str] = None
+    link_label: Optional[str] = None
+    image_url: Optional[str] = None
+    source: Optional[str] = None
+    is_pinned: bool = False
+    starts_at: Optional[datetime] = None
+    ends_at: Optional[datetime] = None
+
+
+class LandingFeed(BaseModel):
+    news: List[LandingFeedItem] = []
+    updates: List[LandingFeedItem] = []
+    tools: List[LandingFeedItem] = []
+    interesting: List[LandingFeedItem] = []
+    random: List[LandingFeedItem] = []
+    show_news: bool = True
+    show_updates: bool = True
+    show_tools: bool = True
+    show_interesting: bool = True
+    # Public landing page: full-bleed backgrounds (URLs). Multiple URLs rotate on a timer.
+    background_image_urls: List[str] = []
+    background_slide_seconds: int = Field(8, ge=3, le=600)
+
 class ReportTimeLogEntry(BaseModel):
     user_name: str
     duration_hours: float
@@ -1069,6 +1167,18 @@ class LeaveRequestRead(BaseModel):
 class LeaveRequestReview(BaseModel):
     status: LeaveStatus
     manager_comment: Optional[str] = None
+
+
+class LeaveCalendarBlock(BaseModel):
+    """Approved leave overlapping a calendar range (for overlays)."""
+
+    id: int
+    user_id: int
+    tenant_id: int
+    user_name: str
+    leave_type: str
+    start_date: date
+    end_date: date
 
 
 MoneyFlowLiteral = Literal["in", "out"]

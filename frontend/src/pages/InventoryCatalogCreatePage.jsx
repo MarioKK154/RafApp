@@ -28,6 +28,8 @@ function InventoryCatalogCreatePage() {
         name_en: '',
         category: '',
         subcategory: '',
+        category_en: '',
+        subcategory_en: '',
         description: '',
         description_en: '',
         unit: '',
@@ -169,24 +171,46 @@ function InventoryCatalogCreatePage() {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                             <div className="space-y-1">
-                                <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">Category</label>
+                                <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">Category (IS / primary)</label>
                                 <input 
                                     type="text" 
                                     name="category" 
                                     value={formData.category} 
+                                    onChange={handleChange} 
+                                    placeholder="e.g. Kaplar"
+                                    className="modern-input h-12" 
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">Category (EN)</label>
+                                <input 
+                                    type="text" 
+                                    name="category_en" 
+                                    value={formData.category_en} 
                                     onChange={handleChange} 
                                     placeholder="e.g. Cables"
                                     className="modern-input h-12" 
                                 />
                             </div>
                             <div className="space-y-1">
-                                <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">Subcategory</label>
+                                <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">Subcategory (IS / primary)</label>
                                 <input 
                                     type="text" 
                                     name="subcategory" 
                                     value={formData.subcategory} 
                                     onChange={handleChange} 
-                                    placeholder="e.g. Power cables / Copper power cables"
+                                    placeholder="e.g. Kraftkaplar / Kopar"
+                                    className="modern-input h-12" 
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">Subcategory (EN)</label>
+                                <input 
+                                    type="text" 
+                                    name="subcategory_en" 
+                                    value={formData.subcategory_en} 
+                                    onChange={handleChange} 
+                                    placeholder="e.g. Power cables / Copper"
                                     className="modern-input h-12" 
                                 />
                             </div>

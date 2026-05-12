@@ -217,11 +217,14 @@ async def start_impersonation(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot impersonate an inactive user")
     log = crud.create_impersonation_log(db, superuser_id=current_user.id, target_user_id=target.id)
     token_data = {
-        "sub": target.email,
+        "sub": str(target.id),
         "impersonated_by": current_user.email,
         "impersonation_log_id": log.id,
     }
-    access_token = security.create_access_token(data=token_data)
+    access_token = security.create_access_token(
+        data=token_data,
+        expires_delta=security.access_token_expires_delta(remember_me=True),
+    )
     impersonated_user = schemas.UserRead.model_validate(target)
     return schemas.ImpersonationStartResponse(
         access_token=access_token,

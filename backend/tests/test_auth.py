@@ -38,7 +38,7 @@ def test_login_for_access_token(client: TestClient, db: Session):
     # 2. ACT: Make a POST request to the login endpoint
     response = client.post(
         "/auth/token",
-        data={"username": test_email, "password": test_password}
+        data={"username": test_email, "password": test_password, "tenant_id": "1"},
     )
 
     # 3. ASSERT: Check if the response is correct

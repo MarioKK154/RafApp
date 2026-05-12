@@ -446,7 +446,7 @@ function LaborCatalogListPage() {
                                                     ) : (
                                                         <FolderIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
                                                     )}
-                                                    {cat.main_category || '(Uncategorized)'}
+                                                    {cat.display_name || cat.main_category || '(Uncategorized)'}
                                                 </span>
                                                 <ChevronRightIcon
                                                     className={`h-5 w-5 text-gray-400 flex-shrink-0 transition-transform ${isExpanded ? 'rotate-90' : ''}`}

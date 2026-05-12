@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom'; 
 import { useTranslation } from 'react-i18next';
+import { addDays, format, parseISO } from 'date-fns';
 
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -20,6 +21,14 @@ import {
     InformationCircleIcon,
     BuildingOffice2Icon
 } from '@heroicons/react/24/outline';
+
+function leaveEventColor(leaveType) {
+    const t = (leaveType || '').toLowerCase();
+    if (t.includes('sick')) return '#e11d48';
+    if (t.includes('vacation') || t.includes('annual') || t.includes('holiday') || t.includes('frí')) return '#ca8a04';
+    if (t.includes('parental') || t.includes('maternity') || t.includes('paternity')) return '#7c3aed';
+    return '#64748b';
+}
 
 function CalendarPage() {
     const { t, i18n } = useTranslation();
@@ -46,6 +55,7 @@ function CalendarPage() {
     });
 
     const [users, setUsers] = useState([]);
+    const [leavePeek, setLeavePeek] = useState(null);
     const userOptions = useMemo(
         () =>
             users.map((u) => ({
@@ -102,18 +112,66 @@ function CalendarPage() {
         setIsLoading(true);
         try {
             const tenantScope = isSuperuser && selectedTenantId ? { tenant_id: selectedTenantId } : {};
+            const nowAnchor = new Date();
+            const rangeStart = format(
+                new Date(nowAnchor.getFullYear(), nowAnchor.getMonth() - 1, 1),
+                'yyyy-MM-dd',
+            );
+            const rangeEnd = format(
+                new Date(nowAnchor.getFullYear(), nowAnchor.getMonth() + 3, 0),
+                'yyyy-MM-dd',
+            );
+
             const [tasksRes, projectsRes, eventsRes, usersRes] = await Promise.all([
                 axiosInstance.get('/tasks/', { params: { limit: 1000, ...tenantScope } }),
                 axiosInstance.get('/projects/', { params: { limit: 1000, ...tenantScope } }),
                 axiosInstance.get('/events/', {
                     params: { 
-                    start: new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1).toISOString(),
-                    end: new Date(new Date().getFullYear(), new Date().getMonth() + 2, 1).toISOString(),
-                    ...tenantScope,
+                        start: new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1).toISOString(),
+                        end: new Date(new Date().getFullYear(), new Date().getMonth() + 2, 1).toISOString(),
+                        ...tenantScope,
                     },
                 }),
                 axiosInstance.get('/users/', { params: { limit: 500, ...tenantScope } }),
             ]);
+
+            let leaveFcEvents = [];
+            try {
+                const leaveParams = {
+                    start: rangeStart,
+                    end: rangeEnd,
+                    ...(isSuperuser && selectedTenantId ? { tenant_id: selectedTenantId } : {}),
+                };
+                const leaveRes = await axiosInstance.get('/accounting/leave-requests/calendar', {
+                    params: leaveParams,
+                });
+                const blocks = Array.isArray(leaveRes.data) ? leaveRes.data : [];
+                leaveFcEvents = blocks.map((block) => {
+                    const bg = leaveEventColor(block.leave_type);
+                    const endExclusive = format(addDays(parseISO(String(block.end_date)), 1), 'yyyy-MM-dd');
+                    return {
+                        id: `leave-${block.id}`,
+                        title: `${block.user_name} — ${block.leave_type}`,
+                        allDay: true,
+                        start: String(block.start_date),
+                        end: endExclusive,
+                        display: 'block',
+                        backgroundColor: bg,
+                        borderColor: bg,
+                        textColor: '#fff',
+                        extendedProps: {
+                            type: 'leave',
+                            realId: block.id,
+                            user_name: block.user_name,
+                            leave_type: block.leave_type,
+                            start_date: block.start_date,
+                            end_date: block.end_date,
+                        },
+                    };
+                });
+            } catch (_) {
+                leaveFcEvents = [];
+            }
 
             const taskEvents = tasksRes.data
                 .filter(t => {
@@ -142,20 +200,22 @@ function CalendarPage() {
                     extendedProps: { type: 'project', realId: proj.id }
                 }));
 
-            const customEvents = eventsRes.data.map(evt => ({
-                id: evt.id.toString(),
-                title: evt.event_type === 'meeting' ? `[MTG] ${evt.title}` : evt.title,
-                start: evt.start_time,
-                end: evt.end_time,
-                backgroundColor: evt.event_type === 'meeting' ? '#f59e0b' : '#6b7280',
-                extendedProps: { 
-                    ...evt, 
-                    type: evt.event_type || 'custom', 
-                    realId: evt.id
-                }
-            }));
+            const customEvents = eventsRes.data
+                .filter((evt) => !(evt.title || '').startsWith('Leave –'))
+                .map((evt) => ({
+                    id: evt.id.toString(),
+                    title: evt.event_type === 'meeting' ? `[MTG] ${evt.title}` : evt.title,
+                    start: evt.start_time,
+                    end: evt.end_time,
+                    backgroundColor: evt.event_type === 'meeting' ? '#f59e0b' : '#6b7280',
+                    extendedProps: {
+                        ...evt,
+                        type: evt.event_type || 'custom',
+                        realId: evt.id,
+                    },
+                }));
 
-            setEvents([...taskEvents, ...projectEvents, ...customEvents]);
+            setEvents([...taskEvents, ...projectEvents, ...customEvents, ...leaveFcEvents]);
             setUsers(Array.isArray(usersRes.data) ? usersRes.data : []);
         } catch (error) {
             // Surface a localized error while still logging details for debugging
@@ -184,6 +244,16 @@ function CalendarPage() {
 
     const handleEventClick = (info) => {
         const props = info.event.extendedProps;
+
+        if (props.type === 'leave') {
+            setLeavePeek({
+                user_name: props.user_name,
+                leave_type: props.leave_type,
+                start_date: props.start_date,
+                end_date: props.end_date,
+            });
+            return;
+        }
 
         if (props.type === 'task') { 
             navigate(`/tasks/${props.realId}`); 
@@ -338,6 +408,10 @@ function CalendarPage() {
                         { id: 'project', label: t('calendar_filter_projects', { defaultValue: 'Projects' }) },
                         { id: 'meeting', label: t('calendar_filter_meetings', { defaultValue: 'Meetings' }) },
                         { id: 'custom', label: t('calendar_filter_custom', { defaultValue: 'Custom' }) },
+                        {
+                            id: 'leave',
+                            label: t('calendar_filter_leave', { defaultValue: 'Away (leave)' }),
+                        },
                     ].map((filter) => {
                         const isActive = activeFilters.includes(filter.id);
                         return (
@@ -550,6 +624,32 @@ function CalendarPage() {
                                 </div>
                             )}
                         </div>
+                    </div>
+                )}
+            </Modal>
+
+            <Modal
+                isOpen={!!leavePeek}
+                onClose={() => setLeavePeek(null)}
+                title={t('leave_detail_title', { defaultValue: 'Approved leave' })}
+            >
+                {leavePeek && (
+                    <div className="space-y-4 pt-4 text-sm">
+                        <p className="font-black text-gray-900 dark:text-white uppercase tracking-tight">
+                            {leavePeek.user_name}
+                        </p>
+                        <p className="text-[10px] font-black text-rose-600 dark:text-rose-400 uppercase tracking-widest">
+                            {leavePeek.leave_type}
+                        </p>
+                        <p className="text-xs text-gray-600 dark:text-gray-300">
+                            {String(leavePeek.start_date)} → {String(leavePeek.end_date)}
+                        </p>
+                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">
+                            {t('leave_calendar_hint', {
+                                defaultValue:
+                                    'Shown from HR leave requests (approved only). Scheduling uses the same source.',
+                            })}
+                        </p>
                     </div>
                 )}
             </Modal>

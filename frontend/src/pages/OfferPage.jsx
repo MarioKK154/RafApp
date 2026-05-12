@@ -7,6 +7,8 @@ import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ConfirmationModal from '../components/ConfirmationModal';
+import InventoryCatalogShopFilters from '../components/InventoryCatalogShopFilters';
+import { useInventoryCatalogShopFilter } from '../hooks/useInventoryCatalogShopFilter';
 import { 
     PencilIcon, 
     TrashIcon, 
@@ -169,50 +171,96 @@ function OfferPage() {
     const canManageOffer = user && (['admin', 'project manager'].includes(user.role) || isSuperuser);
     const canEditOffer = canManageOffer && offer?.status === 'Draft';
 
-    const fetchOfferAndCatalogs = useCallback(async () => {
+    const {
+        selectedShops,
+        toggleShop,
+        shopMatchMode,
+        setShopMatchMode,
+        buildCatalogParams,
+    } = useInventoryCatalogShopFilter();
+
+    useEffect(() => {
         if (!offerId) return;
-        setIsLoading(true);
-        setError('');
-        try {
-            // Load offer first so the page can render even if catalogs fail
-            const offerRes = await axiosInstance.get(`/offers/${offerId}`);
-            const data = offerRes.data;
-            setOffer(data);
-            setHeaderFormData({
-                client_name: data.client_name || '',
-                client_address: data.client_address || '',
-                client_email: data.client_email || '',
-                expiry_date: formatDateForInput(data.expiry_date),
-            });
-        } catch (err) {
-            console.error('Offer fetch failed:', err);
-            setError('Failed to load offer.');
-            setOffer(null);
-            toast.error('Could not load offer.');
-        } finally {
-            setIsLoading(false);
-        }
-        // Load catalogs and ratios separately so failures don't block the offer page
-        try {
-            const [invRes, laborRes, ratiosRes] = await Promise.allSettled([
-                axiosInstance.get('/inventory/catalog', { params: { limit: 1000 } }),
-                axiosInstance.get('/labor-catalog/', { params: { limit: 5000, lang: laborApiLang } }),
-                axiosInstance.get('/labor-catalog/work-load-ratios', { params: { active_only: false } }),
-            ]);
-            const invData = invRes.status === 'fulfilled' ? invRes.value?.data : null;
-            const laborData = laborRes.status === 'fulfilled' ? laborRes.value?.data : null;
-            const ratiosData = ratiosRes.status === 'fulfilled' ? ratiosRes.value?.data : null;
-            setInventoryCatalog(Array.isArray(invData) ? invData : []);
-            setLaborCatalog(Array.isArray(laborData) ? laborData : []);
-            setWorkLoadRatios(Array.isArray(ratiosData) ? ratiosData : []);
-        } catch (_) {
-            setInventoryCatalog([]);
-            setLaborCatalog([]);
-            setWorkLoadRatios([]);
-        }
+        let cancelled = false;
+        (async () => {
+            setIsLoading(true);
+            setError('');
+            try {
+                const offerRes = await axiosInstance.get(`/offers/${offerId}`);
+                if (cancelled) return;
+                const data = offerRes.data;
+                setOffer(data);
+                setHeaderFormData({
+                    client_name: data.client_name || '',
+                    client_address: data.client_address || '',
+                    client_email: data.client_email || '',
+                    expiry_date: formatDateForInput(data.expiry_date),
+                });
+            } catch (err) {
+                console.error('Offer fetch failed:', err);
+                if (!cancelled) {
+                    setError('Failed to load offer.');
+                    setOffer(null);
+                    toast.error('Could not load offer.');
+                }
+            } finally {
+                if (!cancelled) setIsLoading(false);
+            }
+        })();
+        return () => {
+            cancelled = true;
+        };
+    }, [offerId]);
+
+    useEffect(() => {
+        if (!offerId) return;
+        let cancelled = false;
+        (async () => {
+            try {
+                const [laborRes, ratiosRes] = await Promise.allSettled([
+                    axiosInstance.get('/labor-catalog/', { params: { limit: 5000, lang: laborApiLang } }),
+                    axiosInstance.get('/labor-catalog/work-load-ratios', { params: { active_only: false } }),
+                ]);
+                if (cancelled) return;
+                const laborData = laborRes.status === 'fulfilled' ? laborRes.value?.data : null;
+                const ratiosData = ratiosRes.status === 'fulfilled' ? ratiosRes.value?.data : null;
+                setLaborCatalog(Array.isArray(laborData) ? laborData : []);
+                setWorkLoadRatios(Array.isArray(ratiosData) ? ratiosData : []);
+            } catch (_) {
+                if (!cancelled) {
+                    setLaborCatalog([]);
+                    setWorkLoadRatios([]);
+                }
+            }
+        })();
+        return () => {
+            cancelled = true;
+        };
     }, [offerId, laborApiLang]);
 
-    useEffect(() => { fetchOfferAndCatalogs(); }, [fetchOfferAndCatalogs]);
+    useEffect(() => {
+        if (!offerId) return;
+        let cancelled = false;
+        (async () => {
+            try {
+                const invRes = await axiosInstance.get('/inventory/catalog', {
+                    params: buildCatalogParams({ limit: 4000 }),
+                });
+                if (cancelled) return;
+                const invData = invRes?.data;
+                setInventoryCatalog(Array.isArray(invData) ? invData : []);
+                setMaterialExpandedMain(null);
+                setMaterialSelectedMain(null);
+                setMaterialSelectedSub(null);
+                setNewItemInventoryId('');
+            } catch (_) {
+                if (!cancelled) setInventoryCatalog([]);
+            }
+        })();
+        return () => {
+            cancelled = true;
+        };
+    }, [offerId, buildCatalogParams]);
 
     const fetchLaborCategories = useCallback(async () => {
         setCategoriesLoading(true);
@@ -339,6 +387,23 @@ function OfferPage() {
         }
     };
 
+    const reloadOfferFromServer = useCallback(async () => {
+        if (!offerId) return;
+        try {
+            const offerRes = await axiosInstance.get(`/offers/${offerId}`);
+            const data = offerRes.data;
+            setOffer(data);
+            setHeaderFormData({
+                client_name: data.client_name || '',
+                client_address: data.client_address || '',
+                client_email: data.client_email || '',
+                expiry_date: formatDateForInput(data.expiry_date),
+            });
+        } catch (err) {
+            console.error('Offer refresh failed:', err);
+        }
+    }, [offerId]);
+
     const handleLaborCatalogChange = (e) => {
         const itemId = e.target.value;
         setSelectedLaborCatalogId(itemId);
@@ -380,7 +445,7 @@ function OfferPage() {
             setSelectedCatalogItem(null);
             setSelectedVariant(null);
             setAddQty(1);
-            fetchOfferAndCatalogs();
+            reloadOfferFromServer();
         } catch (err) {
             toast.error(err.response?.data?.detail || 'Failed to add line.');
         }
@@ -413,7 +478,7 @@ function OfferPage() {
             setNewItemPrice('');
             setNewItemUnit('hour');
             setShowCustomLaborForm(false);
-            fetchOfferAndCatalogs();
+            reloadOfferFromServer();
         } catch (err) {
             toast.error(err.response?.data?.detail || 'Failed to add line.');
         }
@@ -434,7 +499,7 @@ function OfferPage() {
             toast.success('Line item appended.');
             setNewItemDesc(''); setNewItemQty(1); setNewItemPrice(''); 
             setNewItemInventoryId(''); setSelectedLaborCatalogId('');
-            fetchOfferAndCatalogs();
+            reloadOfferFromServer();
         } catch (error) {
             console.error('Add line item failed:', error);
             toast.error('Failed to append line item.');
@@ -445,7 +510,7 @@ function OfferPage() {
         try {
             await axiosInstance.delete(`/offers/items/${itemId}`);
             toast.success('Item purged from bid.');
-            fetchOfferAndCatalogs();
+            reloadOfferFromServer();
         } catch (error) {
             console.error('Remove line item failed:', error);
             toast.error('Removal failed.');
@@ -634,6 +699,18 @@ function OfferPage() {
                                 >
                                     Custom labor line
                                 </button>
+                            </div>
+
+                            <div className="mb-6 p-4 rounded-2xl bg-gray-50 dark:bg-gray-900/40 border border-gray-100 dark:border-gray-700">
+                                <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">
+                                    Material supplier filter (Material tab browser)
+                                </p>
+                                <InventoryCatalogShopFilters
+                                    selected={selectedShops}
+                                    onToggleShop={toggleShop}
+                                    shopMatch={shopMatchMode}
+                                    onShopMatchChange={setShopMatchMode}
+                                />
                             </div>
 
                             {/* Custom labor form: description, qty, unit (catalog-aligned), unit price */}

@@ -10,6 +10,7 @@ import { useTenantBranding } from './hooks/useTenantBranding';
 // --- FEATURE PAGE IMPORTS ---
 import LoginPage from './pages/LoginPage';
 import HomePage from './pages/HomePage';
+import LandingPage from './pages/LandingPage';
 import ProjectsPage from './pages/ProjectsPage';
 import ProjectCreatePage from './pages/ProjectCreatePage';
 import ProjectEditPage from './pages/ProjectEditPage';
@@ -159,9 +160,10 @@ function AppShell() {
                 )}
                     <Routes>
                         <Route path="/login" element={<LoginPage />} />
+                        <Route path="/" element={<LandingPage />} />
 
                         {/* --- CORE OPERATIONAL HUB --- */}
-                        <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
+                        <Route path="/dashboard" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
                         <Route path="/notifications" element={<ProtectedRoute><NotificationHubPage /></ProtectedRoute>} />
                         <Route path="/scheduling" element={<ProtectedRoute><SchedulingGridPage /></ProtectedRoute>} />
 

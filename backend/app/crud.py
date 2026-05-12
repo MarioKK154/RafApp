@@ -6,6 +6,7 @@ from datetime import date, datetime, timezone, timedelta
 import json
 from . import models, schemas
 from .database import engine
+from .inventory_search import escape_like_fragment, inventory_search_like_patterns
 from .security import get_password_hash
 from .labor_i18n import main_category_label_en
 
@@ -127,6 +128,21 @@ def get_user_by_email(db: Session, email: str) -> Optional[models.User]:
              )\
              .filter(models.User.email == email).first()
 
+
+def get_user_by_email_and_tenant(db: Session, email: str, tenant_id: int) -> Optional[models.User]:
+    return (
+        db.query(models.User)
+        .options(
+            joinedload(models.User.assigned_projects),
+            joinedload(models.User.tenant),
+        )
+        .filter(
+            models.User.email == email,
+            models.User.tenant_id == tenant_id,
+        )
+        .first()
+    )
+
 def get_users(
     db: Session,
     tenant_id: Optional[int] = None,
@@ -240,6 +256,33 @@ def update_user_password(db: Session, user: models.User, new_password: str) -> m
     db.commit()
     db.refresh(user)
     return user
+
+
+def set_user_totp_secret(db: Session, user: models.User, secret: str) -> models.User:
+    user.totp_secret = secret
+    user.totp_enabled = False
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+def enable_user_totp(db: Session, user: models.User) -> models.User:
+    user.totp_enabled = True
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+def disable_user_totp(db: Session, user: models.User) -> models.User:
+    user.totp_secret = None
+    user.totp_enabled = False
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
+
 
 def set_user_password_by_admin(db: Session, user: models.User, new_password: str) -> models.User:
     user.hashed_password = get_password_hash(new_password)
@@ -629,25 +672,65 @@ def delete_task_photo_metadata(db: Session, photo_id: int) -> Optional[models.Ta
 def get_inventory_item(db: Session, item_id: int) -> Optional[models.InventoryItem]:
     return db.query(models.InventoryItem).filter(models.InventoryItem.id == item_id).first()
 
+def _inventory_text_ilike_contains(col, term_lc: str):
+    escaped = escape_like_fragment(term_lc)
+    pat = f"%{escaped}%"
+    # Escape treats \%, \_, \\ literally on PostgreSQL; SQLite honours ESCAPE '\' as well.
+    return col.ilike(pat, escape="\\")
+
+
+def _inventory_nonempty_optional_str(col):
+    return and_(col.isnot(None), func.length(func.trim(col)) > 0)
+
+
+def _inventory_shop_predicates() -> dict[str, Any]:
+    m = models.InventoryItem
+    return {
+        "ronning": or_(
+            _inventory_nonempty_optional_str(m.shop_url_1),
+            _inventory_nonempty_optional_str(m.ronning_sku),
+        ),
+        "iskraft": or_(
+            _inventory_nonempty_optional_str(m.shop_url_2),
+            _inventory_nonempty_optional_str(m.iskraft_sku),
+        ),
+        "reykjafell": or_(
+            _inventory_nonempty_optional_str(m.shop_url_3),
+            _inventory_nonempty_optional_str(m.reykjafell_sku),
+        ),
+    }
+
+
 def get_inventory_items(
-    db: Session, 
-    search: Optional[str] = None, 
+    db: Session,
+    search: Optional[str] = None,
     category: Optional[str] = None,
     subcategory: Optional[str] = None,
-    skip: int = 0, 
-    limit: int = 100
+    shops: Optional[List[str]] = None,
+    shop_match_all: bool = False,
+    skip: int = 0,
+    limit: int = 100,
 ) -> List[models.InventoryItem]:
     query = db.query(models.InventoryItem)
+    m = models.InventoryItem
+
     if search:
-        search_term = f"%{search}%"
-        query = query.filter(
-            or_(
-                models.InventoryItem.name.ilike(search_term),
-                models.InventoryItem.name_en.ilike(search_term),
-                models.InventoryItem.description.ilike(search_term),
-                models.InventoryItem.description_en.ilike(search_term),
-            )
-        )
+        patterns = inventory_search_like_patterns(search)
+        if patterns:
+            text_cols = [
+                m.name,
+                m.name_en,
+                m.description,
+                m.description_en,
+                m.ronning_sku,
+                m.iskraft_sku,
+                m.reykjafell_sku,
+            ]
+            clauses: List[Any] = []
+            for p in patterns:
+                for col in text_cols:
+                    clauses.append(_inventory_text_ilike_contains(col, p))
+            query = query.filter(or_(*clauses))
 
     if category:
         query = query.filter(models.InventoryItem.category == category)
@@ -667,29 +750,85 @@ def get_inventory_items(
                 else_=func.trim(col),
             )
         query = query.filter(base_subcategory == subcategory)
-    
+
+    preds = _inventory_shop_predicates()
+    if shops:
+        parts = []
+        for s in shops:
+            key = (s or "").strip().lower()
+            if key in preds:
+                parts.append(preds[key])
+        if parts:
+            if shop_match_all and len(parts) > 1:
+                query = query.filter(and_(*parts))
+            else:
+                query = query.filter(or_(*parts))
+
     return query.order_by(models.InventoryItem.name).offset(skip).limit(limit).all()
 
 
-def get_inventory_catalog_filters(db: Session) -> List[dict]:
+def get_inventory_catalog_filters(db: Session, lang: Optional[str] = None) -> List[dict]:
     """
     Build a category -> subcategory tree for the catalog UI.
     Uses frontend's "base subcategory = first segment before '/'" convention.
+    When lang starts with 'en', fills category_display / subcategory labels from *_en fields when set.
     """
-    rows = db.query(models.InventoryItem.category, models.InventoryItem.subcategory).all()
-    cat_map = {}
-    for cat, sub in rows:
+    rows = (
+        db.query(
+            models.InventoryItem.category,
+            models.InventoryItem.subcategory,
+            models.InventoryItem.category_en,
+            models.InventoryItem.subcategory_en,
+        )
+        .all()
+    )
+    use_en = (lang or "is").lower().startswith("en")
+    cat_order: List[str] = []
+    cat_to_sub_keys: dict = {}
+    cat_display: dict = {}
+    sub_labels: dict = {}
+
+    for cat, sub, cat_en, sub_en in rows:
         cat_val = (cat or "Uncategorized").strip()
         raw_sub = (sub or "").strip()
         base_sub = raw_sub.split("/")[0].strip() if raw_sub else ""
-        if cat_val not in cat_map:
-            cat_map[cat_val] = set()
-        if base_sub:
-            cat_map[cat_val].add(base_sub)
 
-    result = [{"category": cat, "subcategories": sorted(list(subs))} for cat, subs in cat_map.items()]
-    # Keep sorting stable for UI
-    return sorted(result, key=lambda x: x["category"])
+        if cat_val not in cat_to_sub_keys:
+            cat_order.append(cat_val)
+            cat_to_sub_keys[cat_val] = []
+            cat_display[cat_val] = cat_val
+
+        if use_en and (cat_en or "").strip():
+            cat_display[cat_val] = (cat_en or "").strip()
+
+        if not base_sub:
+            continue
+        if base_sub not in cat_to_sub_keys[cat_val]:
+            cat_to_sub_keys[cat_val].append(base_sub)
+
+        key = (cat_val, base_sub)
+        label = base_sub
+        if use_en and (sub_en or "").strip():
+            base_en = (sub_en or "").strip().split("/")[0].strip()
+            if base_en:
+                label = base_en
+        prev = sub_labels.get(key)
+        if prev is None or (use_en and label != base_sub):
+            sub_labels[key] = label
+
+    result = []
+    for cat_val in sorted(set(cat_order)):
+        subs_sorted = sorted(cat_to_sub_keys.get(cat_val, []))
+        result.append(
+            {
+                "category": cat_val,
+                "category_display": cat_display.get(cat_val, cat_val),
+                "subcategories": [
+                    {"key": s, "label": sub_labels.get((cat_val, s), s)} for s in subs_sorted
+                ],
+            }
+        )
+    return result
 
 def create_inventory_item(db: Session, item: schemas.InventoryItemCreate) -> models.InventoryItem:
     db_item = models.InventoryItem(**item.model_dump())
@@ -702,6 +841,57 @@ def update_inventory_item(db: Session, db_item: models.InventoryItem, item_updat
 
 def delete_inventory_item(db: Session, db_item: models.InventoryItem) -> models.InventoryItem:
     db.delete(db_item); db.commit(); return db_item
+
+
+def mirror_inventory_catalog_is_to_en(db: Session) -> dict:
+    """Copy Icelandic primary fields into empty English columns (superuser bulk helper)."""
+    touched = 0
+    for it in db.query(models.InventoryItem).all():
+        changed = False
+        if (not (it.category_en or "").strip()) and (it.category or "").strip():
+            it.category_en = it.category
+            changed = True
+        if (not (it.subcategory_en or "").strip()) and (it.subcategory or "").strip():
+            it.subcategory_en = it.subcategory
+            changed = True
+        if (not (it.name_en or "").strip()) and (it.name or "").strip():
+            it.name_en = it.name
+            changed = True
+        if (not (it.description_en or "").strip()) and (it.description or "").strip():
+            it.description_en = it.description
+            changed = True
+        if changed:
+            touched += 1
+            db.add(it)
+    db.commit()
+    return {"inventory_items_updated": touched}
+
+
+def mirror_labor_catalog_is_to_en(db: Session) -> dict:
+    """Copy Icelandic labor catalog text into empty *_en / condition_description_en fields."""
+    items_touched = 0
+    for it in db.query(models.LaborCatalogItem).all():
+        changed = False
+        if (not (it.description_en or "").strip()) and (it.description or "").strip():
+            it.description_en = it.description
+            changed = True
+        if (not (it.main_category_en or "").strip()) and (it.main_category or "").strip():
+            it.main_category_en = it.main_category
+            changed = True
+        if (not (it.sub_category_en or "").strip()) and (it.sub_category or "").strip():
+            it.sub_category_en = it.sub_category
+            changed = True
+        if changed:
+            items_touched += 1
+            db.add(it)
+    conds_touched = 0
+    for c in db.query(models.LaborCatalogItemCondition).all():
+        if (not (c.condition_description_en or "").strip()) and (c.condition_description or "").strip():
+            c.condition_description_en = c.condition_description
+            conds_touched += 1
+            db.add(c)
+    db.commit()
+    return {"labor_items_updated": items_touched, "labor_conditions_updated": conds_touched}
 
 def get_project_inventory_for_project(db: Session, project_id: int) -> List[models.ProjectInventoryItem]:
     return db.query(models.ProjectInventoryItem).options(joinedload(models.ProjectInventoryItem.inventory_item)).filter(models.ProjectInventoryItem.project_id == project_id).all()
@@ -722,10 +912,206 @@ def remove_item_from_project_inventory(db: Session, project_inventory_item_id: i
     return db_item
 
 def get_global_inventory_summary(db: Session) -> List[Dict[str, Any]]:
-    summary = db.query(models.InventoryItem, func.sum(models.ProjectInventoryItem.quantity).label('total_quantity')).join(models.ProjectInventoryItem, models.InventoryItem.id == models.ProjectInventoryItem.inventory_item_id).group_by(models.InventoryItem.id).all()
+    """
+    Rows where warehouse stock > 0 OR there is quantity allocated on at least one project.
+    total_quantity = warehouse + allocated (physical stock picture).
+    """
+    alloc_subq = (
+        db.query(
+            models.ProjectInventoryItem.inventory_item_id.label("iid"),
+            func.coalesce(func.sum(models.ProjectInventoryItem.quantity), 0.0).label("allocated"),
+        )
+        .group_by(models.ProjectInventoryItem.inventory_item_id)
+        .subquery()
+    )
+    rows = (
+        db.query(models.InventoryItem, func.coalesce(alloc_subq.c.allocated, 0.0))
+        .outerjoin(alloc_subq, models.InventoryItem.id == alloc_subq.c.iid)
+        .filter(
+            or_(
+                models.InventoryItem.warehouse_quantity > 0,
+                func.coalesce(alloc_subq.c.allocated, 0.0) > 0,
+            )
+        )
+        .order_by(models.InventoryItem.name)
+        .all()
+    )
     results = []
-    for item, total_quantity in summary: results.append({"inventory_item": item, "total_quantity": total_quantity})
+    for item, allocated in rows:
+        wh = float(item.warehouse_quantity or 0)
+        alloc = float(allocated or 0)
+        results.append({
+            "inventory_item": item,
+            "warehouse_quantity": wh,
+            "allocated_quantity": alloc,
+            "total_quantity": wh + alloc,
+        })
     return results
+
+
+def issue_from_warehouse_to_project(
+    db: Session,
+    *,
+    project_id: int,
+    inventory_item_id: int,
+    quantity: float,
+    location: Optional[str],
+) -> models.ProjectInventoryItem:
+    if quantity <= 0:
+        raise ValueError("quantity must be positive")
+    inv = get_inventory_item(db, inventory_item_id)
+    if not inv:
+        raise ValueError("inventory_not_found")
+    wh = float(inv.warehouse_quantity or 0)
+    if wh + 1e-9 < quantity:
+        raise ValueError("insufficient_warehouse")
+    inv.warehouse_quantity = wh - quantity
+    db.add(inv)
+
+    existing = (
+        db.query(models.ProjectInventoryItem)
+        .filter(
+            models.ProjectInventoryItem.project_id == project_id,
+            models.ProjectInventoryItem.inventory_item_id == inventory_item_id,
+        )
+        .first()
+    )
+    if existing:
+        existing.quantity = float(existing.quantity) + quantity
+        if location is not None:
+            existing.location = location
+        db_item = existing
+    else:
+        db_item = models.ProjectInventoryItem(
+            project_id=project_id,
+            inventory_item_id=inventory_item_id,
+            quantity=quantity,
+            location=location,
+        )
+        db.add(db_item)
+    db.commit()
+    db.refresh(db_item)
+    return (
+        db.query(models.ProjectInventoryItem)
+        .options(joinedload(models.ProjectInventoryItem.inventory_item))
+        .filter(models.ProjectInventoryItem.id == db_item.id)
+        .first()
+    )
+
+
+def return_from_project_to_warehouse(
+    db: Session,
+    *,
+    project_id: int,
+    inventory_item_id: int,
+    quantity: float,
+) -> Dict[str, Any]:
+    if quantity <= 0:
+        raise ValueError("quantity must be positive")
+    row = (
+        db.query(models.ProjectInventoryItem)
+        .filter(
+            models.ProjectInventoryItem.project_id == project_id,
+            models.ProjectInventoryItem.inventory_item_id == inventory_item_id,
+        )
+        .first()
+    )
+    if not row:
+        raise ValueError("no_project_line")
+    on_site = float(row.quantity)
+    if on_site + 1e-9 < quantity:
+        raise ValueError("insufficient_project_stock")
+
+    inv = get_inventory_item(db, inventory_item_id)
+    if not inv:
+        raise ValueError("inventory_not_found")
+    inv.warehouse_quantity = float(inv.warehouse_quantity or 0) + quantity
+    db.add(inv)
+
+    remaining = on_site - quantity
+    if remaining <= 1e-9:
+        db.delete(row)
+        db.commit()
+        db.refresh(inv)
+        remaining_row = None
+    else:
+        row.quantity = remaining
+        db.add(row)
+        db.commit()
+        db.refresh(inv)
+        db.refresh(row)
+        remaining_row = (
+            db.query(models.ProjectInventoryItem)
+            .options(joinedload(models.ProjectInventoryItem.inventory_item))
+            .filter(models.ProjectInventoryItem.id == row.id)
+            .first()
+        )
+    return {"warehouse_quantity": float(inv.warehouse_quantity), "project_inventory": remaining_row}
+
+
+def transfer_inventory_between_projects(
+    db: Session,
+    *,
+    from_project_id: int,
+    to_project_id: int,
+    inventory_item_id: int,
+    quantity: float,
+    location: Optional[str],
+) -> models.ProjectInventoryItem:
+    if from_project_id == to_project_id:
+        raise ValueError("same_project")
+    if quantity <= 0:
+        raise ValueError("quantity must be positive")
+    src = (
+        db.query(models.ProjectInventoryItem)
+        .filter(
+            models.ProjectInventoryItem.project_id == from_project_id,
+            models.ProjectInventoryItem.inventory_item_id == inventory_item_id,
+        )
+        .first()
+    )
+    if not src:
+        raise ValueError("no_source_line")
+    src_qty = float(src.quantity)
+    if src_qty + 1e-9 < quantity:
+        raise ValueError("insufficient_project_stock")
+
+    new_src = src_qty - quantity
+    if new_src <= 1e-9:
+        db.delete(src)
+    else:
+        src.quantity = new_src
+        db.add(src)
+
+    dest = (
+        db.query(models.ProjectInventoryItem)
+        .filter(
+            models.ProjectInventoryItem.project_id == to_project_id,
+            models.ProjectInventoryItem.inventory_item_id == inventory_item_id,
+        )
+        .first()
+    )
+    if dest:
+        dest.quantity = float(dest.quantity) + quantity
+        if location is not None:
+            dest.location = location
+        db_item = dest
+    else:
+        db_item = models.ProjectInventoryItem(
+            project_id=to_project_id,
+            inventory_item_id=inventory_item_id,
+            quantity=quantity,
+            location=location,
+        )
+        db.add(db_item)
+    db.commit()
+    db.refresh(db_item)
+    return (
+        db.query(models.ProjectInventoryItem)
+        .options(joinedload(models.ProjectInventoryItem.inventory_item))
+        .filter(models.ProjectInventoryItem.id == db_item.id)
+        .first()
+    )
 
 def get_boq_by_project_id(db: Session, project_id: int) -> Optional[models.BoQ]:
     return db.query(models.BoQ).options(joinedload(models.BoQ.items).joinedload(models.BoQItem.inventory_item)).filter(models.BoQ.project_id == project_id).first()
@@ -2474,6 +2860,31 @@ def get_all_leave_requests(db: Session, tenant_id: int = None, status: Optional[
     if tenant_id is not None: query = query.filter(models.LeaveRequest.tenant_id == tenant_id)
     if status: query = query.filter(models.LeaveRequest.status == status)
     return query.order_by(models.LeaveRequest.start_date.asc()).all()
+
+
+def get_approved_leave_in_date_range(
+    db: Session,
+    range_start: date,
+    range_end: date,
+    tenant_id: Optional[int] = None,
+) -> List[models.LeaveRequest]:
+    """
+    Approved leave overlapping [range_start, range_end].
+    tenant_id=None includes all tenants (superadmin schedule scope).
+    """
+    query = (
+        db.query(models.LeaveRequest)
+        .options(joinedload(models.LeaveRequest.user))
+        .filter(
+            models.LeaveRequest.status == models.LeaveStatus.Approved,
+            models.LeaveRequest.start_date <= range_end,
+            models.LeaveRequest.end_date >= range_start,
+        )
+    )
+    if tenant_id is not None:
+        query = query.filter(models.LeaveRequest.tenant_id == tenant_id)
+    return query.order_by(models.LeaveRequest.start_date.asc(), models.LeaveRequest.user_id.asc()).all()
+
 
 def _create_leave_events_for_approved_request(db: Session, db_request: models.LeaveRequest) -> None:
     """

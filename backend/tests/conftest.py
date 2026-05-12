@@ -83,7 +83,7 @@ def authenticated_user_token(db: Session) -> Dict[str, Any]:
         user = crud.create_user_by_admin(db, user_data=user_in)
 
     # Generate token
-    token = create_access_token(data={"sub": user.email})
+    token = create_access_token(data={"sub": str(user.id)})
     
     return {"user": user, "token": token}
 # --- END NEW FIXTURE ---
