@@ -283,7 +283,7 @@ function GlobalInventoryPage() {
                                         to={`/inventory/edit/${item.id}`}
                                         className="ml-auto flex items-center gap-2 text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-[0.2em] hover:gap-3 transition-all"
                                     >
-                                        {t('open', { defaultValue: 'Open item' })}{' '}
+                                        {t('open_item', { defaultValue: 'Open item' })}{' '}
                                         <ChevronRightIcon className="h-3.5 w-3.5" />
                                     </Link>
                                 )}

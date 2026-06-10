@@ -55,7 +55,7 @@ async def get_dashboard_stats(
     db: DbDependency,
     current_user: ManagerOrAdminDependency
 ):
-    effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
+    effective_tenant_id = current_user.tenant_id
     
     # 1. Project Query
     project_query = db.query(models.Project)

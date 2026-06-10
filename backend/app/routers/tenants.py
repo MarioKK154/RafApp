@@ -8,6 +8,7 @@ import os
 import shutil
 import uuid
 import json
+import secrets
 
 from .. import crud, models, schemas, security
 from ..database import get_db
@@ -54,11 +55,11 @@ async def create_new_tenant(request: Request, tenant_data: schemas.TenantCreate,
     # 3. Create the default tenant admin (Issue #3)
     # Sanitize name for email (remove spaces, convert to lowercase)
     safe_name = tenant_data.name.replace(" ", "").lower()
-    admin_email = f"admin@{safe_name}.com"
+    admin_email = f"{safe_name}_admin@{safe_name}.is"
     
     admin_create_data = schemas.UserCreateAdmin(
         email=admin_email,
-        password="admin1234",  # Standard starting password for new tenants
+        password=os.getenv("DEFAULT_TENANT_ADMIN_PASSWORD", "Admin123!"),
         full_name=f"{tenant_data.name} Admin",
         role="admin",
         tenant_id=new_tenant.id,
@@ -250,8 +251,9 @@ async def upload_tenant_background(
     if db_tenant.background_image_urls:
         try:
             current = json.loads(db_tenant.background_image_urls)
-        except Exception:
-            pass
+        except Exception as e:
+            import logging
+            logging.warning(f"Error parsing background image JSON for tenant {tenant_id}: {e}")
     current.append(url_path)
     crud.update_tenant(db, db_tenant, schemas.TenantUpdate(background_image_urls=current))
     return JSONResponse({"url": url_path})

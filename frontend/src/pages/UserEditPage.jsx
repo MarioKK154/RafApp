@@ -34,24 +34,24 @@ const ROLES_LIST = ['admin', 'project manager', 'team leader', 'electrician', 'a
 
 // Central catalog of granular permissions that can be assigned via UI
 const PERMISSION_OPTIONS = [
-    { value: 'offers.manage', label: 'Offers – create & edit' },
-    { value: 'offers.view_all', label: 'Offers – view all' },
+    { value: 'offers.manage', label: 'perm_offers_manage' },
+    { value: 'offers.view_all', label: 'perm_offers_view_all' },
 
-    { value: 'inventory.manage', label: 'Inventory – create & edit' },
-    { value: 'inventory.view_all', label: 'Inventory – view all' },
+    { value: 'inventory.manage', label: 'perm_inventory_manage' },
+    { value: 'inventory.view_all', label: 'perm_inventory_view_all' },
 
-    { value: 'projects.manage', label: 'Projects – manage all' },
-    { value: 'tasks.manage', label: 'Tasks – manage all' },
+    { value: 'projects.manage', label: 'perm_projects_manage' },
+    { value: 'tasks.manage', label: 'perm_tasks_manage' },
 
-    { value: 'timelogs.manage', label: 'Time logs – adjust entries' },
+    { value: 'timelogs.manage', label: 'perm_timelogs_manage' },
 
-    { value: 'accounting.view', label: 'Accounting – view only' },
-    { value: 'accounting.manage', label: 'Accounting – full access' },
+    { value: 'accounting.view', label: 'perm_accounting_view' },
+    { value: 'accounting.manage', label: 'perm_accounting_manage' },
 
-    { value: 'risk.manage', label: 'Risk library – manage templates' },
-    { value: 'tutorials.manage', label: 'Tutorials – manage content' },
+    { value: 'risk.manage', label: 'perm_risk_manage' },
+    { value: 'tutorials.manage', label: 'perm_tutorials_manage' },
 
-    { value: 'handover.generate', label: 'Client handover – generate packages' },
+    { value: 'handover.generate', label: 'perm_handover_generate' },
 ];
 
 const ROLE_LABEL_KEYS = {
@@ -91,6 +91,7 @@ function UserEditPage() {
 
     // Security & Authorization
     const isSuperuserEditing = currentUser?.is_superuser;
+    const isEditingOtherTenant = isSuperuserEditing && initialUserData?.tenant_id && initialUserData.tenant_id !== currentUser?.tenant_id;
     const canViewPage = currentUser && (['admin', 'project manager'].includes(currentUser.role) || isSuperuserEditing);
     const canSaveChanges = currentUser && (['admin'].includes(currentUser.role) || isSuperuserEditing);
 
@@ -160,7 +161,7 @@ function UserEditPage() {
 
             } catch (error) {
                 console.error('Registry sync failure:', error);
-                setError('Personnel registry connection timed out.');
+                setError(t('toast_registry_timeout'));
                 setIsLoadingData(false);
             }
         }
@@ -170,7 +171,20 @@ function UserEditPage() {
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
-        setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
+        setFormData(prev => {
+            let newVal = type === 'checkbox' ? checked : value;
+            
+            if (name === 'kennitala') {
+                let cleaned = newVal.replace(/\D/g, '');
+                if (cleaned.length > 6) {
+                    newVal = cleaned.substring(0, 6) + '-' + cleaned.substring(6, 10);
+                } else {
+                    newVal = cleaned;
+                }
+            }
+
+            return { ...prev, [name]: newVal };
+        });
     };
 
     const handleSubmitDetails = async (e) => {
@@ -187,11 +201,11 @@ function UserEditPage() {
 
         try {
             const res = await axiosInstance.put(`/users/${userId}`, updatePayload);
-            toast.success(`Personnel node updated: ${res.data.email}`);
+            toast.success(`${t('toast_personnel_updated')} ${res.data.email}`);
             setInitialUserData(res.data);
         } catch (error) {
             console.error('User details update failed:', error);
-            toast.error(error.response?.data?.detail || 'Failed to commit updates.');
+            toast.error(error.response?.data?.detail || t('toast_failed_commit_updates'));
         } finally {
             setIsSubmittingUserDetails(false);
         }
@@ -200,18 +214,18 @@ function UserEditPage() {
     const handlePasswordOverride = async (e) => {
         e.preventDefault();
         if (newPasswordByAdmin !== confirmNewPasswordByAdmin) {
-            toast.error("Security mismatch.");
+            toast.error(t('toast_security_mismatch'));
             return;
         }
         setIsSubmittingNewPassword(true);
         try {
             await axiosInstance.post(`/users/${userId}/set-password`, { new_password: newPasswordByAdmin });
-            toast.success("Security override successful.");
+            toast.success(t('toast_security_override_success'));
             setNewPasswordByAdmin(''); 
             setConfirmNewPasswordByAdmin('');
         } catch (error) {
             console.error('Password override failed:', error);
-            toast.error("Override denied by security policy.");
+            toast.error(t('toast_override_denied'));
         } finally {
             setIsSubmittingNewPassword(false);
         }
@@ -253,19 +267,19 @@ function UserEditPage() {
         try {
             if (isAssigned) {
                 await axiosInstance.post(`/projects/${projectId}/members`, { user_id: parseInt(userId, 10) });
-                toast.success("Deployment Node Active");
+                toast.success(t('toast_deployment_active'));
             } else {
                 await axiosInstance.delete(`/projects/${projectId}/members/${userId}`);
-                toast.success("Deployment Node Severed");
+                toast.success(t('toast_deployment_severed'));
             }
         } catch (error) {
             console.error('Deployment adjustment failed:', error);
             setAssignedProjectIds(original);
-            toast.error("Deployment adjustment failed.");
+            toast.error(t('toast_deployment_failed'));
         }
     };
 
-    if (authIsLoading || isLoadingData) return <LoadingSpinner text="Accessing personnel record..." size="lg" />;
+    if (authIsLoading || isLoadingData) return <LoadingSpinner text={t('accessing_personnel_record')} size="lg" />;
     if (error) return <div className="text-center py-20 font-black text-red-500 uppercase tracking-widest">{error}</div>;
 
     return (
@@ -284,7 +298,7 @@ function UserEditPage() {
                         </h1>
                         <div className="flex items-center gap-4 mt-3">
                             <span className="text-[10px] font-mono font-black text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
-                                <FingerPrintIcon className="h-3.5 w-3.5 text-indigo-500" /> REG-ID: {userId.toString().padStart(4, '0')}
+                                <FingerPrintIcon className="h-3.5 w-3.5 text-indigo-500" /> {t('reg_id')} {userId.toString().padStart(4, '0')}
                             </span>
                             <span className={`text-[9px] font-black uppercase px-3 py-1 rounded-full border shadow-sm ${initialUserData?.is_active ? 'bg-green-50 text-green-600 border-green-100' : 'bg-red-50 text-red-600 border-red-100'}`}>
                                 {initialUserData?.is_active ? t('operational') : t('suspended')}
@@ -296,7 +310,8 @@ function UserEditPage() {
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
                 <div className="lg:col-span-8 space-y-10">
-                    <form onSubmit={handleSubmitDetails} className="bg-white dark:bg-gray-800 p-8 md:p-10 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-700 space-y-10">
+                    {!isEditingOtherTenant && (
+<form onSubmit={handleSubmitDetails} className="bg-white dark:bg-gray-800 p-8 md:p-10 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-700 space-y-10">
                         <div className="flex items-center justify-between border-b border-gray-50 dark:border-gray-700 pb-6">
                             <div className="flex items-center gap-3">
                                 <IdentificationIcon className="h-6 w-6 text-indigo-500" />
@@ -311,7 +326,7 @@ function UserEditPage() {
                             <Field label={`${t('personnel_email')}*`} icon={<EnvelopeIcon />}>
                                 <input type="email" name="email" required value={formData.email} onChange={handleChange} disabled={!canSaveChanges} className="modern-input h-14" />
                             </Field>
-                            <Field label="Kennitala (ID)" icon={<FingerPrintIcon />}>
+                            <Field label={t('kennitala_id')} icon={<FingerPrintIcon />}>
                                 <input type="text" name="kennitala" value={formData.kennitala} onChange={handleChange} disabled={!canSaveChanges} className="modern-input h-14 font-mono text-indigo-600" />
                             </Field>
                             <Field label={t('employee_id_label')} icon={<HashtagIcon />}>
@@ -339,9 +354,9 @@ function UserEditPage() {
 
                         {isSuperuserEditing && (
                             <div className="pt-8 border-t border-gray-50 dark:border-gray-700">
-                                <Field label="Global Infrastructure Node (Tenant)" icon={<BuildingOfficeIcon />}>
+                                <Field label={t('global_infrastructure_node')} icon={<BuildingOfficeIcon />}>
                                     <select name="tenant_id" value={formData.tenant_id || ''} onChange={handleChange} className="modern-input h-14 bg-orange-50/20 dark:bg-orange-900/10 border-orange-100 dark:border-orange-800 font-bold">
-                                        <option value="">-- UNASSIGNED INFRASTRUCTURE --</option>
+                                        <option value="">{t('unassigned_infrastructure')}</option>
                                         {allTenants.map(t => <option key={t.id} value={t.id}>{t.name} [REF:{t.id}]</option>)}
                                     </select>
                                 </Field>
@@ -352,7 +367,7 @@ function UserEditPage() {
                             <Field label="Granular Permissions Overrides" icon={<ShieldCheckIcon />}>
                                 <div className="space-y-3">
                                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.18em]">
-                                        Optional fine-grained permissions in addition to the primary role. Examples:{' '}
+                                        {t('granular_permissions_desc')}{' '}
                                         <span className="text-indigo-500">offers.manage</span>,{' '}
                                         <span className="text-indigo-500">inventory.manage</span>.
                                     </p>
@@ -377,7 +392,7 @@ function UserEditPage() {
                                             ))
                                         ) : (
                                             <span className="inline-flex items-center px-3 py-1.5 rounded-full bg-gray-50 dark:bg-gray-900 text-[9px] font-black text-gray-400 uppercase tracking-[0.18em] border border-dashed border-gray-200 dark:border-gray-700">
-                                                No overrides configured
+                                                {t('no_overrides')}
                                             </span>
                                         )}
                                     </div>
@@ -396,11 +411,11 @@ function UserEditPage() {
                                                 className="flex-1 h-12 pl-4 pr-4 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl text-[11px] font-black text-gray-900 dark:text-white placeholder-gray-400 uppercase tracking-[0.18em] focus:ring-1 focus:ring-indigo-500 appearance-none"
                                             >
                                                 <option value="">
-                                                    Select permission…
+                                                    {t('select_permission')}
                                                 </option>
                                                 {PERMISSION_OPTIONS.map(opt => (
                                                     <option key={opt.value} value={opt.value}>
-                                                        {opt.label}
+                                                        {t(opt.label)}
                                                     </option>
                                                 ))}
                                             </select>
@@ -411,9 +426,9 @@ function UserEditPage() {
                         </div>
 
                         <div className="flex flex-wrap gap-4 pt-4 border-t dark:border-gray-700">
-                            <StatusCheckbox name="is_active" label="Node Enabled" checked={formData.is_active} onChange={handleChange} disabled={!canSaveChanges} />
+                            <StatusCheckbox name="is_active" label={t('node_enabled')} checked={formData.is_active} onChange={handleChange} disabled={!canSaveChanges} />
                             {isSuperuserEditing && (
-                                <StatusCheckbox name="is_superuser" label="Root Authority" checked={formData.is_superuser} onChange={handleChange} disabled={currentUser.id === parseInt(userId, 10)} color="orange" />
+                                <StatusCheckbox name="is_superuser" label={t('root_authority')} checked={formData.is_superuser} onChange={handleChange} disabled={currentUser.id === parseInt(userId, 10)} color="orange" />
                             )}
                         </div>
 
@@ -426,14 +441,18 @@ function UserEditPage() {
                             </div>
                         )}
                     </form>
+)}
 
-                    <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+                    {!isEditingOtherTenant && (
+<div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
                         <UserLicenses userId={userId} />
                     </div>
+)}
                 </div>
 
                 <div className="lg:col-span-4 space-y-10">
-                    <section className="bg-white dark:bg-gray-800 p-8 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-700">
+                    {!isEditingOtherTenant && (
+<section className="bg-white dark:bg-gray-800 p-8 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-700">
                         <div className="flex items-center gap-3 mb-8">
                             <div className="p-2 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl">
                                 <CheckBadgeIcon className="h-5 w-5 text-indigo-600" />
@@ -442,7 +461,7 @@ function UserEditPage() {
                         </div>
                         
                         {projectDataLoading ? (
-                            <LoadingSpinner text="Syncing Map..." size="sm" />
+                            <LoadingSpinner text={t('syncing_map')} size="sm" />
                         ) : (
                             <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
                                 {allProjects.map(proj => (
@@ -453,7 +472,7 @@ function UserEditPage() {
                                     }`}>
                                         <div className="min-w-0 pr-4">
                                             <p className="text-[11px] font-black text-gray-900 dark:text-white truncate uppercase tracking-tight">{proj.name}</p>
-                                            <p className="text-[8px] text-gray-400 font-black uppercase tracking-widest mt-0.5">Node Ref: {proj.project_number || proj.id}</p>
+                                            <p className="text-[8px] text-gray-400 font-black uppercase tracking-widest mt-0.5">{t('node_ref')} {proj.project_number || proj.id}</p>
                                         </div>
                                         <input 
                                             type="checkbox" 
@@ -467,6 +486,7 @@ function UserEditPage() {
                             </div>
                         )}
                     </section>
+)}
 
                     {canSaveChanges && currentUser.id !== parseInt(userId, 10) && (
                         <section className="bg-gray-100 dark:bg-gray-900 p-8 rounded-[2.5rem] shadow-sm border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white">
@@ -480,14 +500,14 @@ function UserEditPage() {
                             <form onSubmit={handlePasswordOverride} className="space-y-4">
                                 <input 
                                     type="password" 
-                                    placeholder="NEW SECURITY KEY" 
+                                    placeholder={t('new_security_key')} 
                                     value={newPasswordByAdmin}
                                     onChange={(e) => setNewPasswordByAdmin(e.target.value)}
                                     className="w-full h-14 pl-6 pr-4 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-2xl text-xs font-black text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-500 focus:ring-1 focus:ring-orange-500 transition-all uppercase"
                                 />
                                 <input 
                                     type="password" 
-                                    placeholder="CONFIRM KEY" 
+                                    placeholder={t('confirm_key')} 
                                     value={confirmNewPasswordByAdmin}
                                     onChange={(e) => setConfirmNewPasswordByAdmin(e.target.value)}
                                     className="w-full h-14 pl-6 pr-4 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-2xl text-xs font-black text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-500 focus:ring-1 focus:ring-orange-500 transition-all uppercase"

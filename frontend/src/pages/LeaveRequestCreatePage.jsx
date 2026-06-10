@@ -129,7 +129,7 @@ const LeaveRequestCreatePage = () => {
                             onClick={() => navigate('/accounting')}
                             className="px-6 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition"
                         >
-                            {t('cancel')}
+                            {t('cancel_leave')}
                         </button>
                         <button
                             type="submit"

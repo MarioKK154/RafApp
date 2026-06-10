@@ -64,6 +64,12 @@ class AppSettings:
     redis_url: Optional[str]
     cors_origins: List[str]
     trusted_hosts: List[str]
+    smtp_host: Optional[str]
+    smtp_port: int
+    smtp_user: Optional[str]
+    smtp_password: Optional[str]
+    smtp_from_email: Optional[str]
+    admin_email: Optional[str]
 
 
 @lru_cache
@@ -99,4 +105,10 @@ def get_settings() -> AppSettings:
         redis_url=_env_str("REDIS_URL") or None,
         cors_origins=cors,
         trusted_hosts=trusted,
+        smtp_host=_env_str("SMTP_HOST") or None,
+        smtp_port=_env_int("SMTP_PORT", 587),
+        smtp_user=_env_str("SMTP_USER") or None,
+        smtp_password=_env_str("SMTP_PASSWORD") or None,
+        smtp_from_email=_env_str("SMTP_FROM_EMAIL") or "noreply@rafapp.is",
+        admin_email=_env_str("ADMIN_EMAIL") or None,
     )

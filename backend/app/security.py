@@ -156,6 +156,16 @@ async def get_current_active_user(
     if not current_user.is_active:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Inactive user")
     return current_user
+async def get_current_user_tenant_id(
+    current_user: Annotated[models.User, Depends(get_current_active_user)]
+) -> int:
+    """
+    Dependency to get the current active user's tenant ID.
+    Raises 400 if user does not belong to a tenant.
+    """
+    if current_user.tenant_id is None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User must belong to a tenant")
+    return current_user.tenant_id
 
 
 def is_subcontractor(user: models.User) -> bool:

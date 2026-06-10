@@ -32,7 +32,7 @@ async def get_project_if_accessible(project_id: int, db: Session, current_user: 
     if not project_id:
         raise HTTPException(status_code=400, detail="Project ID is required.")
         
-    effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
+    effective_tenant_id = current_user.tenant_id
     project = crud.get_project(db, project_id=project_id, tenant_id=effective_tenant_id)
     
     if not project:
@@ -170,7 +170,7 @@ async def read_all_timelogs(
     limit: int = Query(100, ge=1, le=1000)
 ):
     """Administrative oversight: View and filter activity across the entire tenant."""
-    effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
+    effective_tenant_id = current_user.tenant_id
     
     start_dt = datetime.combine(start_date, datetime.min.time()) if start_date else None
     end_dt = datetime.combine(end_date, datetime.max.time()) if end_date else None
@@ -199,7 +199,7 @@ async def update_timelog_admin(
     current_user: AdminOnlyDependency,
 ):
     """Admin only: Edit clocked hours (start/end) or reassign to a different project."""
-    effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
+    effective_tenant_id = current_user.tenant_id
     existing = crud.get_timelog_by_id(db, timelog_id=timelog_id, tenant_id=effective_tenant_id)
     if not existing:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Time log not found or access denied.")

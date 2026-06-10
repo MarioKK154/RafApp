@@ -26,7 +26,7 @@ def get_item_for_user(item_id: int, db: DbDependency, current_user: CurrentUserD
     Helper function to retrieve a labor item while enforcing tenant isolation.
     Superusers bypass the tenant check.
     """
-    effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
+    effective_tenant_id = current_user.tenant_id
     db_item = crud.get_labor_catalog_item(db, item_id=item_id)
     if not db_item:
         raise HTTPException(status_code=404, detail="Labor catalog item not found or access denied.")
@@ -61,7 +61,10 @@ async def import_ar_is_global(
     CSV/Excel columns: Main_category, Sub_category, Item, Conditions, Effective_date, Unit_cost.
     Updates the shared catalog for all tenants; no tenant prices are set. Tenants set their own prices separately.
     """
-    content = await file.read()
+    MAX_FILE_SIZE = 10 * 1024 * 1024
+    content = await file.read(MAX_FILE_SIZE + 1)
+    if len(content) > MAX_FILE_SIZE:
+        raise HTTPException(status_code=413, detail="File too large. Maximum size is 10MB.")
     filename = (file.filename or "").lower()
     if filename.endswith(".xlsx"):
         try:
@@ -154,6 +157,13 @@ def apply_tenant_base_price(
         raise HTTPException(status_code=400, detail="Only tenants can apply a base price; superadmin has no tenant.")
     if body.price < 0:
         raise HTTPException(status_code=400, detail="Price must be non-negative.")
+        
+    # Update the global tenant base_hourly_rate
+    db_tenant = db.query(models.Tenant).filter(models.Tenant.id == current_user.tenant_id).first()
+    if db_tenant:
+        db_tenant.base_hourly_rate = body.price
+        db.commit()
+        
     return crud.apply_tenant_base_price_to_non_hourly(db, tenant_id=current_user.tenant_id, price=body.price)
 
 
@@ -178,7 +188,10 @@ async def import_work_load_ratios_xlsx(
     current_user: SuperUserDependency = None,
 ):
     """Import ar.is work load ratios Excel (sheet 'data': Númer, Lýsing, Hlutfall, Tegund, Virkt). Superadmin only."""
-    content = await file.read()
+    MAX_FILE_SIZE = 10 * 1024 * 1024
+    content = await file.read(MAX_FILE_SIZE + 1)
+    if len(content) > MAX_FILE_SIZE:
+        raise HTTPException(status_code=413, detail="File too large. Maximum size is 10MB.")
     filename = (file.filename or "").lower()
     if not filename.endswith(".xlsx"):
         raise HTTPException(status_code=400, detail="Excel (.xlsx) required.")
@@ -239,7 +252,10 @@ async def import_main_categories_xlsx(
     current_user: SuperUserDependency = None,
 ):
     """Import ar.is main categories Excel (sheet 'data': Númer, Lýsing). Superadmin only."""
-    content = await file.read()
+    MAX_FILE_SIZE = 5 * 1024 * 1024
+    content = await file.read(MAX_FILE_SIZE + 1)
+    if len(content) > MAX_FILE_SIZE:
+        raise HTTPException(status_code=413, detail="File too large. Maximum size is 5MB.")
     filename = (file.filename or "").lower()
     if not filename.endswith(".xlsx"):
         raise HTTPException(status_code=400, detail="Excel (.xlsx) required.")
@@ -284,13 +300,19 @@ def read_labor_items(
     Retrieves labor catalog items, optionally filtered by main_category and sub_category.
     Limit capped at 5000. Use categories endpoint to build the menu.
     """
-    effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
+    effective_tenant_id = current_user.tenant_id
     if effective_tenant_id is None and not current_user.is_superuser:
         raise HTTPException(status_code=403, detail="Tenant context required for non-superusers.")
     return crud.get_labor_catalog_items(
         db, tenant_id=effective_tenant_id, skip=skip, limit=limit,
         main_category=main_category, sub_category=sub_category, lang=lang,
     )
+
+@router.get("/modifiers", response_model=List[schemas.WorkLoadRatioRead])
+def read_labor_modifiers(db: DbDependency):
+    """Get all labor modifiers/surcharges (Álagshlutföll) from ar.is."""
+    ratios = db.query(models.WorkLoadRatio).filter(models.WorkLoadRatio.is_active == True).order_by(models.WorkLoadRatio.ratio_type.desc(), models.WorkLoadRatio.ratio.desc()).all()
+    return ratios
 
 
 @router.post("/super/mirror-is-to-en")
@@ -332,7 +354,10 @@ async def import_condition_variants(
     Adds condition variants for this catalog item (one Eining value per condition).
     """
     get_item_for_user(item_id, db, current_user)
-    content = await file.read()
+    MAX_FILE_SIZE = 10 * 1024 * 1024
+    content = await file.read(MAX_FILE_SIZE + 1)
+    if len(content) > MAX_FILE_SIZE:
+        raise HTTPException(status_code=413, detail="File too large. Maximum size is 10MB.")
     if not (file.filename or "").lower().endswith(".xlsx"):
         raise HTTPException(status_code=400, detail="Excel (.xlsx) required.")
     try:

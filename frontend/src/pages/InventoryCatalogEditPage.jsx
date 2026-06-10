@@ -46,6 +46,12 @@ function InventoryCatalogEditPage() {
         reykjafell_sku: '',
         local_image_path: '',
         warehouse_quantity: '',
+        master_category: '',
+        brand: '',
+        voltage: '',
+        amperage: '',
+        ip_rating: '',
+        ar_labor_tasks_list: '',
     });
     const [isLoadingData, setIsLoadingData] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -85,13 +91,19 @@ function InventoryCatalogEditPage() {
                     iskraft_sku: item.iskraft_sku ?? '',
                     reykjafell_sku: item.reykjafell_sku ?? '',
                     local_image_path: item.local_image_path ?? '',
+                    master_category: item.master_category ?? '',
+                    brand: item.brand ?? '',
+                    voltage: item.voltage ?? '',
+                    amperage: item.amperage ?? '',
+                    ip_rating: item.ip_rating ?? '',
+                    ar_labor_tasks_list: item.ar_labor_tasks_list ?? '',
                     warehouse_quantity:
                         item.warehouse_quantity != null ? String(item.warehouse_quantity) : '',
                 });
             }
         } catch (err) {
             console.error("Registry Sync Failure:", err);
-            toast.error('Failed to synchronize with material registry.');
+            toast.error(t('toast_failed_sync_material_registry'));
             navigate('/inventory'); 
         } finally {
             setIsLoadingData(false);
@@ -110,7 +122,7 @@ function InventoryCatalogEditPage() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!canManageCatalog) {
-            toast.error("Clearance Level Insufficient.");
+            toast.error(t('clearance_level_insufficient'));
             return;
         }
 
@@ -124,17 +136,17 @@ function InventoryCatalogEditPage() {
             }
             // FIXED: Path aligned with backend @router.put("/catalog/{item_id}")
             await axiosInstance.put(`/inventory/catalog/${itemId}`, payload);
-            toast.success(`Registry node updated: ${formData.name}`);
+            toast.success(`${t('toast_registry_node_updated')} ${formData.name}`);
             navigate('/inventory'); 
         } catch (err) {
             console.error("Update Failure:", err);
-            toast.error(err.response?.data?.detail || 'Failed to sync registry updates.');
+            toast.error(err.response?.data?.detail || t('toast_failed_sync_registry_updates'));
         } finally {
             setIsSubmitting(false);
         }
     };
 
-    if (isLoadingData) return <LoadingSpinner text="Synchronizing Material Registry..." size="lg" />;
+    if (isLoadingData) return <LoadingSpinner text={t('synchronizing_material_registry')} size="lg" />;
 
     return (
         <div className="container mx-auto p-4 md:p-8 max-w-6xl animate-in fade-in duration-500">
@@ -176,11 +188,11 @@ function InventoryCatalogEditPage() {
                     <section className="bg-white dark:bg-gray-800 p-8 md:p-10 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-700 space-y-8">
                         <div className="flex items-center gap-3">
                             <TagIcon className="h-5 w-5 text-indigo-500" />
-                            <h2 className="text-sm font-black text-gray-400 uppercase tracking-[0.2em]">Core Specification</h2>
+                            <h2 className="text-sm font-black text-gray-400 uppercase tracking-[0.2em]">{t('core_specification')}</h2>
                         </div>
                         
                         <div className="space-y-1">
-                            <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">Global Asset Descriptor*</label>
+                            <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">{t('global_asset_descriptor_req')}</label>
                             {isSuperuser ? (
                                 <input 
                                     type="text" 
@@ -201,7 +213,7 @@ function InventoryCatalogEditPage() {
                         {isSuperuser && (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                 <div className="space-y-1">
-                                    <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">Base Logistics Unit</label>
+                                    <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">{t('base_logistics_unit')}</label>
                                     <div className="relative">
                                         <HashtagIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                                         <input 
@@ -215,7 +227,7 @@ function InventoryCatalogEditPage() {
                                     </div>
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">Internal Asset Visual Path</label>
+                                    <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">{t('internal_asset_visual_path')}</label>
                                     <div className="relative">
                                         <PhotoIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                                         <input 
@@ -251,7 +263,7 @@ function InventoryCatalogEditPage() {
                         )}
 
                         <div className="space-y-1">
-                            <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">Technical Telemetry / Details</label>
+                            <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">{t('technical_telemetry_details')}</label>
                             <div className="relative">
                                 <DocumentTextIcon className="absolute left-4 top-4 h-5 w-5 text-gray-400" />
                                 {isSuperuser ? (
@@ -262,12 +274,12 @@ function InventoryCatalogEditPage() {
                                         onChange={handleChange} 
                                         disabled={isSubmitting}
                                         className="modern-input h-auto py-4 pl-12 resize-none text-sm leading-relaxed"
-                                        placeholder="Input manufacturer specifications..."
+                                        placeholder={t('placeholder_input_manufacturer_specs')}
                                     ></textarea>
                                 ) : (
                                     <div className="modern-input h-auto py-4 pl-12 text-sm leading-relaxed bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-700 rounded-2xl cursor-default select-none min-h-[4rem] flex items-start">
                                         <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-                                            {formData.description || 'Registry entry contains no supplementary technical specifications.'}
+                                            {formData.description || t('registry_entry_no_specs')}
                                         </p>
                                     </div>
                                 )}
@@ -276,9 +288,9 @@ function InventoryCatalogEditPage() {
 
                         {isSuperuser && (
                             <div className="space-y-6 pt-2 border-t border-gray-100 dark:border-gray-700">
-                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">English (UI when language is English)</p>
+                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">{t('english_ui_language')}</p>
                                 <div className="space-y-1">
-                                    <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">Display name (English)</label>
+                                    <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">{t('display_name_en')}</label>
                                     <input
                                         type="text"
                                         name="name_en"
@@ -286,11 +298,11 @@ function InventoryCatalogEditPage() {
                                         onChange={handleChange}
                                         disabled={isSubmitting}
                                         className="modern-input h-12"
-                                        placeholder="Optional — used in English UI"
+                                        placeholder={t('placeholder_optional_en_ui')}
                                     />
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">Technical details (English)</label>
+                                    <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">{t('technical_details_en')}</label>
                                     <textarea
                                         name="description_en"
                                         rows={4}
@@ -298,7 +310,7 @@ function InventoryCatalogEditPage() {
                                         onChange={handleChange}
                                         disabled={isSubmitting}
                                         className="modern-input h-auto py-3 resize-none text-sm"
-                                        placeholder="Optional translation of specifications"
+                                        placeholder={t('placeholder_optional_translation')}
                                     />
                                 </div>
                             </div>
@@ -326,7 +338,7 @@ function InventoryCatalogEditPage() {
                                         onChange={handleChange} 
                                         disabled={isSubmitting}
                                         className="modern-input h-12" 
-                                        placeholder="English label for menus"
+                                        placeholder={t('placeholder_en_label_menus')}
                                     />
                                 </div>
                                 <div className="space-y-1">
@@ -348,13 +360,90 @@ function InventoryCatalogEditPage() {
                                         value={formData.subcategory_en} 
                                         onChange={handleChange} 
                                         disabled={isSubmitting}
-                                        className="modern-input h-12" 
-                                        placeholder="English label (full path if using /)"
+                                        placeholder={t('placeholder_en_label_full_path')}
                                     />
                                 </div>
                             </div>
                         )}
                     </section>
+
+                    {isSuperuser && (
+                        <section className="bg-white dark:bg-gray-800 p-8 md:p-10 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-700 space-y-8">
+                            <div className="flex items-center gap-3">
+                                <DocumentTextIcon className="h-5 w-5 text-indigo-500" />
+                                <h2 className="text-sm font-black text-gray-400 uppercase tracking-[0.2em]">{t('engineering_logistics_telemetry')}</h2>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                                <div className="space-y-1">
+                                    <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">{t('brand_label')}</label>
+                                    <input 
+                                        type="text" 
+                                        name="brand" 
+                                        value={formData.brand} 
+                                        onChange={handleChange} 
+                                        disabled={isSubmitting}
+                                        className="modern-input h-12" 
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">{t('voltage_label')}</label>
+                                    <input 
+                                        type="text" 
+                                        name="voltage" 
+                                        value={formData.voltage} 
+                                        onChange={handleChange} 
+                                        disabled={isSubmitting}
+                                        className="modern-input h-12" 
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">{t('amperage_label')}</label>
+                                    <input 
+                                        type="text" 
+                                        name="amperage" 
+                                        value={formData.amperage} 
+                                        onChange={handleChange} 
+                                        disabled={isSubmitting}
+                                        className="modern-input h-12" 
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">{t('ip_rating_label')}</label>
+                                    <input 
+                                        type="text" 
+                                        name="ip_rating" 
+                                        value={formData.ip_rating} 
+                                        onChange={handleChange} 
+                                        disabled={isSubmitting}
+                                        className="modern-input h-12" 
+                                    />
+                                </div>
+                            </div>
+                            <div className="space-y-1">
+                                <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">{t('master_category_label')}</label>
+                                <input 
+                                    type="text" 
+                                    name="master_category" 
+                                    value={formData.master_category} 
+                                    onChange={handleChange} 
+                                    disabled={isSubmitting}
+                                    className="modern-input h-12" 
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="block text-[10px] font-black text-purple-400 uppercase mb-2 ml-1 tracking-widest">{t('ar_labor_tasks_array')}</label>
+                                <textarea 
+                                    name="ar_labor_tasks_list" 
+                                    rows="3" 
+                                    value={formData.ar_labor_tasks_list} 
+                                    onChange={handleChange} 
+                                    disabled={isSubmitting}
+                                    className="modern-input h-auto py-4 resize-none text-sm leading-relaxed border-purple-200 dark:border-purple-900/50"
+                                    placeholder={t('placeholder_ar_labor')}
+                                ></textarea>
+                            </div>
+                        </section>
+                    )}
                 </div>
 
                 <div className="lg:col-span-4 space-y-8">
@@ -397,7 +486,7 @@ function InventoryCatalogEditPage() {
                                                     johann ronning
                                                 </a>
                                             ) : (
-                                                <span className="text-[10px] text-gray-400 italic">No link configured</span>
+                                                <span className="text-[10px] text-gray-400 italic">{t('no_link_configured')}</span>
                                             )}
                                             <button
                                                 type="button"
@@ -420,7 +509,7 @@ function InventoryCatalogEditPage() {
                                                 johann ronning
                                             </a>
                                         ) : (
-                                            <span className="text-[10px] text-gray-400 italic">No link configured</span>
+                                            <span className="text-[10px] text-gray-400 italic">{t('no_link_configured')}</span>
                                         )}
                                     </div>
                                 )}
@@ -453,7 +542,7 @@ function InventoryCatalogEditPage() {
                                                     iskraft
                                                 </a>
                                             ) : (
-                                                <span className="text-[10px] text-gray-400 italic">No link configured</span>
+                                                <span className="text-[10px] text-gray-400 italic">{t('no_link_configured')}</span>
                                             )}
                                             <button
                                                 type="button"
@@ -476,7 +565,7 @@ function InventoryCatalogEditPage() {
                                                 iskraft
                                             </a>
                                         ) : (
-                                            <span className="text-[10px] text-gray-400 italic">No link configured</span>
+                                            <span className="text-[10px] text-gray-400 italic">{t('no_link_configured')}</span>
                                         )}
                                     </div>
                                 )}
@@ -509,7 +598,7 @@ function InventoryCatalogEditPage() {
                                                 reykjafell
                                             </a>
                                             ) : (
-                                                <span className="text-[10px] text-gray-400 italic">No link configured</span>
+                                                <span className="text-[10px] text-gray-400 italic">{t('no_link_configured')}</span>
                                             )}
                                             <button
                                                 type="button"
@@ -532,7 +621,7 @@ function InventoryCatalogEditPage() {
                                                 reykjafell
                                             </a>
                                         ) : (
-                                            <span className="text-[10px] text-gray-400 italic">No link configured</span>
+                                            <span className="text-[10px] text-gray-400 italic">{t('no_link_configured')}</span>
                                         )}
                                     </div>
                                 )}
@@ -540,7 +629,7 @@ function InventoryCatalogEditPage() {
                         </div>
                         {isSuperuser && (
                             <div className="pt-4 mt-2 border-t border-gray-100 dark:border-gray-700 space-y-3">
-                                <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Supplier article codes</p>
+                                <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">{t('supplier_article_codes')}</p>
                                 <div className="space-y-1">
                                     <label className="block text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">Rönning SKU</label>
                                     <input

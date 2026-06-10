@@ -61,7 +61,7 @@ function UserListPage() {
         if (isSuperuser && tenantFilter) {
             params.tenant_id = parseInt(tenantFilter, 10);
         }
-        axiosInstance.get('/users/', { params })
+        axiosInstance.get('/users/', { params: { ...params, ...(isSuperuser && { all_tenants: true }) } })
             .then(response => setUsers(response.data))
             .catch(() => {
                 setError(t('sync_workforce_failed'));
@@ -250,9 +250,22 @@ function UserListPage() {
                             </div>
 
                             <div className="min-w-0 flex-1">
-                                <h2 className="text-xl font-black text-gray-900 dark:text-white truncate uppercase tracking-tighter italic group-hover:text-indigo-600 transition-colors">
-                                    {u.full_name || t('unassigned_user')}
-                                </h2>
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <h2 className="text-xl font-black text-gray-900 dark:text-white truncate uppercase tracking-tighter italic group-hover:text-indigo-600 transition-colors">
+                                        {u.full_name || t('unassigned_user')}
+                                    </h2>
+                                    {u.phone_number && (
+                                        <a 
+                                            href={`tel:${u.phone_number}`} 
+                                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/40 text-[10px] font-black uppercase tracking-widest transition-colors"
+                                            onClick={(e) => e.stopPropagation()}
+                                            title="Call Employee"
+                                        >
+                                            <PhoneIcon className="h-3 w-3" />
+                                            {u.phone_number}
+                                        </a>
+                                    )}
+                                </div>
                                 <div className="flex items-center gap-2 mt-1">
                                     <ShieldCheckIcon className="h-3.5 w-3.5 text-indigo-500" />
                                     <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">
@@ -291,6 +304,17 @@ function UserListPage() {
                         {/* Personnel Telemetry Body */}
                         <div className="p-8 flex-grow space-y-4">
                             <DetailRow icon={<EnvelopeIcon />} label={t('email')} value={u.email} />
+                            {u.phone_number && (
+                                <DetailRow 
+                                    icon={<PhoneIcon />} 
+                                    label={t('phone_number', { defaultValue: 'Phone Number' })} 
+                                    value={
+                                        <a href={`tel:${u.phone_number}`} className="hover:text-indigo-600 dark:hover:text-indigo-400 transition" onClick={(e) => e.stopPropagation()}>
+                                            {u.phone_number}
+                                        </a>
+                                    } 
+                                />
+                            )}
                             {/* SYNC FIX: Display location using either 'location' or 'city' field */}
                             <DetailRow icon={<MapPinIcon />} label={t('location')} value={u.location || u.city || t('not_specified')} />
                             

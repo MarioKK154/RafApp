@@ -80,10 +80,12 @@ function LaborCatalogListPage() {
     const [importUpdateExisting, setImportUpdateExisting] = useState(false);
     const [tenantBasePriceInput, setTenantBasePriceInput] = useState('');
     const [applyingBasePrice, setApplyingBasePrice] = useState(false);
-
+    const [modifiers, setModifiers] = useState([]);
+    
     const isSuperuser = user?.is_superuser;
     const canManageCatalog = user && (['admin', 'project manager'].includes(user.role) || isSuperuser);
     const canImportAndCreate = isSuperuser;
+    const canExportData = user?.can_export_data || user?.role === 'admin' || isSuperuser;
 
     const fetchCategories = useCallback(async () => {
         setCategoriesLoading(true);
@@ -121,7 +123,15 @@ function LaborCatalogListPage() {
 
     useEffect(() => {
         fetchCategories();
-    }, [fetchCategories]);
+        // Fetch modifiers
+        axiosInstance.get('/labor-catalog/modifiers').then(res => setModifiers(res.data)).catch(console.error);
+        // Fetch tenant base rate
+        if (user?.tenant_id) {
+            axiosInstance.get(`/tenants/${user.tenant_id}`).then(res => {
+                if (res.data.base_hourly_rate) setTenantBasePriceInput(String(res.data.base_hourly_rate));
+            }).catch(console.error);
+        }
+    }, [fetchCategories, user]);
 
     // First paint: nothing loads until both main + sub are chosen — users see an empty list.
     // Auto-select the first subcategory when categories arrive so the catalog is visible immediately.
@@ -317,7 +327,7 @@ function LaborCatalogListPage() {
                                             setImporting(false);
                                         }
                                     }}
-                                    className="inline-flex items-center px-4 py-2.5 bg-violet-600 hover:bg-violet-700 text-white font-bold rounded-xl transition disabled:opacity-50"
+                                    className="saas-btn-primary inline-flex items-center px-4 py-2.5 rounded-xl transition disabled:opacity-50"
                                     title="Merge duplicate items (same name + category) into one; each duplicate becomes a condition variant"
                                 >
                                     <ArrowPathIcon className="h-5 w-5 mr-1.5" />
@@ -325,7 +335,7 @@ function LaborCatalogListPage() {
                                 </button>
                                 <button
                                     onClick={() => navigate('/labor-catalog/new')}
-                                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition transform active:scale-95"
+                                    className="saas-btn-primary inline-flex items-center gap-2 px-5 py-2.5 text-[10px] uppercase tracking-widest rounded-xl"
                                 >
                                     <PlusIcon className="h-5 w-5" /> {t('new_service')}
                                 </button>
@@ -336,45 +346,63 @@ function LaborCatalogListPage() {
             </header>
 
             {/* Tenant: apply one base price to all non-hourly items */}
-            {!isSuperuser && user && (
-                <div className="mb-6 p-4 bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800 rounded-2xl flex flex-wrap items-center gap-4">
-                    <div className="flex-1 min-w-[200px]">
-                        <label className="block text-[10px] font-black text-violet-700 dark:text-violet-300 uppercase tracking-widest mb-1">Base price for non-hourly items (ISK)</label>
-                        <p className="text-xs text-violet-600 dark:text-violet-400 mb-2">Set one price (e.g. 3500) for all per-unit / lump items. Hourly-rate items are unchanged.</p>
-                        <input
-                            type="number"
-                            min="0"
-                            step="1"
-                            value={tenantBasePriceInput}
-                            onChange={(e) => setTenantBasePriceInput(e.target.value)}
-                            placeholder="e.g. 3500"
-                            className="w-full max-w-[140px] rounded-xl border border-violet-200 dark:border-violet-700 bg-white dark:bg-gray-800 px-4 py-2 text-sm font-bold text-gray-900 dark:text-white"
-                        />
+            {canManageCatalog && (
+                <div className="mb-6 p-4 bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800 rounded-2xl flex flex-col gap-4">
+                    <div className="flex flex-wrap items-center gap-4">
+                        <div className="flex-1 min-w-[200px]">
+                            <label className="block text-[10px] font-black text-violet-700 dark:text-violet-300 uppercase tracking-widest mb-1">Base Electrician Hourly Rate (ISK)</label>
+                            <p className="text-xs text-violet-600 dark:text-violet-400 mb-2">Set one base hourly rate (e.g. 6500) to act as the baseline for all labor calculations and items.</p>
+                            <input
+                                type="number"
+                                min="0"
+                                step="1"
+                                value={tenantBasePriceInput}
+                                onChange={(e) => setTenantBasePriceInput(e.target.value)}
+                                placeholder="e.g. 6500"
+                                className="w-full max-w-[140px] rounded-xl border border-violet-200 dark:border-violet-700 bg-white dark:bg-gray-800 px-4 py-2 text-sm font-bold text-gray-900 dark:text-white"
+                            />
+                        </div>
+                        <button
+                            type="button"
+                            disabled={applyingBasePrice || !tenantBasePriceInput.trim()}
+                            onClick={async () => {
+                                const price = parseFloat(tenantBasePriceInput);
+                                if (isNaN(price) || price < 0) {
+                                    toast.error('Enter a valid rate (e.g. 6500).');
+                                    return;
+                                }
+                                setApplyingBasePrice(true);
+                                try {
+                                    const res = await axiosInstance.post('/labor-catalog/apply-tenant-base-price', { price });
+                                    toast.success(`Saved Base Rate. Applied to ${res.data.updated} catalog items.`);
+                                    if (selectedMain !== null && selectedSub !== null) fetchItems(selectedMain, selectedSub);
+                                } catch (err) {
+                                    toast.error(err.response?.data?.detail || 'Apply failed.');
+                                } finally {
+                                    setApplyingBasePrice(false);
+                                }
+                            }}
+                            className="saas-btn-primary px-6 py-2.5 disabled:opacity-50 rounded-xl text-sm transition"
+                        >
+                            {applyingBasePrice ? 'Applying…' : 'Save & Apply'}
+                        </button>
                     </div>
-                    <button
-                        type="button"
-                        disabled={applyingBasePrice || !tenantBasePriceInput.trim()}
-                        onClick={async () => {
-                            const price = parseFloat(tenantBasePriceInput);
-                            if (isNaN(price) || price < 0) {
-                                toast.error('Enter a valid price (e.g. 3500).');
-                                return;
-                            }
-                            setApplyingBasePrice(true);
-                            try {
-                                const res = await axiosInstance.post('/labor-catalog/apply-tenant-base-price', { price });
-                                toast.success(`Applied to ${res.data.updated} non-hourly items.`);
-                                if (selectedMain !== null && selectedSub !== null) fetchItems(selectedMain, selectedSub);
-                            } catch (err) {
-                                toast.error(err.response?.data?.detail || 'Apply failed.');
-                            } finally {
-                                setApplyingBasePrice(false);
-                            }
-                        }}
-                        className="px-6 py-2.5 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white font-bold rounded-xl text-sm transition"
-                    >
-                        {applyingBasePrice ? 'Applying…' : 'Apply'}
-                    </button>
+                    
+                    {modifiers.length > 0 && (
+                        <div className="mt-4 border-t border-violet-200 dark:border-violet-800 pt-4">
+                            <h4 className="text-xs font-bold text-violet-800 dark:text-violet-200 mb-3">ar.is Labor Surcharges (Álagshlutföll) System</h4>
+                            <div className="flex flex-wrap gap-2">
+                                {modifiers.map(m => (
+                                    <span key={m.id} className="inline-flex items-center px-2 py-1 rounded-md bg-white dark:bg-gray-800 border border-violet-100 dark:border-violet-800 text-[10px] font-medium text-gray-600 dark:text-gray-300">
+                                        {m.description} 
+                                        <span className={`ml-1.5 px-1.5 py-0.5 rounded ${m.ratio > 0 ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'}`}>
+                                            {m.ratio > 0 ? '+' : ''}{(m.ratio * 100).toFixed(0)}%
+                                        </span>
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
             )}
 
@@ -418,8 +446,8 @@ function LaborCatalogListPage() {
 
             <div className="flex flex-col lg:flex-row gap-6">
                 {/* Category menu (sidebar) */}
-                <aside className="lg:w-72 flex-shrink-0 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
-                    <div className="p-4 border-b border-gray-100 dark:border-gray-700">
+                <aside className="lg:w-72 flex-shrink-0 saas-card overflow-hidden">
+                    <div className="p-4 border-b border-gray-100 dark:border-gray-700/50 glass-panel">
                         <h2 className="text-sm font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest">
                             {t('category') || 'Categories'}
                         </h2>
@@ -490,7 +518,7 @@ function LaborCatalogListPage() {
                 </aside>
 
                 {/* Items panel */}
-                <main className="flex-1 min-w-0 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+                <main className="flex-1 min-w-0 saas-card overflow-hidden">
                     {selectedMain === null || selectedSub === null ? (
                         <div className="flex flex-col items-center justify-center py-24 px-6 text-center">
                             <FolderOpenIcon className="h-16 w-16 text-gray-300 dark:text-gray-600 mb-4" />
@@ -517,7 +545,7 @@ function LaborCatalogListPage() {
                                 </div>
                             ) : (
                                 <div className="overflow-x-auto">
-                                    <table className="w-full text-sm text-left min-w-[500px]">
+                                    <table className={`w-full text-sm text-left min-w-[500px] ${!canExportData ? 'protect-data' : ''}`}>
                                         <thead className="text-xs text-gray-400 uppercase bg-gray-50 dark:bg-gray-700/50 font-black">
                                             <tr>
                                                 <th className="py-4 px-6">{t('service_description')}</th>

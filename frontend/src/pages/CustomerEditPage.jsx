@@ -34,6 +34,7 @@ function CustomerEditPage() {
         address: '', 
         kennitala: '', 
         contact_person: '', 
+        contact_person_photo_url: '',
         phone_number: '', 
         email: '', 
         notes: ''
@@ -52,10 +53,10 @@ function CustomerEditPage() {
     useEffect(() => {
         if (!authIsLoading) {
             if (!isAuthenticated) {
-                toast.error("Session expired. Access denied.");
+                toast.error(t('session_expired'));
                 navigate('/login', { replace: true });
             } else if (!isAdmin) {
-                toast.error("Clearance Level Insufficient.");
+                toast.error(t('clearance_insufficient'));
                 navigate('/customers', { replace: true });
             }
         }
@@ -77,6 +78,7 @@ function CustomerEditPage() {
                     address: cust.address || '',
                     kennitala: cust.kennitala || '',
                     contact_person: cust.contact_person || '',
+                    contact_person_photo_url: cust.contact_person_photo_url || '',
                     phone_number: cust.phone_number || '',
                     email: cust.email || '',
                     notes: cust.notes || '',
@@ -84,7 +86,7 @@ function CustomerEditPage() {
             }
         } catch (err) {
             console.error("Registry Sync Error:", err);
-            toast.error('Failed to retrieve customer record.');
+            toast.error(t('toast_retrieve_failed'));
             navigate('/customers');
         } finally {
             setIsLoading(false);
@@ -95,7 +97,18 @@ function CustomerEditPage() {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+        setFormData(prev => {
+            let newVal = value;
+            if (name === 'kennitala') {
+                let cleaned = newVal.replace(/\D/g, '');
+                if (cleaned.length > 6) {
+                    newVal = cleaned.substring(0, 6) + '-' + cleaned.substring(6, 10);
+                } else {
+                    newVal = cleaned;
+                }
+            }
+            return { ...prev, [name]: newVal };
+        });
     };
 
     const handleSubmit = async (e) => {
@@ -105,16 +118,16 @@ function CustomerEditPage() {
         setIsSaving(true);
         try {
             await axiosInstance.put(`/customers/${customerId}`, formData);
-            toast.success(`Registry node updated: ${formData.name}`);
+            toast.success(`${t('toast_node_updated')} ${formData.name}`);
             navigate('/customers');
         } catch (err) {
-            toast.error(err.response?.data?.detail || 'Update synchronization failed.');
+            toast.error(err.response?.data?.detail || t('toast_update_sync_failed'));
         } finally {
             setIsSaving(false);
         }
     };
 
-    if (authIsLoading || isLoading) return <LoadingSpinner text="Synchronizing client registry..." />;
+    if (authIsLoading || isLoading) return <LoadingSpinner text={t('syncing_client_registry')} />;
     if (!isAdmin) return null;
 
     return (
@@ -125,7 +138,7 @@ function CustomerEditPage() {
                     to="/customers" 
                     className="flex items-center text-[10px] font-black text-gray-400 hover:text-indigo-600 transition mb-3 uppercase tracking-[0.2em]"
                 >
-                    <ChevronLeftIcon className="h-3 w-3 mr-1" /> Terminate Edit / Return to Directory
+                    <ChevronLeftIcon className="h-3 w-3 mr-1" /> {t('terminate_edit')}
                 </Link>
                 
                 <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5 flex items-center gap-4">
@@ -152,11 +165,11 @@ function CustomerEditPage() {
                     <section className="bg-white dark:bg-gray-800 p-8 md:p-10 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-700 space-y-8">
                         <div className="flex items-center gap-3">
                             <IdentificationIcon className="h-5 w-5 text-indigo-500" />
-                            <h2 className="text-sm font-black text-gray-400 uppercase tracking-[0.2em]">Registry Identity</h2>
+                            <h2 className="text-sm font-black text-gray-400 uppercase tracking-[0.2em]">{t('legal_identity_parameters')}</h2>
                         </div>
                         
                         <div className="space-y-1">
-                            <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">Legal Entity Name*</label>
+                            <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">{t('full_legal_name')}</label>
                             <input 
                                 type="text" 
                                 name="name" 
@@ -169,7 +182,7 @@ function CustomerEditPage() {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                             <div className="space-y-1">
-                                <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">Kennitala (Tax ID)*</label>
+                                <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">{t('kennitala')}</label>
                                 <div className="relative">
                                     <HashtagIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                                     <input 
@@ -182,7 +195,7 @@ function CustomerEditPage() {
                                 </div>
                             </div>
                             <div className="space-y-1">
-                                <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">Registered Address</label>
+                                <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">{t('primary_address')}</label>
                                 <div className="relative">
                                     <MapPinIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                                     <input 
@@ -201,26 +214,63 @@ function CustomerEditPage() {
                     <section className="bg-white dark:bg-gray-800 p-8 md:p-10 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-700 space-y-8">
                         <div className="flex items-center gap-3">
                             <PhoneIcon className="h-5 w-5 text-emerald-500" />
-                            <h2 className="text-sm font-black text-gray-400 uppercase tracking-[0.2em]">Contact Channels</h2>
+                            <h2 className="text-sm font-black text-gray-400 uppercase tracking-[0.2em]">{t('communication_registry')}</h2>
                         </div>
                         
-                        <div className="space-y-1">
-                            <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">Primary Point of Contact</label>
-                            <div className="relative">
-                                <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                                <input 
-                                    type="text" 
-                                    name="contact_person" 
-                                    value={formData.contact_person} 
-                                    onChange={handleChange} 
-                                    className="modern-input h-14 pl-12" 
-                                />
+                        <div className="space-y-4">
+                            <div className="space-y-1">
+                                <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">{t('primary_contact_person')}</label>
+                                <div className="relative flex items-center gap-4">
+                                    <div className="flex-1 relative">
+                                        <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                        <input 
+                                            type="text" 
+                                            name="contact_person" 
+                                            value={formData.contact_person} 
+                                            onChange={handleChange} 
+                                            className="modern-input h-14 pl-12" 
+                                        />
+                                    </div>
+                                    <div className="flex items-center gap-3 shrink-0">
+                                        {formData.contact_person_photo_url && (
+                                            <img 
+                                                src={formData.contact_person_photo_url} 
+                                                alt="Contact" 
+                                                className="h-12 w-12 rounded-full object-cover border-2 border-gray-200 dark:border-gray-700" 
+                                            />
+                                        )}
+                                        <label className="flex items-center gap-2 cursor-pointer bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 text-emerald-600 dark:text-emerald-400 px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition">
+                                            <CloudArrowUpIcon className="h-4 w-4" />
+                                            <span>Photo</span>
+                                            <input 
+                                                type="file" 
+                                                accept="image/*" 
+                                                className="hidden" 
+                                                onChange={async (e) => {
+                                                    const file = e.target.files?.[0];
+                                                    if (!file) return;
+                                                    try {
+                                                        const formDataMedia = new FormData();
+                                                        formDataMedia.append('file', file);
+                                                        const res = await axiosInstance.post('/system/upload-media', formDataMedia, {
+                                                            headers: { 'Content-Type': 'multipart/form-data' }
+                                                        });
+                                                        setFormData(prev => ({ ...prev, contact_person_photo_url: res.data.url }));
+                                                        toast.success('Photo uploaded successfully');
+                                                    } catch (err) {
+                                                        toast.error('Failed to upload photo');
+                                                    }
+                                                }} 
+                                            />
+                                        </label>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                             <div className="space-y-1">
-                                <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">Mobile / Telephone</label>
+                                <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">{t('phone_number')}</label>
                                 <div className="relative">
                                     <PhoneIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                                     <input 
@@ -233,7 +283,7 @@ function CustomerEditPage() {
                                 </div>
                             </div>
                             <div className="space-y-1">
-                                <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">Registry Email</label>
+                                <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">{t('electronic_mail')}</label>
                                 <div className="relative">
                                     <EnvelopeIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                                     <input 
@@ -253,7 +303,7 @@ function CustomerEditPage() {
                 <div className="lg:col-span-4 space-y-8">
                     <section className="bg-white dark:bg-gray-800 p-8 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-700 space-y-4">
                         <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] flex items-center gap-2 ml-1">
-                            <DocumentTextIcon className="h-4 w-4 text-indigo-500" /> Internal Notes
+                            <DocumentTextIcon className="h-4 w-4 text-indigo-500" /> {t('internal_notes')}
                         </label>
                         <textarea 
                             name="notes" 
@@ -261,7 +311,7 @@ function CustomerEditPage() {
                             onChange={handleChange} 
                             rows="8" 
                             className="modern-input h-auto py-4 resize-none text-sm"
-                            placeholder="Specify billing nuances, site access keys, or behavioral preferences..."
+                            placeholder={t('specify_billing_nuances')}
                         ></textarea>
                     </section>
 
@@ -281,19 +331,10 @@ function CustomerEditPage() {
                         <div className="flex gap-3">
                             <InformationCircleIcon className="h-5 w-5 text-indigo-600 shrink-0" />
                             <p className="text-[10px] text-indigo-700 dark:text-indigo-300 leading-relaxed font-black uppercase tracking-tight">
-                                Registry Audit Trace: Modifications to this node are permanent. All project associations linked to this client will be updated across the OS.
+                                {t('registry_audit_trace')}
                             </p>
                         </div>
                     </div>
-                    
-                    {isSuperuser && (
-                        <div className="p-6 bg-orange-50 dark:bg-orange-900/10 rounded-[1.5rem] border border-orange-100 dark:border-orange-800 flex gap-3">
-                            <ShieldCheckIcon className="h-6 w-6 text-orange-600 shrink-0" />
-                            <p className="text-[10px] text-orange-700 dark:text-orange-300 font-black uppercase tracking-tight leading-relaxed">
-                                Root Clearance: Global Customer properties detected. Changes will affect cross-tenant analytics.
-                            </p>
-                        </div>
-                    )}
                 </div>
             </form>
         </div>

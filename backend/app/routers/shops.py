@@ -22,7 +22,7 @@ def get_shop_for_user(shop_id: int, db: DbDependency, current_user: CurrentUserD
     Helper function to retrieve a shop while enforcing tenant isolation.
     Superusers bypass the tenant check.
     """
-    effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
+    effective_tenant_id = current_user.tenant_id
     db_shop = crud.get_shop(db, shop_id=shop_id, tenant_id=effective_tenant_id)
     if not db_shop:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Shop not found or access denied.")
@@ -68,7 +68,7 @@ def read_all_shops(
     Retrieves a list of shops. 
     Superadmins see all shops across all tenants; regular users see only their own.
     """
-    effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
+    effective_tenant_id = current_user.tenant_id
     return crud.get_shops(db=db, tenant_id=effective_tenant_id, skip=skip, limit=limit)
 
 @router.get("/{shop_id}", response_model=schemas.ShopRead)

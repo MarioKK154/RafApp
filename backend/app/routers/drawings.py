@@ -33,7 +33,7 @@ async def get_project_from_tenant(project_id: int, db: DbDependency, current_use
     """
     Retrieves a project while verifying tenant access.
     """
-    effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
+    effective_tenant_id = current_user.tenant_id
     project = crud.get_project(db, project_id=project_id, tenant_id=effective_tenant_id)
     if not project:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found or access denied.")

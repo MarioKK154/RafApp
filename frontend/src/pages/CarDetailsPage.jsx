@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import axiosInstance from '../api/axiosInstance';
@@ -23,6 +24,8 @@ import {
 } from '@heroicons/react/24/outline';
 
 function CarDetailsPage() {
+    const { t } = useTranslation();
+
     const { carId } = useParams();
     const navigate = useNavigate();
     const { user } = useAuth();
@@ -336,7 +339,7 @@ function CarDetailsPage() {
                                     <tr>
                                         <th className="py-5 px-10">Timestamp</th>
                                         <th className="py-5 px-6">Operational Event</th>
-                                        <th className="py-5 px-6">Personnel</th>
+                                        <th className="py-5 px-6">{t('personnel')}</th>
                                         <th className="py-5 px-10 text-right">Odometer</th>
                                     </tr>
                                 </thead>
@@ -386,6 +389,8 @@ function CarDetailsPage() {
 }
 
 function DetailRow({ icon, label, value, mono = false }) {
+    const { t } = useTranslation();
+
     return (
         <div className="flex items-start gap-4 p-1">
             <div className="mt-1 text-indigo-500 h-4 w-4 shrink-0">{icon}</div>

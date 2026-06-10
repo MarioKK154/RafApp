@@ -148,7 +148,8 @@ def get_users(
     tenant_id: Optional[int] = None,
     is_active: Optional[bool] = None,
     skip: int = 0,
-    limit: int = 100
+    limit: int = 100,
+    exclude_superusers: bool = False
 ) -> List[models.User]:
     query = db.query(models.User).options(
         joinedload(models.User.assigned_projects),
@@ -158,6 +159,8 @@ def get_users(
         query = query.filter(models.User.tenant_id == tenant_id)
     if is_active is not None:
         query = query.filter(models.User.is_active == is_active)
+    if exclude_superusers:
+        query = query.filter(models.User.is_superuser == False)
     return query.order_by(models.User.id).offset(skip).limit(limit).all()
 
 
@@ -494,7 +497,7 @@ def delete_project(db: Session, project_id: int, tenant_id: Optional[int] = None
 # --- Project Membership CRUD ---
 
 def add_member_to_project(db: Session, project: models.Project, user: models.User) -> bool:
-    if project.tenant_id != user.tenant_id and not user.is_superuser:
+    if project.tenant_id != user.tenant_id:
         return False
     if 'members' not in project.__dict__: db.refresh(project, attribute_names=['members'])
     if user not in project.members: project.members.append(user); db.commit(); return True
@@ -563,19 +566,25 @@ def create_task(db: Session, task: schemas.TaskCreate, project_tenant_id: int) -
     assignee_id = task.assignee_id
     if assignee_id:
         assignee = get_user(db, user_id=assignee_id)
-        if not assignee or (assignee.tenant_id != project_tenant_id and not assignee.is_superuser):
+        if not assignee or assignee.tenant_id != project_tenant_id:
              print(f"Warning: Assignee {assignee_id} not in project tenant {project_tenant_id}")
     task_data = task.model_dump()
     popped_assignee_id = task_data.pop('assignee_id', None)
     if popped_assignee_id == '': popped_assignee_id = None
+    
     start_date = task_data.pop('start_date', None)
-    db_task = models.Task(**task_data, assignee_id=assignee_id, start_date=start_date)
+    if start_date == '': start_date = None
+    
+    due_date = task_data.pop('due_date', None)
+    if due_date == '': due_date = None
+    
+    db_task = models.Task(**task_data, assignee_id=assignee_id, start_date=start_date, due_date=due_date)
     db.add(db_task); db.commit(); db.refresh(db_task)
     
     # ROADMAP #2: Send Assignment Notification
     if db_task.assignee_id:
         create_notification(db, db_task.assignee_id, f"Node Update: You have been assigned task '{db_task.title}'.", f"/tasks/{db_task.id}")
-    
+
     return db_task
 
 def update_task(db: Session, task_id: int, task_update: schemas.TaskUpdate, project_tenant_id: int) -> Optional[models.Task]:
@@ -589,7 +598,7 @@ def update_task(db: Session, task_id: int, task_update: schemas.TaskUpdate, proj
 
     if 'assignee_id' in update_data and update_data['assignee_id'] is not None:
         assignee = get_user(db, user_id=update_data['assignee_id'])
-        if not assignee or (assignee.tenant_id != project_tenant_id and not assignee.is_superuser):
+        if not assignee or assignee.tenant_id != project_tenant_id:
              update_data.pop('assignee_id')
              
     for key, value in update_data.items():
@@ -733,23 +742,10 @@ def get_inventory_items(
             query = query.filter(or_(*clauses))
 
     if category:
-        query = query.filter(models.InventoryItem.category == category)
+        query = query.filter(models.InventoryItem.master_category == category)
 
     if subcategory:
-        # Frontend treats "subcategory" as the first segment before '/'.
-        # Example: "Foo / Bar" -> "Foo"
-        col = models.InventoryItem.subcategory
-        if engine.dialect.name == "postgresql":
-            base_subcategory = func.nullif(func.trim(func.split_part(col, "/", 1)), "")
-        else:
-            from sqlalchemy import case
-
-            base_subcategory = case(
-                (func.instr(col, "/") > 0,
-                 func.trim(func.substr(col, 1, func.instr(col, "/") - 1))),
-                else_=func.trim(col),
-            )
-        query = query.filter(base_subcategory == subcategory)
+        query = query.filter(func.lower(models.InventoryItem.category) == subcategory.lower())
 
     preds = _inventory_shop_predicates()
     if shops:
@@ -775,10 +771,10 @@ def get_inventory_catalog_filters(db: Session, lang: Optional[str] = None) -> Li
     """
     rows = (
         db.query(
+            models.InventoryItem.master_category,
             models.InventoryItem.category,
-            models.InventoryItem.subcategory,
+            models.InventoryItem.master_category, # No EN for master yet
             models.InventoryItem.category_en,
-            models.InventoryItem.subcategory_en,
         )
         .all()
     )
@@ -787,15 +783,16 @@ def get_inventory_catalog_filters(db: Session, lang: Optional[str] = None) -> Li
     cat_to_sub_keys: dict = {}
     cat_display: dict = {}
     sub_labels: dict = {}
+    cat_to_sub_keys_lower = {}
 
     for cat, sub, cat_en, sub_en in rows:
-        cat_val = (cat or "Uncategorized").strip()
-        raw_sub = (sub or "").strip()
-        base_sub = raw_sub.split("/")[0].strip() if raw_sub else ""
+        cat_val = (cat or "Annað").strip()
+        base_sub = (sub or "").strip()
 
         if cat_val not in cat_to_sub_keys:
             cat_order.append(cat_val)
             cat_to_sub_keys[cat_val] = []
+            cat_to_sub_keys_lower[cat_val] = set()
             cat_display[cat_val] = cat_val
 
         if use_en and (cat_en or "").strip():
@@ -803,7 +800,10 @@ def get_inventory_catalog_filters(db: Session, lang: Optional[str] = None) -> Li
 
         if not base_sub:
             continue
-        if base_sub not in cat_to_sub_keys[cat_val]:
+            
+        base_sub_lower = base_sub.lower()
+        if base_sub_lower not in cat_to_sub_keys_lower[cat_val]:
+            cat_to_sub_keys_lower[cat_val].add(base_sub_lower)
             cat_to_sub_keys[cat_val].append(base_sub)
 
         key = (cat_val, base_sub)
@@ -1631,7 +1631,7 @@ def get_dashboard_data(db: Session, user: models.User) -> Dict[str, Any]:
     my_checked_out_car = db.query(models.Car).filter(models.Car.current_user_id == user.id, models.Car.status == models.CarStatus.Checked_Out).first()
     managed_projects = None
     if user.is_superuser or user.role == 'admin':
-        tenant_id = None if user.is_superuser else user.tenant_id
+        tenant_id = user.tenant_id
         managed_projects = get_projects(db, tenant_id=tenant_id, limit=100)
     elif user.role == 'project manager':
         managed_projects = db.query(models.Project).filter(models.Project.project_manager_id == user.id).all()
@@ -1659,6 +1659,9 @@ def get_tenant_heatmap_data(db: Session) -> List[Dict[str, Any]]:
         for log in logs_query.all():
             if log.end_time and log.start_time:
                 total_seconds += (log.end_time - log.start_time).total_seconds()
+
+        tools_count = db.query(models.Tool).filter(models.Tool.tenant_id == tenant.id).count()
+        total_tasks_completed = db.query(models.Task).join(models.Project).filter(models.Project.tenant_id == tenant.id, models.Task.status == 'Done').count()
         hours_last_30d = round(total_seconds / 3600.0, 2)
         items.append(
             {
@@ -1696,8 +1699,14 @@ def get_platform_growth_metrics(db: Session) -> Dict[str, Any]:
             continue
         duration = (log.end_time - log.start_time).total_seconds()
         total_seconds_all += duration
-        if log.start_time >= thirty_days_ago:
+        log_start_naive = log.start_time.replace(tzinfo=None) if log.start_time.tzinfo else log.start_time
+        thirty_days_ago_naive = thirty_days_ago.replace(tzinfo=None) if thirty_days_ago.tzinfo else thirty_days_ago
+        if log_start_naive >= thirty_days_ago_naive:
             total_seconds_30d += duration
+
+    active_tools = db.query(models.Tool).filter(models.Tool.status == models.ToolStatus.Available).count()
+    cars_in_service = db.query(models.Car).filter(models.Car.status == models.CarStatus.In_Service).count()
+    total_tasks_completed = db.query(models.Task).filter(models.Task.status == 'Done').count()
 
     return {
         "total_tenants": total_tenants,
@@ -1706,6 +1715,9 @@ def get_platform_growth_metrics(db: Session) -> Dict[str, Any]:
         "new_projects_today": new_projects_today,
         "total_hours_all_time": round(total_seconds_all / 3600.0, 2),
         "total_hours_last_30d": round(total_seconds_30d / 3600.0, 2),
+        "active_tools": active_tools,
+        "cars_in_service": cars_in_service,
+        "total_tasks_completed": total_tasks_completed,
     }
 
 
@@ -2225,18 +2237,35 @@ def get_non_hourly_labor_item_ids(db: Session) -> List[int]:
 
 
 def apply_tenant_base_price_to_non_hourly(db: Session, tenant_id: int, price: float) -> Dict[str, int]:
-    """Set TenantLaborPrice to `price` for all non-hourly catalog items for this tenant. Returns count updated."""
+    """Set TenantLaborPrice to `price * units_per_hour` for all non-hourly catalog items for this tenant. Returns count updated."""
     item_ids = get_non_hourly_labor_item_ids(db)
     updated = 0
     for labor_item_id in item_ids:
+        db_item = db.query(models.LaborCatalogItem).filter(models.LaborCatalogItem.id == labor_item_id).first()
+        if not db_item:
+            continue
+            
+        uph = db_item.units_per_hour
+        if uph is None:
+            first_cond = db.query(models.LaborCatalogItemCondition).filter(
+                models.LaborCatalogItemCondition.labor_catalog_item_id == labor_item_id
+            ).order_by(models.LaborCatalogItemCondition.code).first()
+            if first_cond is not None:
+                uph = first_cond.units_per_hour
+                
+        if uph is None:
+            uph = 0.0
+            
+        calculated_price = float(price) * float(uph)
+        
         existing = db.query(models.TenantLaborPrice).filter(
             models.TenantLaborPrice.tenant_id == tenant_id,
             models.TenantLaborPrice.labor_item_id == labor_item_id,
         ).first()
         if existing:
-            existing.price = price
+            existing.price = calculated_price
         else:
-            db.add(models.TenantLaborPrice(tenant_id=tenant_id, labor_item_id=labor_item_id, price=price))
+            db.add(models.TenantLaborPrice(tenant_id=tenant_id, labor_item_id=labor_item_id, price=calculated_price))
         updated += 1
     db.commit()
     return {"updated": updated}
@@ -2956,6 +2985,20 @@ def create_expense(db: Session, tenant_id: int, expense: schemas.ExpenseCreate) 
     return db_expense
 
 
+
+def update_expense(db: Session, db_expense: models.Expense, expense_update: schemas.ExpenseUpdate) -> models.Expense:
+    update_data = expense_update.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(db_expense, key, value)
+    db.add(db_expense)
+    db.commit()
+    db.refresh(db_expense)
+    return db_expense
+
+def delete_expense(db: Session, db_expense: models.Expense):
+    db.delete(db_expense)
+    db.commit()
+
 def get_expenses_for_tenant(
     db: Session,
     tenant_id: int,
@@ -3019,19 +3062,24 @@ def get_yearly_money_overview(
 
     by_month_map: Dict[int, Dict[str, float]] = {}
     by_category_map: Dict[str, Dict[str, float]] = {}
+    by_project_map: Dict[Optional[int], Dict[str, float]] = {}
 
     for e in expenses:
         month = e.date.month
         month_bucket = by_month_map.setdefault(month, {"in": 0.0, "out": 0.0})
         cat_key = e.category or "other"
         cat_bucket = by_category_map.setdefault(cat_key, {"in": 0.0, "out": 0.0})
+        
+        proj_bucket = by_project_map.setdefault(e.project_id, {"in": 0.0, "out": 0.0})
 
         if e.flow_type == "in":
             month_bucket["in"] += e.amount
             cat_bucket["in"] += e.amount
+            proj_bucket["in"] += e.amount
         else:
             month_bucket["out"] += e.amount
             cat_bucket["out"] += e.amount
+            proj_bucket["out"] += e.amount
 
     by_month = [
         schemas.MonthlyMoneySummary(month=m, total_in=b["in"], total_out=b["out"])
@@ -3043,6 +3091,11 @@ def get_yearly_money_overview(
         for c, b in sorted(by_category_map.items(), key=lambda kv: kv[0])
     ]
 
+    by_project = [
+        schemas.ProjectMoneySummary(project_id=pid, total_in=b["in"], total_out=b["out"])
+        for pid, b in sorted(by_project_map.items(), key=lambda kv: (kv[0] is not None, kv[0]))
+    ]
+
     return schemas.YearlyMoneyOverview(
         year=year,
         total_in=total_in,
@@ -3050,6 +3103,7 @@ def get_yearly_money_overview(
         net=total_in - total_out,
         by_month=by_month,
         by_category=by_category,
+        by_project=by_project,
     )
 
 # --- Project Assignment Logic (ROADMAP #3) ---
@@ -3076,3 +3130,43 @@ def delete_assignment(db: Session, assignment_id: int):
     db.query(models.ProjectAssignment).filter(models.ProjectAssignment.id == assignment_id).delete()
     db.commit()
     return True
+
+# --- Task Checklists ---
+def get_checklists_for_task(db: Session, task_id: int):
+    return db.query(models.TaskChecklistItem).filter(models.TaskChecklistItem.task_id == task_id).order_by(models.TaskChecklistItem.created_at.asc()).all()
+
+def create_task_checklist_item(db: Session, task_id: int, author_id: int, item: schemas.TaskChecklistItemCreate):
+    db_item = models.TaskChecklistItem(
+        task_id=task_id,
+        author_id=author_id,
+        content=item.content,
+        is_private=item.is_private
+    )
+    db.add(db_item)
+    db.commit()
+    db.refresh(db_item)
+    return db_item
+
+def update_task_checklist_item(db: Session, item_id: int, item_update: schemas.TaskChecklistItemUpdate):
+    db_item = db.query(models.TaskChecklistItem).filter(models.TaskChecklistItem.id == item_id).first()
+    if not db_item:
+        return None
+    if item_update.content is not None:
+        db_item.content = item_update.content
+    if item_update.is_completed is not None:
+        db_item.is_completed = item_update.is_completed
+    if item_update.is_private is not None:
+        db_item.is_private = item_update.is_private
+    db.commit()
+    db.refresh(db_item)
+    return db_item
+
+def delete_task_checklist_item(db: Session, item_id: int):
+    db_item = db.query(models.TaskChecklistItem).filter(models.TaskChecklistItem.id == item_id).first()
+    if db_item:
+        db.delete(db_item)
+        db.commit()
+        return True
+    return False
+
+

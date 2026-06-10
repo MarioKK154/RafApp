@@ -4,9 +4,11 @@ import { useTranslation } from 'react-i18next';
 import axiosInstance from '../api/axiosInstance';
 import { useAuth } from '../context/AuthContext';
 import TaskComments from '../components/TaskComments';
+import TaskChecklists from '../components/TaskChecklists';
 import TaskPhotos from '../components/TaskPhotos';
 import { toast } from 'react-toastify';
 import LoadingSpinner from '../components/LoadingSpinner';
+import PushToGCButton from '../components/PushToGCButton';
 import Select from 'react-select';
 import { 
     ClipboardDocumentCheckIcon, 
@@ -242,6 +244,7 @@ function TaskEditPage() {
                 </div>
 
                 <div className="flex items-center gap-3">
+                    <PushToGCButton entityType="task" entityId={taskId} />
                     <button
                         type="button"
                         onClick={async () => {
@@ -305,9 +308,9 @@ function TaskEditPage() {
                                         <TagIcon className="h-3.5 w-3.5 text-indigo-500" /> {t('priority')}
                                     </label>
                                     <select name="priority" value={formData.priority} onChange={handleChange} className="modern-input appearance-none font-bold">
-                                        <option value="Low">Low</option>
-                                        <option value="Medium">Medium</option>
-                                        <option value="High">High</option>
+                                        <option value="Low">{t('priority_low')}</option>
+                                        <option value="Medium">{t('priority_medium')}</option>
+                                        <option value="High">{t('priority_high')}</option>
                                     </select>
                                 </div>
 
@@ -316,7 +319,7 @@ function TaskEditPage() {
                                         <ArrowPathIcon className="h-3.5 w-3.5 text-indigo-500" /> {t('status')}
                                     </label>
                                     <select name="status" value={formData.status} onChange={handleChange} className="modern-input appearance-none font-bold">
-                                        {EDITABLE_TASK_STATUSES.map(s => (<option key={s} value={s}>{s}</option>))}
+                                        {EDITABLE_TASK_STATUSES.map(s => (<option key={s} value={s}>{t('status_' + s.toLowerCase().replace(' ', ''))}</option>))}
                                     </select>
                                 </div>
 
@@ -405,6 +408,7 @@ function TaskEditPage() {
 
             {/* Sub-components with background containers */}
             <div className="mt-16 space-y-16 pb-20 animate-in slide-in-from-bottom-6 duration-700 delay-200">
+                <section className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden p-6"><TaskChecklists taskId={taskId} taskAssigneeId={taskData?.assignee_id} /></section>
                 <section className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden p-6"><TaskComments taskId={taskId} /></section>
                 <section className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden p-6"><TaskPhotos taskId={taskId} /></section>
             </div>

@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import axiosInstance from '../api/axiosInstance';
 import { toast } from 'react-toastify';
 import LoadingSpinner from '../components/LoadingSpinner';
+import IntegrationsSettings from '../components/IntegrationsSettings';
 import { 
     UserIcon, 
     KeyIcon, 
@@ -343,7 +344,7 @@ function AccountSettingsPage() {
                                     )}
                                     {totpSetupPayload && (
                                         <form onSubmit={handleTotpConfirmSetup} className="space-y-4 pt-2">
-                                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('totp_manual_secret')}</p>
+                                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('totp_manual_secret', { defaultValue: 'Manual setup secret' })}</p>
                                             <div className="p-4 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-700 font-mono text-xs break-all text-gray-900 dark:text-gray-100">
                                                 {totpSetupPayload.secret}
                                             </div>
@@ -393,6 +394,8 @@ function AccountSettingsPage() {
                             )}
                         </div>
                     </div>
+                    
+                    <IntegrationsSettings canManage={user.role === 'admin' || user.is_superuser || user.role === 'project manager'} />
                 </div>
 
                 {/* Visual Identity Terminal (Right) */}
@@ -443,7 +446,7 @@ function AccountSettingsPage() {
                                 </button>
                             )}
                         </div>
-                        <p className="mt-6 text-[8px] font-black text-gray-300 dark:text-gray-600 uppercase tracking-[0.3em]">Format: JPG/PNG/GIF • limit: 5MB</p>
+                        <p className="mt-6 text-[8px] font-black text-gray-300 dark:text-gray-600 uppercase tracking-[0.3em]">{t('format_limit_5mb', { defaultValue: 'Format: JPG/PNG/GIF • limit: 5MB' })}</p>
                     </div>
 
                     {/* Root Privilege Indicator */}

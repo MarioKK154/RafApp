@@ -5,6 +5,7 @@ import axiosInstance from '../api/axiosInstance';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
 import LoadingSpinner from '../components/LoadingSpinner';
+import PushToGCButton from '../components/PushToGCButton';
 import Select from 'react-select';
 import { 
     ClockIcon, 
@@ -21,6 +22,7 @@ import {
     PencilIcon
 } from '@heroicons/react/24/outline';
 import Modal from '../components/Modal';
+import { PieChart, Pie, BarChart, Bar, Cell, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 /**
  * Technical Duration Formatter
@@ -83,6 +85,7 @@ function TimeLogsPage() {
     const isAdmin = currentUser?.role === 'admin' || isSuperuser;
 
     // Admin edit timelog modal
+    const [chartType, setChartType] = useState('pie');
     const [logToEdit, setLogToEdit] = useState(null);
     const [editFormData, setEditFormData] = useState({ project_id: '', start_datetime: '', end_datetime: '', notes: '' });
     const [isSavingEdit, setIsSavingEdit] = useState(false);
@@ -169,6 +172,72 @@ function TimeLogsPage() {
     }, [fetchTimeLogs]);
 
     // Calculate sum of displayed hours
+    
+    const chartData = useMemo(() => {
+        if (!timeLogs || timeLogs.length === 0) return [];
+        
+        if (!selectedProject && !selectedUser) {
+            const groups = {};
+            timeLogs.forEach(log => {
+                const pName = log.project?.name || `Project ${log.project_id}`;
+                const pId = log.project_id;
+                const hours = log.duration_hours || 0;
+                if (!groups[pId]) groups[pId] = { name: pName, id: pId, hours: 0, type: 'project' };
+                groups[pId].hours += hours;
+            });
+            return Object.values(groups).sort((a,b) => b.hours - a.hours);
+        }
+        
+        if (selectedProject && !selectedUser) {
+            const groups = {};
+            timeLogs.forEach(log => {
+                const uName = log.user?.full_name || log.user?.email || `User ${log.user_id}`;
+                const uId = log.user_id;
+                const hours = log.duration_hours || 0;
+                if (!groups[uId]) groups[uId] = { name: uName, id: uId, hours: 0, type: 'user' };
+                groups[uId].hours += hours;
+            });
+            return Object.values(groups).sort((a,b) => b.hours - a.hours);
+        }
+
+        if (selectedUser) {
+            const groups = {};
+            timeLogs.forEach(log => {
+                const pName = log.project?.name || `Project ${log.project_id}`;
+                const pId = log.project_id;
+                const hours = log.duration_hours || 0;
+                if (!groups[pId]) groups[pId] = { name: pName, id: pId, hours: 0, type: 'project' };
+                groups[pId].hours += hours;
+            });
+            return Object.values(groups).sort((a,b) => b.hours - a.hours);
+        }
+        
+        return [];
+    }, [timeLogs, selectedProject, selectedUser]);
+
+    const handleChartClick = (data, index) => {
+        if (!data || data.activePayload) {
+            // Recharts bar chart passes activePayload
+            const payload = data?.activePayload?.[0]?.payload || data;
+            if (payload.type === 'project') {
+                setSelectedProject({ value: payload.id, label: payload.name });
+                setSelectedUser(null);
+            } else if (payload.type === 'user') {
+                setSelectedUser({ value: payload.id, label: payload.name });
+                setSelectedProject(null);
+            }
+        } else {
+            // Recharts pie chart passes the raw data object directly
+            if (data.type === 'project') {
+                setSelectedProject({ value: data.id, label: data.name });
+                setSelectedUser(null);
+            } else if (data.type === 'user') {
+                setSelectedUser({ value: data.id, label: data.name });
+                setSelectedProject(null);
+            }
+        }
+    };
+
     const totalDisplayedHours = useMemo(() => {
         return timeLogs.reduce((acc, log) => acc + (log.duration_hours || 0), 0).toFixed(1);
     }, [timeLogs]);
@@ -283,6 +352,74 @@ function TimeLogsPage() {
                 )}
             </section>
 
+            
+            {/* Interactive Chart Section */}
+            {timeLogs.length > 0 && (
+                <section className="mb-10 bg-white dark:bg-gray-800 p-6 rounded-[2rem] border border-gray-100 dark:border-gray-700 shadow-sm">
+                    <div className="flex justify-between items-center mb-6">
+                        <div>
+                            <h3 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-widest">
+                                {!selectedProject && !selectedUser ? "Total Hours by Project" : ""}
+                                {selectedProject && !selectedUser ? `Hours by Employee (${selectedProject.label})` : ""}
+                                {selectedUser ? `Hours across Projects (${selectedUser.label})` : ""}
+                            </h3>
+                            <p className="text-[10px] text-gray-500 font-bold uppercase tracking-[0.2em] mt-1">
+                                Click on a slice or bar to drill down and apply filters automatically.
+                            </p>
+                        </div>
+                        <div className="bg-gray-100 dark:bg-gray-700 p-1 rounded-xl flex items-center gap-1">
+                            <button 
+                                onClick={() => setChartType('pie')}
+                                className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-colors ${chartType === 'pie' ? 'bg-white dark:bg-gray-800 text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
+                            >
+                                Pie Chart
+                            </button>
+                            <button 
+                                onClick={() => setChartType('bar')}
+                                className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-colors ${chartType === 'bar' ? 'bg-white dark:bg-gray-800 text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
+                            >
+                                Bar Chart
+                            </button>
+                        </div>
+                    </div>
+                    <div className="h-[300px] w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                            {chartType === 'pie' ? (
+                                <PieChart>
+                                    <Pie 
+                                        data={chartData} 
+                                        dataKey="hours" 
+                                        nameKey="name" 
+                                        cx="50%" 
+                                        cy="50%" 
+                                        outerRadius={100} 
+                                        label={({name, percent}) => percent > 0 ? `${name} ${(percent * 100).toFixed(0)}%` : ''}
+                                        onClick={handleChartClick}
+                                        style={{ cursor: 'pointer' }}
+                                    >
+                                        {chartData.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={['#6366f1', '#ec4899', '#f59e0b', '#10b981', '#8b5cf6', '#3b82f6', '#ef4444', '#14b8a6', '#f43f5e', '#a855f7'][index % 10]} />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip formatter={(value) => `${value.toFixed(1)} hrs`} />
+                                </PieChart>
+                            ) : (
+                                <BarChart data={chartData} onClick={handleChartClick} style={{ cursor: 'pointer' }}>
+                                    <XAxis dataKey="name" tick={{fontSize: 10}} />
+                                    <YAxis tick={{fontSize: 10}} />
+                                    <Tooltip formatter={(value) => `${value.toFixed(1)} hrs`} cursor={{fill: 'transparent'}} />
+                                    <Bar dataKey="hours" fill="#6366f1" radius={[4, 4, 0, 0]}>
+                                        {chartData.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={['#6366f1', '#ec4899', '#f59e0b', '#10b981', '#8b5cf6', '#3b82f6', '#ef4444', '#14b8a6', '#f43f5e', '#a855f7'][index % 10]} />
+                                        ))}
+                                    </Bar>
+                                </BarChart>
+                            )}
+                        </ResponsiveContainer>
+                    </div>
+                </section>
+            )}
+
             {/* Content Area */}
             {isLoading && timeLogs.length === 0 ? (
                 <div className="py-20"><LoadingSpinner text={t('syncing_operational_history')} size="lg" /></div>
@@ -291,7 +428,7 @@ function TimeLogsPage() {
             ) : timeLogs.length > 0 ? (
                 <div className="space-y-4">
                     {timeLogs.map(log => (
-                        <div key={log.id} className="group relative bg-white dark:bg-gray-800 rounded-[2rem] border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden">
+                        <div key={log.id} className="group relative hover:z-50 focus-within:z-[60] bg-white dark:bg-gray-800 rounded-[2rem] border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-xl transition-all duration-300">
                             <div className="p-6 flex flex-wrap lg:flex-nowrap items-center gap-6">
                                 
                                 {/* Technician & Identity */}
@@ -360,7 +497,7 @@ function TimeLogsPage() {
 
                             {/* Activity Notes Section */}
                             {log.notes && (
-                                <div className="px-6 py-4 bg-gray-50 dark:bg-gray-900/50 border-t border-gray-50 dark:border-gray-700 flex gap-3 items-start">
+                                <div className="px-6 py-4 bg-gray-50 dark:bg-gray-900/50 border-t border-gray-50 dark:border-gray-700 flex gap-3 items-start rounded-b-[2rem]">
                                     <DocumentTextIcon className="h-4 w-4 text-gray-400 shrink-0 mt-0.5" />
                                     <p className="text-[11px] font-medium text-gray-600 dark:text-gray-400 italic leading-relaxed">
                                         "{log.notes}"
@@ -369,16 +506,19 @@ function TimeLogsPage() {
                             )}
 
                             {/* Admin only: Edit clocked hours / reassign project */}
-                            <div className="absolute right-6 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2">
+                            <div className="absolute right-6 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity flex items-center gap-2 z-50">
                                 {isAdmin && (
-                                    <button
-                                        type="button"
-                                        onClick={() => openEditModal(log)}
-                                        className="p-2 bg-indigo-600 text-white rounded-xl transition transform hover:scale-110 active:scale-95"
-                                        title={t('edit', { defaultValue: 'Edit' })}
-                                    >
-                                        <PencilIcon className="h-5 w-5" />
-                                    </button>
+                                    <>
+                                        <PushToGCButton entityType="timelog" entityId={log.id} buttonLabel="Push" />
+                                        <button
+                                            type="button"
+                                            onClick={() => openEditModal(log)}
+                                            className="p-2 bg-indigo-600 text-white rounded-xl transition transform hover:scale-110 active:scale-95"
+                                            title={t('edit', { defaultValue: 'Edit' })}
+                                        >
+                                            <PencilIcon className="h-5 w-5" />
+                                        </button>
+                                    </>
                                 )}
                             </div>
                         </div>

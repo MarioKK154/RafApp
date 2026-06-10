@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Chart } from 'react-google-charts';
 import { useAuth } from '../context/AuthContext';
 import axiosInstance from '../api/axiosInstance';
-import { extractTenantList } from '../utils/tenantUtils';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-toastify';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -27,9 +26,8 @@ function GanttChartPage() {
     const [tasks, setTasks] = useState([]);
     const [allProjects, setAllProjects] = useState([]);
     const [selectedProjectId, setSelectedProjectId] = useState('');
-    const [selectedTenantId, setSelectedTenantId] = useState('');
-    const [tenants, setTenants] = useState([]);
-
+    const selectedTenantId = 1; const setSelectedTenantId = () => {};
+    
     const [isLoadingTasks, setIsLoadingTasks] = useState(true);
     const [isLoadingProjects, setIsLoadingProjects] = useState(true);
     const [error, setError] = useState('');
@@ -46,9 +44,7 @@ function GanttChartPage() {
             setIsLoadingProjects(true);
             try {
                 const params = { limit: 1000 };
-                if (isSuperuser && selectedTenantId) {
-                    params.tenant_id = selectedTenantId;
-                }
+                
                 const response = await axiosInstance.get('/projects/', { params });
                 setAllProjects(response.data);
             } catch (error) {
@@ -58,7 +54,7 @@ function GanttChartPage() {
                 setIsLoadingProjects(false);
             }
         }
-    }, [isAuthenticated, authIsLoading, hasAccess, t, isSuperuser, selectedTenantId]);
+    }, [isAuthenticated, authIsLoading, hasAccess, t, isSuperuser]);
 
     /**
      * Protocol: Sync Task Timeline Telemetry
@@ -72,13 +68,12 @@ function GanttChartPage() {
             if (selectedProjectId) {
                 params.project_id = selectedProjectId;
             }
-            if (isSuperuser && selectedTenantId) {
-                params.tenant_id = selectedTenantId;
-            }
+            
 
             try {
                 const response = await axiosInstance.get('/tasks/', { params });
-                setTasks(response.data);
+                const activeTasks = response.data.filter(t => !['Commissioned', 'Done', 'Completed', 'Cancelled'].includes(t.status));
+                setTasks(activeTasks);
             } catch (error) {
                 console.error('Gantt tasks fetch error:', error);
                 setError(t('timeline_sync_failed', { defaultValue: 'Failed to synchronize task timeline.' }));
@@ -87,7 +82,7 @@ function GanttChartPage() {
                 setIsLoadingTasks(false);
             }
         }
-    }, [isAuthenticated, authIsLoading, selectedProjectId, hasAccess, t, isSuperuser, selectedTenantId]);
+    }, [isAuthenticated, authIsLoading, selectedProjectId, hasAccess, t, isSuperuser]);
 
     useEffect(() => {
         if (!authIsLoading && isAuthenticated) {
@@ -101,12 +96,7 @@ function GanttChartPage() {
 
     useEffect(() => {
         if (!isSuperuser) return;
-        axiosInstance.get('/tenants/', { params: { limit: 1000 } })
-            .then((res) => {
-                setTenants(extractTenantList(res?.data));
-            })
-            .catch(() => setTenants([]));
-    }, [isSuperuser]);
+        }, [isSuperuser]);
 
     useEffect(() => {
         if (!isLoadingProjects && hasAccess) {
@@ -123,30 +113,7 @@ function GanttChartPage() {
         allProjects.filter(p => p.status === 'Active' || p.status === 'Planning'),
         [allProjects]
     );
-    const tenantOptions = useMemo(() => {
-        const byId = new Map();
-        for (const tenant of tenants) {
-            if (tenant?.id != null) byId.set(String(tenant.id), tenant);
-        }
-        for (const project of allProjects) {
-            if (project?.tenant_id == null) continue;
-            const key = String(project.tenant_id);
-            if (!byId.has(key)) {
-                byId.set(key, { id: project.tenant_id, name: project?.tenant?.name || `Tenant ${project.tenant_id}` });
-            }
-        }
-        return Array.from(byId.values()).sort((a, b) =>
-            String(a?.name || a?.company_name || '').localeCompare(String(b?.name || b?.company_name || ''))
-        );
-    }, [tenants, allProjects]);
-    const activeTenantScopeLabel = useMemo(() => {
-        if (!isSuperuser) return null;
-        if (!selectedTenantId) return 'Scope: All Companies';
-        const selected = tenantOptions.find((tenant) => String(tenant.id) === String(selectedTenantId));
-        const tenantName = selected?.name || selected?.company_name || `Tenant ${selectedTenantId}`;
-        return `Scope: ${tenantName}`;
-    }, [isSuperuser, selectedTenantId, tenantOptions]);
-    const activeProjectIds = useMemo(() => new Set(activeAndPlanningProjects.map(p => p.id)), [activeAndPlanningProjects]);
+            const activeProjectIds = useMemo(() => new Set(activeAndPlanningProjects.map(p => p.id)), [activeAndPlanningProjects]);
     const ganttTasks = useMemo(() => 
         tasks.filter(t => activeProjectIds.has(t.project_id)),
         [tasks, activeProjectIds]
@@ -252,12 +219,7 @@ function GanttChartPage() {
                         </div>
                         <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">{t('gantt_chart', { defaultValue: 'Gantt chart' })}</h1>
                     </div>
-                    {activeTenantScopeLabel && (
-                        <div className="px-3 py-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 text-[10px] font-black uppercase tracking-widest text-indigo-700 dark:text-indigo-300">
-                            {activeTenantScopeLabel}
-                        </div>
-                    )}
-                </div>
+                                    </div>
             </header>
 
             {/* Tactical Console */}
@@ -280,26 +242,7 @@ function GanttChartPage() {
                         ))}
                     </select>
                 </div>
-                {isSuperuser && (
-                    <div className="relative group">
-                        <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center pointer-events-none">
-                            <BuildingOffice2Icon className="h-5 w-5 text-gray-400 group-focus-within:text-indigo-500 transition-colors" />
-                        </div>
-                        <select
-                            id="tenantGanttFilter"
-                            value={selectedTenantId}
-                            onChange={(e) => setSelectedTenantId(e.target.value)}
-                            className="block w-full pl-12 pr-4 h-14 rounded-2xl border border-gray-100 dark:bg-gray-800 dark:border-gray-700 text-xs font-black uppercase tracking-widest focus:ring-2 focus:ring-indigo-500 transition-all shadow-sm appearance-none cursor-pointer"
-                        >
-                            <option value="">All Companies</option>
-                            {tenantOptions.map((tenant) => (
-                                <option key={tenant.id} value={tenant.id}>
-                                    {tenant.name || tenant.company_name || `Tenant ${tenant.id}`}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-                )}
+
                 <div className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl p-4 flex items-center justify-center gap-3 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 shadow-sm">
                     <AdjustmentsHorizontalIcon className="h-4 w-4 text-indigo-500" /> 
                     {ganttTasks.length} Interval Nodes

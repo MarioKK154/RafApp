@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import axiosInstance from '../api/axiosInstance';
@@ -20,6 +21,8 @@ import {
 } from '@heroicons/react/24/outline';
 
 function ToolEditPage() {
+    const { t } = useTranslation();
+
     const { toolId } = useParams();
     const navigate = useNavigate();
     const { user } = useAuth();
@@ -61,7 +64,7 @@ function ToolEditPage() {
             setCurrentImageUrl(tool.image_url);
         } catch (err) {
             console.error("Asset Sync Error:", err);
-            toast.error('Failed to access hardware registry.');
+            toast.error(t('toast_failed_access_hardware'));
             navigate('/tools');
         } finally {
             setIsLoading(false);
@@ -71,18 +74,18 @@ function ToolEditPage() {
     useEffect(() => { fetchTool(); }, [fetchTool]);
 
     const handleChange = (e) => {
-        const { name, value } = e.target;
+    const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
     const handleFileChange = (e) => {
-        setSelectedFile(e.target.files[0]);
+    setSelectedFile(e.target.files[0]);
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!canManageTools) {
-            toast.error("Administrative privileges required for registry updates.");
+            toast.error(t('toast_admin_req_registry'));
             return;
         }
 
@@ -100,17 +103,17 @@ function ToolEditPage() {
                 await axiosInstance.post(`/tools/${toolId}/image`, imageFormData);
             }
 
-            toast.success(`Asset registry updated: ${formData.name}`);
+            toast.success(`${t('toast_asset_registry_updated')} ${formData.name}`);
             navigate('/tools');
         } catch (err) {
             console.error("Registry Update Error:", err);
-            toast.error(err.response?.data?.detail || 'Failed to commit registry changes.');
+            toast.error(err.response?.data?.detail || t('toast_failed_commit_registry'));
         } finally {
             setIsSaving(false);
         }
     };
 
-    if (isLoading) return <LoadingSpinner text="Retrieving technical specifications..." size="lg" />;
+    if (isLoading) return <LoadingSpinner text={t('retrieving_technical_specs')} size="lg" />;
 
     return (
         <div className="container mx-auto p-4 md:p-8 max-w-6xl animate-in fade-in duration-500">
@@ -125,11 +128,11 @@ function ToolEditPage() {
                     </div>
                     <div>
                         <h1 className="text-2xl font-black text-gray-900 dark:text-white leading-none tracking-tight">
-                            Modify Asset: {formData.name}
+                            {t('modify_asset')} {formData.name}
                         </h1>
                         <div className="flex items-center gap-2 mt-2">
                             <span className="text-[10px] font-bold text-gray-400 uppercase flex items-center gap-1">
-                                <FingerPrintIcon className="h-3 w-3" /> Registry ID: {toolId}
+                                <FingerPrintIcon className="h-3 w-3" /> {t('registry_id')} {toolId}
                             </span>
                         </div>
                     </div>
@@ -147,7 +150,7 @@ function ToolEditPage() {
                         </h2>
                         
                         <div>
-                            <label className="block text-[10px] font-black text-gray-500 uppercase mb-1 ml-1 tracking-widest">Asset Name*</label>
+                            <label className="block text-[10px] font-black text-gray-500 uppercase mb-1 ml-1 tracking-widest">{t('asset_name_req')}</label>
                             <input 
                                 type="text" 
                                 name="name" 
@@ -161,17 +164,17 @@ function ToolEditPage() {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <label className="block text-[10px] font-black text-gray-500 uppercase mb-1 ml-1 tracking-widest">Manufacturer</label>
+                                <label className="block text-[10px] font-black text-gray-500 uppercase mb-1 ml-1 tracking-widest">{t('manufacturer_label')}</label>
                                 <input type="text" name="brand" value={formData.brand} onChange={handleChange} disabled={isSaving} className="block w-full h-12 rounded-2xl border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-indigo-500 text-sm" />
                             </div>
                             <div>
-                                <label className="block text-[10px] font-black text-gray-500 uppercase mb-1 ml-1 tracking-widest">Model Identifier</label>
+                                <label className="block text-[10px] font-black text-gray-500 uppercase mb-1 ml-1 tracking-widest">{t('model_identifier_label')}</label>
                                 <input type="text" name="model" value={formData.model} onChange={handleChange} disabled={isSaving} className="block w-full h-12 rounded-2xl border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-indigo-500 text-sm" />
                             </div>
                         </div>
 
                         <div>
-                            <label className="block text-[10px] font-black text-gray-500 uppercase mb-1 ml-1 tracking-widest">Serial Number</label>
+                            <label className="block text-[10px] font-black text-gray-500 uppercase mb-1 ml-1 tracking-widest">{t('serial_number_label')}</label>
                             <div className="relative group">
                                 <IdentificationIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-indigo-500 transition-colors" />
                                 <input type="text" name="serial_number" value={formData.serial_number} onChange={handleChange} disabled={isSaving} className="pl-12 block w-full h-12 rounded-2xl border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-indigo-500 font-mono text-xs font-bold" />
@@ -209,18 +212,18 @@ function ToolEditPage() {
                                 src={currentImageUrl || '/default-tool.png'} 
                                 alt="Tool Telemetry" 
                                 className={`h-full w-full object-contain p-4 transition-opacity duration-300 ${selectedFile ? 'opacity-20' : 'opacity-100'}`} 
-                                onError={(e) => { e.target.src='/default-tool.png' }}
+                                onError={(e) => { e.target.onerror = null; e.target.src='/default-tool.png'; }}
                             />
                             {selectedFile && (
                                 <div className="absolute inset-0 flex flex-col items-center justify-center animate-pulse">
                                     <CloudArrowUpIcon className="h-10 w-10 text-indigo-500" />
-                                    <p className="text-[9px] font-black text-indigo-600 uppercase tracking-widest mt-1">Pending Update</p>
+                                    <p className="text-[9px] font-black text-indigo-600 uppercase tracking-widest mt-1">{t('pending_update')}</p>
                                 </div>
                             )}
                         </div>
 
                         <div>
-                            <label className="block text-[10px] font-black text-gray-500 uppercase mb-3 ml-1 tracking-widest">Update Asset File</label>
+                            <label className="block text-[10px] font-black text-gray-500 uppercase mb-3 ml-1 tracking-widest">{t('update_asset_file')}</label>
                             <input 
                                 type="file" 
                                 onChange={handleFileChange} 
@@ -230,7 +233,7 @@ function ToolEditPage() {
                         </div>
 
                         <div className="pt-4 border-t border-gray-50 dark:border-gray-700">
-                            <label className="block text-[10px] font-black text-gray-500 uppercase mb-1 ml-1 tracking-widest">Acquisition Date</label>
+                            <label className="block text-[10px] font-black text-gray-500 uppercase mb-1 ml-1 tracking-widest">{t('acquisition_date')}</label>
                             <div className="relative">
                                 <CalendarIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                                 <input type="date" name="purchase_date" value={formData.purchase_date} onChange={handleChange} disabled={isSaving} className="pl-12 block w-full h-12 rounded-2xl border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-indigo-500 text-sm font-bold" />
@@ -259,7 +262,7 @@ function ToolEditPage() {
                     <div className="p-5 bg-indigo-50 dark:bg-indigo-900/10 rounded-3xl border border-indigo-100 dark:border-indigo-800 flex gap-3">
                         <InformationCircleIcon className="h-5 w-5 text-indigo-600 shrink-0 mt-0.5" />
                         <p className="text-[10px] text-indigo-700 dark:text-indigo-300 leading-relaxed font-bold uppercase tracking-tight">
-                            Modifications to asset specifications are logged in the historical audit trail. Visual telemetry updates may take a moment to propagate across global dashboards.
+                            {t('tool_modifications_logged')}
                         </p>
                     </div>
                 </div>

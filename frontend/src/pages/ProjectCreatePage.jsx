@@ -98,7 +98,7 @@ function ProjectCreatePage() {
             }
         } catch (error) {
             console.error('Project create fetch failed:', error);
-            toast.error('Failed to sync registry dependencies.');
+            toast.error(t('toast_fetch_failed'));
         } finally {
             setIsLoadingData(false);
         }
@@ -135,7 +135,7 @@ function ProjectCreatePage() {
 
         // Require a client for every project (main, sub, extra)
         if (!formData.customer_id) {
-            toast.error('Client association is required before creating a project.');
+            toast.error(t('toast_client_required'));
             return;
         }
 
@@ -153,11 +153,11 @@ function ProjectCreatePage() {
 
         try {
             const res = await axiosInstance.post('/projects/', payload);
-            toast.success('Project created.');
+            toast.success(t('toast_project_created'));
             navigate('/projects');
         } catch (error) {
             console.error('Project create submit failed:', error);
-            toast.error(error.response?.data?.detail || 'Node initialization failed.');
+            toast.error(error.response?.data?.detail || t('toast_node_failed'));
         } finally {
             setIsSubmitting(false);
         }
@@ -170,7 +170,7 @@ function ProjectCreatePage() {
             {/* Header Protocol */}
             <div className="mb-10 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5">
                 <Link to="/projects" className="flex items-center text-[10px] font-black text-gray-400 hover:text-indigo-600 transition mb-3 uppercase tracking-[0.2em]">
-                    <ChevronLeftIcon className="h-3 w-3 mr-1 stroke-[3px]" /> Return to Registry
+                    <ChevronLeftIcon className="h-3 w-3 mr-1 stroke-[3px]" /> {t('return_to_registry')}
                 </Link>
                 <div className="flex items-center gap-5">
                     <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
@@ -186,19 +186,19 @@ function ProjectCreatePage() {
                 {/* Left Column: Tactical Configuration */}
                 <div className="lg:col-span-8 space-y-10">
                     
-                    {/* Tier Selection & Serialization */}
+                    {/* {t('tier_selection')} & Serialization */}
                     <section className="bg-white dark:bg-gray-800 p-8 md:p-10 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-700 space-y-8">
                         <div className="flex flex-col md:flex-row justify-between md:items-center gap-6">
                             <div className="flex items-center gap-3">
                                 <HashtagIcon className="h-6 w-6 text-indigo-500" />
-                                <h2 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-[0.2em]">Tier Selection</h2>
+                                <h2 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-[0.2em]">{t('tier_selection')}</h2>
                             </div>
                             
                             {/* Three-Way Type Toggle */}
                             <div className="flex bg-gray-100 dark:bg-gray-900/50 p-1.5 rounded-2xl border border-gray-200 dark:border-gray-700">
-                                <TypeButton active={projectType === 'main'} onClick={() => setProjectType('main')} icon={<CubeIcon />} label="Main" />
-                                <TypeButton active={projectType === 'sub'} onClick={() => setProjectType('sub')} icon={<FolderPlusIcon />} label="Sub-Project" />
-                                <TypeButton active={projectType === 'extra'} onClick={() => setProjectType('extra')} icon={<SquaresPlusIcon />} label="Extra Work" />
+                                <TypeButton active={projectType === 'main'} onClick={() => setProjectType('main')} icon={<CubeIcon />} label={t('tier_main')} />
+                                <TypeButton active={projectType === 'sub'} onClick={() => setProjectType('sub')} icon={<FolderPlusIcon />} label={t('tier_sub')} />
+                                <TypeButton active={projectType === 'extra'} onClick={() => setProjectType('extra')} icon={<SquaresPlusIcon />} label={t('tier_extra')} />
                             </div>
                         </div>
 
@@ -206,10 +206,10 @@ function ProjectCreatePage() {
                             {projectType !== 'main' ? (
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black text-indigo-500 uppercase tracking-widest ml-1 flex items-center gap-2">
-                                        <LinkIcon className="h-3.5 w-3.5" /> Parent Project Association*
+                                        <LinkIcon className="h-3.5 w-3.5" /> {t('parent_project_association')}
                                     </label>
                                     <select name="parent_id" required value={formData.parent_id} onChange={handleChange} className="modern-input h-14 font-bold border-indigo-100 dark:border-indigo-900/30">
-                                        <option value="">Select Parent Node</option>
+                                        <option value="">{t('select_parent_node')}</option>
                                         {parentProjects.map(p => (
                                             <option key={p.id} value={p.id}>[{p.project_number || p.id}] {p.name}</option>
                                         ))}
@@ -217,13 +217,13 @@ function ProjectCreatePage() {
                                 </div>
                             ) : (
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Registry Serial (Generated)*</label>
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">{t('registry_serial')}</label>
                                     <input type="text" name="project_number" value={formData.project_number} onChange={handleChange} className="modern-input h-14 font-mono font-black text-indigo-600 bg-indigo-50/30 dark:bg-indigo-900/10" />
                                 </div>
                             )}
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Project Title*</label>
-                                <input type="text" name="name" required value={formData.name} onChange={handleChange} placeholder="e.g. Electrical Installation - Phase 2" className="modern-input h-14 font-black" />
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">{t('project_title')}</label>
+                                <input type="text" name="name" required value={formData.name} onChange={handleChange} placeholder={t('project_title_placeholder')} className="modern-input h-14 font-black" />
                             </div>
                         </div>
                     </section>
@@ -232,18 +232,18 @@ function ProjectCreatePage() {
                     <section className="bg-white dark:bg-gray-800 p-8 md:p-10 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-700 space-y-8">
                         <div className="flex items-center gap-3">
                             <MapPinIcon className="h-6 w-6 text-indigo-500" />
-                            <h2 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-[0.2em]">Site Logistics</h2>
+                            <h2 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-[0.2em]">{t('site_logistics')}</h2>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 flex items-center justify-between">
-                                    <span>Client Association*</span>
+                                    <span>{t('client_association')}</span>
                                     <button
                                         type="button"
                                         onClick={() => navigate('/customers/new')}
                                         className="inline-flex items-center gap-1 text-[9px] font-black text-indigo-600 hover:text-indigo-800 uppercase tracking-[0.2em]"
                                     >
-                                        <PlusIcon className="h-3 w-3" /> New client
+                                        <PlusIcon className="h-3 w-3" /> {t('new_client')}
                                     </button>
                                 </label>
                                 <div className="relative">
@@ -255,14 +255,14 @@ function ProjectCreatePage() {
                                         onChange={handleChange}
                                         className="modern-input h-14 pl-12 font-bold"
                                     >
-                                        <option value="">-- Select client --</option>
+                                        <option value="">{t('select_client')}</option>
                                         {customers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                                     </select>
                                 </div>
                             </div>
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Deployment Address</label>
-                                <input type="text" name="address" value={formData.address} onChange={handleChange} className="modern-input h-14 font-bold" placeholder="Site Coordinates" />
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">{t('deployment_address')}</label>
+                                <input type="text" name="address" value={formData.address} onChange={handleChange} className="modern-input h-14 font-bold" placeholder={t('site_coordinates')} />
                             </div>
                         </div>
                     </section>
@@ -271,15 +271,15 @@ function ProjectCreatePage() {
                     <section className="bg-white dark:bg-gray-800 p-8 md:p-10 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-700 space-y-8">
                         <div className="flex items-center gap-3">
                             <CalendarDaysIcon className="h-6 w-6 text-indigo-500" />
-                            <h2 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-[0.2em]">Temporal Schedule</h2>
+                            <h2 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-[0.2em]">{t('temporal_schedule')}</h2>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Initialization Date</label>
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">{t('initialization_date')}</label>
                                 <input type="date" name="start_date" value={formData.start_date} onChange={handleChange} className="modern-input h-14 font-bold" />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Target Completion</label>
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">{t('target_completion')}</label>
                                 <input type="date" name="end_date" value={formData.end_date} onChange={handleChange} className="modern-input h-14 font-bold" />
                             </div>
                         </div>
@@ -293,17 +293,17 @@ function ProjectCreatePage() {
                     <section className="bg-white dark:bg-gray-800 p-8 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-700 space-y-6">
                         <div className="space-y-2">
                             <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] flex items-center gap-2 ml-1">
-                                <UserIcon className="h-4 w-4 text-indigo-500" /> Project Lead
+                                <UserIcon className="h-4 w-4 text-indigo-500" /> {t('project_lead')}
                             </label>
                             <select name="project_manager_id" value={formData.project_manager_id} onChange={handleChange} className="modern-input h-14 font-black uppercase text-[11px] tracking-widest appearance-none">
-                                <option value="">Unassigned</option>
+                                <option value="">{t('unassigned')}</option>
                                 {projectManagers.map(pm => <option key={pm.id} value={pm.id}>{pm.full_name}</option>)}
                             </select>
                         </div>
 
                         <div className="space-y-2 pt-4">
                             <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] flex items-center gap-2 ml-1">
-                                <BanknotesIcon className="h-4 w-4 text-emerald-500" /> Fiscal Allocation (ISK)
+                                <BanknotesIcon className="h-4 w-4 text-emerald-500" /> {t('fiscal_allocation')}
                             </label>
                             <input type="number" name="budget" value={formData.budget} onChange={handleChange} className="modern-input h-14 font-black text-emerald-600 font-mono" placeholder="0" />
                         </div>
@@ -311,7 +311,7 @@ function ProjectCreatePage() {
 
                     <section className="bg-white dark:bg-gray-800 p-8 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-700 space-y-4">
                         <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] flex items-center gap-2 ml-1">
-                            <DocumentTextIcon className="h-4 w-4 text-indigo-500" /> Scope Summary
+                            <DocumentTextIcon className="h-4 w-4 text-indigo-500" /> {t('scope_summary')}
                         </label>
                         <textarea 
                             name="description" 
@@ -319,7 +319,7 @@ function ProjectCreatePage() {
                             value={formData.description} 
                             onChange={handleChange} 
                             className="modern-input h-auto py-4 resize-none text-sm font-medium"
-                            placeholder="Primary operational objectives..."
+                            placeholder={t('scope_summary_placeholder')}
                         ></textarea>
                     </section>
 
@@ -329,16 +329,16 @@ function ProjectCreatePage() {
                         className="w-full h-20 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-[2rem] transition transform active:scale-95 disabled:opacity-50 flex items-center justify-center gap-3 uppercase text-xs tracking-[0.3em]"
                     >
                         {isSubmitting ? (
-                            <><ArrowPathIcon className="h-6 w-6 animate-spin" /> Syncing Node...</>
+                            <><ArrowPathIcon className="h-6 w-6 animate-spin" /> {t('syncing_node')}</>
                         ) : (
-                            <><ShieldCheckIcon className="h-6 w-6 stroke-[2.5px]" /> Create project</>
+                            <><ShieldCheckIcon className="h-6 w-6 stroke-[2.5px]" /> {t('create_project_btn')}</>
                         )}
                     </button>
 
                     <div className="p-6 bg-indigo-50/50 dark:bg-indigo-900/10 rounded-[1.5rem] border border-indigo-100 dark:border-indigo-800/30 flex gap-4">
                         <InformationCircleIcon className="h-6 w-6 text-indigo-600 shrink-0" />
                         <p className="text-[10px] text-indigo-700 dark:text-indigo-300 leading-relaxed font-black uppercase tracking-tight">
-                            Infrastructure Notice: Node initialization triggers automated resource tracking. Deployment Tiers define financial reporting hierarchy.
+                            {t('infrastructure_notice')}
                         </p>
                     </div>
                 </div>

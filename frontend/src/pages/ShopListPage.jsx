@@ -50,7 +50,7 @@ function ShopListPage() {
     // Search & Protocol States
     const [searchTerm, setSearchTerm] = useState('');
     const debouncedSearch = useDebounce(searchTerm, 300);
-    const [selectedTenantId, setSelectedTenantId] = useState(null);
+    const selectedTenantId = 1; const setSelectedTenantId = () => {};
     const [shopToDelete, setShopToDelete] = useState(null);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
@@ -131,10 +131,7 @@ function ShopListPage() {
                     </div>
                     <div className="flex items-center gap-4">
                         {isSuperuser && (
-                            <SuperTenantSelector
-                                selectedTenantId={selectedTenantId}
-                                onChange={setSelectedTenantId}
-                            />
+                            null
                         )}
                         {canManageShops && (
                             <button

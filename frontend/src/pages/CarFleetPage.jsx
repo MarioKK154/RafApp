@@ -46,7 +46,7 @@ function CarFleetPage() {
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const debouncedSearchTerm = useDebounce(searchTerm, 300);
-    const [selectedTenantId, setSelectedTenantId] = useState(null);
+    const selectedTenantId = 1; const setSelectedTenantId = () => {};
 
     const isSuperuser = user?.is_superuser;
     const canManageFleet = user && (user.role === 'admin' || isSuperuser);
@@ -128,10 +128,7 @@ function CarFleetPage() {
                     </div>
                     <div className="flex items-center gap-4">
                         {isSuperuser && (
-                            <SuperTenantSelector
-                                selectedTenantId={selectedTenantId}
-                                onChange={setSelectedTenantId}
-                            />
+                            null
                         )}
                         {canManageFleet && (
                             <button

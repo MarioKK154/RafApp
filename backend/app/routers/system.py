@@ -53,6 +53,13 @@ def _default_landing_feed() -> schemas.LandingFeed:
         show_interesting=True,
         background_image_urls=[],
         background_slide_seconds=8,
+        hero_title="Welcome to Our Platform",
+        hero_subtitle="We provide the best tools for your business.",
+        about_us_text="Add your company's story here.",
+        about_us_text_en="Add your company's story here.",
+        about_us_text_is="Bættu við sögu fyrirtækisins hér.",
+        contact_persons=[],
+        pricing_tiers=[]
     )
 
 
@@ -82,6 +89,16 @@ def _normalize_landing_payload(payload: dict) -> dict:
     except (TypeError, ValueError):
         slide = 8
     payload["background_slide_seconds"] = max(3, min(600, slide))
+    
+    payload.setdefault("hero_title", "Welcome to Our Platform")
+    payload.setdefault("hero_subtitle", "We provide the best tools for your business.")
+    payload.setdefault("about_us_text", "Add your company's story here.")
+    payload.setdefault("about_us_text_en", "Add your company's story here.")
+    payload.setdefault("about_us_text_is", "Bættu við sögu fyrirtækisins hér.")
+    if not isinstance(payload.get("contact_persons"), list):
+        payload["contact_persons"] = []
+    if not isinstance(payload.get("pricing_tiers"), list):
+        payload["pricing_tiers"] = []
 
     for section_key in ("news", "updates", "tools", "interesting", "random"):
         items = payload.get(section_key)

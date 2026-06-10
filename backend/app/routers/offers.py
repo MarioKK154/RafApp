@@ -35,7 +35,7 @@ def get_offer_and_check_auth(offer_id: int, db: DbDependency, current_user: Curr
     Helper to fetch an offer record and verify access. 
     Superusers bypass the tenant ownership check.
     """
-    effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
+    effective_tenant_id = current_user.tenant_id
     db_offer = crud.get_offer(db, offer_id=offer_id, tenant_id=effective_tenant_id)
     if not db_offer:
         raise HTTPException(status_code=404, detail="Offer not found or access denied.")
@@ -68,7 +68,7 @@ def create_new_offer(
     Creates a new work offer for a project.
     Superadmins can create offers for any project; others are limited to their tenant.
     """
-    effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
+    effective_tenant_id = current_user.tenant_id
     
     # Verify the project exists and the user has access to it
     project = crud.get_project(db, project_id=offer_data.project_id, tenant_id=effective_tenant_id)
@@ -88,7 +88,7 @@ def get_offers_for_a_project(
     """
     Lists all offers associated with a specific project.
     """
-    effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
+    effective_tenant_id = current_user.tenant_id
     
     # Verify project exists and user has access
     project = crud.get_project(db, project_id=project_id, tenant_id=effective_tenant_id)

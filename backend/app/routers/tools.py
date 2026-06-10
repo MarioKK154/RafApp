@@ -29,7 +29,7 @@ def get_tool_for_user(tool_id: int, db: DbDependency, current_user: CurrentUserD
     Helper function to retrieve a tool while enforcing tenant isolation.
     Superusers bypass the tenant check.
     """
-    effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
+    effective_tenant_id = current_user.tenant_id
     db_tool = crud.get_tool(db, tool_id=tool_id, tenant_id=effective_tenant_id)
     if not db_tool:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tool not found or access denied.")
@@ -76,7 +76,7 @@ def read_all_tools(request: Request, db: DbDependency, current_user: CurrentUser
     Retrieves a list of tools. 
     Superadmins see all tools; regular users see tools only from their tenant.
     """
-    effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
+    effective_tenant_id = current_user.tenant_id
     return crud.get_tools(db=db, tenant_id=effective_tenant_id, skip=skip, limit=limit)
 
 @router.get("/{tool_id}", response_model=schemas.ToolRead)

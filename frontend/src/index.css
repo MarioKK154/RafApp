@@ -1,95 +1,652 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  body {
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    @apply bg-gray-50 text-gray-900 antialiased selection:bg-indigo-100 selection:text-indigo-700;
-    text-rendering: optimizeLegibility;
-    min-height: 100vh;
-  }
-  
-  .dark body {
-    @apply bg-gray-900 text-gray-100 selection:bg-indigo-500/30 selection:text-white;
-  }
+/* ============================================================
+   RAFAPP DESIGN SYSTEM — Global Token Layer
+   Automatically responds to OS dark/light preference
+   ============================================================ */
 
-  /* PROTOCOL: Native HTML Select Fix */
-  /* This ensures that standard <select> dropdowns are readable in Dark Mode */
-  .dark select option {
-    @apply bg-gray-800 text-white;
+/* ── Light Theme Tokens ── */
+:root {
+  /* Surfaces */
+  --bg-base:       #fafafa; /* ultra light gray */
+  --bg-elevated:   #ffffff;
+  --bg-overlay:    rgba(255,255,255,0.85);
+  --bg-subtle:     #f4f4f5;
+  --bg-muted:      #e4e4e7;
+
+  /* Borders */
+  --border:        #e4e4e7;
+  --border-subtle: #f4f4f5;
+
+  /* Text */
+  --text-primary:  #09090b;
+  --text-secondary:#3f3f46;
+  --text-muted:    #71717a;
+  --text-disabled: #a1a1aa;
+
+  /* Brand (Electric Violet/Indigo) */
+  --brand:         #6366f1;
+  --brand-light:   #818cf8;
+  --brand-pale:    #eef2ff;
+  --brand-border:  #c7d2fe;
+
+  /* Status */
+  --success:       #10b981;
+  --success-pale:  #ecfdf5;
+  --warning:       #f59e0b;
+  --warning-pale:  #fffbeb;
+  --danger:        #ef4444;
+  --danger-pale:   #fef2f2;
+  --info:          #3b82f6;
+
+  /* Sidebar */
+  --sidebar-bg:    #ffffff;
+  --sidebar-border:#e4e4e7;
+  --nav-active-bg: #eef2ff;
+  --nav-hover-bg:  #f4f4f5;
+  --nav-active-text:#4f46e5;
+  --nav-text:      #71717a;
+
+  /* Shadows - Super soft and highly diffused */
+  --shadow-sm:     0 1px 2px rgba(0, 0, 0, 0.02);
+  --shadow-md:     0 4px 12px -2px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+  --shadow-lg:     0 12px 32px -4px rgba(0, 0, 0, 0.06), 0 4px 12px -2px rgba(0, 0, 0, 0.03);
+  --shadow-brand:  0 8px 24px -4px rgba(99, 102, 241, 0.25);
+}
+
+/* ── Dark Theme Tokens (OS-level, no class toggle needed) ── */
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Surfaces */
+    --bg-base:       #09090b; /* Zinc 950 */
+    --bg-elevated:   #18181b; /* Zinc 900 */
+    --bg-overlay:    rgba(9, 9, 11, 0.85); /* Glass base */
+    --bg-subtle:     #27272a; /* Zinc 800 */
+    --bg-muted:      #3f3f46; /* Zinc 700 */
+
+    /* Borders */
+    --border:        #27272a;
+    --border-subtle: #18181b;
+
+    /* Text */
+    --text-primary:  #fafafa;
+    --text-secondary:#a1a1aa;
+    --text-muted:    #71717a;
+    --text-disabled: #52525b;
+
+    /* Brand */
+    --brand:         #818cf8;
+    --brand-light:   #a5b4fc;
+    --brand-pale:    #1e1b4b; /* Deep Indigo 950 */
+    --brand-border:  #3730a3;
+
+    /* Status */
+    --success:       #34d399;
+    --success-pale:  #022c22;
+    --warning:       #fbbf24;
+    --warning-pale:  #451a03;
+    --danger:        #f87171;
+    --danger-pale:   #450a0a;
+    --info:          #60a5fa;
+
+    /* Sidebar */
+    --sidebar-bg:    #09090b;
+    --sidebar-border:#27272a;
+    --nav-active-bg: #27272a;
+    --nav-hover-bg:  #18181b;
+    --nav-active-text:#e0e7ff;
+    --nav-text:      #a1a1aa;
+
+    /* Shadows */
+    --shadow-sm:     0 1px 2px rgba(0, 0, 0, 0.5);
+    --shadow-md:     0 4px 12px -2px rgba(0, 0, 0, 0.7), 0 2px 4px -1px rgba(0, 0, 0, 0.4);
+    --shadow-lg:     0 12px 32px -4px rgba(0, 0, 0, 0.9), 0 4px 12px -2px rgba(0, 0, 0, 0.6);
+    --shadow-brand:  0 8px 24px -4px rgba(99, 102, 241, 0.4);
   }
 }
 
-@layer components {
-  .modern-input {
-    @apply block w-full h-12 px-4 rounded-2xl border-gray-200 bg-white 
-           dark:bg-gray-800 dark:border-gray-700 dark:text-white 
-           focus:ring-2 focus:ring-indigo-500 focus:border-transparent 
-           transition-all duration-200 font-bold text-sm outline-none shadow-sm
-           disabled:opacity-50 disabled:cursor-not-allowed placeholder:text-gray-400;
+/* ============================================================
+   BASE STYLES
+   ============================================================ */
+
+@layer base {
+  *, *::before, *::after {
+    box-sizing: border-box;
   }
+
+  html {
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  html, body, #root {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background-color: var(--bg-base);
+    color: var(--text-primary);
+    line-height: 1.5;
+  }
+
+  /* Scrollbar — thin and themed */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 99px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted);
+  }
+
+  /* Selection */
+  ::selection {
+    background: var(--brand-pale);
+    color: var(--brand);
+  }
+
+  /* Native select fix for dark mode */
+  select option {
+    background: var(--bg-elevated);
+    color: var(--text-primary);
+  }
+
+  /* Focus outline — always brand-colored */
+  :focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
+  }
+}
+
+/* ============================================================
+   COMPONENT TOKENS — Reusable classes
+   ============================================================ */
+
+@layer components {
+
+  /* ── Page shell ── */
+  .page-shell {
+    @apply flex-1 overflow-x-hidden overflow-y-auto;
+    background-color: var(--bg-base);
+  }
+
+  .page-content {
+    @apply container mx-auto px-4 md:px-8 py-8 max-w-7xl;
+    animation: fadeUp 0.35s ease-out;
+  }
+
+  /* ── Cards ── */
+  .card {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+  }
+
+  .card:hover {
+    box-shadow: var(--shadow-md);
+  }
+
+  .card-interactive {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+    cursor: pointer;
+  }
+
+  .card-interactive:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+    border-color: var(--brand-border);
+  }
+
+  /* ── Forms ── */
+  .field-label {
+    display: block;
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 0.375rem;
+  }
+
+  .modern-input {
+    display: block;
+    width: 100%;
+    height: 2.75rem;
+    padding: 0 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    background: var(--bg-subtle);
+    border: 1.5px solid var(--border);
+    border-radius: 0.75rem;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  }
+
+  .modern-input::placeholder {
+    color: var(--text-muted);
+    font-weight: 400;
+  }
+
+  .modern-input:hover {
+    border-color: var(--brand-border);
+  }
+
+  .modern-input:focus {
+    border-color: var(--brand);
+    background: var(--bg-elevated);
+    box-shadow: 0 0 0 3px rgb(99 102 241 / 0.12);
+  }
+
+  .modern-input:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  textarea.modern-input {
+    height: auto;
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+    resize: vertical;
+  }
+
+  /* ── Buttons ── */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0 1.25rem;
+    height: 2.5rem;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border-radius: 0.75rem;
+    border: none;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+  }
+
+  .btn:active { transform: scale(0.97); }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+  .btn-primary {
+    background: var(--brand);
+    color: white;
+    box-shadow: var(--shadow-brand);
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    background: var(--brand-light);
+    box-shadow: 0 6px 20px -4px rgb(99 102 241 / 0.5);
+  }
+
+  .btn-secondary {
+    background: var(--bg-subtle);
+    color: var(--text-secondary);
+    border: 1.5px solid var(--border);
+  }
+
+  .btn-secondary:hover:not(:disabled) {
+    background: var(--bg-muted);
+    border-color: var(--border);
+    color: var(--text-primary);
+  }
+
+  .btn-danger {
+    background: var(--danger-pale);
+    color: var(--danger);
+    border: 1.5px solid transparent;
+  }
+
+  .btn-danger:hover:not(:disabled) {
+    background: var(--danger);
+    color: white;
+  }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--text-secondary);
+  }
+
+  .btn-ghost:hover:not(:disabled) {
+    background: var(--bg-subtle);
+    color: var(--text-primary);
+  }
+
+  .btn-lg {
+    height: 3rem;
+    padding: 0 1.75rem;
+    font-size: 0.75rem;
+    border-radius: 0.875rem;
+  }
+
+  .btn-sm {
+    height: 2rem;
+    padding: 0 0.875rem;
+    font-size: 0.625rem;
+    border-radius: 0.625rem;
+  }
+
+  /* ── Badges / Status ── */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2rem 0.65rem;
+    font-size: 0.6rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    border-radius: 99px;
+  }
+
+  .badge-indigo { background: var(--brand-pale); color: var(--brand); }
+  .badge-green  { background: var(--success-pale); color: var(--success); }
+  .badge-amber  { background: var(--warning-pale); color: var(--warning); }
+  .badge-red    { background: var(--danger-pale); color: var(--danger); }
+  .badge-gray   { background: var(--bg-subtle); color: var(--text-muted); }
 
   .status-badge {
     @apply inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-[0.2em] border shadow-sm;
   }
 
+  /* ── Section headers ── */
+  .section-title {
+    font-size: 0.65rem;
+    font-weight: 900;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .page-title {
+    font-size: 1.5rem;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+    line-height: 1.2;
+  }
+
+  /* ── Table ── */
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .data-table th {
+    padding: 0.75rem 1rem;
+    font-size: 0.6rem;
+    font-weight: 800;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    background: var(--bg-subtle);
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+  }
+
+  .data-table th:first-child { border-radius: 0.75rem 0 0 0; }
+  .data-table th:last-child  { border-radius: 0 0.75rem 0 0; }
+
+  .data-table td {
+    padding: 0.875rem 1rem;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border-subtle);
+    vertical-align: middle;
+  }
+
+  .data-table tbody tr {
+    transition: background 0.1s ease;
+  }
+
+  .data-table tbody tr:hover {
+    background: var(--bg-subtle);
+  }
+
+  /* ── Dividers ── */
+  .divider {
+    height: 1px;
+    background: var(--border);
+    border: none;
+    margin: 0;
+  }
+
+  /* ── React Select dark overrides ── */
+  .react-select__control {
+    background: var(--bg-subtle) !important;
+    border: 1.5px solid var(--border) !important;
+    border-radius: 0.75rem !important;
+    min-height: 2.75rem !important;
+    box-shadow: none !important;
+    transition: border-color 0.2s ease !important;
+  }
+
+  .react-select__control:hover {
+    border-color: var(--brand-border) !important;
+  }
+
+  .react-select__control--is-focused {
+    border-color: var(--brand) !important;
+    box-shadow: 0 0 0 3px rgb(99 102 241 / 0.12) !important;
+  }
+
+  .react-select__menu {
+    background: var(--bg-elevated) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 0.75rem !important;
+    box-shadow: var(--shadow-lg) !important;
+    overflow: hidden;
+  }
+
+  .react-select__option {
+    background: transparent !important;
+    color: var(--text-secondary) !important;
+    font-size: 0.875rem !important;
+  }
+
+  .react-select__option--is-focused {
+    background: var(--bg-subtle) !important;
+    color: var(--text-primary) !important;
+  }
+
+  .react-select__option--is-selected {
+    background: var(--brand-pale) !important;
+    color: var(--brand) !important;
+  }
+
+  .react-select__single-value,
+  .react-select__input-container,
+  .react-select__input {
+    color: var(--text-primary) !important;
+  }
+
+  .react-select__multi-value {
+    background: var(--brand-pale) !important;
+    border-radius: 0.375rem !important;
+  }
+
+  .react-select__multi-value__label {
+    color: var(--brand) !important;
+    font-weight: 600;
+  }
+
+  .react-select__placeholder {
+    color: var(--text-muted) !important;
+  }
+
+  .react-select__indicator-separator {
+    background: var(--border) !important;
+  }
+
+  .react-select__dropdown-indicator,
+  .react-select__clear-indicator {
+    color: var(--text-muted) !important;
+  }
+
+  /* ── Utility ── */
   .scrollbar-hide::-webkit-scrollbar { display: none; }
   .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
-
-  /* TECHNICAL OVERRIDE: React Select Dark Mode Calibrations
-     This forces the dropdown menu and items to be visible before hover.
-  */
-  .dark .react-select__control {
-    @apply !bg-gray-800 !border-gray-700 !text-white;
-  }
-
-  .dark .react-select__menu {
-    @apply !bg-gray-800 !border !border-gray-700 !shadow-2xl;
-  }
-
-  .dark .react-select__option {
-    @apply !bg-transparent !text-gray-300;
-  }
-
-  /* Focus and Selected states for the personnel registry */
-  .dark .react-select__option--is-focused {
-    @apply !bg-gray-700 !text-white;
-  }
-
-  .dark .react-select__option--is-selected {
-    @apply !bg-indigo-600 !text-white;
-  }
-
-  .dark .react-select__single-value,
-  .dark .react-select__input-container {
-    @apply !text-white;
-  }
-
-  .dark .react-select__multi-value {
-    @apply !bg-gray-700;
-  }
-
-  .dark .react-select__multi-value__label {
-    @apply !text-indigo-200;
-  }
-
-  .dark .react-select__multi-value__remove:hover {
-    @apply !bg-red-500 !text-white;
-  }
 }
 
-/* Page Transition Animations */
-.animate-in {
-  animation: fadeIn 0.4s ease-out;
+/* ============================================================
+   ANIMATIONS
+   ============================================================ */
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
-/* Base React Select container styling */
-.react-select-container .react-select__control {
-  @apply !rounded-2xl !border-gray-200 !h-12 !shadow-sm dark:!bg-gray-800 dark:!border-gray-700;
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-8px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes pulseSoft {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Legacy compat — keep .animate-in working */
+.animate-in {
+  animation: fadeUp 0.35s ease-out;
+}
+
+/* ============================================================
+   TOASTIFY OVERRIDES — match design system
+   ============================================================ */
+
+.Toastify__toast {
+  border-radius: 0.875rem !important;
+  font-family: 'Inter', system-ui !important;
+  font-size: 0.8125rem !important;
+  font-weight: 600 !important;
+  padding: 0.875rem 1rem !important;
+  box-shadow: var(--shadow-lg) !important;
+}
+
+.Toastify__toast-body {
+  padding: 0 !important;
+}
+
+/* ============================================================
+   SAAS UTILITIES & COMPONENTS
+   ============================================================ */
+
+/* Glassmorphism utility for sticky headers/modals */
+.glass-panel {
+  background: var(--bg-overlay);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+}
+
+/* Sleek interactive cards */
+.saas-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.saas-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--border-subtle);
+}
+
+/* Primary buttons with glow */
+.saas-btn-primary {
+  background-color: var(--brand);
+  color: white;
+  border: none;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow-brand);
+}
+
+.saas-btn-primary:hover {
+  background-color: var(--brand-light);
+  transform: translateY(-1px);
+}
+
+.saas-btn-primary:active {
+  transform: translateY(1px);
+}
+
+
+
+/* ============================================================
+   MODAL BASE
+   ============================================================ */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  animation: fadeIn 0.2s ease;
+}
+
+.modal-content {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 1.25rem;
+  box-shadow: var(--shadow-lg);
+  width: 100%;
+  max-width: 32rem;
+  animation: fadeUp 0.25s ease;
+}
+
+/* ============================================================
+   DATA PROTECTION (Anti-Scraping / Copying)
+   ============================================================ */
+
+.protect-data {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+@media print {
+  .protect-data {
+    display: none !important;
+  }
 }

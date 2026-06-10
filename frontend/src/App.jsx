@@ -4,6 +4,7 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { PushNotificationProvider } from './context/PushNotificationContext';
 import Sidebar from './components/Sidebar'; 
 import { useTenantBranding } from './hooks/useTenantBranding';
 
@@ -63,20 +64,38 @@ import NotificationHubPage from './pages/NotificationHubPage';
 import SchedulingGridPage from './pages/SchedulingGridPage'; 
 import axiosInstance from './api/axiosInstance';
 import RiskLibraryPage from './pages/RiskLibraryPage';
+import ChatPage from './pages/ChatPage';
 
 const ProtectedRoute = ({ children }) => {
     const { isAuthenticated, isLoading } = useAuth();
     
     if (isLoading) {
         return (
-            <div className="flex flex-col justify-center items-center h-screen bg-gray-50 dark:bg-gray-900">
-                <div className="relative">
-                    <div className="h-16 w-16 rounded-full border-4 border-gray-200 dark:border-gray-800 border-t-indigo-600 animate-spin"></div>
-                    <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="h-2 w-2 bg-indigo-600 rounded-full animate-pulse"></div>
+            <div
+                className="flex flex-col justify-center items-center h-screen"
+                style={{ background: 'var(--bg-base)' }}
+            >
+                <div className="relative mb-5">
+                    <div
+                        className="h-14 w-14 rounded-full animate-spin"
+                        style={{
+                            border: '3px solid var(--border)',
+                            borderTopColor: 'var(--brand)',
+                        }}
+                    />
+                    <div
+                        className="absolute inset-0 flex items-center justify-center"
+                    >
+                        <div
+                            className="h-2 w-2 rounded-full"
+                            style={{ background: 'var(--brand)' }}
+                        />
                     </div>
                 </div>
-                <p className="mt-4 text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] animate-pulse italic">
+                <p
+                    className="text-[9px] font-black uppercase tracking-[0.35em]"
+                    style={{ color: 'var(--text-muted)', animation: 'pulseSoft 2s ease-in-out infinite' }}
+                >
                     Synchronizing Session...
                 </p>
             </div>
@@ -130,14 +149,17 @@ function AppShell() {
 
     return (
         <div
-            className="relative flex h-screen bg-gray-50/95 dark:bg-gray-900/95 text-gray-900 dark:text-gray-100 font-sans selection:bg-indigo-100 selection:text-indigo-700"
-            style={style}
+            className="relative flex h-screen w-screen overflow-hidden font-sans"
+            style={{ background: 'var(--bg-base)', color: 'var(--text-primary)', ...style }}
         >
             <Sidebar />
 
-            <main className="flex-1 overflow-x-hidden overflow-y-auto scroll-smooth custom-scrollbar flex flex-col">
+            <main className="flex-1 overflow-x-hidden overflow-y-auto flex flex-col" style={{ background: 'var(--bg-base)' }}>
                 {globalBanner && globalBanner.message && (
-                    <div className="flex-shrink-0 flex items-center justify-center gap-4 px-6 py-3 bg-indigo-600 text-white text-sm font-medium text-center">
+                    <div
+                        className="flex-shrink-0 flex items-center justify-center gap-4 px-6 py-3 text-white text-sm font-medium text-center"
+                        style={{ background: 'var(--brand)' }}
+                    >
                         <span>{globalBanner.message}</span>
                     </div>
                 )}
@@ -166,6 +188,7 @@ function AppShell() {
                         <Route path="/dashboard" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
                         <Route path="/notifications" element={<ProtectedRoute><NotificationHubPage /></ProtectedRoute>} />
                         <Route path="/scheduling" element={<ProtectedRoute><SchedulingGridPage /></ProtectedRoute>} />
+                        <Route path="/chat" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
 
                         {/* --- PROJECT NODES --- */}
                         <Route path="/projects" element={<ProtectedRoute><ProjectsPage /></ProtectedRoute>} />
@@ -268,7 +291,9 @@ function AppShell() {
 function App() {
     return (
         <AuthProvider>
-            <AppShell />
+            <PushNotificationProvider>
+                <AppShell />
+            </PushNotificationProvider>
         </AuthProvider>
     );
 }

@@ -41,10 +41,10 @@ function TenantCreatePage() {
     useEffect(() => {
         if (!authIsLoading) {
             if (!isAuthenticated) {
-                toast.error("Root authentication required.");
+                toast.error(t('root_auth_required'));
                 navigate('/login', { replace: true });
             } else if (!isSuperuser) {
-                toast.error("Access Denied: Node initialization restricted to Root Admins.");
+                toast.error(t('access_denied_root_admins'));
                 navigate('/', { replace: true });
             }
         }
@@ -82,11 +82,11 @@ function TenantCreatePage() {
                 });
             }
 
-            toast.success(`Infrastructure Node "${response.data.name}" online.`);
+            toast.success(`${t('toast_tenant_online')} \"${response.data.name}\" online.`);
             navigate('/tenants');
         } catch (err) {
             console.error('Tenant creation error:', err);
-            const errorMsg = err.response?.data?.detail || 'Node rejection: Please verify input telemetry.';
+            const errorMsg = err.response?.data?.detail || t('node_rejection_verify');
             setError(errorMsg);
             toast.error(errorMsg);
         } finally {
@@ -94,7 +94,7 @@ function TenantCreatePage() {
         }
     };
 
-    if (authIsLoading) return <LoadingSpinner text="Synchronizing Root Credentials..." size="lg" />;
+    if (authIsLoading) return <LoadingSpinner text={t('sync_root_credentials')} size="lg" />;
     if (!isAuthenticated || !isSuperuser) return null;
 
     return (
@@ -115,7 +115,7 @@ function TenantCreatePage() {
                         <h1 className="text-3xl font-black text-gray-900 dark:text-white leading-none tracking-tight">
                             {t('new_tenant')}
                         </h1>
-                        <p className="text-gray-500 dark:text-gray-400 text-sm mt-1 font-medium">Create a new isolated operational environment.</p>
+                        <p className="text-gray-500 dark:text-gray-400 text-sm mt-1 font-medium">{t('create_new_isolated_env')}</p>
                     </div>
                 </div>
             </div>
@@ -127,18 +127,18 @@ function TenantCreatePage() {
                 <div className="lg:col-span-8 space-y-6">
                     <section className="bg-white dark:bg-gray-800 p-6 md:p-8 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-700 space-y-6">
                         <h2 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] border-b pb-2 flex items-center gap-2">
-                            <BuildingOfficeIcon className="h-4 w-4" /> Organization Details
+                            <BuildingOfficeIcon className="h-4 w-4" /> {t('organization_details')}
                         </h2>
                         
                         <div>
-                            <label className="block text-[10px] font-black text-gray-500 uppercase mb-1 ml-1 tracking-widest">Company / Entity Name*</label>
+                            <label className="block text-[10px] font-black text-gray-500 uppercase mb-1 ml-1 tracking-widest">{t('company_entity_name')}</label>
                             <input 
                                 type="text" 
                                 name="name" 
                                 required 
                                 value={formData.name} 
                                 onChange={handleChange} 
-                                placeholder="Full legal organization name..."
+                                placeholder={t('company_name_placeholder')}
                                 disabled={isSubmitting}
                                 className="block w-full h-12 rounded-2xl border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-orange-500 font-bold" 
                             />
@@ -150,11 +150,11 @@ function TenantCreatePage() {
                             </h2>
                             
                             <div>
-                                <label className="block text-[10px] font-black text-gray-500 uppercase mb-1 ml-1 tracking-widest">Logo</label>
+                                <label className="block text-[10px] font-black text-gray-500 uppercase mb-1 ml-1 tracking-widest">{t('logo_label')}</label>
                                 <div className="flex flex-wrap items-center gap-3">
                                     <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl border-2 border-dashed border-gray-200 dark:border-gray-600 hover:border-orange-500 hover:bg-orange-50/50 dark:hover:bg-orange-900/10 transition-colors">
                                         <PhotoIcon className="h-5 w-5 text-gray-500" />
-                                        <span className="text-xs font-bold">Choose logo image</span>
+                                        <span className="text-xs font-bold">{t('choose_logo_image')}</span>
                                         <input
                                             type="file"
                                             accept=".png,.jpg,.jpeg,.svg,.webp"
@@ -168,11 +168,11 @@ function TenantCreatePage() {
                             </div>
 
                             <div>
-                                <label className="block text-[10px] font-black text-gray-500 uppercase mb-1 ml-1 tracking-widest">Background photo(s)</label>
+                                <label className="block text-[10px] font-black text-gray-500 uppercase mb-1 ml-1 tracking-widest">{t('background_photos')}</label>
                                 <div className="flex flex-wrap items-center gap-3">
                                     <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl border-2 border-dashed border-gray-200 dark:border-gray-600 hover:border-orange-500 hover:bg-orange-50/50 dark:hover:bg-orange-900/10 transition-colors">
                                         <PhotoIcon className="h-5 w-5 text-gray-500" />
-                                        <span className="text-xs font-bold">Add background image(s)</span>
+                                        <span className="text-xs font-bold">{t('add_background_images')}</span>
                                         <input
                                             type="file"
                                             accept=".png,.jpg,.jpeg,.webp"
@@ -184,7 +184,7 @@ function TenantCreatePage() {
                                     </label>
                                     {backgroundFiles.length > 0 && (
                                         <span className="text-xs text-gray-500 dark:text-gray-400">
-                                            {backgroundFiles.length} file(s) selected
+                                            {backgroundFiles.length} {t('files_selected')}
                                         </span>
                                     )}
                                 </div>
@@ -199,11 +199,11 @@ function TenantCreatePage() {
                         <div className="flex items-center gap-2">
                             <ExclamationTriangleIcon className="h-5 w-5 text-orange-600" />
                             <h3 className="text-[10px] font-black text-orange-700 dark:text-orange-400 uppercase tracking-widest leading-none">
-                                Node Impact
+                                {t('node_impact')}
                             </h3>
                         </div>
                         <p className="text-[10px] text-orange-600 dark:text-orange-300 leading-relaxed font-bold uppercase tracking-tight">
-                            Initializing a new tenant creates a primary data silo. No historical projects, users, or assets from existing tenants will be accessible from this node.
+                            {t('initializing_new_tenant_impact')}
                         </p>
                     </section>
 
@@ -215,7 +215,7 @@ function TenantCreatePage() {
                         {isSubmitting ? (
                             <>
                                 <ArrowPathIcon className="h-6 w-6 mr-2 animate-spin" />
-                                Processing Registry...
+                                {t('processing_registry_tenant')}
                             </>
                         ) : (
                             <>

@@ -56,6 +56,10 @@ def _delete_existing_tenant_data(db, tenant_id: int) -> None:
     db.flush()
 
     # Remaining tenant-scoped entities requested for demo.
+    db.query(models.LeaveRequest).filter(models.LeaveRequest.tenant_id == tenant_id).delete(synchronize_session=False)
+    db.query(models.Offer).filter(models.Offer.tenant_id == tenant_id).delete(synchronize_session=False)
+    db.query(models.Event).filter(models.Event.tenant_id == tenant_id).delete(synchronize_session=False)
+    db.query(models.Shop).filter(models.Shop.tenant_id == tenant_id).delete(synchronize_session=False)
     db.query(models.Customer).filter(models.Customer.tenant_id == tenant_id).delete(synchronize_session=False)
     db.query(models.Tool).filter(models.Tool.tenant_id == tenant_id).delete(synchronize_session=False)
     db.query(models.Car).filter(models.Car.tenant_id == tenant_id).delete(synchronize_session=False)
@@ -318,18 +322,94 @@ def _create_tools(db, tenant_id: int, users: dict[str, models.User]) -> None:
                 current_user_id=None,
                 description="Insulated heavy duty cutter.",
             ),
-            models.Tool(
-                name="Network Cable Tester",
-                brand="Trend",
-                model="SignalTEK",
-                serial_number="TRD-DEM-004",
-                status=models.ToolStatus.Available,
-                tenant_id=tenant_id,
-                current_user_id=None,
-                description="Cat6/Cat6A certification checks.",
-            ),
         ]
     )
+    db.commit()
+
+
+def _create_timelogs(db, tenant_id: int, users: dict[str, models.User]) -> None:
+    now = _utc_now()
+    el1 = users["el1.demo@rafapp.is"]
+    tl1 = users["tl1.demo@rafapp.is"]
+    
+    project = db.query(models.Project).filter(models.Project.tenant_id == tenant_id).first()
+    if not project:
+        return
+        
+    db.add_all([
+        models.TimeLog(
+            user_id=el1.id, project_id=project.id,
+            start_time=now - timedelta(days=1, hours=8),
+            end_time=now - timedelta(days=1, hours=0),
+            notes="General wiring work", duration=timedelta(hours=8)
+        ),
+        models.TimeLog(
+            user_id=tl1.id, project_id=project.id,
+            start_time=now - timedelta(days=2, hours=8),
+            end_time=now - timedelta(days=2, hours=2),
+            notes="Project planning and site visit", duration=timedelta(hours=6)
+        ),
+    ])
+    db.commit()
+
+def _create_shops(db, tenant_id: int) -> None:
+    db.add_all([
+        models.Shop(tenant_id=tenant_id, name="Ískraft", address="Smiðjuvegur 11", phone_number="5551234", email="sala@iskraft.is"),
+        models.Shop(tenant_id=tenant_id, name="Johan Rönning", address="Kringlan 7", phone_number="5559876", email="info@ronning.is")
+    ])
+    db.commit()
+
+def _create_comments_and_photos(db, tenant_id: int, users: dict[str, models.User]) -> None:
+    task = db.query(models.Task).join(models.Project).filter(models.Project.tenant_id == tenant_id).first()
+    if not task:
+        return
+    el1 = users["el1.demo@rafapp.is"]
+    db.add_all([
+        models.TaskComment(task_id=task.id, author_id=el1.id, content="Wiring is halfway done. Waiting for materials."),
+        models.TaskComment(task_id=task.id, author_id=users["pm.demo@rafapp.is"].id, content="Understood. Will order from Ískraft today.")
+    ])
+    db.commit()
+
+def _create_schedules(db, tenant_id: int, users: dict[str, models.User]) -> None:
+    now = _utc_now()
+    pm = users["pm.demo@rafapp.is"]
+    db.add_all([
+        models.Event(
+            tenant_id=tenant_id, title="Client Sync Meeting", description="Discussing project phases.",
+            start_time=now + timedelta(days=1, hours=10), end_time=now + timedelta(days=1, hours=11),
+            creator_id=pm.id, event_type=models.EventType.meeting
+        ),
+    ])
+    db.commit()
+
+def _create_offers(db, tenant_id: int, users: dict[str, models.User]) -> None:
+    project = db.query(models.Project).filter(models.Project.tenant_id == tenant_id).first()
+    if not project:
+        return
+    pm = users["pm.demo@rafapp.is"]
+    offer = models.Offer(
+        tenant_id=tenant_id, project_id=project.id, created_by_user_id=pm.id,
+        offer_number="OFF-2026-001", title="Initial Installation Offer",
+        status=models.OfferStatus.Draft, total_amount=1500000.0
+    )
+    db.add(offer)
+    db.commit()
+
+def _create_time_off(db, tenant_id: int, users: dict[str, models.User]) -> None:
+    el2 = users["el2.demo@rafapp.is"]
+    now = _utc_now()
+    db.add_all([
+        models.LeaveRequest(
+            tenant_id=tenant_id, user_id=el2.id, leave_type="Vacation",
+            start_date=(now + timedelta(days=14)).date(), end_date=(now + timedelta(days=21)).date(),
+            status=models.LeaveStatus.Approved, reason="Summer vacation"
+        ),
+        models.LeaveRequest(
+            tenant_id=tenant_id, user_id=users["el3.demo@rafapp.is"].id, leave_type="Sick Leave",
+            start_date=(now - timedelta(days=2)).date(), end_date=(now - timedelta(days=1)).date(),
+            status=models.LeaveStatus.Pending, reason="Flu"
+        )
+    ])
     db.commit()
 
 
@@ -345,6 +425,12 @@ def seed_demo_tenant(reset_existing: bool = True) -> None:
         _create_projects_and_tasks(db, tenant.id, users)
         _create_cars(db, tenant.id, users)
         _create_tools(db, tenant.id, users)
+        _create_timelogs(db, tenant.id, users)
+        _create_shops(db, tenant.id)
+        _create_comments_and_photos(db, tenant.id, users)
+        _create_schedules(db, tenant.id, users)
+        _create_offers(db, tenant.id, users)
+        _create_time_off(db, tenant.id, users)
 
         users_count = db.query(models.User).filter(models.User.tenant_id == tenant.id).count()
         customers_count = db.query(models.Customer).filter(models.Customer.tenant_id == tenant.id).count()

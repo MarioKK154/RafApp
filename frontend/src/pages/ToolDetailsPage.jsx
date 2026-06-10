@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import axiosInstance from '../api/axiosInstance';
@@ -19,6 +20,8 @@ import {
 } from '@heroicons/react/24/outline';
 
 function ToolDetailsPage() {
+    const { t } = useTranslation();
+
     const { toolId } = useParams();
     const navigate = useNavigate();
     const [tool, setTool] = useState(null);
@@ -48,7 +51,7 @@ function ToolDetailsPage() {
     }, [fetchTool]);
 
     const getStatusStyles = (status) => {
-        switch (status) {
+    switch (status) {
             case 'Available': return 'bg-green-50 text-green-700 border-green-100 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800';
             case 'In Use': return 'bg-indigo-50 text-indigo-700 border-indigo-100 dark:bg-indigo-900/20 dark:text-indigo-400 dark:border-indigo-800';
             case 'In Repair': return 'bg-orange-50 text-orange-700 border-orange-100 dark:bg-orange-900/20 dark:text-orange-400 dark:border-orange-800';
@@ -110,7 +113,7 @@ function ToolDetailsPage() {
                                 src={tool.image_url || '/default-tool.png'} 
                                 alt={tool.name}
                                 className="relative z-10 w-48 h-48 object-contain mx-auto grayscale hover:grayscale-0 transition-all duration-500"
-                                onError={(e) => { e.target.src='/default-tool.png' }}
+                                onError={(e) => { e.target.onerror = null; e.target.src='/default-tool.png'; }}
                             />
                         </div>
 
@@ -232,6 +235,8 @@ function ToolDetailsPage() {
  * Helper: Technical Specification Line
  */
 function SpecItem({ icon, label, value, mono = false }) {
+    const { t } = useTranslation();
+
     return (
         <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-gray-400">

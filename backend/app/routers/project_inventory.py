@@ -186,3 +186,4 @@ def remove_item_from_project(
 
     crud.remove_item_from_project_inventory(db, project_inventory_item_id=project_inventory_item_id)
     return None
+

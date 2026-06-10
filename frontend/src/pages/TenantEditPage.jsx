@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import axiosInstance from '../api/axiosInstance';
@@ -17,6 +18,8 @@ import {
 } from '@heroicons/react/24/outline';
 
 function TenantEditPage() {
+    const { t } = useTranslation();
+
     const { tenantId } = useParams();
     const navigate = useNavigate();
     const { user: currentUser, isAuthenticated, isLoading: authIsLoading } = useAuth();
@@ -54,7 +57,7 @@ function TenantEditPage() {
                 });
             } catch (err) {
                 console.error("Infrastructure Sync Error:", err);
-                const errorMsg = err.response?.status === 404 ? 'Tenant node not found.' : 'Failed to synchronize node telemetry.';
+                const errorMsg = err.response?.status === 404 ? t('toast_tenant_not_found') : t('toast_tenant_sync_failed');
                 setError(errorMsg);
                 toast.error(errorMsg);
             } finally {
@@ -72,7 +75,7 @@ function TenantEditPage() {
     }, [fetchTenantData]);
 
     const handleChange = (e) => {
-        const { name, value } = e.target;
+    const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
@@ -92,18 +95,18 @@ function TenantEditPage() {
         if (JSON.stringify(formData.background_image_urls || []) !== JSON.stringify(initialBgUrls)) updatePayload.background_image_urls = formData.background_image_urls || [];
 
         if (Object.keys(updatePayload).length === 0) {
-            toast.info("No modifications detected. Synchronization bypassed.");
+            toast.info(t('toast_no_modifications'));
             setIsSubmitting(false);
             return;
         }
 
         try {
             const response = await axiosInstance.put(`/tenants/${tenantId}`, updatePayload);
-            toast.success(`Infrastructure Node "${response.data.name}" updated.`);
+            toast.success(`${t('toast_tenant_updated')} \"${response.data.name}\" updated.`);
             navigate('/tenants');
         } catch (err) {
             console.error("Node Update Error:", err);
-            const msg = err.response?.data?.detail || 'Failed to commit node updates.';
+            const msg = err.response?.data?.detail || t('toast_tenant_update_failed');
             setError(msg);
             toast.error(msg);
         } finally {
@@ -111,11 +114,11 @@ function TenantEditPage() {
         }
     };
 
-    if (authIsLoading || isLoadingData) return <LoadingSpinner text="Accessing Root Node..." size="lg" />;
+    if (authIsLoading || isLoadingData) return <LoadingSpinner text={t('accessing_root_node')} size="lg" />;
     if (error && !initialTenantData) return (
         <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-8">
             <h2 className="text-xl font-black text-red-600 uppercase tracking-tighter">{error}</h2>
-            <Link to="/tenants" className="mt-4 text-xs font-bold text-gray-400 hover:text-indigo-600 uppercase tracking-widest">Return to Registry</Link>
+            <Link to="/tenants" className="mt-4 text-xs font-bold text-gray-400 hover:text-indigo-600 uppercase tracking-widest">{t('return_to_registry')}</Link>
         </div>
     );
 
@@ -124,7 +127,7 @@ function TenantEditPage() {
             {/* Header / Breadcrumbs */}
             <div className="mb-8">
                 <Link to="/tenants" className="flex items-center text-xs font-black text-gray-400 hover:text-orange-600 transition mb-2 uppercase tracking-widest">
-                    <ChevronLeftIcon className="h-3 w-3 mr-1" /> Back to Registry
+                    <ChevronLeftIcon className="h-3 w-3 mr-1" /> {t('back_to_registry')}
                 </Link>
                 <div className="flex items-center gap-3">
                     <div className="p-3 bg-orange-600 rounded-2xl shadow-lg shadow-orange-100 dark:shadow-none">
@@ -132,7 +135,7 @@ function TenantEditPage() {
                     </div>
                     <div>
                         <h1 className="text-3xl font-black text-gray-900 dark:text-white leading-none tracking-tight">
-                            Configure Node: {initialTenantData?.name}
+                            {t('configure_node')} {initialTenantData?.name}
                         </h1>
                         <div className="flex items-center gap-1.5 mt-2 text-[10px] font-bold text-gray-400 uppercase tracking-tighter">
                             <FingerPrintIcon className="h-3 w-3" /> Registry ID: {tenantId}
@@ -148,11 +151,11 @@ function TenantEditPage() {
                 <div className="lg:col-span-7 space-y-6">
                     <section className="bg-white dark:bg-gray-800 p-6 md:p-8 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-700 space-y-6">
                         <h2 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] border-b pb-2 flex items-center gap-2">
-                            <BuildingOfficeIcon className="h-4 w-4" /> Node Identity
+                            <BuildingOfficeIcon className="h-4 w-4" /> {t('node_identity')}
                         </h2>
                         
                         <div>
-                            <label className="block text-[10px] font-black text-gray-500 uppercase mb-1 ml-1 tracking-widest">Company / Entity Name*</label>
+                            <label className="block text-[10px] font-black text-gray-500 uppercase mb-1 ml-1 tracking-widest">{t('company_entity_name')}</label>
                             <input 
                                 type="text" 
                                 name="name" 
@@ -166,11 +169,11 @@ function TenantEditPage() {
 
                         <div className="space-y-6 pt-4 border-t border-gray-50 dark:border-gray-700">
                             <h2 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] flex items-center gap-2">
-                                <PaintBrushIcon className="h-4 w-4" /> Branding Telemetry
+                                <PaintBrushIcon className="h-4 w-4" /> {t('branding_telemetry')}
                             </h2>
                             
                             <div>
-                                <label className="block text-[10px] font-black text-gray-500 uppercase mb-1 ml-1 tracking-widest">Logo</label>
+                                <label className="block text-[10px] font-black text-gray-500 uppercase mb-1 ml-1 tracking-widest">{t('logo_label')}</label>
                                 <div className="flex flex-wrap items-center gap-4">
                                     {formData.logo_url && (
                                         <div className="relative">
@@ -184,7 +187,7 @@ function TenantEditPage() {
                                     )}
                                     <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl border-2 border-dashed border-gray-200 dark:border-gray-600 hover:border-orange-500 hover:bg-orange-50/50 dark:hover:bg-orange-900/10 transition-colors">
                                         <PhotoIcon className="h-5 w-5 text-gray-500" />
-                                        <span className="text-xs font-bold">{formData.logo_url ? 'Replace logo' : 'Upload logo'}</span>
+                                        <span className="text-xs font-bold">{formData.logo_url ? t('replace_logo') : t('upload_logo')}</span>
                                         <input
                                             type="file"
                                             accept=".png,.jpg,.jpeg,.svg,.webp"
@@ -201,7 +204,7 @@ function TenantEditPage() {
                                                     if (res.data?.url) setFormData(prev => ({ ...prev, logo_url: res.data.url }));
                                                 } catch (err) {
                                                     console.error('Logo upload failed:', err);
-                                                    toast.error(err.response?.data?.detail || 'Logo upload failed.');
+                                                    toast.error(err.response?.data?.detail || t('toast_logo_upload_failed'));
                                                 }
                                                 e.target.value = '';
                                             }}
@@ -212,7 +215,7 @@ function TenantEditPage() {
                             </div>
 
                             <div>
-                                <label className="block text-[10px] font-black text-gray-500 uppercase mb-1 ml-1 tracking-widest">Background photo(s)</label>
+                                <label className="block text-[10px] font-black text-gray-500 uppercase mb-1 ml-1 tracking-widest">{t('background_photos')}</label>
                                 <div className="space-y-3">
                                     {(formData.background_image_urls || []).length > 0 && (
                                         <div className="flex flex-wrap gap-2">
@@ -241,7 +244,7 @@ function TenantEditPage() {
                                     )}
                                     <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl border-2 border-dashed border-gray-200 dark:border-gray-600 hover:border-orange-500 hover:bg-orange-50/50 dark:hover:bg-orange-900/10 transition-colors">
                                         <PhotoIcon className="h-5 w-5 text-gray-500" />
-                                        <span className="text-xs font-bold">Add background image(s)</span>
+                                        <span className="text-xs font-bold">{t('add_background_images')}</span>
                                         <input
                                             type="file"
                                             accept=".png,.jpg,.jpeg,.webp"
@@ -262,7 +265,7 @@ function TenantEditPage() {
                                                         }));
                                                     } catch (err) {
                                                         console.error('Background upload failed:', err);
-                                                        toast.error(err.response?.data?.detail || 'Background upload failed.');
+                                                        toast.error(err.response?.data?.detail || t('toast_bg_upload_failed'));
                                                     }
                                                 }
                                                 e.target.value = '';
@@ -280,7 +283,7 @@ function TenantEditPage() {
                 <div className="lg:col-span-5 space-y-6">
                     {/* Live Preview Card */}
                     <section className="bg-gray-900 p-6 rounded-[2.5rem] border border-gray-800 space-y-4 overflow-hidden shadow-2xl">
-                        <h3 className="text-[10px] font-black text-orange-500 uppercase tracking-widest text-center">Live Asset Preview</h3>
+                        <h3 className="text-[10px] font-black text-orange-500 uppercase tracking-widest text-center">{t('live_asset_preview')}</h3>
                         <div className="relative h-40 rounded-2xl bg-gray-800 border border-gray-700 flex flex-col items-center justify-center overflow-hidden">
                             {(formData.background_image_urls?.length > 0 ? formData.background_image_urls[0] : formData.background_image_url) && (
                                 <img
@@ -306,7 +309,7 @@ function TenantEditPage() {
                                 )}
                             </div>
                         </div>
-                        <p className="text-[9px] text-gray-500 text-center font-bold uppercase italic tracking-tighter">Verified Node appearance for tenant users</p>
+                        <p className="text-[9px] text-gray-500 text-center font-bold uppercase italic tracking-tighter">{t('verified_node_appearance')}</p>
                     </section>
 
                     <button 
@@ -317,12 +320,12 @@ function TenantEditPage() {
                         {isSubmitting ? (
                             <>
                                 <ArrowPathIcon className="h-6 w-6 mr-2 animate-spin" />
-                                Syncing Registry...
+                                {t('syncing_node')}
                             </>
                         ) : (
                             <>
                                 <CloudArrowUpIcon className="h-6 w-6 mr-2" />
-                                Commit Node Changes
+                                {t('commit_node_changes')}
                             </>
                         )}
                     </button>
@@ -330,7 +333,7 @@ function TenantEditPage() {
                     <div className="p-5 bg-indigo-50 dark:bg-indigo-900/10 rounded-3xl border border-indigo-100 dark:border-indigo-800 flex gap-3">
                         <InformationCircleIcon className="h-5 w-5 text-indigo-600 shrink-0 mt-0.5" />
                         <p className="text-[10px] text-indigo-700 dark:text-indigo-300 leading-relaxed font-bold uppercase tracking-tight">
-                            Global Impact: Modifications to Logo and Background URLs are cached but will appear immediately upon the next user session initialization.
+                            {t('global_impact_tenant')}
                         </p>
                     </div>
                 </div>

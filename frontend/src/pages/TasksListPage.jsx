@@ -67,7 +67,7 @@ function TasksListPage() {
     const [sortDir, setSortDir] = useState({ value: 'desc', label: 'DESC' });
     const [searchTerm, setSearchTerm] = useState('');
     const debouncedSearchTerm = useDebounce(searchTerm, 300);
-    const [selectedTenantId, setSelectedTenantId] = useState(null);
+    const selectedTenantId = 1; const setSelectedTenantId = () => {};
 
     // Permission Matrix
     const isSuperuser = user?.is_superuser;
@@ -250,10 +250,7 @@ function TasksListPage() {
                     </div>
                     <div className="flex items-center gap-3">
                         {isSuperuser && (
-                            <SuperTenantSelector
-                                selectedTenantId={selectedTenantId}
-                                onChange={setSelectedTenantId}
-                            />
+                            null
                         )}
                         {canCreateTasks && (
                             <button

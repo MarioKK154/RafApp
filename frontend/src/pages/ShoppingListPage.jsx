@@ -6,6 +6,7 @@ import { toast } from 'react-toastify';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { Link } from 'react-router-dom';
 import { inventoryDisplayName } from '../utils/inventoryI18n';
+import PushToGCButton from '../components/PushToGCButton';
 import { 
     ShoppingCartIcon, 
     BriefcaseIcon, 
@@ -210,7 +211,7 @@ function ShoppingListPage() {
                                 </thead>
                                 <tbody className="divide-y divide-gray-50 dark:divide-gray-700">
                                     {shoppingList.map(item => (
-                                        <tr key={item.inventory_item.id} className="group hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
+                                        <tr key={item.inventory_item.id} className="group relative z-10 focus-within:z-[60] hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
                                             <td className="py-5 px-8">
                                                 <div className="flex items-center gap-3">
                                                     <div className="p-2 bg-gray-50 dark:bg-gray-700 rounded-xl group-hover:bg-indigo-50 transition-colors">
@@ -225,13 +226,18 @@ function ShoppingListPage() {
                                             <td className="py-5 px-6 text-right font-medium text-gray-500">{item.quantity_required}</td>
                                             <td className="py-5 px-6 text-right font-medium text-gray-500">{item.quantity_in_stock}</td>
                                             <td className="py-5 px-8 text-right">
-                                                <span className={`inline-flex items-center h-10 px-4 rounded-xl text-sm font-black font-mono shadow-sm ${
-                                                    item.quantity_to_order > 0 
-                                                    ? 'bg-orange-50 text-orange-600 dark:bg-orange-900/20 border border-orange-100 dark:border-orange-800' 
-                                                    : 'bg-green-50 text-green-600 dark:bg-green-900/20 border border-green-100 dark:border-green-800'
-                                                }`}>
-                                                    {item.quantity_to_order > 0 ? `+ ${item.quantity_to_order.toFixed(1)}` : '0.0'}
-                                                </span>
+                                                <div className="flex items-center justify-end gap-3">
+                                                    <span className={`inline-flex items-center h-10 px-4 rounded-xl text-sm font-black font-mono shadow-sm ${
+                                                        item.quantity_to_order > 0 
+                                                        ? 'bg-orange-50 text-orange-600 dark:bg-orange-900/20 border border-orange-100 dark:border-orange-800' 
+                                                        : 'bg-green-50 text-green-600 dark:bg-green-900/20 border border-green-100 dark:border-green-800'
+                                                    }`}>
+                                                        {item.quantity_to_order > 0 ? `+ ${item.quantity_to_order.toFixed(1)}` : '0.0'}
+                                                    </span>
+                                                    {item.quantity_to_order > 0 && (
+                                                        <PushToGCButton entityType="material" entityId={item.id} buttonLabel="Request GC" />
+                                                    )}
+                                                </div>
                                             </td>
                                         </tr>
                                     ))}
@@ -280,7 +286,7 @@ function ShoppingListPage() {
                                             <th className="py-5 px-8">Material</th>
                                             <th className="py-5 px-6 text-right">Requested Qty</th>
                                             <th className="py-5 px-6">Requested By</th>
-                                            <th className="py-5 px-6">Status</th>
+                                            <th className="py-5 px-6">{t('status')}</th>
                                             <th className="py-5 px-8 text-right">Requested At</th>
                                         </tr>
                                     </thead>

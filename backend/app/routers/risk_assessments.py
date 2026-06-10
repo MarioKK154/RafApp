@@ -44,7 +44,7 @@ def get_risk_item_and_verify_tenant(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Linked project not found.")
 
     effective_tenant_id = project.tenant_id
-    if not current_user.is_superuser and effective_tenant_id != current_user.tenant_id:
+    if effective_tenant_id != current_user.tenant_id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Access denied: Resource belongs to a different tenant.",
@@ -139,7 +139,7 @@ async def read_risk_items_for_project(
     db: DbDependency,
     current_user: CurrentUserDependency,
 ):
-    effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
+    effective_tenant_id = current_user.tenant_id
     project = crud.get_project(db, project_id=project_id, tenant_id=effective_tenant_id)
     if not project:
         raise HTTPException(
@@ -158,7 +158,7 @@ async def create_risk_item_endpoint(
     db: DbDependency,
     current_user: TeamLeaderOrHigherDependency,
 ):
-    effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
+    effective_tenant_id = current_user.tenant_id
     project = crud.get_project(db, project_id=payload.project_id, tenant_id=effective_tenant_id)
     if not project:
         raise HTTPException(
@@ -205,7 +205,7 @@ async def create_risks_from_templates(
     db: DbDependency,
     current_user: TeamLeaderOrHigherDependency,
 ):
-    effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
+    effective_tenant_id = current_user.tenant_id
     project = crud.get_project(db, project_id=project_id, tenant_id=effective_tenant_id)
     if not project:
         raise HTTPException(
@@ -238,7 +238,7 @@ async def export_risk_assessment_pdf(
     """
     Export a project's risk assessment (risk register) as PDF.
     """
-    effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
+    effective_tenant_id = current_user.tenant_id
     project = crud.get_project(db, project_id=project_id, tenant_id=effective_tenant_id)
     if not project:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found or not accessible.")
@@ -326,4 +326,5 @@ async def export_risk_assessment_pdf(
         media_type="application/pdf",
         headers={"Content-Disposition": f'attachment; filename=\"{filename}\"'},
     )
+
 

@@ -207,8 +207,7 @@ function ProjectEditPage() {
                             to={`/projects/${projectId}/risk-assessment`}
                             className="h-10 px-4 bg-amber-50 text-amber-700 border border-amber-100 text-[10px] font-black uppercase tracking-[0.2em] rounded-xl shadow-sm hover:bg-amber-100 transition flex items-center gap-2"
                         >
-                            <ShieldCheckIcon className="h-4 w-4" /> Risk Assessment
-                        </Link>
+                            <ShieldCheckIcon className="h-4 w-4" /> {t('risk_assessment')} </Link>
                         <button
                             type="button"
                             onClick={async () => {
@@ -243,37 +242,37 @@ function ProjectEditPage() {
                     <div className="bg-white dark:bg-gray-800 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
                         <div className="p-8 border-b border-gray-50 dark:border-gray-700 flex items-center gap-3 bg-gray-50/50 dark:bg-gray-900/20">
                             <InformationCircleIcon className="h-5 w-5 text-indigo-500" />
-                            <h2 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-widest">Configuration Parameters</h2>
+                            <h2 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-widest">{t('configuration_parameters')}</h2>
                         </div>
                         
                         <form onSubmit={handleUpdateDetails} className="p-8 space-y-8">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                 <div className="md:col-span-2 space-y-1">
-                                    <label className="text-[10px] font-black text-gray-400 uppercase ml-1">Deployment Title</label>
+                                    <label className="text-[10px] font-black text-gray-400 uppercase ml-1">{t('deployment_title')}</label>
                                     <input type="text" name="name" disabled={!canEditParameters} value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} className="modern-input h-14 font-black" />
                                 </div>
                                 <div className="md:col-span-2 space-y-1">
-                                    <label className="text-[10px] font-black text-gray-400 uppercase ml-1">Site Address</label>
+                                    <label className="text-[10px] font-black text-gray-400 uppercase ml-1">{t('site_address')}</label>
                                     <input type="text" name="address" disabled={!canEditParameters} value={formData.address} onChange={(e) => setFormData({...formData, address: e.target.value})} className="modern-input h-14" />
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-black text-gray-400 uppercase ml-1">Start date</label>
+                                    <label className="text-[10px] font-black text-gray-400 uppercase ml-1">{t('start_date')}</label>
                                     <input type="date" name="start_date" disabled={!isAdmin} value={formData.start_date} onChange={(e) => setFormData({...formData, start_date: e.target.value})} className="modern-input h-14" />
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-black text-gray-400 uppercase ml-1">End date</label>
+                                    <label className="text-[10px] font-black text-gray-400 uppercase ml-1">{t('end_date')}</label>
                                     <input type="date" name="end_date" disabled={!isAdmin} value={formData.end_date} onChange={(e) => setFormData({...formData, end_date: e.target.value})} className="modern-input h-14" />
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-black text-gray-400 uppercase ml-1">Assigned PM</label>
+                                    <label className="text-[10px] font-black text-gray-400 uppercase ml-1">{t('assigned_pm')}</label>
                                     <select name="project_manager_id" value={formData.project_manager_id} onChange={(e) => setFormData({...formData, project_manager_id: e.target.value})} disabled={!isAdmin} className="modern-input h-14">
-                                        <option value="">Unassigned</option>
+                                        <option value="">{t('unassigned')}</option>
                                         {projectManagers.map(pm => <option key={pm.id} value={pm.id}>{pm.full_name}</option>)}
                                     </select>
                                 </div>
                                 {canSeeFinancials && (
                                     <div className="space-y-1">
-                                        <label className="text-[10px] font-black text-gray-400 uppercase ml-1">Budget (ISK)</label>
+                                        <label className="text-[10px] font-black text-gray-400 uppercase ml-1">{t('budget_isk')}</label>
                                         <input type="number" name="budget" disabled={!isAdmin} value={formData.budget} onChange={(e) => setFormData({...formData, budget: e.target.value})} className="modern-input h-14 font-black text-emerald-600" />
                                     </div>
                                 )}
@@ -283,13 +282,11 @@ function ProjectEditPage() {
                                 <div className="flex gap-3">
                                     {formData.status === 'Active' && (
                                         <button type="button" onClick={() => updateProjectStatus('Commissioned')} className="h-12 px-6 bg-indigo-50 text-indigo-600 text-[10px] font-black uppercase rounded-xl hover:bg-indigo-100 transition flex items-center gap-2">
-                                            <CheckBadgeIcon className="h-5 w-5" /> Mark Commissioned
-                                        </button>
+                                            <CheckBadgeIcon className="h-5 w-5" /> {t('mark_commissioned')} </button>
                                     )}
                                     {formData.status === 'Commissioned' && isAdmin && (
                                         <button type="button" onClick={() => updateProjectStatus('Completed')} className="h-12 px-6 bg-emerald-600 text-white text-[10px] font-black uppercase rounded-xl hover:bg-emerald-700 transition flex items-center gap-2 shadow-lg shadow-emerald-100">
-                                            <ShieldCheckIcon className="h-5 w-5" /> Finalize Archive
-                                        </button>
+                                            <ShieldCheckIcon className="h-5 w-5" /> {t('finalize_archive')} </button>
                                     )}
                                 </div>
                                 <button type="submit" disabled={isSaving} className="h-14 px-10 bg-gray-900 text-white font-black text-[10px] uppercase rounded-2xl flex items-center gap-3">

@@ -141,6 +141,20 @@ async def mirror_inventory_catalog_is_to_en(
     """Fill empty English catalog fields from Icelandic primaries (bulk). Superuser only."""
     return crud.mirror_inventory_catalog_is_to_en(db)
 
+@router.get("/catalog/all-categories-distinct")
+@limiter.limit("60/minute")
+async def get_all_categories_distinct(request: Request, db: DbDependency):
+    rows = db.query(
+        models.InventoryItem.master_category, 
+        models.InventoryItem.category, 
+        models.InventoryItem.subcategory
+    ).distinct().all()
+    
+    return [
+        {"master_category": r[0], "category": r[1], "subcategory": r[2]}
+        for r in rows
+    ]
+
 @router.get("/catalog/{item_id}", response_model=schemas.InventoryItemRead)
 @limiter.limit("100/minute")
 async def read_catalog_item(
@@ -184,3 +198,88 @@ async def delete_catalog_item(
     
     crud.delete_inventory_item(db=db, db_item=db_item)
     return None
+
+@router.post("/catalog/bulk-edit", response_model=Dict[str, int])
+@limiter.limit("100/minute")
+async def bulk_edit_catalog_items(
+    request: Request,
+    payload: schemas.InventoryBulkEdit,
+    db: DbDependency,
+    current_user: SuperuserDependency
+):
+    """Bulk move items to new categories/subcategories."""
+    items = db.query(models.InventoryItem).filter(models.InventoryItem.id.in_(payload.item_ids)).all()
+    count = 0
+    for item in items:
+        if payload.master_category is not None: item.master_category = payload.master_category
+        if payload.category is not None: item.category = payload.category
+        if payload.subcategory is not None: item.subcategory = payload.subcategory
+        count += 1
+    db.commit()
+    return {"updated": count}
+
+@router.post("/catalog/bulk-delete", response_model=Dict[str, int])
+@limiter.limit("20/minute")
+async def bulk_delete_catalog_items(
+    request: Request,
+    payload: schemas.InventoryBulkDelete,
+    db: DbDependency,
+    current_user: SuperuserDependency
+):
+    """Bulk delete items."""
+    items = db.query(models.InventoryItem).filter(models.InventoryItem.id.in_(payload.item_ids)).all()
+    count = 0
+    for item in items:
+        db.delete(item)
+        count += 1
+    db.commit()
+    return {"deleted": count}
+
+@router.post("/catalog/merge", response_model=Dict[str, Any])
+@limiter.limit("20/minute")
+async def merge_catalog_items(
+    request: Request,
+    payload: schemas.InventoryMerge,
+    db: DbDependency,
+    current_user: SuperuserDependency
+):
+    """Merge secondary items into a primary item."""
+    primary = db.query(models.InventoryItem).filter(models.InventoryItem.id == payload.primary_item_id).first()
+    if not primary:
+        raise HTTPException(status_code=404, detail="Primary item not found")
+        
+    secondaries = db.query(models.InventoryItem).filter(models.InventoryItem.id.in_(payload.secondary_item_ids)).all()
+    if not secondaries:
+        raise HTTPException(status_code=404, detail="No valid secondary items found")
+        
+    for sec in secondaries:
+        if not primary.ronning_sku and sec.ronning_sku: primary.ronning_sku = sec.ronning_sku
+        if not primary.iskraft_sku and sec.iskraft_sku: primary.iskraft_sku = sec.iskraft_sku
+        if not primary.reykjafell_sku and sec.reykjafell_sku: primary.reykjafell_sku = sec.reykjafell_sku
+        if not primary.shop_url_1 and sec.shop_url_1: primary.shop_url_1 = sec.shop_url_1
+        if not primary.shop_url_2 and sec.shop_url_2: primary.shop_url_2 = sec.shop_url_2
+        if not primary.shop_url_3 and sec.shop_url_3: primary.shop_url_3 = sec.shop_url_3
+        if not primary.brand and sec.brand: primary.brand = sec.brand
+
+        # Remap Foreign Keys using direct updates
+        try:
+            db.query(models.ProjectInventoryItem).filter(models.ProjectInventoryItem.inventory_item_id == sec.id).update({"inventory_item_id": primary.id})
+        except Exception: pass
+        
+        try:
+            db.query(models.BoQItem).filter(models.BoQItem.inventory_item_id == sec.id).update({"inventory_item_id": primary.id})
+        except Exception: pass
+        
+        try:
+            db.query(models.OfferLineItem).filter(models.OfferLineItem.inventory_item_id == sec.id).update({"inventory_item_id": primary.id})
+        except Exception: pass
+        
+        try:
+            db.query(models.MaterialRequest).filter(models.MaterialRequest.inventory_item_id == sec.id).update({"inventory_item_id": primary.id})
+        except Exception: pass
+        
+        db.delete(sec)
+        
+    db.commit()
+    return {"merged": len(secondaries), "primary_id": primary.id}
+

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import axiosInstance from '../api/axiosInstance';
 import { toast } from 'react-toastify';
+import { PieChart, Pie, BarChart, Bar, Cell, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { 
     BanknotesIcon, 
@@ -31,7 +32,13 @@ function AccountingPage() {
     // Money flow states (management only)
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
     const [overview, setOverview] = useState(null);
+    const [chartType, setChartType] = useState('pie');
+    const [chartFlow, setChartFlow] = useState('out');
     const [recentExpenses, setRecentExpenses] = useState([]);
+    const [showDetailedEntries, setShowDetailedEntries] = useState(false);
+    const [editingExpenseId, setEditingExpenseId] = useState(null);
+    const [editingExpenseData, setEditingExpenseData] = useState({});
+    const [allExpenses, setAllExpenses] = useState([]);
     const [isLoadingOverview, setIsLoadingOverview] = useState(false);
     const [isSubmittingExpense, setIsSubmittingExpense] = useState(false);
     const [projects, setProjects] = useState([]);
@@ -104,6 +111,7 @@ function AccountingPage() {
                     setOverview(overviewRes.data);
                 }
                 setRecentExpenses(Array.isArray(expensesRes.data) ? expensesRes.data.slice(0, 10) : []);
+                setAllExpenses(Array.isArray(expensesRes.data) ? expensesRes.data : []);
                 setProjects(Array.isArray(projectsRes.data) ? projectsRes.data : []);
                 setEmployees(Array.isArray(usersRes.data) ? usersRes.data : []);
             }
@@ -149,6 +157,39 @@ function AccountingPage() {
         }
     };
 
+        const handleEditExpenseSubmit = async (expenseId) => {
+        try {
+            const payload = {
+                date: editingExpenseData.date,
+                amount: parseFloat(editingExpenseData.amount),
+                flow_type: editingExpenseData.flow_type,
+                category: editingExpenseData.category,
+                description: editingExpenseData.description,
+                reference: editingExpenseData.reference,
+                project_id: editingExpenseData.project_id ? parseInt(editingExpenseData.project_id, 10) : null,
+            };
+            await axiosInstance.put(`/accounting/expenses/${expenseId}`, payload);
+            toast.success("Expense updated successfully");
+            setEditingExpenseId(null);
+            refreshOverview();
+        } catch (error) {
+            console.error('Update expense error:', error);
+            toast.error("Failed to update expense");
+        }
+    };
+
+    const handleDeleteExpense = async (expenseId) => {
+        if (!window.confirm("Are you sure you want to delete this entry?")) return;
+        try {
+            await axiosInstance.delete(`/accounting/expenses/${expenseId}`);
+            toast.success("Expense deleted");
+            refreshOverview();
+        } catch (error) {
+            console.error('Delete expense error:', error);
+            toast.error("Failed to delete expense");
+        }
+    };
+
     const handleDownloadPayslip = async (payslipId, filename) => {
         try {
             const response = await axiosInstance.get(`/accounting/payslips/download/${payslipId}`, {
@@ -187,7 +228,8 @@ function AccountingPage() {
     }
 
     return (
-        <div className="container mx-auto p-4 md:p-8 max-w-7xl animate-in fade-in duration-500">
+        <div className="animate-in fade-in duration-500 pb-12">
+            <div className="container mx-auto p-4 md:p-8 max-w-7xl">
             {/* Main Header */}
             <header className="mb-10">
                 <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
@@ -886,47 +928,87 @@ function AccountingPage() {
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                        <div>
-                                            <h3 className="text-[11px] font-black text-gray-500 uppercase tracking-[0.25em] mb-2">
-                                                By Month
+                                    <div className="flex justify-end mb-4">
+                                        <div className="bg-gray-100 dark:bg-gray-700 p-1 rounded-xl flex items-center gap-1 mr-4">
+                                            <button 
+                                                onClick={() => setChartFlow('out')}
+                                                className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-colors ${chartFlow === 'out' ? 'bg-white dark:bg-gray-800 text-red-500 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
+                                            >
+                                                Money Out
+                                            </button>
+                                            <button 
+                                                onClick={() => setChartFlow('in')}
+                                                className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-colors ${chartFlow === 'in' ? 'bg-white dark:bg-gray-800 text-green-500 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
+                                            >
+                                                Money In
+                                            </button>
+                                        </div>
+                                        <div className="bg-gray-100 dark:bg-gray-700 p-1 rounded-xl flex items-center gap-1">
+                                            <button 
+                                                onClick={() => setChartType('pie')}
+                                                className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-colors ${chartType === 'pie' ? 'bg-white dark:bg-gray-800 text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
+                                            >
+                                                Pie Chart
+                                            </button>
+                                            <button 
+                                                onClick={() => setChartType('bar')}
+                                                className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-colors ${chartType === 'bar' ? 'bg-white dark:bg-gray-800 text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
+                                            >
+                                                Bar Chart
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                        <div className="bg-gray-50 dark:bg-gray-900/40 rounded-[2rem] p-6 border border-gray-100 dark:border-gray-700">
+                                            <h3 className="text-[11px] font-black text-gray-500 uppercase tracking-[0.25em] mb-4 text-center">
+                                                {chartFlow === "out" ? "Money Out by Category" : "Money In by Category"}
                                             </h3>
-                                            <div className="space-y-1">
-                                                {overview.by_month.map(m => (
-                                                    <div key={m.month} className="flex items-center justify-between text-xs text-gray-700 dark:text-gray-200">
-                                                        <span className="font-semibold">
-                                                            {m.month}. {t('month_short', { defaultValue: '' })}
-                                                        </span>
-                                                        <span>
-                                                            IN {m.total_in.toLocaleString()} / OUT {m.total_out.toLocaleString()}
-                                                        </span>
-                                                    </div>
-                                                ))}
-                                                {overview.by_month.length === 0 && (
-                                                    <p className="text-xs text-gray-400 italic">
-                                                        No recorded transactions for this year yet.
-                                                    </p>
-                                                )}
+                                            <div className="h-[300px] w-full">
+                                                <ResponsiveContainer width="100%" height="100%">
+                                                    {chartType === 'pie' ? (
+                                                        <PieChart>
+                                                            <Pie data={overview.by_category} dataKey={chartFlow === "out" ? "total_out" : "total_in"} nameKey="category" cx="50%" cy="50%" outerRadius={100} label={({name, percent}) => percent > 0 ? `${name} ${(percent * 100).toFixed(0)}%` : ''}>
+                                                                {overview.by_category.map((entry, index) => (
+                                                                    <Cell key={`cell-${index}`} fill={['#6366f1', '#ec4899', '#f59e0b', '#10b981', '#8b5cf6', '#3b82f6', '#ef4444'][index % 7]} />
+                                                                ))}
+                                                            </Pie>
+                                                            <Tooltip formatter={(value) => `${value.toLocaleString()} ISK`} />
+                                                        </PieChart>
+                                                    ) : (
+                                                        <BarChart data={overview.by_category}>
+                                                            <XAxis dataKey="category" tick={{fontSize: 10}} />
+                                                            <YAxis tick={{fontSize: 10}} />
+                                                            <Tooltip formatter={(value) => `${value.toLocaleString()} ISK`} />
+                                                            <Bar dataKey={chartFlow === "out" ? "total_out" : "total_in"} fill="#6366f1" radius={[4, 4, 0, 0]} />
+                                                        </BarChart>
+                                                    )}
+                                                </ResponsiveContainer>
                                             </div>
                                         </div>
-                                        <div>
-                                            <h3 className="text-[11px] font-black text-gray-500 uppercase tracking-[0.25em] mb-2">
-                                                By Category
+                                        <div className="bg-gray-50 dark:bg-gray-900/40 rounded-[2rem] p-6 border border-gray-100 dark:border-gray-700">
+                                            <h3 className="text-[11px] font-black text-gray-500 uppercase tracking-[0.25em] mb-4 text-center">
+                                                {chartFlow === "out" ? "Money Out by Project" : "Money In by Project"}
                                             </h3>
-                                            <div className="space-y-1">
-                                                {overview.by_category.map(c => (
-                                                    <div key={c.category} className="flex items-center justify-between text-xs text-gray-700 dark:text-gray-200">
-                                                        <span className="font-semibold capitalize">{c.category}</span>
-                                                        <span>
-                                                            IN {c.total_in.toLocaleString()} / OUT {c.total_out.toLocaleString()}
-                                                        </span>
-                                                    </div>
-                                                ))}
-                                                {overview.by_category.length === 0 && (
-                                                    <p className="text-xs text-gray-400 italic">
-                                                        No category breakdown available.
-                                                    </p>
-                                                )}
+                                            <div className="h-[300px] w-full">
+                                                <ResponsiveContainer width="100%" height="100%">
+                                                    {chartType === 'pie' ? (
+                                                        <PieChart>
+                                                            <Pie data={(overview.by_project && overview.by_project.length > 0) ? overview.by_project.map(p => ({...p, project_id: p.project_id || "other"})) : [{project_id: "other", total_out: 0, total_in: 0}]} dataKey={chartFlow === "out" ? "total_out" : "total_in"} nameKey="project_id" cx="50%" cy="50%" outerRadius={100} label={({name, percent}) => percent > 0 ? `${name === "other" || name === "None" ? "Other" : (projects.find(p => p.id === name)?.name || `Proj ${name}`)} ${(percent * 100).toFixed(0)}%` : ''}>
+                                                                {overview.by_project?.map((entry, index) => (
+                                                                    <Cell key={`cell-${index}`} fill={['#10b981', '#3b82f6', '#f59e0b', '#ec4899', '#8b5cf6', '#6366f1', '#ef4444'][index % 7]} />
+                                                                ))}
+                                                            </Pie>
+                                                            <Tooltip formatter={(value) => `${value.toLocaleString()} ISK`} labelFormatter={(label) => label === "other" || label === "None" ? "Other (Unlinked)" : (projects.find(p => p.id === label)?.name || `Project ${label}`)} />
+                                                        </PieChart>
+                                                    ) : (
+                                                        <BarChart data={overview.by_project?.map(p => ({...p, project_id: p.project_id || "other"})) || []}>
+                                                            <XAxis dataKey="project_id" tick={{fontSize: 10}} tickFormatter={(val) => val === "other" || val === "None" ? "Other" : (projects.find(p => p.id === val)?.name?.substring(0, 8) || `P${val}`)} />
+                                                            <YAxis tick={{fontSize: 10}} />
+                                                            <Tooltip formatter={(value) => `${value.toLocaleString()} ISK`} labelFormatter={(label) => label === "other" || label === "None" ? "Other (Unlinked)" : (projects.find(p => p.id === label)?.name || `Project ${label}`)} />
+                                                            <Bar dataKey={chartFlow === "out" ? "total_out" : "total_in"} fill="#10b981" radius={[4, 4, 0, 0]} />
+                                                        </BarChart>
+                                                    )}
+                                                </ResponsiveContainer>
                                             </div>
                                         </div>
                                     </div>
@@ -1112,8 +1194,112 @@ function AccountingPage() {
                     </div>
                 </section>
             )}
+
+            </div> {/* End max-w-7xl container */}
+
+            {/* Detailed Entries List spanning full width */}
+            {isManagement && activeTab === 'financial' && (
+                <div className="w-full px-4 md:px-8 mt-8 mb-12">
+                    <button 
+                        onClick={() => setShowDetailedEntries(!showDetailedEntries)}
+                        className="px-4 py-3 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black uppercase tracking-widest rounded-xl transition-colors w-full shadow-sm"
+                    >
+                        {showDetailedEntries ? 'Hide Detailed Entries List' : 'Show Detailed Entries List'}
+                    </button>
+                    
+                    {showDetailedEntries && (
+                        <div className="mt-6 bg-white dark:bg-gray-800 rounded-[2rem] border border-gray-100 dark:border-gray-700 overflow-hidden shadow-sm animate-in fade-in duration-500">
+                            <div className="overflow-x-auto p-4">
+                                <table className="w-full text-left text-xs">
+                                    <thead className="bg-gray-50 dark:bg-gray-900 border-b border-gray-100 dark:border-gray-700">
+                                        <tr>
+                                            <th className="px-4 py-3 font-black text-gray-500 uppercase tracking-wider rounded-tl-xl">Date</th>
+                                            <th className="px-4 py-3 font-black text-gray-500 uppercase tracking-wider">Amount</th>
+                                            <th className="px-4 py-3 font-black text-gray-500 uppercase tracking-wider">Type / Cat</th>
+                                            <th className="px-4 py-3 font-black text-gray-500 uppercase tracking-wider">Project</th>
+                                            <th className="px-4 py-3 font-black text-gray-500 uppercase tracking-wider">Desc / Ref</th>
+                                            <th className="px-4 py-3 font-black text-gray-500 uppercase tracking-wider text-right rounded-tr-xl">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                                        {allExpenses.map(e => (
+                                            <tr key={e.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors">
+                                                {editingExpenseId === e.id ? (
+                                                    <>
+                                                        <td className="px-4 py-3">
+                                                            <input type="date" value={editingExpenseData.date} onChange={(ev) => setEditingExpenseData({...editingExpenseData, date: ev.target.value})} className="modern-input h-8 w-full" />
+                                                        </td>
+                                                        <td className="px-4 py-3">
+                                                            <input type="number" value={editingExpenseData.amount} onChange={(ev) => setEditingExpenseData({...editingExpenseData, amount: ev.target.value})} className="modern-input h-8 w-24" />
+                                                        </td>
+                                                        <td className="px-4 py-3">
+                                                            <select value={editingExpenseData.flow_type} onChange={(ev) => setEditingExpenseData({...editingExpenseData, flow_type: ev.target.value})} className="modern-input h-8 w-16 mb-1">
+                                                                <option value="out">Out</option>
+                                                                <option value="in">In</option>
+                                                            </select>
+                                                            <select value={editingExpenseData.category} onChange={(ev) => setEditingExpenseData({...editingExpenseData, category: ev.target.value})} className="modern-input h-8 w-20">
+                                                                <option value="car">Car</option>
+                                                                <option value="tool">Tool</option>
+                                                                <option value="repair">Repair</option>
+                                                                <option value="clothing">Clothing</option>
+                                                                <option value="project">Project</option>
+                                                                <option value="other">Other</option>
+                                                            </select>
+                                                        </td>
+                                                        <td className="px-4 py-3">
+                                                            <select value={editingExpenseData.project_id || ''} onChange={(ev) => setEditingExpenseData({...editingExpenseData, project_id: ev.target.value})} className="modern-input h-8 w-full">
+                                                                <option value="">None</option>
+                                                                {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                                                            </select>
+                                                        </td>
+                                                        <td className="px-4 py-3">
+                                                            <input type="text" placeholder="Desc" value={editingExpenseData.description || ''} onChange={(ev) => setEditingExpenseData({...editingExpenseData, description: ev.target.value})} className="modern-input h-8 w-full mb-1" />
+                                                            <input type="text" placeholder="Ref" value={editingExpenseData.reference || ''} onChange={(ev) => setEditingExpenseData({...editingExpenseData, reference: ev.target.value})} className="modern-input h-8 w-full" />
+                                                        </td>
+                                                        <td className="px-4 py-3 text-right">
+                                                            <div className="flex justify-end gap-2">
+                                                                <button onClick={() => handleEditExpenseSubmit(e.id)} className="px-2 py-1 bg-green-500 hover:bg-green-600 text-white rounded font-bold">Save</button>
+                                                                <button onClick={() => setEditingExpenseId(null)} className="px-2 py-1 bg-gray-400 hover:bg-gray-500 text-white rounded font-bold">Cancel</button>
+                                                            </div>
+                                                        </td>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <td className="px-4 py-3">{new Date(e.date).toLocaleDateString()}</td>
+                                                        <td className="px-4 py-3 font-bold">
+                                                            <span className={e.flow_type === 'in' ? 'text-emerald-600' : 'text-red-500'}>
+                                                                {e.flow_type === 'in' ? '+' : '-'}{e.amount.toLocaleString()} ISK
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-4 py-3 capitalize">{e.flow_type} / {e.category}</td>
+                                                        <td className="px-4 py-3">{e.project_id ? (projects.find(p => p.id === e.project_id)?.name || `Project ${e.project_id}`) : 'Other'}</td>
+                                                        <td className="px-4 py-3 text-gray-500">
+                                                            <div>{e.description || '-'}</div>
+                                                            <div className="text-[10px]">{e.reference ? `Ref: ${e.reference}` : ''}</div>
+                                                        </td>
+                                                        <td className="px-4 py-3 text-right">
+                                                            <div className="flex justify-end gap-2">
+                                                                <button onClick={() => { setEditingExpenseId(e.id); setEditingExpenseData(e); }} className="text-indigo-500 hover:text-indigo-700 font-bold uppercase tracking-widest text-[9px]">Edit</button>
+                                                                <button onClick={() => handleDeleteExpense(e.id)} className="text-red-500 hover:text-red-700 font-bold uppercase tracking-widest text-[9px]">Del</button>
+                                                            </div>
+                                                        </td>
+                                                    </>
+                                                )}
+                                            </tr>
+                                        ))}
+                                        {allExpenses.length === 0 && (
+                                            <tr><td colSpan="6" className="px-4 py-6 text-center text-gray-500 italic">No entries found.</td></tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
         </div>
     );
+
 }
 
 export default AccountingPage;

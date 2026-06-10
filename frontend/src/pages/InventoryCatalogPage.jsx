@@ -6,6 +6,8 @@ import axiosInstance from '../api/axiosInstance';
 import { toast } from 'react-toastify';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ConfirmationModal from '../components/ConfirmationModal';
+import InventoryCategoryModal from '../components/InventoryCategoryModal';
+import InventoryMergeModal from '../components/InventoryMergeModal';
 import InventoryCatalogShopFilters from '../components/InventoryCatalogShopFilters';
 import { inventoryDisplayName, inventoryCategoryLine } from '../utils/inventoryI18n';
 import { 
@@ -19,7 +21,8 @@ import {
     ChevronRightIcon,
     AdjustmentsHorizontalIcon,
     ShoppingBagIcon,
-    ArchiveBoxIcon
+    ArchiveBoxIcon,
+    XMarkIcon
 } from '@heroicons/react/24/outline';
 
 /**
@@ -68,8 +71,59 @@ function InventoryCatalogPage() {
     const [globalSearchLoading, setGlobalSearchLoading] = useState(false);
     const [catalogRefreshTrigger, setCatalogRefreshTrigger] = useState(0);
 
+    const [selectedItemIds, setSelectedItemIds] = useState(new Set());
+    const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+    const [isMergeModalOpen, setIsMergeModalOpen] = useState(false);
+
+    const toggleSelectItem = (id, e) => {
+        e.stopPropagation();
+        setSelectedItemIds(prev => {
+            const next = new Set(prev);
+            if (next.has(id)) next.delete(id);
+            else next.add(id);
+            return next;
+        });
+    };
+
+    const handleBulkEditCategory = async (payload) => {
+        try {
+            await axiosInstance.post('/inventory/catalog/bulk-edit', payload);
+            toast.success('Categories updated successfully');
+            setSelectedItemIds(new Set());
+            fetchFilters();
+            fetchItems(selectedCategory, selectedSubcategory);
+        } catch (err) {
+            toast.error('Failed to update categories');
+        }
+    };
+
+    const handleBulkDelete = async () => {
+        if (!window.confirm(`Are you sure you want to permanently delete ${selectedItemIds.size} items?`)) return;
+        try {
+            await axiosInstance.post('/inventory/catalog/bulk-delete', { item_ids: Array.from(selectedItemIds) });
+            toast.success('Items deleted successfully');
+            setSelectedItemIds(new Set());
+            fetchItems(selectedCategory, selectedSubcategory);
+        } catch (err) {
+            toast.error('Failed to delete items');
+        }
+    };
+
+    const handleMergeItems = async (payload) => {
+        try {
+            await axiosInstance.post('/inventory/catalog/merge', payload);
+            toast.success('Items merged successfully');
+            setSelectedItemIds(new Set());
+            fetchItems(selectedCategory, selectedSubcategory);
+        } catch (err) {
+            toast.error('Failed to merge items');
+        }
+    };
+
+
     const isSuperuser = user?.is_superuser;
     const canManageCatalog = !!isSuperuser;
+
 
     const shopsKey = useMemo(() => [...selectedShops].sort().join(','), [selectedShops]);
 
@@ -139,9 +193,13 @@ function InventoryCatalogPage() {
         return { categoryTitle, subTitle };
     }, [categoryTree, selectedCategory, selectedSubcategory]);
 
-    // Reset sub-variant filter when changing category or subcategory
+    // State for brand filtering
+    const [selectedBrand, setSelectedBrand] = useState(null);
+
+    // Reset sub-variant and brand filter when changing category or subcategory
     useEffect(() => {
         setSelectedVariant(null);
+        setSelectedBrand(null);
     }, [selectedCategory, selectedSubcategory]);
 
     useEffect(() => {
@@ -185,10 +243,9 @@ function InventoryCatalogPage() {
     const baseItems = useMemo(() => {
         if (!selectedCategory || !selectedSubcategory) return [];
         return items.filter((item) => {
-            const cat = (item.category || 'Uncategorized').trim();
-            const rawSub = (item.subcategory || '').trim();
-            const baseSub = rawSub.split('/')[0].trim();
-            return cat === selectedCategory && baseSub === selectedSubcategory;
+            const cat = (item.master_category || 'Uncategorized').trim();
+            const sub = (item.category || '').trim();
+            return cat === selectedCategory && sub === selectedSubcategory;
         });
     }, [items, selectedCategory, selectedSubcategory]);
 
@@ -196,29 +253,36 @@ function InventoryCatalogPage() {
     const variantOptions = useMemo(() => {
         const set = new Set();
         baseItems.forEach((item) => {
-            const rawSub = (item.subcategory || '').trim();
-            const parts = rawSub.split('/').map(p => p.trim()).filter(Boolean);
-            if (parts.length > 1) {
-                const variant = parts.slice(1).join(' / ');
-                if (variant) set.add(variant);
-            }
+            const variant = (item.subcategory || '').trim();
+            if (variant) set.add(variant);
         });
         return Array.from(set).sort();
     }, [baseItems]);
 
-    // Variant filter only (text search uses full-database API when the search box has a value)
+    // Available brands within the current view
+    const brandOptions = useMemo(() => {
+        const set = new Set();
+        baseItems.forEach((item) => {
+            const brand = (item.brand || '').trim();
+            if (brand) set.add(brand);
+        });
+        return Array.from(set).sort((a, b) => a.localeCompare(b));
+    }, [baseItems]);
+
+    // Variant and brand filter
     const visibleItems = useMemo(() => {
         if (!selectedCategory || !selectedSubcategory) return [];
 
         return baseItems.filter((item) => {
-            const rawSub = (item.subcategory || '').trim();
-            const parts = rawSub.split('/').map(p => p.trim()).filter(Boolean);
-            const variant = parts.length > 1 ? parts.slice(1).join(' / ') : null;
+            const variant = (item.subcategory || '').trim() || null;
+            const brand = (item.brand || '').trim() || null;
 
             if (selectedVariant && variant !== selectedVariant) return false;
+            if (selectedBrand && brand !== selectedBrand) return false;
+            
             return true;
         });
-    }, [baseItems, selectedCategory, selectedSubcategory, selectedVariant]);
+    }, [baseItems, selectedCategory, selectedSubcategory, selectedVariant, selectedBrand]);
 
     const triggerDelete = (item) => {
         if (!canManageCatalog) return;
@@ -255,7 +319,17 @@ function InventoryCatalogPage() {
             onClick={() => navigate(`/inventory/edit/${item.id}`)}
             className="group bg-white dark:bg-gray-800 rounded-[2.5rem] border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-500 flex flex-col overflow-hidden cursor-pointer"
         >
-            <div className="h-64 bg-gray-50 dark:bg-gray-900/60 border-b border-gray-50 dark:border-gray-700/50 overflow-hidden">
+            <div className="h-64 bg-gray-50 dark:bg-gray-900/60 border-b border-gray-50 dark:border-gray-700/50 overflow-hidden relative">
+                {isSuperuser && (
+                    <div className="absolute top-4 left-4 z-10" onClick={(e) => e.stopPropagation()}>
+                        <input 
+                            type="checkbox" 
+                            checked={selectedItemIds.has(item.id)}
+                            onChange={(e) => toggleSelectItem(item.id, e)}
+                            className="h-6 w-6 text-blue-600 rounded border-gray-300 focus:ring-blue-500 shadow-sm cursor-pointer"
+                        />
+                    </div>
+                )}
                 {item.local_image_path ? (
                     <img
                         src={resolveImageUrl(item.local_image_path)}
@@ -564,7 +638,7 @@ function InventoryCatalogPage() {
                                         : 'bg-gray-50 dark:bg-gray-900 text-gray-500 border-gray-100 dark:border-gray-700 hover:bg-gray-100'
                                 }`}
                             >
-                                {t('all', { defaultValue: 'All types' })}
+                                {t('all_subcategories', { defaultValue: 'All Types' })}
                             </button>
                             {variantOptions.map((variant) => (
                                 <button
@@ -578,6 +652,36 @@ function InventoryCatalogPage() {
                                     }`}
                                 >
                                     {variant}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+
+                    {brandOptions.length > 0 && (
+                        <div className="mb-6 flex flex-wrap gap-2">
+                            <button
+                                type="button"
+                                onClick={() => setSelectedBrand(null)}
+                                className={`px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-[0.18em] border transition ${
+                                    !selectedBrand
+                                        ? 'bg-indigo-600 text-white border-indigo-700'
+                                        : 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-500 border-indigo-100 dark:border-indigo-800 hover:bg-indigo-100'
+                                }`}
+                            >
+                                {t('all_brands', { defaultValue: 'All Brands' })}
+                            </button>
+                            {brandOptions.map((brand) => (
+                                <button
+                                    key={brand}
+                                    type="button"
+                                    onClick={() => setSelectedBrand(brand)}
+                                    className={`px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-[0.18em] border transition ${
+                                        selectedBrand === brand
+                                            ? 'bg-indigo-600 text-white border-indigo-700'
+                                            : 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-500 border-indigo-100 dark:border-indigo-800 hover:bg-indigo-100 hover:text-indigo-700'
+                                    }`}
+                                >
+                                    {brand}
                                 </button>
                             ))}
                         </div>
@@ -602,6 +706,37 @@ function InventoryCatalogPage() {
                     </div>
                 </>
             )}
+
+            {/* Superadmin Bulk Action Bar */}
+            {isSuperuser && selectedItemIds.size > 0 && (
+                <div className="fixed bottom-6 inset-x-0 mx-auto max-w-2xl bg-white dark:bg-gray-800 shadow-2xl rounded-full border border-gray-200 dark:border-gray-700 p-4 flex items-center justify-between z-50">
+                    <div className="flex items-center space-x-2">
+                        <span className="bg-blue-100 text-blue-800 text-sm font-bold px-3 py-1 rounded-full">{selectedItemIds.size} Selected</span>
+                    </div>
+                    <div className="flex space-x-3">
+                        <button onClick={() => setIsCategoryModalOpen(true)} className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm font-bold rounded-full">Move / Edit Category</button>
+                        {selectedItemIds.size > 1 && (
+                            <button onClick={() => setIsMergeModalOpen(true)} className="px-4 py-2 bg-orange-100 hover:bg-orange-200 text-orange-800 text-sm font-bold rounded-full">Merge Items</button>
+                        )}
+                        <button onClick={handleBulkDelete} className="px-4 py-2 bg-red-100 hover:bg-red-200 text-red-800 text-sm font-bold rounded-full">Delete</button>
+                        <button onClick={() => setSelectedItemIds(new Set())} className="px-3 py-2 text-gray-500 hover:text-gray-700"><XMarkIcon className="h-5 w-5" /></button>
+                    </div>
+                </div>
+            )}
+
+            <InventoryCategoryModal 
+                isOpen={isCategoryModalOpen}
+                onClose={() => setIsCategoryModalOpen(false)}
+                selectedIds={Array.from(selectedItemIds)}
+                onSave={handleBulkEditCategory}
+            />
+            
+            <InventoryMergeModal
+                isOpen={isMergeModalOpen}
+                onClose={() => setIsMergeModalOpen(false)}
+                selectedItems={items.filter(i => selectedItemIds.has(i.id))}
+                onMerge={handleMergeItems}
+            />
 
             {/* Registry Purge Confirmation */}
             <ConfirmationModal

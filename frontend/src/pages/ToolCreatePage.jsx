@@ -119,7 +119,7 @@ function ToolCreatePage() {
                                 required 
                                 value={formData.name} 
                                 onChange={handleChange} 
-                                placeholder="e.g., Heavy Duty Impact Drill"
+                                placeholder={t('placeholder_tool_name')}
                                 className="block w-full h-12 rounded-2xl border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-indigo-500 font-bold" 
                             />
                         </div>
@@ -127,11 +127,11 @@ function ToolCreatePage() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <label className="block text-[10px] font-black text-gray-500 uppercase mb-1 ml-1 tracking-widest">{t('brand')}</label>
-                                <input type="text" name="brand" value={formData.brand} onChange={handleChange} placeholder="e.g., Milwaukee" className="block w-full h-12 rounded-2xl border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-indigo-500 text-sm" />
+                                <input type="text" name="brand" value={formData.brand} onChange={handleChange} placeholder={t('placeholder_tool_brand')} className="block w-full h-12 rounded-2xl border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-indigo-500 text-sm" />
                             </div>
                             <div>
                                 <label className="block text-[10px] font-black text-gray-500 uppercase mb-1 ml-1 tracking-widest">{t('model')}</label>
-                                <input type="text" name="model" value={formData.model} onChange={handleChange} placeholder="e.g., M18 FUEL" className="block w-full h-12 rounded-2xl border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-indigo-500 text-sm" />
+                                <input type="text" name="model" value={formData.model} onChange={handleChange} placeholder={t('placeholder_tool_model')} className="block w-full h-12 rounded-2xl border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-indigo-500 text-sm" />
                             </div>
                         </div>
 
@@ -139,7 +139,7 @@ function ToolCreatePage() {
                             <label className="block text-[10px] font-black text-gray-500 uppercase mb-1 ml-1 tracking-widest">{t('serial_number')}</label>
                             <div className="relative group">
                                 <IdentificationIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-indigo-500 transition-colors" />
-                                <input type="text" name="serial_number" value={formData.serial_number} onChange={handleChange} placeholder="S/N: 0000-0000-0000" className="pl-12 block w-full h-12 rounded-2xl border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-indigo-500 font-mono text-xs font-bold" />
+                                <input type="text" name="serial_number" value={formData.serial_number} onChange={handleChange} placeholder={t('placeholder_tool_sn')} className="pl-12 block w-full h-12 rounded-2xl border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-indigo-500 font-mono text-xs font-bold" />
                             </div>
                         </div>
                     </section>
@@ -153,7 +153,7 @@ function ToolCreatePage() {
                             value={formData.description} 
                             onChange={handleChange} 
                             rows="4" 
-                            placeholder="Voltage, battery requirements, case contents, or special handling notes..."
+                            placeholder={t('placeholder_tool_desc')}
                             className="block w-full rounded-[1.5rem] border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-indigo-500 text-sm"
                         ></textarea>
                     </section>

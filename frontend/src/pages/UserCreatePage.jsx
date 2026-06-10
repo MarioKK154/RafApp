@@ -60,7 +60,7 @@ function UserCreatePage() {
                 setTenants(extractTenantList(response?.data));
             } catch (error) {
                 console.error('Fetch tenants failed:', error);
-                toast.error("Failed to load infrastructure nodes (tenants).");
+                toast.error(t('toast_failed_load_tenants'));
             }
         }
     }, [isSuperuser]);
@@ -75,10 +75,25 @@ function UserCreatePage() {
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: type === 'checkbox' ? checked : value,
-        }));
+        setFormData(prev => {
+            let newVal = type === 'checkbox' ? checked : value;
+            
+            if (name === 'kennitala') {
+                let cleaned = newVal.replace(/\D/g, '');
+                if (cleaned.length > 6) {
+                    newVal = cleaned.substring(0, 6) + '-' + cleaned.substring(6, 10);
+                } else {
+                    newVal = cleaned;
+                }
+            }
+
+            let updates = { [name]: newVal };
+            if (name === 'is_superuser' && newVal) {
+                updates.tenant_id = '1';
+                updates.role = 'admin';
+            }
+            return { ...prev, ...updates };
+        });
     };
 
     const handleSubmit = async (e) => {
@@ -86,7 +101,7 @@ function UserCreatePage() {
         if (!isAdmin) return;
 
         if (formData.password.length < 8) {
-            toast.error('Security Protocol: Password must be at least 8 characters.');
+            toast.error(t('toast_password_length_req'));
             return;
         }
 
@@ -101,10 +116,10 @@ function UserCreatePage() {
 
         try {
             const response = await axiosInstance.post('/users/', payload);
-            toast.success('User created.');
+            toast.success(t('toast_user_created'));
             navigate('/users');
         } catch (error) {
-            const errorMsg = error.response?.data?.detail || 'Failed to initialize user node.';
+            const errorMsg = error.response?.data?.detail || t('toast_user_create_failed');
             setError(errorMsg);
             toast.error(errorMsg);
         } finally {
@@ -112,14 +127,14 @@ function UserCreatePage() {
         }
     };
 
-    if (authIsLoading) return <LoadingSpinner text="Authenticating Registry Access..." />;
+    if (authIsLoading) return <LoadingSpinner text={t('auth_registry_access')} />;
 
     return (
         <div className="container mx-auto p-4 md:p-8 max-w-5xl animate-in fade-in duration-500">
             {/* Header Protocol */}
             <header className="mb-12 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5">
                 <Link to="/users" className="flex items-center text-[10px] font-black text-gray-400 hover:text-indigo-600 transition mb-3 uppercase tracking-[0.2em]">
-                    <ChevronLeftIcon className="h-3 w-3 mr-1 stroke-[3px]" /> Terminate / Return to Registry
+                    <ChevronLeftIcon className="h-3 w-3 mr-1 stroke-[3px]" /> {t('terminate_return_registry')}
                 </Link>
                 <div className="flex items-center gap-3">
                     <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
@@ -143,15 +158,15 @@ function UserCreatePage() {
                     <section className="bg-white dark:bg-gray-800 p-8 md:p-10 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-700 space-y-8">
                         <div className="flex items-center gap-3 border-b border-gray-50 dark:border-gray-700 pb-6">
                             <KeyIcon className="h-6 w-6 text-indigo-500" />
-                            <h2 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-[0.2em]">Auth Credentials</h2>
+                            <h2 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-[0.2em]">{t('auth_credentials')}</h2>
                         </div>
                         
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <Field label="Personnel Email*" icon={<EnvelopeIcon />}>
-                                <input type="email" name="email" required value={formData.email} onChange={handleChange} disabled={isSubmitting} className="modern-input h-14" placeholder="user@company.is" />
+                            <Field label={t('personnel_email_req')} icon={<EnvelopeIcon />}>
+                                <input type="email" name="email" required value={formData.email} onChange={handleChange} disabled={isSubmitting} className="modern-input h-14" placeholder={t('email_placeholder')} />
                             </Field>
-                            <Field label="Access Password*" icon={<ShieldCheckIcon />}>
-                                <input type="password" name="password" required value={formData.password} onChange={handleChange} disabled={isSubmitting} className="modern-input h-14" placeholder="Min 8 characters" />
+                            <Field label={t('access_password_req')} icon={<ShieldCheckIcon />}>
+                                <input type="password" name="password" required value={formData.password} onChange={handleChange} disabled={isSubmitting} className="modern-input h-14" placeholder={t('min_8_chars')} />
                             </Field>
                         </div>
                     </section>
@@ -160,23 +175,23 @@ function UserCreatePage() {
                     <section className="bg-white dark:bg-gray-800 p-8 md:p-10 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-700 space-y-8">
                         <div className="flex items-center gap-3 border-b border-gray-50 dark:border-gray-700 pb-6">
                             <IdentificationIcon className="h-6 w-6 text-indigo-500" />
-                            <h2 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-[0.2em]">Personnel Metadata</h2>
+                            <h2 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-[0.2em]">{t('personnel_metadata')}</h2>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                             <div className="md:col-span-2">
-                                <Field label="Full Legal Name" icon={<UserIcon />}>
-                                    <input type="text" name="full_name" value={formData.full_name} onChange={handleChange} disabled={isSubmitting} className="modern-input h-14 font-black" placeholder="Official Name" />
+                                <Field label={t('full_legal_name')} icon={<UserIcon />}>
+                                    <input type="text" name="full_name" value={formData.full_name} onChange={handleChange} disabled={isSubmitting} className="modern-input h-14 font-black" placeholder={t('official_name_placeholder')} />
                                 </Field>
                             </div>
-                            <Field label="Kennitala (ID Number)" icon={<FingerPrintIcon />}>
-                                <input type="text" name="kennitala" value={formData.kennitala} onChange={handleChange} disabled={isSubmitting} className="modern-input h-14 font-mono" placeholder="000000-0000" />
+                            <Field label={t('kennitala_id_number')} icon={<FingerPrintIcon />}>
+                                <input type="text" name="kennitala" value={formData.kennitala} onChange={handleChange} disabled={isSubmitting} className="modern-input h-14 font-mono" placeholder={t('kennitala_placeholder')} />
                             </Field>
-                            <Field label="Employee Identifier" icon={<IdentificationIcon />}>
-                                <input type="text" name="employee_id" value={formData.employee_id} onChange={handleChange} disabled={isSubmitting} className="modern-input h-14 font-bold" placeholder="EMP-000" />
+                            <Field label={t('employee_identifier')} icon={<IdentificationIcon />}>
+                                <input type="text" name="employee_id" value={formData.employee_id} onChange={handleChange} disabled={isSubmitting} className="modern-input h-14 font-bold" placeholder={t('emp_placeholder')} />
                             </Field>
                             <Field label={t('phone_optional')} icon={<PhoneIcon />}>
-                                <input type="tel" name="phone_number" value={formData.phone_number} onChange={handleChange} disabled={isSubmitting} className="modern-input h-14" placeholder="e.g. +354..." />
+                                <input type="tel" name="phone_number" value={formData.phone_number} onChange={handleChange} disabled={isSubmitting} className="modern-input h-14" placeholder={t('phone_placeholder')} />
                             </Field>
                             <Field label={t('hourly_rate_optional')} icon={<BanknotesIcon />}>
                                 <input type="number" name="hourly_rate" value={formData.hourly_rate} onChange={handleChange} disabled={isSubmitting} className="modern-input h-14 font-mono" placeholder="0" step="any" min="0" />
@@ -191,23 +206,23 @@ function UserCreatePage() {
                     <section className="bg-white dark:bg-gray-800 p-8 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-700 space-y-6">
                         <div className="flex items-center gap-3 mb-4">
                             <BriefcaseIcon className="h-5 w-5 text-indigo-500" />
-                            <h2 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-widest italic">Operations</h2>
+                            <h2 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-widest italic">{t('operations')}</h2>
                         </div>
 
-                        <Field label="Deployment Base (City)" icon={<MapIcon />}>
-                            <input type="text" name="city" value={formData.city} onChange={handleChange} disabled={isSubmitting} className="modern-input h-14 font-bold" placeholder="e.g. Reykjavík" />
+                        <Field label={t('deployment_base_city')} icon={<MapIcon />}>
+                            <input type="text" name="city" value={formData.city} onChange={handleChange} disabled={isSubmitting} className="modern-input h-14 font-bold" placeholder={t('city_placeholder')} />
                         </Field>
 
-                        <Field label="Operational Role*" icon={<BriefcaseIcon />}>
+                        <Field label={t('operational_role_req')} icon={<BriefcaseIcon />}>
                             <select name="role" required value={formData.role} onChange={handleChange} disabled={isSubmitting} className="modern-input h-14 font-black uppercase text-[11px] tracking-widest appearance-none">
                                 {ROLES_LIST.map(r => <option key={r} value={r}>{r.toUpperCase()}</option>)}
                             </select>
                         </Field>
 
                         {isSuperuser && (
-                            <Field label="Assign to Cluster (Tenant)*" icon={<BuildingOfficeIcon />}>
+                            <Field label={t('assign_cluster_tenant')} icon={<BuildingOfficeIcon />}>
                                 <select name="tenant_id" required={isSuperuser} value={formData.tenant_id} onChange={handleChange} disabled={isSubmitting} className="modern-input h-14 bg-orange-50/20 dark:bg-orange-900/10 border-orange-100 dark:border-orange-800 font-bold">
-                                    <option value="">-- SELECT TENANT --</option>
+                                    <option value="">{t('select_tenant')}</option>
                                     {tenants.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                                 </select>
                             </Field>
@@ -217,13 +232,13 @@ function UserCreatePage() {
                     <section className="bg-white dark:bg-gray-800 p-8 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-700 space-y-4">
                         <label className="flex items-center gap-4 cursor-pointer group">
                             <input type="checkbox" name="is_active" checked={formData.is_active} onChange={handleChange} disabled={isSubmitting} className="h-6 w-6 text-indigo-600 rounded-lg border-gray-300 focus:ring-0" />
-                            <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest group-hover:text-indigo-600 transition-colors">Activate Account</span>
+                            <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest group-hover:text-indigo-600 transition-colors">{t('activate_account')}</span>
                         </label>
                         
                         {isSuperuser && (
                             <label className="flex items-center gap-4 cursor-pointer group pt-2">
                                 <input type="checkbox" name="is_superuser" checked={formData.is_superuser} onChange={handleChange} disabled={isSubmitting} className="h-6 w-6 text-orange-600 rounded-lg border-gray-300 focus:ring-0" />
-                                <span className="text-[10px] font-black text-orange-600 uppercase tracking-widest">Root Global Access</span>
+                                <span className="text-[10px] font-black text-orange-600 uppercase tracking-widest">{t('root_global_access')}</span>
                             </label>
                         )}
                     </section>

@@ -26,7 +26,7 @@ UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 def get_car_for_user(car_id: int, db: DbDependency, current_user: CurrentUserDependency) -> models.Car:
     """Helper to fetch a car and verify it belongs to the user's tenant or they are superadmin."""
-    effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
+    effective_tenant_id = current_user.tenant_id
     db_car = crud.get_car(db, car_id=car_id, tenant_id=effective_tenant_id)
     if not db_car:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Car not found or access denied.")
@@ -65,7 +65,7 @@ def create_new_car(request: Request, car: schemas.CarCreate, db: DbDependency, c
 @limiter.limit("100/minute")
 def read_all_cars(request: Request, db: DbDependency, current_user: CurrentUserDependency, skip: int = 0, limit: int = 100):
     """Retrieves all cars for the user's tenant. Superadmins see all."""
-    effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
+    effective_tenant_id = current_user.tenant_id
     return crud.get_cars(db=db, tenant_id=effective_tenant_id, skip=skip, limit=limit)
 
 @router.get("/{car_id}", response_model=schemas.CarRead)

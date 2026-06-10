@@ -36,7 +36,7 @@ async def get_comment_and_verify_tenant(
 
     # Verify tenant ownership unless user is Superadmin
     effective_tenant_id = db_comment.task.project.tenant_id
-    if not current_user.is_superuser and effective_tenant_id != current_user.tenant_id:
+    if effective_tenant_id != current_user.tenant_id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to access this comment")
     
     return db_comment

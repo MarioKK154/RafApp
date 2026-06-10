@@ -1,50 +1,39 @@
 import React from 'react';
 
-/**
- * A standardized loading spinner for the RafApp ecosystem.
- * Supports various sizes and optional status text.
- */
-function LoadingSpinner({ text = "Loading...", size = "md" }) {
-  // Define size-specific classes for the spinner and border thickness
-  let spinnerSizeClasses = "h-8 w-8 border-4"; // Default: md
-  
-  if (size === "sm") {
-    spinnerSizeClasses = "h-5 w-5 border-2";
-  } else if (size === "lg") {
-    spinnerSizeClasses = "h-12 w-12 border-4";
-  } else if (size === "xl") {
-    spinnerSizeClasses = "h-16 w-16 border-8";
-  }
-
-  return (
-    <div 
-      className="flex flex-col justify-center items-center space-y-3 py-8 w-full"
-      aria-live="polite"
-      aria-busy="true"
-    >
-      <div
-        className={`
-          ${spinnerSizeClasses} 
-          animate-spin 
-          rounded-full 
-          border-solid 
-          border-indigo-600 
-          border-t-transparent 
-          dark:border-indigo-400 
-          dark:border-t-transparent
-        `}
-        role="status"
-      >
-        <span className="sr-only">Loading...</span>
-      </div>
-      
-      {text && (
-        <p className="text-sm font-medium text-gray-600 dark:text-gray-400 animate-pulse">
-          {text}
-        </p>
-      )}
-    </div>
-  );
+function LoadingSpinner({ text = 'Loading...' }) {
+    return (
+        <div
+            className="flex flex-col items-center justify-center flex-1 min-h-[50vh] gap-5"
+            style={{ color: 'var(--text-muted)' }}
+        >
+            <div className="relative">
+                {/* Outer ring */}
+                <div
+                    className="h-12 w-12 rounded-full animate-spin"
+                    style={{
+                        border: '2.5px solid var(--border)',
+                        borderTopColor: 'var(--brand)',
+                    }}
+                />
+                {/* Inner dot */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                    <div
+                        className="h-1.5 w-1.5 rounded-full"
+                        style={{
+                            background: 'var(--brand)',
+                            animation: 'pulseSoft 1.5s ease-in-out infinite',
+                        }}
+                    />
+                </div>
+            </div>
+            <p
+                className="text-[9px] font-black uppercase tracking-[0.3em]"
+                style={{ animation: 'pulseSoft 2s ease-in-out infinite' }}
+            >
+                {text}
+            </p>
+        </div>
+    );
 }
 
 export default LoadingSpinner;

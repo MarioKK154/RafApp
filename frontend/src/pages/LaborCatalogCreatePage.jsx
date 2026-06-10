@@ -37,7 +37,7 @@ function LaborCatalogCreatePage() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!formData.description || !formData.default_unit_price) {
-            toast.warn("Please complete all required fields.");
+            toast.warn(t('toast_complete_required_fields'));
             return;
         }
 
@@ -47,11 +47,11 @@ function LaborCatalogCreatePage() {
                 ...formData,
                 default_unit_price: parseFloat(formData.default_unit_price)
             });
-            toast.success('Service category registered successfully!');
+            toast.success(t('toast_service_category_registered'));
             navigate('/labor-catalog');
         } catch (err) {
             console.error("Labor Catalog Create Error:", err);
-            toast.error(err.response?.data?.detail || 'Failed to initialize catalog item.');
+            toast.error(err.response?.data?.detail || t('toast_failed_initialize_catalog'));
         } finally {
             setIsSaving(false);
         }
@@ -89,11 +89,11 @@ function LaborCatalogCreatePage() {
                             required 
                             value={formData.description} 
                             onChange={handleChange} 
-                            placeholder="e.g., Master Electrician Rate"
+                            placeholder={t('placeholder_master_electrician')}
                             className="pl-10 block w-full rounded-2xl border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-indigo-500" 
                         />
                     </div>
-                    <p className="mt-1.5 text-[10px] text-gray-400 ml-1">The name of the labor category as it will appear on commercial offers.</p>
+                    <p className="mt-1.5 text-[10px] text-gray-400 ml-1">{t('service_desc_helper')}</p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -127,7 +127,7 @@ function LaborCatalogCreatePage() {
                             required 
                             value={formData.unit} 
                             onChange={handleChange} 
-                            placeholder="e.g., hour, visit, point"
+                            placeholder={t('placeholder_hour_visit_point')}
                             className="block w-full rounded-2xl border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-indigo-500" 
                         />
                     </div>

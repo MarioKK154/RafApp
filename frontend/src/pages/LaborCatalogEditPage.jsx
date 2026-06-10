@@ -18,12 +18,12 @@ import {
 } from '@heroicons/react/24/outline';
 
 /** ar.is Eining: value = units per hour → time per unit (e.g. 0.26 → 3.8 hr per unit) */
-function einingLabel(u) {
-    if (u === 0) return 'Hourly rate';
+function einingLabel(u, t) {
+    if (u === 0) return t('hourly_rate');
     if (u == null || !Number.isFinite(u) || u < 0) return '';
     const minPerUnit = 60 / u;
-    if (minPerUnit >= 60) return `${(minPerUnit / 60).toFixed(2)} hr per unit`;
-    return `${minPerUnit.toFixed(1)} min per unit`;
+    if (minPerUnit >= 60) return `${(minPerUnit / 60).toFixed(2)} ${t('hr_per_unit')}`;
+    return `${minPerUnit.toFixed(1)} ${t('min_per_unit')}`;
 }
 
 function LaborCatalogEditPage() {
@@ -71,7 +71,7 @@ function LaborCatalogEditPage() {
             });
         } catch (err) {
             console.error("Fetch Item Error:", err);
-            toast.error('Failed to retrieve catalog entry.');
+            toast.error(t('toast_failed_retrieve_catalog'));
             navigate('/labor-catalog');
         } finally {
             setIsLoading(false);
@@ -107,11 +107,11 @@ function LaborCatalogEditPage() {
             ? (formData.base_price !== '' ? parseFloat(formData.base_price) : null)
             : (formData.your_price !== '' ? parseFloat(formData.your_price) : null);
         if (priceToSave == null || isNaN(priceToSave) || priceToSave < 0) {
-            toast.warn(isSuperuser ? "Base price is required." : "Your price is required.");
+            toast.warn(isSuperuser ? t('toast_base_price_required') : t('toast_your_price_required'));
             return;
         }
         if (isSuperuser && !formData.description) {
-            toast.warn("Description is required.");
+            toast.warn(t('toast_description_required'));
             return;
         }
 
@@ -133,16 +133,16 @@ function LaborCatalogEditPage() {
                 }
                 : { default_unit_price: priceToSave };
             await axiosInstance.put(`/labor-catalog/${itemId}`, payload);
-            toast.success('Saved.');
+            toast.success(t('toast_saved'));
             navigate('/labor-catalog');
         } catch (err) {
-            toast.error(err.response?.data?.detail || 'Failed to update catalog item.');
+            toast.error(err.response?.data?.detail || t('toast_failed_update_catalog'));
         } finally {
             setIsSaving(false);
         }
     };
 
-    if (isLoading) return <LoadingSpinner text="Synchronizing with catalog registry..." />;
+    if (isLoading) return <LoadingSpinner text={t('sync_catalog_registry')} />;
 
     return (
         <div className="container mx-auto p-4 md:p-8 max-w-2xl animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -165,7 +165,7 @@ function LaborCatalogEditPage() {
                             </h1>
                             <div className="flex items-center gap-1.5 mt-2 text-[10px] font-bold text-gray-400 uppercase tracking-tighter">
                                 <FingerPrintIcon className="h-3 w-3" />
-                                Entry ID: {itemId}
+                                {t('entry_id')} {itemId}
                             </div>
                         </div>
                     </div>
@@ -178,7 +178,7 @@ function LaborCatalogEditPage() {
                 {/* Catalog description: read-only for tenants (from ar.is), editable for superadmin */}
                 <div>
                     <label className="block text-[10px] font-black text-gray-400 uppercase mb-1 ml-1 tracking-widest">
-                        {isSuperuser ? 'Service Category Description*' : 'Catalog item (from ar.is)'}
+                        {isSuperuser ? t('service_description_req') : t('catalog_item_aris')}
                     </label>
                     {isSuperuser ? (
                         <div className="relative">
@@ -189,7 +189,7 @@ function LaborCatalogEditPage() {
                                 required 
                                 value={formData.description} 
                                 onChange={handleChange} 
-                                placeholder="e.g., Master Electrician Rate"
+                                placeholder={t('placeholder_master_electrician')}
                                 className="pl-10 block w-full rounded-2xl border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-indigo-500" 
                             />
                         </div>
@@ -220,7 +220,7 @@ function LaborCatalogEditPage() {
                                 value={formData.description_en}
                                 onChange={handleChange}
                                 className="block w-full rounded-2xl border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-indigo-500"
-                                placeholder="Translated line item title"
+                                placeholder={t('placeholder_translated_line_item')}
                             />
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -273,7 +273,7 @@ function LaborCatalogEditPage() {
                             />
                         </div>
                         {!isSuperuser && (
-                            <p className="mt-1 text-[10px] text-gray-500 dark:text-gray-400">Catalog reference. Only your company&apos;s price below is used in offers.</p>
+                            <p className="mt-1 text-[10px] text-gray-500 dark:text-gray-400">{t('catalog_reference_helper')}</p>
                         )}
                     </div>
 
@@ -294,14 +294,14 @@ function LaborCatalogEditPage() {
                                 className="pl-10 block w-full rounded-2xl border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-indigo-500" 
                             />
                         </div>
-                        <p className="mt-1 text-[10px] text-gray-500 dark:text-gray-400">Your company&apos;s price for this item. Used in offers; does not change the catalog base.</p>
+                        <p className="mt-1 text-[10px] text-gray-500 dark:text-gray-400">{t('your_price_helper')}</p>
                     </div>
                 </div>
 
                 {/* ar.is Eining: display only */}
                 {formData.units_per_hour !== '' && formData.units_per_hour != null && (
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                        ar.is Eining: {Number(formData.units_per_hour)} units/hr → {einingLabel(Number(formData.units_per_hour))}
+                        ar.is Eining: {Number(formData.units_per_hour)} units/hr → {einingLabel(Number(formData.units_per_hour), t)}
                     </p>
                 )}
 
@@ -316,7 +316,7 @@ function LaborCatalogEditPage() {
                                 name="units_per_hour"
                                 min="0"
                                 step="0.01"
-                                placeholder="0 = hourly rate, 4 = 15 min/unit, 1.37, 6.15..."
+                                placeholder={t('placeholder_units_per_hour')}
                                 value={formData.units_per_hour === '' || formData.units_per_hour == null ? '' : formData.units_per_hour}
                                 onChange={handleChange}
                                 className="block w-full rounded-2xl border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-indigo-500"
@@ -335,17 +335,17 @@ function LaborCatalogEditPage() {
                         Condition variants (ar.is Eining per condition)
                     </h3>
                     {conditionVariants.length === 0 ? (
-                        <p className="text-sm text-slate-500 dark:text-slate-400 italic">No condition variants for this item.</p>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 italic">{t('no_condition_variants')}</p>
                     ) : (
                         <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-600">
                             <table className="w-full text-sm text-left">
                                 <thead className="bg-slate-100 dark:bg-slate-800 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                                     <tr>
-                                        <th className="py-3 px-4">Code</th>
-                                        <th className="py-3 px-4">Condition (IS)</th>
-                                        <th className="py-3 px-4">Condition (EN)</th>
-                                        <th className="py-3 px-4 text-right">Eining (units/hr)</th>
-                                        <th className="py-3 px-4 text-right">Time per unit</th>
+                                        <th className="py-3 px-4">{t('col_code')}</th>
+                                        <th className="py-3 px-4">{t('col_condition_is')}</th>
+                                        <th className="py-3 px-4">{t('col_condition_en')}</th>
+                                        <th className="py-3 px-4 text-right">{t('col_eining')}</th>
+                                        <th className="py-3 px-4 text-right">{t('col_time_per_unit')}</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
@@ -355,7 +355,7 @@ function LaborCatalogEditPage() {
                                             <td className="py-3 px-4 text-slate-700 dark:text-slate-300">{c.condition_description_is || c.condition_description}</td>
                                             <td className="py-3 px-4 text-slate-600 dark:text-slate-400 text-xs">{c.condition_description_en || '—'}</td>
                                             <td className="py-3 px-4 text-right font-mono">{c.units_per_hour != null ? Number(c.units_per_hour) : '—'}</td>
-                                            <td className="py-3 px-4 text-right font-medium text-indigo-600 dark:text-indigo-400">{einingLabel(c.units_per_hour) || '—'}</td>
+                                            <td className="py-3 px-4 text-right font-medium text-indigo-600 dark:text-indigo-400">{einingLabel(c.units_per_hour, t) || '—'}</td>
                                         </tr>
                                     ))}
                                 </tbody>

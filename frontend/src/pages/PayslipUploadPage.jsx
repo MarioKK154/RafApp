@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import axiosInstance from '../api/axiosInstance';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
@@ -7,6 +8,7 @@ import { CloudArrowUpIcon, UserIcon, BanknotesIcon } from '@heroicons/react/24/o
 
 const PayslipUploadPage = () => {
     const navigate = useNavigate();
+    const { t } = useTranslation();
     const { user: _currentUser } = useAuth();
     const [users, setUsers] = useState([]);
     const [loadingUsers, setLoadingUsers] = useState(true);
@@ -24,7 +26,7 @@ const PayslipUploadPage = () => {
         // Fetch users to populate the selection dropdown
         axiosInstance.get('/users/')
             .then(res => setUsers(res.data))
-            .catch(() => toast.error("Could not load employee list"))
+            .catch(() => toast.error(t('toast_could_not_load_employees')))
             .finally(() => setLoadingUsers(false));
     }, []);
 
@@ -40,7 +42,7 @@ const PayslipUploadPage = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!formData.file) {
-            toast.error("Please select a PDF payslip.");
+            toast.error(t('toast_select_pdf_payslip'));
             return;
         }
 
@@ -58,10 +60,10 @@ const PayslipUploadPage = () => {
             await axiosInstance.post('/accounting/payslips', uploadData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
-            toast.success("Payslip uploaded successfully!");
+            toast.success(t('toast_payslip_uploaded'));
             navigate('/accounting');
         } catch (error) {
-            toast.error(error.response?.data?.detail || "Upload failed");
+            toast.error(error.response?.data?.detail || t('toast_upload_failed'));
         } finally {
             setIsSubmitting(false);
         }
@@ -73,7 +75,7 @@ const PayslipUploadPage = () => {
                 <div className="p-6 border-b dark:border-gray-700">
                     <h1 className="text-xl font-bold flex items-center">
                         <CloudArrowUpIcon className="h-6 w-6 mr-2 text-blue-500" />
-                        Upload Employee Payslip
+                        {t('upload_employee_payslip')}
                     </h1>
                 </div>
 
@@ -81,7 +83,7 @@ const PayslipUploadPage = () => {
                     {/* Employee Selection */}
                     <div>
                         <label className="block text-sm font-medium mb-1 flex items-center">
-                            <UserIcon className="h-4 w-4 mr-1" /> Employee
+                            <UserIcon className="h-4 w-4 mr-1" /> {t('employee_label')}
                         </label>
                         <select
                             name="user_id"
@@ -91,7 +93,7 @@ const PayslipUploadPage = () => {
                             disabled={loadingUsers}
                             className="w-full rounded-xl border-gray-300 dark:bg-gray-700 dark:text-white"
                         >
-                            <option value="">{loadingUsers ? 'Loading employees...' : '-- Select Employee --'}</option>
+                            <option value="">{loadingUsers ? t('loading_employees') : t('select_employee')}</option>
                             {users.map(u => (
                                 <option key={u.id} value={u.id}>{u.full_name || u.email} ({u.role})</option>
                             ))}
@@ -100,7 +102,7 @@ const PayslipUploadPage = () => {
 
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium mb-1">Issue Date</label>
+                            <label className="block text-sm font-medium mb-1">{t('issue_date')}</label>
                             <input
                                 type="date"
                                 name="issue_date"
@@ -111,7 +113,7 @@ const PayslipUploadPage = () => {
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium mb-1">File (PDF)</label>
+                            <label className="block text-sm font-medium mb-1">{t('file_pdf')}</label>
                             <input
                                 type="file"
                                 name="file"
@@ -126,7 +128,7 @@ const PayslipUploadPage = () => {
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <label className="block text-sm font-medium mb-1 flex items-center">
-                                <BanknotesIcon className="h-4 w-4 mr-1" /> Brutto (Gross)
+                                <BanknotesIcon className="h-4 w-4 mr-1" /> {t('brutto_gross')}
                             </label>
                             <input
                                 type="number"
@@ -139,7 +141,7 @@ const PayslipUploadPage = () => {
                         </div>
                         <div>
                             <label className="block text-sm font-medium mb-1 flex items-center">
-                                <BanknotesIcon className="h-4 w-4 mr-1 text-green-500" /> Netto
+                                <BanknotesIcon className="h-4 w-4 mr-1 text-green-500" /> {t('netto')}
                             </label>
                             <input
                                 type="number"
@@ -153,13 +155,13 @@ const PayslipUploadPage = () => {
                     </div>
 
                     <div className="flex justify-end gap-3 pt-6">
-                        <button type="button" onClick={() => navigate('/accounting')} className="px-6 py-2 border rounded-xl dark:border-gray-600">Cancel</button>
+                        <button type="button" onClick={() => navigate('/accounting')} className="px-6 py-2 border rounded-xl dark:border-gray-600">{t('cancel_upload')}</button>
                         <button 
                             type="submit" 
                             disabled={isSubmitting}
                             className="px-8 py-2 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 disabled:opacity-50"
                         >
-                            {isSubmitting ? "Uploading..." : "Finish Upload"}
+                            {isSubmitting ? t('uploading') : t('finish_upload')}
                         </button>
                     </div>
                 </form>

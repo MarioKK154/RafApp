@@ -15,7 +15,8 @@ import {
     ChevronLeftIcon,
     ArrowPathIcon,
     CheckBadgeIcon,
-    InformationCircleIcon
+    InformationCircleIcon,
+    CloudArrowUpIcon
 } from '@heroicons/react/24/outline';
 
 function ShopCreatePage() {
@@ -28,6 +29,7 @@ function ShopCreatePage() {
         name: '', 
         address: '', 
         contact_person: '', 
+        contact_person_photo_url: '',
         phone_number: '', 
         email: '', 
         website: '', 
@@ -101,7 +103,7 @@ function ShopCreatePage() {
                                     required 
                                     value={formData.name} 
                                     onChange={handleChange} 
-                                    placeholder="Full company name..."
+                                    placeholder={t('placeholder_full_company')}
                                     className="block w-full h-12 rounded-2xl border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-indigo-500 font-bold" 
                                 />
                             </div>
@@ -114,7 +116,7 @@ function ShopCreatePage() {
                                         name="address" 
                                         value={formData.address} 
                                         onChange={handleChange} 
-                                        placeholder="Physical street address..."
+                                        placeholder={t('placeholder_physical_address')}
                                         className="pl-12 block w-full h-12 rounded-2xl border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-indigo-500 text-sm" 
                                     />
                                 </div>
@@ -131,30 +133,65 @@ function ShopCreatePage() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <label className="block text-[10px] font-black text-gray-500 uppercase mb-1 ml-1">{t('account_manager')}</label>
-                                <div className="relative">
-                                    <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                                    <input type="text" name="contact_person" value={formData.contact_person} onChange={handleChange} placeholder="Direct contact name" className="pl-12 block w-full h-12 rounded-2xl border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-indigo-500 text-sm" />
+                                <div className="relative flex items-center gap-4">
+                                    <div className="flex-1 relative">
+                                        <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                                        <input type="text" name="contact_person" value={formData.contact_person} onChange={handleChange} placeholder={t('placeholder_direct_contact')} className="pl-12 block w-full h-12 rounded-2xl border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-indigo-500 text-sm" />
+                                    </div>
+                                    <div className="flex items-center gap-3 shrink-0">
+                                        {formData.contact_person_photo_url && (
+                                            <img 
+                                                src={formData.contact_person_photo_url} 
+                                                alt="Contact" 
+                                                className="h-10 w-10 rounded-full object-cover border border-gray-200 dark:border-gray-700" 
+                                            />
+                                        )}
+                                        <label className="flex items-center gap-1 cursor-pointer bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 text-emerald-600 dark:text-emerald-400 px-2 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition">
+                                            <CloudArrowUpIcon className="h-4 w-4" />
+                                            <span>Photo</span>
+                                            <input 
+                                                type="file" 
+                                                accept="image/*" 
+                                                className="hidden" 
+                                                onChange={async (e) => {
+                                                    const file = e.target.files?.[0];
+                                                    if (!file) return;
+                                                    try {
+                                                        const formDataMedia = new FormData();
+                                                        formDataMedia.append('file', file);
+                                                        const res = await axiosInstance.post('/system/upload-media', formDataMedia, {
+                                                            headers: { 'Content-Type': 'multipart/form-data' }
+                                                        });
+                                                        setFormData(prev => ({ ...prev, contact_person_photo_url: res.data.url }));
+                                                        toast.success('Photo uploaded successfully');
+                                                    } catch (err) {
+                                                        toast.error('Failed to upload photo');
+                                                    }
+                                                }} 
+                                            />
+                                        </label>
+                                    </div>
                                 </div>
                             </div>
                             <div>
                                 <label className="block text-[10px] font-black text-gray-500 uppercase mb-1 ml-1">{t('contact_phone')}</label>
                                 <div className="relative">
                                     <PhoneIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                                    <input type="tel" name="phone_number" value={formData.phone_number} onChange={handleChange} placeholder="+354..." className="pl-12 block w-full h-12 rounded-2xl border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-indigo-500 text-sm" />
+                                    <input type="tel" name="phone_number" value={formData.phone_number} onChange={handleChange} placeholder={t('placeholder_phone_354')} className="pl-12 block w-full h-12 rounded-2xl border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-indigo-500 text-sm" />
                                 </div>
                             </div>
                             <div>
                                 <label className="block text-[10px] font-black text-gray-500 uppercase mb-1 ml-1">{t('primary_email')}</label>
                                 <div className="relative">
                                     <EnvelopeIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                                    <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="procurement@vendor.is" className="pl-12 block w-full h-12 rounded-2xl border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-indigo-500 text-sm" />
+                                    <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder={t('placeholder_procurement_email')} className="pl-12 block w-full h-12 rounded-2xl border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-indigo-500 text-sm" />
                                 </div>
                             </div>
                             <div>
                                 <label className="block text-[10px] font-black text-gray-500 uppercase mb-1 ml-1">{t('website_url')}</label>
                                 <div className="relative">
                                     <GlobeAltIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                                    <input type="url" name="website" value={formData.website} onChange={handleChange} placeholder="https://..." className="pl-12 block w-full h-12 rounded-2xl border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-indigo-500 text-sm" />
+                                    <input type="url" name="website" value={formData.website} onChange={handleChange} placeholder={t('placeholder_https')} className="pl-12 block w-full h-12 rounded-2xl border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-indigo-500 text-sm" />
                                 </div>
                             </div>
                         </div>
@@ -172,7 +209,7 @@ function ShopCreatePage() {
                             value={formData.notes} 
                             onChange={handleChange} 
                             rows="6" 
-                            placeholder="Special agreements, account numbers, or preferred shipping terms..."
+                            placeholder={t('placeholder_special_agreements')}
                             className="block w-full rounded-[1.5rem] border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-indigo-500 text-sm"
                         ></textarea>
                     </section>

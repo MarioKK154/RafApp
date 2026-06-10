@@ -36,7 +36,7 @@ async def read_project_shopping_list(
     
     # 1. Permission Check: Determine tenant scope
     # Superadmins (God Mode) have effective_tenant_id = None to bypass filters
-    effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
+    effective_tenant_id = current_user.tenant_id
     
     # 2. Verify project existence and user access
     project = crud.get_project(db, project_id=project_id, tenant_id=effective_tenant_id)
@@ -60,7 +60,7 @@ async def create_material_request(
     db: DbDependency,
     current_user: TeamLeaderOrHigherDependency,
 ):
-    effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
+    effective_tenant_id = current_user.tenant_id
 
     project = crud.get_project(db, project_id=payload.project_id, tenant_id=effective_tenant_id)
     if not project:
@@ -105,7 +105,7 @@ async def read_project_material_requests(
     current_user: ManagerOrAdminDependency,
     include_resolved: bool = False,
 ):
-    effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
+    effective_tenant_id = current_user.tenant_id
 
     project = crud.get_project(db, project_id=project_id, tenant_id=effective_tenant_id)
     if not project:

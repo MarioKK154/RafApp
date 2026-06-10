@@ -54,7 +54,7 @@ function InventoryCatalogCreatePage() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!canManageCatalog) {
-            toast.error("Administrative clearance required.");
+            toast.error(t('admin_clearance_required'));
             return;
         }
 
@@ -62,13 +62,13 @@ function InventoryCatalogCreatePage() {
         try {
             // Align with backend inventory catalog endpoint
             await axiosInstance.post('/inventory/catalog', formData);
-            toast.success(`Material "${formData.name}" initialized in registry.`);
+            toast.success(`${t('toast_material_initialized')} ${formData.name}`);
             
             // REDIRECT SYNC: Pointing back to the main Global Inventory Node
             navigate('/inventory'); 
         } catch (err) {
             console.error("Catalog Entry Error:", err);
-            toast.error(err.response?.data?.detail || 'Failed to register material.');
+            toast.error(err.response?.data?.detail || t('toast_failed_register_material'));
         } finally {
             setIsSubmitting(false);
         }
@@ -98,37 +98,37 @@ function InventoryCatalogCreatePage() {
                     <section className="bg-white dark:bg-gray-800 p-8 md:p-10 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-700 space-y-8">
                         <div className="flex items-center gap-3">
                             <TagIcon className="h-5 w-5 text-indigo-500" />
-                            <h2 className="text-sm font-black text-gray-400 uppercase tracking-[0.2em]">Core Metadata</h2>
+                            <h2 className="text-sm font-black text-gray-400 uppercase tracking-[0.2em]">{t('core_metadata')}</h2>
                         </div>
                         
                         <div className="space-y-1">
-                            <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">Asset Title / Identifier*</label>
+                            <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">{t('asset_title_identifier_req')}</label>
                             <input 
                                 type="text" 
                                 name="name" 
                                 required 
                                 value={formData.name} 
                                 onChange={handleChange} 
-                                placeholder="e.g. 3-Phase Circuit Breaker 16A"
+                                placeholder={t('placeholder_3_phase')}
                                 className="modern-input h-14 font-black" 
                             />
                         </div>
 
                         <div className="space-y-1">
-                            <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">Display name (English, optional)</label>
+                            <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">{t('display_name_en_optional')}</label>
                             <input
                                 type="text"
                                 name="name_en"
                                 value={formData.name_en}
                                 onChange={handleChange}
-                                placeholder="Shown when UI language is English"
+                                placeholder={t('placeholder_shown_en')}
                                 className="modern-input h-12"
                             />
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                             <div className="space-y-1">
-                                <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">Base Measurement Unit</label>
+                                <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">{t('base_measurement_unit')}</label>
                                 <div className="relative">
                                     <HashtagIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                                     <input 
@@ -136,13 +136,13 @@ function InventoryCatalogCreatePage() {
                                         name="unit" 
                                         value={formData.unit} 
                                         onChange={handleChange} 
-                                        placeholder="pcs, m, kg, units"
+                                        placeholder={t('placeholder_units')}
                                         className="modern-input h-14 pl-12" 
                                     />
                                 </div>
                             </div>
                             <div className="space-y-1">
-                                <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">Visual Telemetry Path</label>
+                                <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">{t('visual_telemetry_path')}</label>
                                 <div className="relative">
                                     <PhotoIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                                     <input 
@@ -150,7 +150,7 @@ function InventoryCatalogCreatePage() {
                                         name="local_image_path" 
                                         value={formData.local_image_path} 
                                         onChange={handleChange} 
-                                        placeholder="assets/items/item_00.jpg"
+                                        placeholder={t('placeholder_visual_path')}
                                         className="modern-input h-14 pl-12 font-mono text-xs" 
                                     />
                                 </div>
@@ -158,59 +158,59 @@ function InventoryCatalogCreatePage() {
                         </div>
 
                         <div className="space-y-1">
-                            <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">Technical Specifications</label>
+                            <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">{t('technical_specifications')}</label>
                             <textarea 
                                 name="description" 
                                 rows="4" 
                                 value={formData.description} 
                                 onChange={handleChange} 
-                                placeholder="Input manufacturer data..."
+                                placeholder={t('placeholder_input_manufacturer')}
                                 className="modern-input h-auto py-4 resize-none text-sm"
                             ></textarea>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                             <div className="space-y-1">
-                                <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">Category (IS / primary)</label>
+                                <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">{t('category_is_primary')}</label>
                                 <input 
                                     type="text" 
                                     name="category" 
                                     value={formData.category} 
                                     onChange={handleChange} 
-                                    placeholder="e.g. Kaplar"
+                                    placeholder={t('placeholder_kaplar')}
                                     className="modern-input h-12" 
                                 />
                             </div>
                             <div className="space-y-1">
-                                <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">Category (EN)</label>
+                                <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">{t('category_en')}</label>
                                 <input 
                                     type="text" 
                                     name="category_en" 
                                     value={formData.category_en} 
                                     onChange={handleChange} 
-                                    placeholder="e.g. Cables"
+                                    placeholder={t('placeholder_cables')}
                                     className="modern-input h-12" 
                                 />
                             </div>
                             <div className="space-y-1">
-                                <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">Subcategory (IS / primary)</label>
+                                <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">{t('subcategory_is_primary')}</label>
                                 <input 
                                     type="text" 
                                     name="subcategory" 
                                     value={formData.subcategory} 
                                     onChange={handleChange} 
-                                    placeholder="e.g. Kraftkaplar / Kopar"
+                                    placeholder={t('placeholder_kraftkaplar')}
                                     className="modern-input h-12" 
                                 />
                             </div>
                             <div className="space-y-1">
-                                <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">Subcategory (EN)</label>
+                                <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">{t('subcategory_en')}</label>
                                 <input 
                                     type="text" 
                                     name="subcategory_en" 
                                     value={formData.subcategory_en} 
                                     onChange={handleChange} 
-                                    placeholder="e.g. Power cables / Copper"
+                                    placeholder={t('placeholder_power_cables')}
                                     className="modern-input h-12" 
                                 />
                             </div>
@@ -259,7 +259,7 @@ function InventoryCatalogCreatePage() {
                             </div>
                         </div>
                         <div className="pt-4 mt-2 border-t border-gray-100 dark:border-gray-700 space-y-3">
-                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Supplier article codes (optional)</p>
+                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">{t('supplier_article_codes_optional')}</p>
                             <div>
                                 <label className="block text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">Rönning SKU</label>
                                 <input

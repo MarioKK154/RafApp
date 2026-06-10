@@ -59,6 +59,26 @@ class UserReadBasic(BaseModel):
         return None
     model_config = ConfigDict(from_attributes=True)
 
+class TaskChecklistItemReadBasic(BaseModel):
+    id: int
+    content: str
+    is_completed: bool
+    is_private: bool
+    created_at: datetime
+    task_id: int
+    author_id: int
+    author: Optional[UserReadBasic] = None
+    model_config = ConfigDict(from_attributes=True)
+
+class TaskChecklistItemCreate(BaseModel):
+    content: str
+    is_private: bool = False
+
+class TaskChecklistItemUpdate(BaseModel):
+    content: Optional[str] = None
+    is_completed: Optional[bool] = None
+    is_private: Optional[bool] = None
+
 class TaskCommentReadBasic(BaseModel):
     id: int
     content: str
@@ -127,6 +147,7 @@ class TotpDisableBody(BaseModel):
 
 class TenantBase(BaseModel):
     name: str = Field(..., min_length=1)
+    base_hourly_rate: Optional[float] = 6500.0
     logo_url: Optional[HttpUrl | str] = None
     background_image_url: Optional[HttpUrl | str] = None
     background_image_urls: Optional[List[str]] = None
@@ -146,6 +167,7 @@ class TenantCreate(TenantBase):
 
 class TenantUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=1)
+    base_hourly_rate: Optional[float] = None
     logo_url: Optional[HttpUrl | str | None] = None
     background_image_url: Optional[HttpUrl | str | None] = None
     background_image_urls: Optional[List[str]] = None
@@ -180,6 +202,7 @@ class UserCreateAdmin(UserBase):
     hourly_rate: Optional[float] = None
     # Optional per-user granular permissions, e.g. ["offers.manage", "inventory.manage"]
     extra_permissions: Optional[List[str]] = None
+    can_export_data: Optional[bool] = False
 
 class UserRead(UserBase):
     id: int
@@ -196,6 +219,7 @@ class UserRead(UserBase):
     impersonated_by_email: Optional[str] = None
     impersonation_log_id: Optional[int] = None
     extra_permissions: Optional[List[str]] = None
+    can_export_data: Optional[bool] = False
 
     @computed_field
     @property
@@ -243,6 +267,7 @@ class UserUpdateAdmin(BaseModel):
     role: Optional[str] = None
     tenant_id: Optional[int] = None
     extra_permissions: Optional[List[str]] = None
+    can_export_data: Optional[bool] = None
 
 class UserChangePassword(BaseModel):
     current_password: str
@@ -503,10 +528,16 @@ class InventoryItemBase(BaseModel):
     name_en: Optional[str] = None
     category: Optional[str] = None # ROADMAP: Multi-level hierarchy
     subcategory: Optional[str] = None
+    master_category: Optional[str] = None
     category_en: Optional[str] = None
     subcategory_en: Optional[str] = None
     description: Optional[str] = None
     description_en: Optional[str] = None
+    brand: Optional[str] = None
+    voltage: Optional[str] = None
+    amperage: Optional[str] = None
+    ip_rating: Optional[str] = None
+    ar_labor_tasks_list: Optional[str] = None
     unit: Optional[str] = None
     low_stock_threshold: Optional[float] = None
     shop_url_1: Optional[HttpUrl | str] = None # Ronning
@@ -526,10 +557,16 @@ class InventoryItemUpdate(BaseModel):
     name_en: Optional[str] = None
     category: Optional[str] = None
     subcategory: Optional[str] = None
+    master_category: Optional[str] = None
     category_en: Optional[str] = None
     subcategory_en: Optional[str] = None
     description: Optional[str] = None
     description_en: Optional[str] = None
+    brand: Optional[str] = None
+    voltage: Optional[str] = None
+    amperage: Optional[str] = None
+    ip_rating: Optional[str] = None
+    ar_labor_tasks_list: Optional[str] = None
     unit: Optional[str] = None
     low_stock_threshold: Optional[float] = None
     shop_url_1: Optional[HttpUrl | str] = None
@@ -905,6 +942,7 @@ class ShopBase(BaseModel):
     name: str
     address: Optional[str] = None
     contact_person: Optional[str] = None
+    contact_person_photo_url: Optional[str] = None
     phone_number: Optional[str] = None
     email: Optional[EmailStr] = None
     website: Optional[HttpUrl | str] = None
@@ -917,6 +955,7 @@ class ShopUpdate(BaseModel):
     name: Optional[str] = None
     address: Optional[str] = None
     contact_person: Optional[str] = None
+    contact_person_photo_url: Optional[str] = None
     phone_number: Optional[str] = None
     email: Optional[EmailStr] = None
     website: Optional[HttpUrl | str] = None
@@ -942,6 +981,8 @@ class TenantHeatmapItem(BaseModel):
     active_projects: int
     total_users: int
     hours_last_30d: float
+    tools_count: int = 0
+    total_tasks_completed: int = 0
 
 
 class TenantHeatmap(BaseModel):
@@ -963,6 +1004,9 @@ class PlatformGrowthMetrics(BaseModel):
     new_projects_today: int
     total_hours_all_time: float
     total_hours_last_30d: float
+    active_tools: int = 0
+    cars_in_service: int = 0
+    total_tasks_completed: int = 0
 
 
 class SystemStatus(BaseModel):
@@ -982,19 +1026,39 @@ class LandingFeedItem(BaseModel):
     ends_at: Optional[datetime] = None
 
 
+class LandingPricingTier(BaseModel):
+    name: str = "Basic"
+    price: str = "0 ISK"
+    features: List[str] = []
+    button_text: str = "Get Started"
+    is_popular: bool = False
+
+
+class LandingContactPerson(BaseModel):
+    name: str = ""
+    title: str = ""
+    email: str = ""
+    phone: str = ""
+    image_url: Optional[str] = None
+
 class LandingFeed(BaseModel):
     news: List[LandingFeedItem] = []
     updates: List[LandingFeedItem] = []
-    tools: List[LandingFeedItem] = []
-    interesting: List[LandingFeedItem] = []
     random: List[LandingFeedItem] = []
     show_news: bool = True
     show_updates: bool = True
-    show_tools: bool = True
-    show_interesting: bool = True
     # Public landing page: full-bleed backgrounds (URLs). Multiple URLs rotate on a timer.
     background_image_urls: List[str] = []
     background_slide_seconds: int = Field(8, ge=3, le=600)
+
+    # Expanded content
+    hero_title: str = "Welcome to Our Platform"
+    hero_subtitle: str = "We provide the best tools for your business."
+    about_us_text: str = ""
+    about_us_text_en: str = ""
+    about_us_text_is: str = ""
+    contact_persons: List[LandingContactPerson] = []
+    pricing_tiers: List[LandingPricingTier] = []
 
 class ReportTimeLogEntry(BaseModel):
     user_name: str
@@ -1195,6 +1259,16 @@ class ExpenseBase(BaseModel):
     project_id: Optional[int] = None
 
 
+
+class ExpenseUpdate(BaseModel):
+    date: Optional[date] = None
+    amount: Optional[float] = Field(None, gt=0)
+    flow_type: Optional[MoneyFlowLiteral] = None
+    category: Optional[ExpenseCategoryLiteral] = None
+    description: Optional[str] = None
+    reference: Optional[str] = None
+    project_id: Optional[int] = None
+
 class ExpenseCreate(ExpenseBase):
     pass
 
@@ -1212,6 +1286,12 @@ class MonthlyMoneySummary(BaseModel):
     total_out: float
 
 
+
+class ProjectMoneySummary(BaseModel):
+    project_id: Optional[int]
+    total_in: float
+    total_out: float
+
 class CategoryMoneySummary(BaseModel):
     category: ExpenseCategoryLiteral
     total_in: float
@@ -1225,6 +1305,7 @@ class YearlyMoneyOverview(BaseModel):
     net: float
     by_month: List[MonthlyMoneySummary]
     by_category: List[CategoryMoneySummary]
+    by_project: List[ProjectMoneySummary]
 
 
 BillingStatusLiteral = Literal["Pending", "Paid", "Overdue"]
@@ -1369,6 +1450,7 @@ class CustomerBase(BaseModel):
     address: Optional[str] = None
     kennitala: Optional[str] = None
     contact_person: Optional[str] = None
+    contact_person_photo_url: Optional[str] = None
     phone_number: Optional[str] = None
     email: Optional[EmailStr] = None
     notes: Optional[str] = None
@@ -1381,6 +1463,7 @@ class CustomerUpdate(BaseModel):
     address: Optional[str] = None
     kennitala: Optional[str] = None
     contact_person: Optional[str] = None
+    contact_person_photo_url: Optional[str] = None
     phone_number: Optional[str] = None
     email: Optional[EmailStr] = None
     notes: Optional[str] = None
@@ -1388,6 +1471,7 @@ class CustomerUpdate(BaseModel):
 class CustomerRead(CustomerBase):
     id: int
     tenant_id: int
+    contact_person_photo_url: Optional[str] = None
     created_at: datetime
     updated_at: Optional[datetime] = None
     model_config = ConfigDict(from_attributes=True)
@@ -1620,3 +1704,95 @@ class DrawingRead(DrawingBase):
         return f"{STATIC_BASE_URL}/{self.filepath}"
     
     model_config = ConfigDict(from_attributes=True)
+
+
+# --- Chat & Messaging Schemas ---
+
+class ChatMessageBase(BaseModel):
+    content: str
+    attachment_url: Optional[str] = None
+
+class ChatMessageCreate(ChatMessageBase):
+    thread_id: int
+
+class ChatMessageRead(ChatMessageBase):
+    id: int
+    thread_id: int
+    author_id: Optional[int] = None
+    created_at: datetime
+    updated_at: datetime
+    author: Optional[UserReadBasic] = None
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ThreadParticipantRead(BaseModel):
+    id: int
+    thread_id: int
+    user_id: int
+    joined_at: datetime
+    last_read_at: Optional[datetime] = None
+    user: Optional[UserReadBasic] = None
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ChatThreadBase(BaseModel):
+    name: Optional[str] = None
+    is_group: bool = False
+    project_id: Optional[int] = None
+
+
+class ChatThreadCreate(ChatThreadBase):
+    participant_user_ids: List[int] = []
+
+
+class ChatThreadRead(ChatThreadBase):
+    id: int
+    tenant_id: int
+    created_at: datetime
+    updated_at: datetime
+    participants: List[ThreadParticipantRead] = []
+    messages: List[ChatMessageRead] = [] 
+    model_config = ConfigDict(from_attributes=True)
+# --- Integration Schemas ---
+class TenantIntegrationBase(BaseModel):
+    provider: str
+    api_key: Optional[str] = None
+    base_url: Optional[str] = None
+    is_active: bool = True
+
+class TenantIntegrationCreate(TenantIntegrationBase):
+    pass
+
+class TenantIntegrationRead(TenantIntegrationBase):
+    id: int
+    tenant_id: int
+    created_at: datetime
+    model_config = ConfigDict(from_attributes=True)
+
+class PushPayload(BaseModel):
+    # This schema handles the generic push request
+    entity_type: str # 'task', 'timelog', 'material'
+    entity_id: int
+    provider: str    # 'PROCORE', 'ACC', 'AJOUR'
+
+
+class InventoryBulkEdit(BaseModel):
+    item_ids: List[int]
+    master_category: Optional[str] = None
+    category: Optional[str] = None
+    subcategory: Optional[str] = None
+
+class InventoryMerge(BaseModel):
+    primary_item_id: int
+    secondary_item_ids: List[int]
+
+class InventoryBulkDelete(BaseModel):
+    item_ids: List[int]
+
+class SalesLeadCreate(BaseModel):
+    name: str
+    email: EmailStr
+    company: str
+    phone: Optional[str] = None
+    selected_tier: str
+

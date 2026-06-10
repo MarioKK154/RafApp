@@ -17,6 +17,7 @@ function RiskLibraryPage() {
     const [templates, setTemplates] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
 
     const [category, setCategory] = useState('');
     const [title, setTitle] = useState('');
@@ -410,4 +411,5 @@ function RiskLibraryPage() {
 }
 
 export default RiskLibraryPage;
+
 

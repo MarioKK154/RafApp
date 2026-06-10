@@ -286,7 +286,7 @@ async def get_pending_leave_requests(
     db: DbDependency, 
     current_user: AccountantOrAdminDependency
 ):
-    effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
+    effective_tenant_id = current_user.tenant_id
     # Accessing the Enum member directly from models
     return crud.get_all_leave_requests(db, tenant_id=effective_tenant_id, status=models.LeaveStatus.Pending)
 
@@ -333,7 +333,7 @@ async def create_expense_entry(
     db: DbDependency,
     current_user: AccountantOrAdminDependency,
 ):
-    effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
+    effective_tenant_id = current_user.tenant_id
     if effective_tenant_id is None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -365,7 +365,7 @@ async def list_expenses(
     to_date: Optional[date] = None,
     search: Optional[str] = None,
 ):
-    effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
+    effective_tenant_id = current_user.tenant_id
     if effective_tenant_id is None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Tenant context required.")
     return crud.get_expenses_for_tenant(
@@ -395,7 +395,7 @@ async def yearly_money_overview(
     to_date: Optional[date] = None,
     search: Optional[str] = None,
 ):
-    effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
+    effective_tenant_id = current_user.tenant_id
     if effective_tenant_id is None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Tenant context required.")
 

@@ -46,6 +46,7 @@ function ProjectInventory({ projectId }) {
     const canManageInventory = user && (['admin', 'project manager'].includes(user.role) || user.is_superuser);
     const canRequestMaterials =
         user && (['admin', 'project manager', 'team leader'].includes(user.role) || user.is_superuser);
+    const canExportData = user?.can_export_data || user?.role === 'admin' || user?.is_superuser;
 
     const {
         selectedShops,
@@ -292,7 +293,7 @@ function ProjectInventory({ projectId }) {
             </header>
 
             <div className="p-8">
-                <div className="mb-8 p-4 rounded-2xl bg-white dark:bg-gray-900/40 border border-gray-100 dark:border-gray-700">
+                <div className="mb-8 p-4 saas-card">
                     <InventoryCatalogShopFilters
                         selected={selectedShops}
                         onToggleShop={toggleShop}
@@ -307,7 +308,7 @@ function ProjectInventory({ projectId }) {
                 </div>
 
                 {canManageInventory && (
-                    <div className="mb-10 p-6 bg-gray-50/50 dark:bg-gray-900/40 rounded-[2rem] border border-gray-100 dark:border-gray-700 shadow-inner">
+                    <div className="mb-10 p-6 saas-card shadow-inner">
                         <div className="flex items-center gap-2 mb-4 ml-1">
                             <BuildingStorefrontIcon className="h-4 w-4 text-emerald-500 stroke-[3px]" />
                             <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">
@@ -401,7 +402,7 @@ function ProjectInventory({ projectId }) {
                             <button
                                 type="submit"
                                 disabled={isSubmitting}
-                                className="h-12 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-[0.2em] rounded-xl transition transform active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+                                className="saas-btn-primary h-12 text-[10px] uppercase tracking-[0.2em] rounded-xl disabled:opacity-50 flex items-center justify-center gap-2 w-full mt-4"
                             >
                                 {isSubmitting ? (
                                     <ArrowPathIcon className="h-4 w-4 animate-spin" />
@@ -419,7 +420,7 @@ function ProjectInventory({ projectId }) {
                 )}
 
                 {canRequestMaterials && (
-                    <div className="mb-10 p-6 bg-amber-50/60 dark:bg-amber-900/20 rounded-[2rem] border border-amber-100 dark:border-amber-800 shadow-inner">
+                    <div className="mb-10 p-6 saas-card">
                         <div className="flex items-center gap-2 mb-6 ml-1">
                             <PlusIcon className="h-4 w-4 text-amber-500 stroke-[3px]" />
                             <h3 className="text-[10px] font-black text-amber-700 dark:text-amber-200 uppercase tracking-[0.2em]">
@@ -472,7 +473,7 @@ function ProjectInventory({ projectId }) {
                             <button
                                 type="submit"
                                 disabled={isRequestSubmitting}
-                                className="h-12 bg-amber-600 hover:bg-amber-700 text-white font-black text-[10px] uppercase tracking-[0.2em] rounded-xl shadow-lg shadow-amber-100 dark:shadow-none transition transform active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+                                className="saas-btn-primary h-12 text-[10px] uppercase tracking-[0.2em] rounded-xl disabled:opacity-50 flex items-center justify-center gap-2 w-full mt-4"
                             >
                                 {isRequestSubmitting ? (
                                     <ArrowPathIcon className="h-4 w-4 animate-spin" />
@@ -485,8 +486,8 @@ function ProjectInventory({ projectId }) {
                     </div>
                 )}
 
-                <div className="overflow-hidden rounded-[1.5rem] border border-gray-100 dark:border-gray-700 shadow-sm bg-white dark:bg-gray-900/20">
-                    <table className="w-full text-left border-collapse">
+                <div className="overflow-hidden saas-card">
+                    <table className={`w-full text-left border-collapse ${!canExportData ? 'protect-data' : ''}`}>
                         <thead>
                             <tr className="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-700">
                                 <th className="py-5 px-8 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">

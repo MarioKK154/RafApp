@@ -142,16 +142,16 @@ function CarCreatePage() {
                         
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <Field label={t('make', { defaultValue: 'Make / Manufacturer' })}>
-                                <input type="text" name="make" required value={formData.make} onChange={handleChange} placeholder="e.g., Toyota" className="modern-input" />
+                                <input type="text" name="make" required value={formData.make} onChange={handleChange} placeholder={t('placeholder_make')} className="modern-input" />
                             </Field>
                             <Field label={t('model', { defaultValue: 'Model' })}>
-                                <input type="text" name="model" required value={formData.model} onChange={handleChange} placeholder="e.g., Hilux" className="modern-input" />
+                                <input type="text" name="model" required value={formData.model} onChange={handleChange} placeholder={t('placeholder_model')} className="modern-input" />
                             </Field>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <Field label={t('license_plate', { defaultValue: 'License Plate' })}>
-                                <input type="text" name="license_plate" required value={formData.license_plate} onChange={handleChange} placeholder="AB-123" className="modern-input font-mono font-black uppercase" />
+                                <input type="text" name="license_plate" required value={formData.license_plate} onChange={handleChange} placeholder={t('placeholder_plate')} className="modern-input font-mono font-black uppercase" />
                             </Field>
                             <Field label={t('year', { defaultValue: 'Year' })}>
                                 <input type="number" name="year" value={formData.year} onChange={handleChange} className="modern-input" />
@@ -162,7 +162,7 @@ function CarCreatePage() {
                         </div>
 
                         <Field label={t('vin', { defaultValue: 'VIN (Serial Number)' })}>
-                            <input type="text" name="vin" value={formData.vin} onChange={handleChange} placeholder="17-DIGIT CHASSIS ID" className="modern-input font-mono" />
+                            <input type="text" name="vin" value={formData.vin} onChange={handleChange} placeholder={t('placeholder_vin')} className="modern-input font-mono" />
                         </Field>
                     </section>
 

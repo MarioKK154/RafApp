@@ -37,10 +37,10 @@ function UserBulkImportPage() {
     useEffect(() => {
         if (!authIsLoading) {
             if (!isAuthenticated) {
-                toast.error("Authentication required for registry access.");
+                toast.error(t('auth_required_registry'));
                 navigate('/login', { replace: true });
             } else if (!isAdmin) {
-                toast.error("Access Denied: Administrative clearance required for bulk ingestion.");
+                toast.error(t('access_denied_admin_req'));
                 navigate('/users', { replace: true });
             }
         }
@@ -54,9 +54,9 @@ function UserBulkImportPage() {
         if (file) {
             if (file.type === "text/csv" || file.name.endsWith('.csv')) {
                 setSelectedFile(file);
-                toast.info(`Ready to process: ${file.name}`);
+                toast.info(`${t('ready_to_process')} ${file.name}`);
             } else {
-                toast.error("Invalid Filetype: Protocol requires .csv format.");
+                toast.error(t('invalid_filetype_csv'));
                 setSelectedFile(null);
                 event.target.value = null;
             }
@@ -79,10 +79,10 @@ function UserBulkImportPage() {
                 headers: { 'Content-Type': 'multipart/form-data' },
             });
             setUploadResult(response.data);
-            toast.success(`Ingestion Complete: ${response.data.created_count} users initialized.`);
+            toast.success(`${t('ingestion_complete')} ${response.data.created_count} ${t('users_initialized')}`);
         } catch (error) {
             console.error('CSV ingestion error:', error);
-            const errorMsg = error.response?.data?.detail || 'Ingestion protocol failed. Verify CSV integrity.';
+            const errorMsg = error.response?.data?.detail || t('csv_ingestion_error');
             setUploadError(errorMsg);
             toast.error(errorMsg);
         } finally {
@@ -93,7 +93,7 @@ function UserBulkImportPage() {
         }
     };
 
-    if (authIsLoading) return <LoadingSpinner text="Authenticating Registry Clearance..." size="lg" />;
+    if (authIsLoading) return <LoadingSpinner text={t('authenticating_clearance')} size="lg" />;
     if (!isAuthenticated || !isAdmin) return null;
 
     return (
@@ -125,8 +125,8 @@ function UserBulkImportPage() {
                             </div>
                         )}
                         <div className="mb-6">
-                            <h2 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">Source Deployment</h2>
-                            <p className="text-sm text-gray-500 font-medium">Select a standardized CSV file to populate the user database.</p>
+                            <h2 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">{t('source_deployment')}</h2>
+                            <p className="text-sm text-gray-500 font-medium">{t('select_csv_populate')}</p>
                         </div>
 
                         <form onSubmit={handleSubmit} className="space-y-6">
@@ -146,9 +146,9 @@ function UserBulkImportPage() {
                                 }`}>
                                     <DocumentTextIcon className={`h-12 w-12 mb-4 transition-colors ${selectedFile ? 'text-indigo-600' : 'text-gray-300'}`} />
                                     <p className="text-xs font-black text-gray-900 dark:text-white uppercase tracking-widest">
-                                        {selectedFile ? selectedFile.name : "Drop CSV File or Click to Browse"}
+                                        {selectedFile ? selectedFile.name : t('drop_csv_browse')}
                                     </p>
-                                    <p className="text-[10px] text-gray-400 mt-2 font-bold uppercase">RFC 4180 Compliant Required</p>
+                                    <p className="text-[10px] text-gray-400 mt-2 font-bold uppercase">{t('rfc_4180_compliant')}</p>
                                 </div>
                             </div>
 
@@ -176,14 +176,14 @@ function UserBulkImportPage() {
                     {uploadResult && (
                         <section className="bg-white dark:bg-gray-800 rounded-[2.5rem] border border-gray-100 dark:border-gray-700 overflow-hidden shadow-xl animate-in slide-in-from-bottom-4">
                             <div className="p-8 border-b border-gray-50 dark:border-gray-700 flex justify-between items-center">
-                                <h3 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-widest">Ingestion Summary</h3>
+                                <h3 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-widest">{t('ingestion_summary')}</h3>
                                 <div className="flex gap-4">
                                     <div className="text-right">
-                                        <p className="text-[9px] font-black text-green-500 uppercase">Created</p>
+                                        <p className="text-[9px] font-black text-green-500 uppercase">{t('created')}</p>
                                         <p className="text-xl font-black">{uploadResult.created_count}</p>
                                     </div>
                                     <div className="text-right">
-                                        <p className="text-[9px] font-black text-orange-500 uppercase">Skipped</p>
+                                        <p className="text-[9px] font-black text-orange-500 uppercase">{t('skipped')}</p>
                                         <p className="text-xl font-black">{uploadResult.skipped_count + (uploadResult.parse_errors?.length || 0)}</p>
                                     </div>
                                 </div>
@@ -230,29 +230,29 @@ function UserBulkImportPage() {
                     <section className="bg-gray-900 p-8 rounded-[2.5rem] text-white shadow-2xl">
                         <div className="flex items-center gap-3 mb-6">
                             <TableCellsIcon className="h-6 w-6 text-indigo-400" />
-                            <h2 className="text-xl font-black uppercase tracking-tight">CSV Schema Guide</h2>
+                            <h2 className="text-xl font-black uppercase tracking-tight">{t('csv_schema_guide')}</h2>
                         </div>
 
                         <div className="space-y-4">
-                            <SchemaField label="Name" requirement="Optional" detail="Full display name" />
-                            <SchemaField label="Email" requirement="Required" detail="Primary unique identifier" highlight />
-                            <SchemaField label="Employee ID" requirement="Optional" detail="Numerical payroll ID" />
-                            <SchemaField label="Kennitala" requirement="Optional" detail="10-digit national ID" />
-                            <SchemaField label="Phone" requirement="Optional" detail="Mobile contact number" />
-                            <SchemaField label="Location" requirement="Optional" detail="Primary site assignment" />
+                            <SchemaField label={t("schema_name")} requirement={t("schema_optional")} detail={t("schema_full_name")} />
+                            <SchemaField label={t("schema_email")} requirement={t("schema_required")} detail={t("schema_primary_id")} highlight />
+                            <SchemaField label={t("schema_emp_id")} requirement={t("schema_optional")} detail={t("schema_num_id")} />
+                            <SchemaField label={t("schema_kennitala")} requirement={t("schema_optional")} detail={t("schema_10_digit")} />
+                            <SchemaField label={t("schema_phone")} requirement={t("schema_optional")} detail={t("schema_mobile")} />
+                            <SchemaField label={t("schema_location")} requirement={t("schema_optional")} detail={t("schema_site")} />
                         </div>
 
                         <div className="mt-8 pt-6 border-t border-gray-800 space-y-4">
                             <div className="flex items-start gap-3 p-4 bg-gray-800/50 rounded-2xl">
                                 <ExclamationTriangleIcon className="h-5 w-5 text-orange-500 shrink-0" />
                                 <p className="text-[10px] text-gray-400 font-bold leading-relaxed uppercase">
-                                    Logic Note: Existing identifiers will trigger a <span className="text-orange-500">SKIP</span>. Duplicate detection is active for Email, Emp-ID, and Kennitala.
+                                    Logic Note: Existing identifiers will trigger a <span className="text-orange-500">{t('skip_uppercase')}</span>. Duplicate detection is active for Email, Emp-ID, and Kennitala.
                                 </p>
                             </div>
                             <div className="flex items-start gap-3 p-4 bg-indigo-500/10 rounded-2xl">
                                 <InformationCircleIcon className="h-5 w-5 text-indigo-400 shrink-0" />
                                 <p className="text-[10px] text-indigo-300 font-bold leading-relaxed uppercase">
-                                    Default Configuration: Ingested users default to "electrician" role with security pass "testpassword123".
+                                    {t("default_config_note")}
                                 </p>
                             </div>
                         </div>

@@ -6,6 +6,10 @@ from datetime import datetime
 from .. import crud, models, schemas, security
 from ..database import get_db
 from ..limiter import limiter
+from ..services.push_service import notify_user
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(
     prefix="/events",
@@ -23,7 +27,7 @@ def get_event_and_check_auth(event_id: int, db: DbDependency, current_user: Curr
     Retrieves an event and verifies tenant access. 
     Superadmins bypass the tenant check.
     """
-    effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
+    effective_tenant_id = current_user.tenant_id
     db_event = crud.get_event(db, event_id=event_id, tenant_id=effective_tenant_id)
     if not db_event:
         raise HTTPException(status_code=404, detail="Event not found or access denied.")
@@ -42,12 +46,27 @@ def create_new_event(
     Logic: Automatically handles attendee linkage and type categorization.
     """
     if event_data.project_id:
-        effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
+        effective_tenant_id = current_user.tenant_id
         project = crud.get_project(db, project_id=event_data.project_id, tenant_id=effective_tenant_id)
         if not project:
             raise HTTPException(status_code=404, detail="Project not found or not accessible.")
             
-    return crud.create_event(db, event_data=event_data, user=current_user)
+    new_event = crud.create_event(db, event_data=event_data, user=current_user)
+    
+    for attendee in new_event.attendees:
+        if attendee.id != current_user.id:
+            try:
+                notify_user(
+                    db=db,
+                    user_id=attendee.id,
+                    title="New Calendar Event",
+                    body=f"You've been invited to: {new_event.title}",
+                    url="/calendar"
+                )
+            except Exception as e:
+                logger.error(f"Failed to send push notification: {e}")
+                
+    return new_event
 
 @router.get("/", response_model=List[schemas.EventRead])
 @limiter.limit("100/minute")
@@ -63,8 +82,8 @@ def get_events_in_range(
     Oversight: Retrieves all events within a specific temporal window.
     Isolation: Superadmins see system-wide; regular users see tenant-specific sequences.
     """
-    effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
-    if current_user.is_superuser and tenant_id is not None:
+    effective_tenant_id = current_user.tenant_id
+    if False:
         effective_tenant_id = tenant_id
 
     if not current_user.is_superuser and effective_tenant_id is None:

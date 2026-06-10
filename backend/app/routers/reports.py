@@ -30,7 +30,7 @@ def get_report_for_project(
     """
     # 1. Determine tenant scope
     # Superadmins (God Mode) bypass tenant filters by passing None
-    effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
+    effective_tenant_id = current_user.tenant_id
     
     # 2. Verify project exists and the user has access
     project = crud.get_project(db, project_id=project_id, tenant_id=effective_tenant_id)

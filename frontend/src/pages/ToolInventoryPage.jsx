@@ -48,7 +48,7 @@ function ToolInventoryPage() {
     // Filter & UI States
     const [searchTerm, setSearchTerm] = useState('');
     const debouncedSearch = useDebounce(searchTerm, 300);
-    const [selectedTenantId, setSelectedTenantId] = useState(null);
+    const selectedTenantId = 1; const setSelectedTenantId = () => {};
     const [toolToDelete, setToolToDelete] = useState(null);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
@@ -159,10 +159,7 @@ function ToolInventoryPage() {
                     </div>
                     <div className="flex items-center gap-4">
                         {isSuperuser && (
-                            <SuperTenantSelector
-                                selectedTenantId={selectedTenantId}
-                                onChange={setSelectedTenantId}
-                            />
+                            null
                         )}
                         {canManageTools && (
                             <button

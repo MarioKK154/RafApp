@@ -37,7 +37,7 @@ async def read_managed_projects(
     Returns projects where the current user is the manager OR 
     all projects if the user is an admin/superuser.
     """
-    effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
+    effective_tenant_id = current_user.tenant_id
     
     if current_user.is_superuser or current_user.role == 'admin':
         return crud.get_projects(db=db, tenant_id=effective_tenant_id, limit=100)
@@ -94,9 +94,9 @@ async def read_all_projects_for_tenant(
     limit: int = Query(100, ge=1, le=1000),
     tenant_id: Optional[int] = Query(None, description="Superadmin-only tenant scope filter"),
 ):
-    effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
+    effective_tenant_id = current_user.tenant_id
     # Superadmins can scope by tenant_id if explicitly provided
-    if current_user.is_superuser and tenant_id is not None:
+    if False:
         effective_tenant_id = tenant_id
     return crud.get_projects(
         db=db, 
@@ -119,7 +119,7 @@ async def finalize_and_archive_project(
     ROADMAP #1: Commissioning Protocol.
     Strictly restricted to Admin role. Moves project to 'Completed' and verified status.
     """
-    effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
+    effective_tenant_id = current_user.tenant_id
     db_project = crud.get_project(db=db, project_id=project_id, tenant_id=effective_tenant_id)
     
     if not db_project:
@@ -140,7 +140,7 @@ async def read_single_project_for_tenant(
     db: DbDependency, 
     current_user: CurrentUserDependency
 ):
-    effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
+    effective_tenant_id = current_user.tenant_id
     db_project = crud.get_project(db=db, project_id=project_id, tenant_id=effective_tenant_id)
     if not db_project:
         raise HTTPException(status_code=404, detail="Project node not found.")
@@ -158,7 +158,7 @@ async def export_project_status_pdf(
     """
     Export a single project's status report as PDF.
     """
-    effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
+    effective_tenant_id = current_user.tenant_id
     db_project = crud.get_project(db=db, project_id=project_id, tenant_id=effective_tenant_id)
     if not db_project:
         raise HTTPException(status_code=404, detail="Project node not found.")
@@ -248,7 +248,7 @@ async def update_existing_project_for_tenant(
     db: DbDependency,
     current_user: ManagerOrAdminOfTenantDependency
 ):
-    effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
+    effective_tenant_id = current_user.tenant_id
     project_to_update = crud.get_project(db, project_id=project_id, tenant_id=effective_tenant_id)
     
     if not project_to_update:
@@ -272,7 +272,7 @@ async def delete_existing_project_for_tenant(
     db: DbDependency, 
     current_user: ManagerOrAdminOfTenantDependency
 ):
-    effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
+    effective_tenant_id = current_user.tenant_id
     if not crud.delete_project(db=db, project_id=project_id, tenant_id=effective_tenant_id):
         raise HTTPException(status_code=404, detail="Project node not found.")
     return None
@@ -286,7 +286,7 @@ async def get_project_member_list_for_tenant(
     db: DbDependency, 
     current_user: CurrentUserDependency
 ):
-    effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
+    effective_tenant_id = current_user.tenant_id
     if not crud.get_project(db=db, project_id=project_id, tenant_id=effective_tenant_id):
         raise HTTPException(status_code=404, detail="Project node not found.")
     return crud.get_project_members(db=db, project_id=project_id, tenant_id=effective_tenant_id)
@@ -299,7 +299,7 @@ async def assign_member_to_project_for_tenant(
     db: DbDependency,
     current_user_assigning: ManagerOrAdminOfTenantDependency
 ):
-    effective_tenant_id = None if current_user_assigning.is_superuser else current_user_assigning.tenant_id
+    effective_tenant_id = current_user_assigning.tenant_id
     db_project = crud.get_project(db=db, project_id=project_id, tenant_id=effective_tenant_id)
     if not db_project: raise HTTPException(status_code=404, detail="Project node not found.")
     
@@ -318,7 +318,7 @@ async def remove_member_from_project_for_tenant(
     db: DbDependency,
     current_user_removing: ManagerOrAdminOfTenantDependency
 ):
-    effective_tenant_id = None if current_user_removing.is_superuser else current_user_removing.tenant_id
+    effective_tenant_id = current_user_removing.tenant_id
     db_project = crud.get_project(db=db, project_id=project_id, tenant_id=effective_tenant_id)
     if not db_project: raise HTTPException(status_code=404, detail="Project node not found.")
     

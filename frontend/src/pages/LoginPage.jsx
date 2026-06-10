@@ -14,6 +14,8 @@ import {
     BuildingOffice2Icon,
     MagnifyingGlassIcon,
     ChevronDownIcon,
+    ArrowLeftIcon,
+    LanguageIcon,
 } from '@heroicons/react/24/outline';
 
 function resolveLoginAssetUrl(url) {
@@ -26,7 +28,7 @@ function resolveLoginAssetUrl(url) {
 }
 
 function LoginPage() {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const { login, isAuthenticated } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
@@ -45,6 +47,10 @@ function LoginPage() {
     const tenantPickerRef = useRef(null);
 
     const from = location.state?.from?.pathname || '/';
+
+    const toggleLanguage = () => {
+        i18n.changeLanguage(i18n.language?.startsWith('en') ? 'is' : 'en');
+    };
 
     useEffect(() => {
         if (!tenantMenuOpen) return undefined;
@@ -159,6 +165,20 @@ function LoginPage() {
                 <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(#4f46e5 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
             </div>
 
+            <div className="absolute top-6 right-6 z-50">
+                <button onClick={toggleLanguage} className="flex items-center gap-2 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm font-bold text-xs uppercase tracking-widest">
+                    <LanguageIcon className="h-4 w-4" />
+                    <span>{i18n.language?.startsWith('en') ? 'IS' : 'EN'}</span>
+                </button>
+            </div>
+
+            <div className="absolute top-6 left-6 z-50">
+                <button onClick={() => navigate('/')} className="flex items-center gap-2 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm font-bold text-xs uppercase tracking-widest">
+                    <ArrowLeftIcon className="h-4 w-4" />
+                    <span>{t('back', { defaultValue: 'Back' })}</span>
+                </button>
+            </div>
+
             <div className="w-full max-w-md animate-in fade-in zoom-in-95 duration-700">
                 
                 <div className="text-center mb-10">
@@ -186,17 +206,20 @@ function LoginPage() {
                                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 flex items-center gap-1.5">
                                     <BuildingOffice2Icon className="h-3 w-3" /> {t('company', { defaultValue: 'Company' })}
                                 </label>
-                                <div className="relative">
-                                    <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                                    <input
-                                        type="text"
-                                        value={tenantSearch}
-                                        onChange={(e) => setTenantSearch(e.target.value)}
-                                        placeholder={t('search_company', { defaultValue: 'Search company...' })}
-                                        className="modern-input h-12 pl-11 text-sm"
-                                    />
-                                </div>
                                 <div className="relative" ref={tenantPickerRef}>
+                                    <div className="relative mb-2">
+                                        <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                        <input
+                                            type="text"
+                                            value={tenantSearch}
+                                            onChange={(e) => {
+                                                setTenantSearch(e.target.value);
+                                                setTenantMenuOpen(true);
+                                            }}
+                                            placeholder={t('search_company', { defaultValue: 'Search company...' })}
+                                            className="modern-input h-12 pl-11 text-sm"
+                                        />
+                                    </div>
                                     <button
                                         type="button"
                                         onClick={() => setTenantMenuOpen((o) => !o)}

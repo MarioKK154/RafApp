@@ -168,6 +168,7 @@ async def read_users(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
     tenant_id: Optional[int] = Query(None, description="Superadmin-only tenant/company filter"),
+    all_tenants: bool = Query(False, description="Superadmin-only flag to fetch all users"),
 ):
     """
     Protocol: Retrieve Personnel Registry.
@@ -176,9 +177,12 @@ async def read_users(
     """
     # Technical Sync: If not a superuser, force-filter by the user's own tenant_id.
     # Superusers can optionally scope by a tenant/company id.
-    effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
-    if current_user.is_superuser and tenant_id is not None:
-        effective_tenant_id = tenant_id
+    effective_tenant_id = current_user.tenant_id
+    if current_user.is_superuser:
+        if all_tenants:
+            effective_tenant_id = None
+        elif tenant_id is not None:
+            effective_tenant_id = tenant_id
     
     return crud.get_users(
         db, 

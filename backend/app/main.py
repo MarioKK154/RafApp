@@ -1,5 +1,6 @@
 # backend/app/main.py
-from fastapi import FastAPI, Depends, Request, HTTPException
+from fastapi import FastAPI, Depends, Request, HTTPException, APIRouter
+from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
@@ -24,6 +25,8 @@ from .routers import (
     notifications, assignments, tutorials,
     risk_assessments,
     system,
+    chat,
+    integrations,
 )
 
 # 2. Database schema
@@ -94,8 +97,9 @@ if is_sqlite():
                 )
             )
             conn.commit()
-    except Exception:
-        pass
+    except Exception as e:
+        import logging
+        logging.warning(f"Migration error (labor_catalog_item_conditions): {e}")
 
     def _add_column_if_missing(column_sql: str) -> None:
         try:
@@ -112,6 +116,7 @@ if is_sqlite():
         "ALTER TABLE inventory_items ADD COLUMN reykjafell_sku VARCHAR",
         "ALTER TABLE inventory_items ADD COLUMN name_en VARCHAR",
         "ALTER TABLE inventory_items ADD COLUMN description_en TEXT",
+        "ALTER TABLE users ADD COLUMN can_export_data BOOLEAN DEFAULT FALSE",
     ):
         _add_column_if_missing(_col_stmt)
 
@@ -125,8 +130,9 @@ if is_sqlite():
             with engine.connect() as conn:
                 conn.execute(text(_idx_stmt))
                 conn.commit()
-        except Exception:
-            pass
+        except Exception as e:
+            import logging
+            logging.warning(f"Migration index error ({_idx_stmt}): {e}")
 
 app = FastAPI(
     title="RafApp API",
@@ -169,37 +175,42 @@ for folder in subdirs:
 
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
-# 5. Include all routers in the app
-app.include_router(auth.router)
-app.include_router(dashboard.router)
-app.include_router(tenants.router)
-app.include_router(users.router)
-app.include_router(projects.router)
-app.include_router(tasks.router)
-app.include_router(inventory.router)
-app.include_router(project_inventory.router)
-app.include_router(tools.router)
-app.include_router(cars.router)
-app.include_router(shops.router)
-app.include_router(boq.router)
-app.include_router(offers.router)
-app.include_router(reports.router)
-app.include_router(events.router)
-app.include_router(labor_catalog.router)
-app.include_router(calculators.router)
-app.include_router(customers.router)
-app.include_router(drawings.router)
-app.include_router(timelogs.router)
-app.include_router(comments.router)
-app.include_router(task_photos.router)
-app.include_router(shopping_list.router)
-app.include_router(accounting.router)
-app.include_router(notifications.router) # <--- ROADMAP #2: Added
-app.include_router(assignments.router)
-app.include_router(tutorials.router)
-app.include_router(admin_tools.router)
-app.include_router(system.router)
-app.include_router(risk_assessments.router)
+# 5. Include all routers in the app under /api prefix
+api_router = APIRouter(prefix="/api")
+api_router.include_router(auth.router)
+api_router.include_router(dashboard.router)
+api_router.include_router(tenants.router)
+api_router.include_router(users.router)
+api_router.include_router(projects.router)
+api_router.include_router(tasks.router)
+api_router.include_router(inventory.router)
+api_router.include_router(project_inventory.router)
+api_router.include_router(tools.router)
+api_router.include_router(cars.router)
+api_router.include_router(shops.router)
+api_router.include_router(boq.router)
+api_router.include_router(offers.router)
+api_router.include_router(reports.router)
+api_router.include_router(events.router)
+api_router.include_router(labor_catalog.router)
+api_router.include_router(calculators.router)
+api_router.include_router(customers.router)
+api_router.include_router(drawings.router)
+api_router.include_router(timelogs.router)
+api_router.include_router(comments.router)
+api_router.include_router(task_photos.router)
+api_router.include_router(shopping_list.router)
+api_router.include_router(accounting.router)
+api_router.include_router(notifications.router) # <--- ROADMAP #2: Added
+api_router.include_router(assignments.router)
+api_router.include_router(tutorials.router)
+api_router.include_router(admin_tools.router)
+api_router.include_router(system.router)
+api_router.include_router(risk_assessments.router)
+api_router.include_router(chat.router)
+api_router.include_router(integrations.router)
+
+app.include_router(api_router)
 
 
 @app.on_event("startup")
@@ -213,16 +224,9 @@ def _normalize_legacy_task_statuses() -> None:
     try:
         with engine.begin() as conn:
             conn.execute(text("UPDATE tasks SET status = 'To Do' WHERE status = 'Not Started'"))
-    except Exception:
-        # Non-fatal: app should still boot even if this compatibility step fails.
-        pass
-
-# 6. Root Endpoint
-@app.get("/")
-@limiter.limit("5/minute")
-def read_root(request: Request):
-    return {"message": "Welcome to the Raf-App API"}
-
+    except Exception as e:
+        import logging
+        logging.warning(f"Legacy task normalization failed: {e}")
 
 @app.get("/health/db")
 @limiter.limit("60/minute")
@@ -238,3 +242,25 @@ def health_db(request: Request):
         "roles": healthcheck_by_role(),
         "layout": database_layout(),
     }
+
+
+# 6. SPA Catch-All Route
+FRONTEND_BUILD_DIR = BASE_DIR.parent.parent / "frontend" / "dist"
+
+@app.get("/{full_path:path}")
+async def serve_spa(full_path: str):
+    # Skip handling /api requests here, they should be handled by the api_router and return 404/405 correctly if missed.
+    # However, FastAPI evaluates this route last, so unmatched /api routes will hit this.
+    if full_path.startswith("api/"):
+        raise HTTPException(status_code=404, detail="Not Found")
+
+    path = FRONTEND_BUILD_DIR / full_path
+    if path.is_file():
+        return FileResponse(path)
+    
+    index_path = FRONTEND_BUILD_DIR / "index.html"
+    if index_path.is_file():
+        return FileResponse(index_path)
+    
+    # If the frontend hasn't been built yet
+    return {"message": "Welcome to the Raf-App API. The frontend is not built yet."}

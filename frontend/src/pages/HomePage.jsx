@@ -79,7 +79,7 @@ function HomePage() {
             const activeProjectIds = activeOnly.map(p => p.id);
             const verifiedActiveTasks = rawTasks.filter(tk => 
                 activeProjectIds.includes(tk.project_id) && 
-                !['Done', 'Completed', 'Archived'].includes(tk.status)
+                ['Not Started', 'In Progress'].includes(tk.status)
             );
 
             setStats({

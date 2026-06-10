@@ -69,7 +69,7 @@ async def create_tutorial(
         tutorial_text=tutorial_text,
         image_path=image_path,
         file_path=file_path,
-        tenant_id=None if (current_user.is_superuser and is_global) else current_user.tenant_id,
+        tenant_id=current_user.tenant_id,
         author_id=current_user.id
     )
     db.add(new_tutorial)

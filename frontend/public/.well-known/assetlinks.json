@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "is.rafapp.app",
+      "sha256_cert_fingerprints": [
+        "27:68:20:B1:53:AD:AC:77:AC:9B:E6:9E:3B:26:9A:0B:4F:B6:3A:3E:9E:F1:97:95:17:A4:8A:C0:6C:C0:A5:5D"
+      ]
+    }
+  }
+]

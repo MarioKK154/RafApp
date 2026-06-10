@@ -55,7 +55,7 @@ const ProjectsPage = () => {
 
     const isSuperuser = user?.is_superuser;
     const isAdmin = user && (user.role === 'admin' || isSuperuser);
-    const [selectedTenantId, setSelectedTenantId] = useState(null);
+    const selectedTenantId = 1; const setSelectedTenantId = () => {};
 
     const fetchProjects = useCallback(async () => {
         if (!user) return;
@@ -73,7 +73,8 @@ const ProjectsPage = () => {
                 params: {
                     limit: 1000,
                     search: debouncedSearchTerm || undefined,
-                    tenant_id: isSuperuser ? selectedTenantId : undefined,
+                    tenant_id: undefined,
+
                 },
             });
             setProjects(Array.isArray(response.data) ? response.data : []);
@@ -183,10 +184,7 @@ const ProjectsPage = () => {
                     </div>
                     <div className="flex items-center gap-4">
                         {isSuperuser && (
-                            <SuperTenantSelector
-                                selectedTenantId={selectedTenantId}
-                                onChange={setSelectedTenantId}
-                            />
+                            null
                         )}
                         <button
                             onClick={() => navigate('/projects/new')}

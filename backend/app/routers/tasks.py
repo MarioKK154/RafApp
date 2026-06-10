@@ -13,6 +13,7 @@ from reportlab.pdfgen import canvas
 from .. import crud, models, schemas, security
 from ..database import get_db
 from ..limiter import limiter
+from ..services.push_service import notify_user
 
 # Initialize Logging for technical diagnostics
 logger = logging.getLogger(__name__)
@@ -42,7 +43,7 @@ async def get_task_and_verify_tenant(task_id: int, db: DbDependency, current_use
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found in registry")
     
     effective_tenant_id = db_task.project.tenant_id
-    if not current_user.is_superuser and effective_tenant_id != current_user.tenant_id:
+    if effective_tenant_id != current_user.tenant_id:
         logger.warning(f"Security Alert: User {current_user.id} attempted unauthorized access to Task {task_id}")
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied: Resource belongs to a different tenant infrastructure")
     return db_task
@@ -54,7 +55,7 @@ async def create_new_task(request: Request, task_data: schemas.TaskCreate, db: D
     Deployment: Register a new task. 
     Superadmins can deploy tasks globally; others are restricted to their local tenant projects.
     """
-    effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
+    effective_tenant_id = current_user.tenant_id
     project = crud.get_project(db, project_id=task_data.project_id, tenant_id=effective_tenant_id)
     
     if not project:
@@ -82,7 +83,7 @@ async def read_all_tasks(
     Telemetry: Retrieve task registry entries based on operational filters.
     """
     if project_id:
-        effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
+        effective_tenant_id = current_user.tenant_id
         project = crud.get_project(db, project_id=project_id, tenant_id=effective_tenant_id)
         if not project:
             return []
@@ -103,16 +104,17 @@ async def read_all_tasks(
     # - Superadmins can optionally filter by tenant_id when provided
     # - Subcontractors can only see tasks assigned to themselves within their tenant
     # - Other users are locked to their own tenant, with standard filters
-    if current_user.is_superuser:
-        if tenant_id is not None:
-            tasks = [task for task in tasks if task.project and task.project.tenant_id == tenant_id]
-    elif security.is_subcontractor(current_user):
+    if security.is_subcontractor(current_user):
         tasks = [
             task for task in tasks
             if task.project
             and task.project.tenant_id == current_user.tenant_id
             and task.assignee_id == current_user.id
         ]
+    elif current_user.is_superuser:
+        if tenant_id:
+            tasks = [task for task in tasks if task.project and task.project.tenant_id == tenant_id]
+        # else: superusers see all tasks across all tenants if no tenant_id is specified
     else:
         tasks = [task for task in tasks if task.project and task.project.tenant_id == current_user.tenant_id]
 
@@ -142,9 +144,12 @@ async def update_existing_task(
     if db_task.is_commissioned and not current_user.is_superuser:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Commissioned tasks are locked for integrity")
 
-    effective_validation_id = None if current_user.is_superuser else current_user.tenant_id
+    effective_validation_id = current_user.tenant_id
     
     try:
+        # Check old assignee
+        old_assignee_id = db_task.assignee_id
+        
         updated_task = crud.update_task(
             db=db, 
             task_id=task_id, 
@@ -153,6 +158,21 @@ async def update_existing_task(
         )
         if not updated_task:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Update target lost")
+            
+        # Trigger push notification if assigned to a new user
+        new_assignee_id = updated_task.assignee_id
+        if new_assignee_id and new_assignee_id != old_assignee_id:
+            try:
+                notify_user(
+                    db=db,
+                    user_id=new_assignee_id,
+                    title="New Task Assigned",
+                    body=f"You have been assigned to task: {updated_task.title}",
+                    url=f"/tasks/{updated_task.id}"
+                )
+            except Exception as e:
+                logger.error(f"Failed to send push notification: {e}")
+                
         return updated_task
     except Exception as e:
         logger.error(f"Task Update Failure [ID: {task_id}]: {str(e)}")
@@ -246,6 +266,101 @@ async def read_comments_for_task(
     db_task = await get_task_and_verify_tenant(task_id=task_id, db=db, current_user=current_user)
     return crud.get_comments_for_task(db=db, task_id=db_task.id, skip=skip, limit=limit)
 
+@router.get("/{task_id}/checklists/", response_model=List[schemas.TaskChecklistItemReadBasic])
+@limiter.limit("100/minute")
+async def read_checklists_for_task(
+    request: Request,
+    task_id: int,
+    db: DbDependency,
+    current_user: CurrentUserDependency
+):
+    """Retrieve checklists for a task. Private items are only visible to Assignee, task creator/PM, and Admins."""
+    db_task = await get_task_and_verify_tenant(task_id=task_id, db=db, current_user=current_user)
+    items = crud.get_checklists_for_task(db=db, task_id=db_task.id)
+    
+    # Filter privacy
+    is_privileged = (
+        current_user.is_superuser or 
+        current_user.id == db_task.assignee_id or 
+        current_user.role in ["admin", "project manager"]
+    )
+    
+    if is_privileged:
+        return items
+    
+    # Return only public items
+    return [item for item in items if not item.is_private]
+
+@router.post("/{task_id}/checklists/", response_model=schemas.TaskChecklistItemReadBasic, status_code=status.HTTP_201_CREATED)
+@limiter.limit("100/minute")
+async def create_checklist_item_for_task(
+    request: Request,
+    task_id: int,
+    item: schemas.TaskChecklistItemCreate,
+    db: DbDependency,
+    current_user: CurrentUserDependency
+):
+    db_task = await get_task_and_verify_tenant(task_id=task_id, db=db, current_user=current_user)
+    return crud.create_task_checklist_item(db=db, task_id=db_task.id, author_id=current_user.id, item=item)
+
+@router.put("/{task_id}/checklists/{item_id}", response_model=schemas.TaskChecklistItemReadBasic)
+@limiter.limit("100/minute")
+async def update_checklist_item(
+    request: Request,
+    task_id: int,
+    item_id: int,
+    item_update: schemas.TaskChecklistItemUpdate,
+    db: DbDependency,
+    current_user: CurrentUserDependency
+):
+    db_task = await get_task_and_verify_tenant(task_id=task_id, db=db, current_user=current_user)
+    
+    # Needs to exist
+    db_item = db.query(models.TaskChecklistItem).filter(models.TaskChecklistItem.id == item_id, models.TaskChecklistItem.task_id == task_id).first()
+    if not db_item:
+        raise HTTPException(status_code=404, detail="Checklist item not found")
+        
+    # Check permissions if item is private
+    is_privileged = (
+        current_user.is_superuser or 
+        current_user.id == db_task.assignee_id or 
+        current_user.id == db_item.author_id or
+        current_user.role in ["admin", "project manager"]
+    )
+    
+    if db_item.is_private and not is_privileged:
+        raise HTTPException(status_code=403, detail="Not authorized to edit this private checklist item")
+        
+    return crud.update_task_checklist_item(db=db, item_id=item_id, item_update=item_update)
+
+@router.delete("/{task_id}/checklists/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
+@limiter.limit("100/minute")
+async def delete_checklist_item(
+    request: Request,
+    task_id: int,
+    item_id: int,
+    db: DbDependency,
+    current_user: CurrentUserDependency
+):
+    db_task = await get_task_and_verify_tenant(task_id=task_id, db=db, current_user=current_user)
+    
+    db_item = db.query(models.TaskChecklistItem).filter(models.TaskChecklistItem.id == item_id, models.TaskChecklistItem.task_id == task_id).first()
+    if not db_item:
+        raise HTTPException(status_code=404, detail="Checklist item not found")
+        
+    is_privileged = (
+        current_user.is_superuser or 
+        current_user.id == db_task.assignee_id or 
+        current_user.id == db_item.author_id or
+        current_user.role in ["admin", "project manager"]
+    )
+    
+    if not is_privileged:
+        raise HTTPException(status_code=403, detail="Not authorized to delete this checklist item")
+        
+    crud.delete_task_checklist_item(db=db, item_id=item_id)
+    return None
+
 
 @router.get("/export/pdf")
 @limiter.limit("30/minute")
@@ -263,7 +378,7 @@ async def export_tasks_pdf(
     """
     # Reuse the same visibility rules as read_all_tasks
     if project_id:
-        effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
+        effective_tenant_id = current_user.tenant_id
         project = crud.get_project(db, project_id=project_id, tenant_id=effective_tenant_id)
         if not project:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found or not accessible.")
@@ -280,10 +395,7 @@ async def export_tasks_pdf(
         limit=1000,
     )
 
-    if current_user.is_superuser:
-        # Superadmin: optionally scope by explicit tenant_id via project filter above
-        pass
-    elif security.is_subcontractor(current_user):
+    if security.is_subcontractor(current_user):
         # Subcontractors: only tasks assigned to them within their tenant
         tasks = [
             task for task in tasks
@@ -461,3 +573,4 @@ async def export_single_task_pdf(
         media_type="application/pdf",
         headers={"Content-Disposition": f'attachment; filename=\"{filename}\"'},
     )
+

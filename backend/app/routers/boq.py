@@ -30,7 +30,7 @@ def get_project_boq(
     If it doesn't exist, it creates one.
     """
     # Superadmin bypass: effective_tenant_id is None for superusers
-    effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
+    effective_tenant_id = current_user.tenant_id
     
     project = crud.get_project(db, project_id=project_id, tenant_id=effective_tenant_id)
     if not project:
@@ -51,7 +51,7 @@ def add_boq_item(
     """
     Adds an item from the global catalog to a project's BoQ.
     """
-    effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
+    effective_tenant_id = current_user.tenant_id
     
     project = crud.get_project(db, project_id=project_id, tenant_id=effective_tenant_id)
     if not project:
@@ -81,7 +81,7 @@ def update_boq_item_quantity(
     if not db_item:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="BoQ item not found.")
     
-    effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
+    effective_tenant_id = current_user.tenant_id
     project = crud.get_project(db, project_id=db_item.boq.project_id, tenant_id=effective_tenant_id)
     if not project:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to modify this BoQ item.")
@@ -103,7 +103,7 @@ def remove_boq_item(
     if not db_item:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="BoQ item not found.")
 
-    effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
+    effective_tenant_id = current_user.tenant_id
     project = crud.get_project(db, project_id=db_item.boq.project_id, tenant_id=effective_tenant_id)
     if not project:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to modify this BoQ item.")

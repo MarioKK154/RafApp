@@ -21,7 +21,7 @@ def get_customer_for_user(customer_id: int, db: DbDependency, current_user: Admi
     Helper function to retrieve a customer while enforcing tenant isolation.
     Superusers bypass the tenant check.
     """
-    effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
+    effective_tenant_id = current_user.tenant_id
     db_customer = crud.get_customer(db, customer_id=customer_id, tenant_id=effective_tenant_id)
     
     if not db_customer:
@@ -42,11 +42,7 @@ def create_new_customer(
     Superadmins can specify a tenant_id in the request body.
     """
     # 1. Determine target tenant
-    if current_user.is_superuser:
-        # Use provided tenant_id, default to System Tenant (1) if missing
-        target_tenant_id = customer.tenant_id if customer.tenant_id is not None else 1
-    else:
-        target_tenant_id = current_user.tenant_id
+    target_tenant_id = current_user.tenant_id
 
     # 2. Verify target tenant exists
     if not crud.get_tenant(db, tenant_id=target_tenant_id):
@@ -74,7 +70,7 @@ def read_all_customers(
     Retrieves a list of customers.
     Superadmins see all customers across all tenants; regular admins see only their own.
     """
-    effective_tenant_id = None if current_user.is_superuser else current_user.tenant_id
+    effective_tenant_id = current_user.tenant_id
     return crud.get_customers(db=db, tenant_id=effective_tenant_id, skip=skip, limit=limit)
 
 @router.get("/{customer_id}", response_model=schemas.CustomerRead)

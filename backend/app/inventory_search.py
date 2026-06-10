@@ -36,11 +36,57 @@ def inventory_search_like_patterns(raw: Optional[str]) -> List[str]:
 
     variants: set[str] = set()
 
-    spaced = re.sub(r"\s+", " ", trimmed)
-    variants.add(spaced)
-    compact = re.sub(r"\s+", "", spaced)
-    if compact:
-        variants.add(compact)
+    # Broad Electrical Synonym Groups
+    SYNONYM_GROUPS = [
+        ["nym", "mmj", "eclq", "exq"],
+        ["rk", "mk", "pn", "rq", "h07v"],
+        ["ídráttrör", "rör með vír", "barki með vír"],
+        ["hf", "lszh", "halógenfrítt"],
+        ["cat6", "cat6a", "tölvustrengur", "netstrengur"],
+        ["vírbakki", "kapalbakki", "bakki"],
+        ["kapalstigi", "stigi"],
+        ["dós", "veggdós", "tengidós", "loftdós", "dósir"],
+        ["wago", "tengiklossi", "raðtengi", "búrtengi"],
+        ["kapalskór", "endahólk", "hólk"],
+        ["nippill", "kabelnippill", "þétti"],
+        ["tengill", "innstunga", "fjöltengi"],
+        ["rofi", "slekkjari", "vippa"],
+        ["dimmer", "ljósdeyfir"],
+        ["tafla", "dreifiskápur", "vinnutafla", "töflukassi"],
+        ["sjálfvar", "öryggi", "lekaliði", "mcb", "rcd", "rcbo"],
+        ["aflrofi", "mótorrofi", "skilrofi"],
+        ["ljós", "lampi", "kastari", "flóðljós", "led-borði"],
+        ["pera", "ljósapera", "flúrpípa", "halogen"],
+        ["skynjari", "hreyfiskynjari", "nærveruskynjari"],
+        ["reykskynjari", "brunaviðvörun"]
+    ]
+
+    # Dynamically build flat dictionary
+    SYNONYMS = {}
+    for group in SYNONYM_GROUPS:
+        for term in group:
+            SYNONYMS[term] = group
+
+    # Generate base search strings including synonym replacements
+    base_strings = {trimmed}
+    
+    # Sort terms by length descending to replace longest phrases first
+    sorted_terms = sorted(SYNONYMS.keys(), key=len, reverse=True)
+    
+    for term in sorted_terms:
+        # Check if term exists in the trimmed search string
+        if re.search(rf"\b{re.escape(term)}\b", trimmed):
+            for syn in SYNONYMS[term]:
+                if syn != term:
+                    new_str = re.sub(rf"\b{re.escape(term)}\b", syn, trimmed)
+                    base_strings.add(new_str)
+
+    for base_str in base_strings:
+        spaced = re.sub(r"\s+", " ", base_str)
+        variants.add(spaced)
+        compact = re.sub(r"\s+", "", spaced)
+        if compact:
+            variants.add(compact)
 
     # Comma vs dot (decimal separator in EU vs US style product codes)
     comma_dot: set[str] = set()

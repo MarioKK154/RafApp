@@ -138,6 +138,7 @@ class Tenant(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String, unique=True, index=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    base_hourly_rate: Mapped[float] = mapped_column(Float, default=6500.0)
     logo_url: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     background_image_url: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     background_image_urls: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # JSON array of URLs for rotating backgrounds
@@ -183,6 +184,7 @@ class User(Base):
     role = Column(String, nullable=False)
     # Optional per-user granular permissions, stored as JSON string (e.g. ["offers.manage", "inventory.manage"])
     extra_permissions = Column(Text, nullable=True)
+    can_export_data = Column(Boolean, default=False)
     tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True) 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
@@ -304,6 +306,7 @@ class Task(Base):
     project = relationship("Project", back_populates="tasks")
     assignee = relationship("User", back_populates="assigned_tasks")
     comments = relationship("TaskComment", back_populates="task", cascade="all, delete-orphan")
+    checklists = relationship("TaskChecklistItem", back_populates="task", cascade="all, delete-orphan")
     photos = relationship("TaskPhoto", back_populates="task", cascade="all, delete-orphan")
     successors = relationship(
         "Task",
@@ -364,10 +367,16 @@ class InventoryItem(Base):
     name_en = Column(String, nullable=True, index=True)
     category = Column(String, index=True, nullable=True)
     subcategory = Column(String, index=True, nullable=True)
+    master_category = Column(String, index=True, nullable=True)
     category_en = Column(String, nullable=True, index=True)
     subcategory_en = Column(String, nullable=True, index=True)
     description = Column(Text, nullable=True)
     description_en = Column(Text, nullable=True)
+    brand = Column(String, index=True, nullable=True)
+    voltage = Column(String, nullable=True)
+    amperage = Column(String, nullable=True)
+    ip_rating = Column(String, nullable=True)
+    ar_labor_tasks_list = Column(Text, nullable=True)
     unit = Column(String, nullable=True)
     low_stock_threshold = Column(Float, nullable=True)
     shop_url_1 = Column(String, nullable=True) 
@@ -604,6 +613,30 @@ class TaskComment(Base):
     task = relationship("Task", back_populates="comments")
     author = relationship("User", back_populates="task_comments")
 
+class TaskChecklistItem(Base):
+    __tablename__ = "task_checklist_items"
+    id = Column(Integer, primary_key=True, index=True)
+    content = Column(String, nullable=False)
+    is_completed = Column(Boolean, default=False)
+    is_private = Column(Boolean, default=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    task_id = Column(Integer, ForeignKey("tasks.id", ondelete="CASCADE"), nullable=False)
+    author_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    
+    task = relationship("Task", back_populates="checklists")
+    author = relationship("User")
+
+class PushSubscription(Base):
+    __tablename__ = "push_subscriptions"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    endpoint = Column(String, nullable=False, unique=True)
+    p256dh = Column(String, nullable=False)
+    auth = Column(String, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    user = relationship("User")
+
 class TaskPhoto(Base):
     __tablename__ = "task_photos"
     id = Column(Integer, primary_key=True, index=True)
@@ -698,6 +731,7 @@ class Shop(Base):
     name: Mapped[str] = mapped_column(String, index=True, nullable=False)
     address: Mapped[Optional[str]] = mapped_column(String)
     contact_person: Mapped[Optional[str]] = mapped_column(String)
+    contact_person_photo_url: Mapped[Optional[str]] = mapped_column(String)
     phone_number: Mapped[Optional[str]] = mapped_column(String)
     email: Mapped[Optional[str]] = mapped_column(String)
     website: Mapped[Optional[str]] = mapped_column(String)
@@ -730,6 +764,7 @@ class Customer(Base):
     address: Mapped[Optional[str]] = mapped_column(String)
     kennitala: Mapped[Optional[str]] = mapped_column(String, index=True)
     contact_person: Mapped[Optional[str]] = mapped_column(String)
+    contact_person_photo_url: Mapped[Optional[str]] = mapped_column(String)
     phone_number: Mapped[Optional[str]] = mapped_column(String)
     email: Mapped[Optional[str]] = mapped_column(String, index=True)
     notes: Mapped[Optional[str]] = mapped_column(Text)
@@ -851,3 +886,68 @@ class ProjectAssignment(Base):
     user = relationship("User", backref="project_assignments")
     project = relationship("Project", backref="assigned_personnel")
     
+class ChatThread(Base):
+    __tablename__ = "chat_threads"
+    id = Column(Integer, primary_key=True, index=True)
+    tenant_id = Column(Integer, ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False, index=True)
+    project_id = Column(Integer, ForeignKey("projects.id", ondelete="CASCADE"), nullable=True, index=True)
+    name = Column(String, nullable=True) # None for DMs
+    is_group = Column(Boolean, default=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    tenant = relationship("Tenant")
+    project = relationship("Project")
+    participants = relationship("ThreadParticipant", back_populates="thread", cascade="all, delete-orphan")
+    messages = relationship("ChatMessage", back_populates="thread", cascade="all, delete-orphan")
+
+
+class ThreadParticipant(Base):
+    __tablename__ = "thread_participants"
+    id = Column(Integer, primary_key=True, index=True)
+    thread_id = Column(Integer, ForeignKey("chat_threads.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    joined_at = Column(DateTime(timezone=True), server_default=func.now())
+    last_read_at = Column(DateTime(timezone=True), nullable=True)
+
+    thread = relationship("ChatThread", back_populates="participants")
+    user = relationship("User")
+
+
+class ChatMessage(Base):
+    __tablename__ = "chat_messages"
+    id = Column(Integer, primary_key=True, index=True)
+    thread_id = Column(Integer, ForeignKey("chat_threads.id", ondelete="CASCADE"), nullable=False, index=True)
+    author_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    content = Column(Text, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    attachment_url = Column(String, nullable=True)
+
+    thread = relationship("ChatThread", back_populates="messages")
+    author = relationship("User")
+
+from datetime import datetime
+
+class TenantIntegration(Base):
+    __tablename__ = "tenant_integrations"
+    id = Column(Integer, primary_key=True, index=True)
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False, index=True)
+    provider = Column(String, nullable=False) # e.g., 'PROCORE', 'ACC', 'AJOUR'
+    api_key = Column(String, nullable=True)   # Simulated API Key
+    base_url = Column(String, nullable=True)  # Simulated Base URL
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    tenant = relationship("Tenant")
+
+class SalesLead(Base):
+    __tablename__ = "sales_leads"
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    name: Mapped[str] = mapped_column(String, nullable=False)
+    email: Mapped[str] = mapped_column(String, nullable=False)
+    company: Mapped[str] = mapped_column(String, nullable=False)
+    phone: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    selected_tier: Mapped[str] = mapped_column(String, nullable=False)
+    status: Mapped[str] = mapped_column(String, default="New", nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

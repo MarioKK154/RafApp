@@ -116,7 +116,7 @@ function TaskCreatePage() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!formData.project_id) {
-            toast.error("A project assignment is required.");
+            toast.error(t('toast_project_required'));
             return;
         }
 
@@ -129,10 +129,10 @@ function TaskCreatePage() {
 
         try {
             await axiosInstance.post('/tasks/', payload);
-            toast.success(`Work node initialized: ${formData.title}`);
+            toast.success(`${t('toast_work_node_init')} ${formData.title}`);
             navigate(-1); // Returns user to their previous context
         } catch (err) {
-            toast.error(err.response?.data?.detail || "Task initialization failed.");
+            toast.error(err.response?.data?.detail || t('toast_task_init_failed'));
         } finally {
             setIsSubmitting(false);
         }
@@ -159,23 +159,23 @@ function TaskCreatePage() {
             <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Identity Module */}
                 <div className="space-y-6 bg-white dark:bg-gray-800 p-8 rounded-[2.5rem] border border-gray-100 dark:border-gray-700 shadow-sm">
-                    <h2 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] border-b pb-4">Identity</h2>
+                    <h2 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] border-b pb-4">{t('identity')}</h2>
                     
                     <div className="space-y-1">
-                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Work Title*</label>
+                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">{t('work_title')}</label>
                         <input 
                             type="text" 
                             name="title" 
                             required 
                             value={formData.title} 
                             onChange={handleChange} 
-                            placeholder="e.g., Lighting Installation" 
+                            placeholder={t('work_title_placeholder')} 
                             className="modern-input h-14 font-bold" 
                         />
                     </div>
 
                     <div className="space-y-1">
-                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Site Assignment*</label>
+                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">{t('site_assignment')}</label>
                         <div className="relative">
                             <BriefcaseIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                             <select 
@@ -195,14 +195,14 @@ function TaskCreatePage() {
                     </div>
 
                     <div className="space-y-1">
-                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1 flex items-center gap-1">Technical Scope</label>
+                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1 flex items-center gap-1">{t('technical_scope')}</label>
                         <textarea 
                             name="description" 
                             rows="5" 
                             value={formData.description} 
                             onChange={handleChange} 
                             className="modern-input p-4 text-sm" 
-                            placeholder="Detail work requirements..."
+                            placeholder={t('detail_work_requirements')}
                         ></textarea>
                     </div>
                 </div>
@@ -210,10 +210,10 @@ function TaskCreatePage() {
                 {/* Execution Module */}
                 <div className="space-y-6">
                     <div className="bg-white dark:bg-gray-800 p-8 rounded-[2.5rem] border border-gray-100 dark:border-gray-700 shadow-sm space-y-6">
-                        <h2 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] border-b pb-4">Execution</h2>
+                        <h2 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] border-b pb-4">{t('execution')}</h2>
                         
                         <div className="space-y-1">
-                            <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Personnel</label>
+                            <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">{t('personnel')}</label>
                             <div className="relative">
                                 <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                                 <select 
@@ -222,7 +222,7 @@ function TaskCreatePage() {
                                     onChange={handleChange} 
                                     className="modern-input pl-12 h-14"
                                 >
-                                    <option value="">Unassigned (Open Pool)</option>
+                                    <option value="">{t('unassigned_pool')}</option>
                                     {users.map(u => (
                                         <option key={u.id} value={u.id}>{u.full_name}</option>
                                     ))}
@@ -232,40 +232,40 @@ function TaskCreatePage() {
 
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-1">
-                                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Priority</label>
+                                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">{t('priority')}</label>
                                 <select 
                                     name="priority" 
                                     value={formData.priority} 
                                     onChange={handleChange} 
                                     className="modern-input h-14 font-black uppercase text-[10px]"
                                 >
-                                    <option>Low</option>
-                                    <option>Medium</option>
-                                    <option>High</option>
+                                    <option value="Low">{t('priority_low')}</option>
+                                    <option value="Medium">{t('priority_medium')}</option>
+                                    <option value="High">{t('priority_high')}</option>
                                 </select>
                             </div>
                             <div className="space-y-1">
-                                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Status</label>
+                                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">{t('status')}</label>
                                 <select 
                                     name="status" 
                                     value={formData.status} 
                                     onChange={handleChange} 
                                     className="modern-input h-14 font-black uppercase text-[10px]"
                                 >
-                                    <option>To Do</option>
-                                    <option>In Progress</option>
-                                    <option>Done</option>
+                                    <option value="To Do">{t('status_todo')}</option>
+                                    <option value="In Progress">{t('status_inprogress')}</option>
+                                    <option value="Done">{t('status_done')}</option>
                                 </select>
                             </div>
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-1">
-                                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Start Date</label>
+                                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">{t('start_date')}</label>
                                 <input type="date" name="start_date" value={formData.start_date} onChange={handleChange} className="modern-input h-14 font-bold" />
                             </div>
                             <div className="space-y-1">
-                                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Target Date</label>
+                                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">{t('target_date')}</label>
                                 <input type="date" name="due_date" value={formData.due_date} onChange={handleChange} className="modern-input h-14 font-bold" />
                             </div>
                         </div>

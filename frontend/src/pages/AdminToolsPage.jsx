@@ -17,7 +17,8 @@ import {
     FingerPrintIcon,
     GlobeAltIcon,
     ChartBarSquareIcon,
-    BoltIcon
+    BoltIcon,
+    Cog6ToothIcon
 } from '@heroicons/react/24/outline';
 
 const CONFIRMATION_PHRASE = "PERFORM CLEAN SLATE";
@@ -48,16 +49,20 @@ function AdminToolsPage() {
     const [landingFeed, setLandingFeed] = useState({
         news: [],
         updates: [],
-        tools: [],
-        interesting: [],
+        random: [],
         background_image_urls: [],
         background_slide_seconds: 8,
+        hero_title: 'Welcome to Our Platform',
+        hero_subtitle: 'We provide the best tools for your business.',
+        about_us_text: '',
+        about_us_text_en: '',
+        about_us_text_is: '',
+        contact_persons: [],
+        pricing_tiers: [],
     });
     const [landingVisibility, setLandingVisibility] = useState({
         show_news: true,
         show_updates: true,
-        show_tools: true,
-        show_interesting: true,
     });
     const [draggedItem, setDraggedItem] = useState(null);
     const [isLoadingMetrics, setIsLoadingMetrics] = useState(false);
@@ -129,19 +134,23 @@ function AdminToolsPage() {
                 setLandingFeed({
                     news: hydrateFeedItems(lf.news),
                     updates: hydrateFeedItems(lf.updates),
-                    tools: hydrateFeedItems(lf.tools),
-                    interesting: hydrateFeedItems(Array.isArray(lf.interesting) ? lf.interesting : lf.random),
+                    random: hydrateFeedItems(Array.isArray(lf.random) ? lf.random : []),
                     background_image_urls: Array.isArray(lf.background_image_urls) ? lf.background_image_urls : [],
                     background_slide_seconds:
                         typeof lf.background_slide_seconds === 'number' && !Number.isNaN(lf.background_slide_seconds)
                             ? lf.background_slide_seconds
                             : Math.min(600, Math.max(3, parseInt(lf.background_slide_seconds, 10) || 8)),
+                    hero_title: lf.hero_title || '',
+                    hero_subtitle: lf.hero_subtitle || '',
+                    about_us_text: lf.about_us_text || '',
+                    about_us_text_en: lf.about_us_text_en || '',
+                    about_us_text_is: lf.about_us_text_is || '',
+                    contact_persons: Array.isArray(lf.contact_persons) ? lf.contact_persons : [],
+                    pricing_tiers: Array.isArray(lf.pricing_tiers) ? lf.pricing_tiers : [],
                 });
                 setLandingVisibility({
                     show_news: lf.show_news !== false,
                     show_updates: lf.show_updates !== false,
-                    show_tools: lf.show_tools !== false,
-                    show_interesting: lf.show_interesting !== false,
                 });
             } catch (err) {
                 console.error('Admin metrics fetch failed:', err);
@@ -190,33 +199,41 @@ function AdminToolsPage() {
             const payload = {
                 news: normalizeItems(landingFeed.news),
                 updates: normalizeItems(landingFeed.updates),
-                tools: normalizeItems(landingFeed.tools),
-                interesting: normalizeItems(landingFeed.interesting),
+                random: normalizeItems(landingFeed.random),
                 show_news: landingVisibility.show_news !== false,
                 show_updates: landingVisibility.show_updates !== false,
-                show_tools: landingVisibility.show_tools !== false,
-                show_interesting: landingVisibility.show_interesting !== false,
                 background_image_urls: bgUrls,
                 background_slide_seconds: slideSec,
+                hero_title: landingFeed.hero_title,
+                hero_subtitle: landingFeed.hero_subtitle,
+                about_us_text: landingFeed.about_us_text,
+                about_us_text_en: landingFeed.about_us_text_en,
+                about_us_text_is: landingFeed.about_us_text_is,
+                contact_persons: landingFeed.contact_persons,
+                pricing_tiers: landingFeed.pricing_tiers,
             };
             const res = await axiosInstance.post('/system/landing-feed', payload);
             const lf = res.data || payload;
             setLandingFeed({
                 news: hydrateFeedItems(lf.news),
                 updates: hydrateFeedItems(lf.updates),
-                tools: hydrateFeedItems(lf.tools),
-                interesting: hydrateFeedItems(lf.interesting),
+                random: hydrateFeedItems(lf.random),
                 background_image_urls: Array.isArray(lf.background_image_urls) ? lf.background_image_urls : [],
                 background_slide_seconds:
                     typeof lf.background_slide_seconds === 'number' && !Number.isNaN(lf.background_slide_seconds)
                         ? lf.background_slide_seconds
                         : Math.min(600, Math.max(3, parseInt(lf.background_slide_seconds, 10) || 8)),
+                hero_title: lf.hero_title || '',
+                hero_subtitle: lf.hero_subtitle || '',
+                about_us_text: lf.about_us_text || '',
+                about_us_text_en: lf.about_us_text_en || '',
+                about_us_text_is: lf.about_us_text_is || '',
+                contact_persons: Array.isArray(lf.contact_persons) ? lf.contact_persons : [],
+                pricing_tiers: Array.isArray(lf.pricing_tiers) ? lf.pricing_tiers : [],
             });
             setLandingVisibility({
                 show_news: lf.show_news !== false,
                 show_updates: lf.show_updates !== false,
-                show_tools: lf.show_tools !== false,
-                show_interesting: lf.show_interesting !== false,
             });
             toast.success('Landing page feed updated.');
         } catch (err) {
@@ -333,6 +350,103 @@ function AdminToolsPage() {
             ...prev,
             background_image_urls: (prev.background_image_urls || []).filter((_, i) => i !== index),
         }));
+    };
+
+    const addPricingTier = () => {
+        setLandingFeed((prev) => ({
+            ...prev,
+            pricing_tiers: [
+                ...(prev.pricing_tiers || []),
+                { name: 'Basic', price: '0 ISK', features: ['Feature 1', 'Feature 2'], button_text: 'Get Started', is_popular: false }
+            ]
+        }));
+    };
+
+    const updatePricingTier = (index, key, value) => {
+        setLandingFeed((prev) => {
+            const arr = [...(prev.pricing_tiers || [])];
+            arr[index] = { ...arr[index], [key]: value };
+            return { ...prev, pricing_tiers: arr };
+        });
+    };
+
+    const updatePricingTierFeature = (tierIndex, featureIndex, value) => {
+        setLandingFeed((prev) => {
+            const arr = [...(prev.pricing_tiers || [])];
+            const features = [...(arr[tierIndex].features || [])];
+            features[featureIndex] = value;
+            arr[tierIndex] = { ...arr[tierIndex], features };
+            return { ...prev, pricing_tiers: arr };
+        });
+    };
+
+    const addPricingTierFeature = (tierIndex) => {
+        setLandingFeed((prev) => {
+            const arr = [...(prev.pricing_tiers || [])];
+            const features = [...(arr[tierIndex].features || []), 'New feature'];
+            arr[tierIndex] = { ...arr[tierIndex], features };
+            return { ...prev, pricing_tiers: arr };
+        });
+    };
+
+    const removePricingTierFeature = (tierIndex, featureIndex) => {
+        setLandingFeed((prev) => {
+            const arr = [...(prev.pricing_tiers || [])];
+            const features = (arr[tierIndex].features || []).filter((_, i) => i !== featureIndex);
+            arr[tierIndex] = { ...arr[tierIndex], features };
+            return { ...prev, pricing_tiers: arr };
+        });
+    };
+
+    const removePricingTier = (index) => {
+        setLandingFeed((prev) => ({
+            ...prev,
+            pricing_tiers: (prev.pricing_tiers || []).filter((_, i) => i !== index),
+        }));
+    };
+
+    const addContactPerson = () => {
+        setLandingFeed((prev) => ({
+            ...prev,
+            contact_persons: [
+                ...(prev.contact_persons || []),
+                { name: '', title: '', email: '', phone: '' }
+            ]
+        }));
+    };
+
+    const updateContactPerson = (index, key, value) => {
+        setLandingFeed((prev) => {
+            const arr = [...(prev.contact_persons || [])];
+            arr[index] = { ...arr[index], [key]: value };
+            return { ...prev, contact_persons: arr };
+        });
+    };
+
+    const removeContactPerson = (index) => {
+        setLandingFeed((prev) => ({
+            ...prev,
+            contact_persons: (prev.contact_persons || []).filter((_, i) => i !== index),
+        }));
+    };
+
+    const handleContactPhotoUpload = async (index, file) => {
+        if (!file) return;
+        setIsUploadingLandingBg(true);
+        try {
+            const fd = new FormData();
+            fd.append('file', file);
+            const res = await axiosInstance.post('/system/landing-background', fd);
+            const url = res.data?.url;
+            if (url) {
+                updateContactPerson(index, 'image_url', url);
+                toast.success('Contact photo uploaded. Click Save landing feed to publish.');
+            }
+        } catch (err) {
+            toast.error(err.response?.data?.detail || err.message || 'Upload failed.');
+        } finally {
+            setIsUploadingLandingBg(false);
+        }
     };
 
     const handleLandingBackgroundUpload = async (e) => {
@@ -453,9 +567,12 @@ function AdminToolsPage() {
                 </div>
             </header>
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                {/* Danger Zone Form */}
-                <div className="lg:col-span-7">
+            <div className="space-y-12">
+                {/* Critical Operations */}
+                <div className="space-y-4">
+                    <h2 className="text-sm font-black text-gray-400 uppercase tracking-widest border-b border-gray-100 dark:border-gray-800 pb-2">Critical Operations</h2>
+                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+                        <div>
                     <div className="bg-white dark:bg-gray-800 p-6 md:p-10 rounded-3xl shadow-xl shadow-red-100 dark:shadow-none border-2 border-red-200 dark:border-red-900/50">
                         <div className="flex items-center gap-2 mb-6 text-red-600 dark:text-red-400">
                             <ExclamationTriangleIcon className="h-6 w-6" />
@@ -531,8 +648,8 @@ function AdminToolsPage() {
                     </div>
                 </div>
 
-                {/* Status & Results Sidebar + Metrics */}
-                <div className="lg:col-span-5 space-y-6">
+                        </div>
+                        <div className="space-y-6">
                     {/* Success Report */}
                     {resultSummary ? (
                         <div className="bg-green-600 text-white p-6 md:p-8 rounded-3xl shadow-xl animate-in zoom-in duration-300">
@@ -559,8 +676,14 @@ function AdminToolsPage() {
                         </div>
                     )}
 
-                    {/* Platform Metrics */}
-                    <div className="grid grid-cols-1 gap-4">
+                        </div>
+                    </div>
+                </div>
+
+                {/* System Metrics & Health */}
+                <div className="space-y-4">
+                    <h2 className="text-sm font-black text-gray-400 uppercase tracking-widest border-b border-gray-100 dark:border-gray-800 pb-2">System Metrics & Health</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                         <div className="p-5 bg-indigo-50 dark:bg-indigo-900/10 rounded-3xl border border-indigo-100 dark:border-indigo-800">
                             <div className="flex items-center gap-2 mb-3">
                                 <GlobeAltIcon className="h-5 w-5 text-indigo-600 dark:text-indigo-300" />
@@ -705,10 +828,17 @@ function AdminToolsPage() {
                                 </p>
                             )}
                         </div>
+                    </div>
+                </div>
+
+                {/* System Configuration */}
+                <div className="space-y-4">
+                    <h2 className="text-sm font-black text-gray-400 uppercase tracking-widest border-b border-gray-100 dark:border-gray-800 pb-2">System Configuration</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 
                         <div className="p-5 bg-yellow-50 dark:bg-yellow-900/20 rounded-3xl border border-yellow-200 dark:border-yellow-700">
                             <div className="flex items-center gap-2 mb-3">
-                                <ShieldExclamationIcon className="h-5 w-5 text-yellow-600 dark:text-yellow-300" />
+                                <Cog6ToothIcon className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
                                 <h3 className="text-xs font-black text-gray-800 dark:text-gray-100 uppercase tracking-[0.25em]">
                                     Maintenance Mode
                                 </h3>
@@ -716,7 +846,7 @@ function AdminToolsPage() {
                             {systemStatus && (
                                 <div className="space-y-3 text-xs text-gray-800 dark:text-gray-100">
                                     <div className="flex items-center justify-between">
-                                        <span className="font-bold uppercase tracking-wider">Status</span>
+                                        <span className="font-bold uppercase tracking-wider">{t('status')}</span>
                                         <span className={systemStatus.maintenance ? 'text-red-600' : 'text-emerald-600'}>
                                             {systemStatus.maintenance ? 'Enabled' : 'Disabled'}
                                         </span>
@@ -783,6 +913,13 @@ function AdminToolsPage() {
                                 </button>
                             </div>
                         )}
+                    </div>
+                </div>
+
+                {/* Logs & Feeds */}
+                <div className="space-y-4">
+                    <h2 className="text-sm font-black text-gray-400 uppercase tracking-widest border-b border-gray-100 dark:border-gray-800 pb-2">Logs & Feeds</h2>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
                         <div className="p-5 bg-slate-50 dark:bg-slate-900/30 rounded-3xl border border-slate-200 dark:border-slate-700">
                             <div className="flex items-center gap-2 mb-3">
@@ -878,6 +1015,215 @@ function AdminToolsPage() {
                             <p className="text-[10px] text-gray-600 dark:text-gray-300 mb-3">
                                 Add card entries for home page sections. Links are optional.
                             </p>
+
+                            {/* Hero Section */}
+                            <div className="mb-4 rounded-2xl border border-sky-200 dark:border-sky-700 p-3 bg-white/80 dark:bg-gray-800/60">
+                                <h4 className="text-[11px] font-black uppercase tracking-widest text-sky-700 dark:text-sky-200 mb-2">
+                                    Hero Section
+                                </h4>
+                                <div className="space-y-2">
+                                    <input
+                                        value={landingFeed.hero_title || ''}
+                                        onChange={(e) => setLandingFeed(prev => ({ ...prev, hero_title: e.target.value }))}
+                                        placeholder="Hero Title (e.g. Welcome to Our Platform)"
+                                        className="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-2 py-1.5 text-xs font-bold"
+                                    />
+                                    <input
+                                        value={landingFeed.hero_subtitle || ''}
+                                        onChange={(e) => setLandingFeed(prev => ({ ...prev, hero_subtitle: e.target.value }))}
+                                        placeholder="Hero Subtitle (e.g. We provide the best tools for your business)"
+                                        className="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-2 py-1.5 text-xs"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* About Us */}
+                            <div className="mb-4 rounded-2xl border border-sky-200 dark:border-sky-700 p-3 bg-white/80 dark:bg-gray-800/60">
+                                <div className="space-y-4">
+                                    <div>
+                                        <h4 className="text-[11px] font-black uppercase tracking-widest text-sky-700 dark:text-sky-200 mb-2">
+                                            About Us Text (English)
+                                        </h4>
+                                        <textarea
+                                            value={landingFeed.about_us_text_en || ''}
+                                            onChange={(e) => setLandingFeed(prev => ({ ...prev, about_us_text_en: e.target.value }))}
+                                            placeholder="Enter details about your company in English..."
+                                            rows={4}
+                                            className="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-2 py-1.5 text-xs focus:ring-2 focus:ring-sky-500"
+                                        />
+                                    </div>
+                                    <div>
+                                        <h4 className="text-[11px] font-black uppercase tracking-widest text-sky-700 dark:text-sky-200 mb-2">
+                                            About Us Text (Icelandic)
+                                        </h4>
+                                        <textarea
+                                            value={landingFeed.about_us_text_is || ''}
+                                            onChange={(e) => setLandingFeed(prev => ({ ...prev, about_us_text_is: e.target.value }))}
+                                            placeholder="Enter details about your company in Icelandic..."
+                                            rows={4}
+                                            className="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-2 py-1.5 text-xs focus:ring-2 focus:ring-sky-500"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Contact Info */}
+                            <div className="mb-4 rounded-2xl border border-sky-200 dark:border-sky-700 p-3 bg-white/80 dark:bg-gray-800/60">
+                                <div className="flex items-center justify-between mb-2">
+                                    <h4 className="text-[11px] font-black uppercase tracking-widest text-sky-700 dark:text-sky-200">
+                                        Contact Persons
+                                    </h4>
+                                    <button
+                                        type="button"
+                                        onClick={addContactPerson}
+                                        className="px-2 py-1 rounded-lg bg-sky-600 hover:bg-sky-700 text-white text-[10px] font-black uppercase tracking-widest"
+                                    >
+                                        Add Contact
+                                    </button>
+                                </div>
+                                <div className="space-y-4">
+                                    {(landingFeed.contact_persons || []).length === 0 && (
+                                        <p className="text-[10px] text-gray-500 italic">No contact persons defined.</p>
+                                    )}
+                                    {(landingFeed.contact_persons || []).map((person, idx) => (
+                                        <div key={`contact-${idx}`} className="p-3 rounded-xl border border-sky-100 dark:border-sky-800 bg-white dark:bg-gray-800 relative">
+                                            <button
+                                                type="button"
+                                                onClick={() => removeContactPerson(idx)}
+                                                className="absolute top-2 right-2 text-red-500 hover:text-red-700"
+                                            >
+                                                <TrashIcon className="h-4 w-4" />
+                                            </button>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2 pr-6">
+                                                <input
+                                                    value={person.name || ''}
+                                                    onChange={(e) => updateContactPerson(idx, 'name', e.target.value)}
+                                                    placeholder="Name (e.g. John Doe)"
+                                                    className="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-2 py-1.5 text-xs font-bold"
+                                                />
+                                                <input
+                                                    value={person.title || ''}
+                                                    onChange={(e) => updateContactPerson(idx, 'title', e.target.value)}
+                                                    placeholder="Title / Job (e.g. CEO)"
+                                                    className="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-2 py-1.5 text-xs"
+                                                />
+                                                <input
+                                                    value={person.email || ''}
+                                                    onChange={(e) => updateContactPerson(idx, 'email', e.target.value)}
+                                                    placeholder="Email Address"
+                                                    className="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-2 py-1.5 text-xs"
+                                                />
+                                                <input
+                                                    value={person.phone || ''}
+                                                    onChange={(e) => updateContactPerson(idx, 'phone', e.target.value)}
+                                                    placeholder="Phone Number"
+                                                    className="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-2 py-1.5 text-xs"
+                                                />
+                                                <div className="flex items-center gap-2 col-span-1 md:col-span-2">
+                                                    {person.image_url && (
+                                                        <img src={person.image_url} alt="Contact" className="w-10 h-10 rounded-full object-cover border border-gray-300 dark:border-gray-600" />
+                                                    )}
+                                                    <input
+                                                        type="file"
+                                                        accept="image/*"
+                                                        onChange={(e) => {
+                                                            handleContactPhotoUpload(idx, e.target.files?.[0]);
+                                                            e.target.value = '';
+                                                        }}
+                                                        className="text-xs text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-sky-50 file:text-sky-700 hover:file:bg-sky-100"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Pricing Tiers */}
+                            <div className="mb-4 rounded-2xl border border-sky-200 dark:border-sky-700 p-3 bg-white/80 dark:bg-gray-800/60">
+                                <div className="flex items-center justify-between mb-2">
+                                    <h4 className="text-[11px] font-black uppercase tracking-widest text-sky-700 dark:text-sky-200">
+                                        Pricing Tiers
+                                    </h4>
+                                    <button
+                                        type="button"
+                                        onClick={addPricingTier}
+                                        className="px-2 py-1 rounded-lg bg-sky-600 hover:bg-sky-700 text-white text-[10px] font-black uppercase tracking-widest"
+                                    >
+                                        Add Tier
+                                    </button>
+                                </div>
+                                <div className="space-y-4">
+                                    {(landingFeed.pricing_tiers || []).length === 0 && (
+                                        <p className="text-[10px] text-gray-500 italic">No pricing tiers defined.</p>
+                                    )}
+                                    {(landingFeed.pricing_tiers || []).map((tier, idx) => (
+                                        <div key={`tier-${idx}`} className="p-3 rounded-xl border border-sky-100 dark:border-sky-800 bg-white dark:bg-gray-800 relative">
+                                            <button
+                                                type="button"
+                                                onClick={() => removePricingTier(idx)}
+                                                className="absolute top-2 right-2 text-red-500 hover:text-red-700"
+                                            >
+                                                <TrashIcon className="h-4 w-4" />
+                                            </button>
+                                            <div className="grid grid-cols-2 gap-2 mb-2 pr-6">
+                                                <input
+                                                    value={tier.name || ''}
+                                                    onChange={(e) => updatePricingTier(idx, 'name', e.target.value)}
+                                                    placeholder="Tier Name (e.g. Pro)"
+                                                    className="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-2 py-1.5 text-xs font-bold"
+                                                />
+                                                <input
+                                                    value={tier.price || ''}
+                                                    onChange={(e) => updatePricingTier(idx, 'price', e.target.value)}
+                                                    placeholder="Price (e.g. 15.000 ISK/mo)"
+                                                    className="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-2 py-1.5 text-xs"
+                                                />
+                                                <input
+                                                    value={tier.button_text || ''}
+                                                    onChange={(e) => updatePricingTier(idx, 'button_text', e.target.value)}
+                                                    placeholder="Button Text"
+                                                    className="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-2 py-1.5 text-xs"
+                                                />
+                                                <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-500 border border-gray-200 dark:border-gray-700 rounded-lg px-2 py-1.5">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={!!tier.is_popular}
+                                                        onChange={(e) => updatePricingTier(idx, 'is_popular', e.target.checked)}
+                                                    />
+                                                    Highlight as Popular
+                                                </label>
+                                            </div>
+                                            <div>
+                                                <p className="text-[10px] font-bold text-gray-500 uppercase mb-1">Features</p>
+                                                {(tier.features || []).map((feature, fIdx) => (
+                                                    <div key={`feature-${idx}-${fIdx}`} className="flex gap-2 mb-1">
+                                                        <input
+                                                            value={feature}
+                                                            onChange={(e) => updatePricingTierFeature(idx, fIdx, e.target.value)}
+                                                            className="flex-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-2 py-1 text-xs"
+                                                        />
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => removePricingTierFeature(idx, fIdx)}
+                                                            className="text-red-500 hover:text-red-700 px-1"
+                                                        >
+                                                            &times;
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                                <button
+                                                    type="button"
+                                                    onClick={() => addPricingTierFeature(idx)}
+                                                    className="text-[10px] font-bold text-sky-600 hover:text-sky-700 mt-1"
+                                                >
+                                                    + Add Feature
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
                             <div className="mb-4 rounded-2xl border border-sky-200 dark:border-sky-700 p-3 bg-white/80 dark:bg-gray-800/60">
                                 <h4 className="text-[11px] font-black uppercase tracking-widest text-sky-700 dark:text-sky-200 mb-2">
                                     Background photos
@@ -949,8 +1295,6 @@ function AdminToolsPage() {
                             {[
                                 { key: 'news', label: 'News', visibleKey: 'show_news' },
                                 { key: 'updates', label: 'Updates', visibleKey: 'show_updates' },
-                                { key: 'tools', label: 'Electrical tools', visibleKey: 'show_tools' },
-                                { key: 'interesting', label: 'Interesting stuff', visibleKey: 'show_interesting' },
                             ].map((section) => (
                                 <div key={section.key} className="mb-4 rounded-2xl border border-sky-200 dark:border-sky-700 p-3 bg-white/80 dark:bg-gray-800/60">
                                     <div className="flex items-center justify-between mb-2">
@@ -1201,7 +1545,6 @@ function AdminToolsPage() {
                     </div>
                 </div>
             </div>
-        </div>
     );
 }
 
