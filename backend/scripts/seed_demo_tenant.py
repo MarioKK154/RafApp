@@ -106,6 +106,13 @@ def _ensure_tenant(db) -> models.Tenant:
 
 def _create_users(db, tenant_id: int) -> dict[str, models.User]:
     now = _utc_now()
+    role_map = {
+        "admin": "admin",
+        "accountant": "accountant",
+        "project manager": "project manager",
+        "team leader": "team_lead",
+        "electrician": "regular_user",
+    }
     demo_users = [
         # admin
         dict(email="admin.demo@rafapp.is", full_name="John Admin Doe", role="admin", employee_id="2001", kennitala="1201011234", phone="5551001", city="Reykjavik", hourly=9500),
@@ -140,7 +147,7 @@ def _create_users(db, tenant_id: int) -> dict[str, models.User]:
             phone_number=row["phone"],
             city=row["city"],
             location=row["city"],
-            role=row["role"],
+            role=role_map.get(row["role"], row["role"]),
             is_active=True,
             is_superuser=False,
             tenant_id=tenant_id,
