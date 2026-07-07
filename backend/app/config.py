@@ -22,7 +22,7 @@ from dotenv import load_dotenv
 _ENV_PATH = Path(__file__).resolve().parent.parent / ".env"
 # Do not load .env when running tests via pytest to avoid overriding SQLite DATABASE_URL
 if "pytest" not in sys.modules and not any("pytest" in arg for arg in sys.argv):
-    load_dotenv(_ENV_PATH, override=True)
+    load_dotenv(_ENV_PATH, override=False)
 
 
 def _env_str(name: str, default: str = "") -> str:
