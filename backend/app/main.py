@@ -296,9 +296,16 @@ def _ensure_timelogs_travel_hours_column() -> None:
 @app.get("/health/db")
 @limiter.limit("60/minute")
 def health_db(request: Request):
-    import os
+    from .database import healthcheck_db, healthcheck_by_role, database_layout
+
+    if not healthcheck_db():
+        raise HTTPException(status_code=503, detail="database unavailable")
     return {
-        "env_keys": list(os.environ.keys()),
+        "status": "ok",
+        "database": "reachable",
+        "app_env": _settings.app_env,
+        "roles": healthcheck_by_role(),
+        "layout": database_layout(),
     }
 
 
