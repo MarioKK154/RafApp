@@ -296,15 +296,9 @@ def _ensure_timelogs_travel_hours_column() -> None:
 @app.get("/health/db")
 @limiter.limit("60/minute")
 def health_db(request: Request):
-    from .database import engine, text, healthcheck_by_role, database_layout
-    with engine.connect() as conn:
-        conn.execute(text("SELECT 1"))
+    import os
     return {
-        "status": "ok",
-        "database": "reachable",
-        "app_env": _settings.app_env,
-        "roles": healthcheck_by_role(),
-        "layout": database_layout(),
+        "env_keys": list(os.environ.keys()),
     }
 
 
