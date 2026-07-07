@@ -296,10 +296,9 @@ def _ensure_timelogs_travel_hours_column() -> None:
 @app.get("/health/db")
 @limiter.limit("60/minute")
 def health_db(request: Request):
-    from .database import healthcheck_db, healthcheck_by_role, database_layout
-
-    if not healthcheck_db():
-        raise HTTPException(status_code=503, detail="database unavailable")
+    from .database import engine, text, healthcheck_by_role, database_layout
+    with engine.connect() as conn:
+        conn.execute(text("SELECT 1"))
     return {
         "status": "ok",
         "database": "reachable",
