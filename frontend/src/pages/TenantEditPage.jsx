@@ -14,7 +14,13 @@ import {
     CloudArrowUpIcon,
     FingerPrintIcon,
     PaintBrushIcon,
-    InformationCircleIcon
+    InformationCircleIcon,
+    UsersIcon,
+    BriefcaseIcon,
+    WrenchScrewdriverIcon,
+    TruckIcon,
+    UserGroupIcon,
+    ChartBarIcon
 } from '@heroicons/react/24/outline';
 
 function TenantEditPage() {
@@ -30,11 +36,23 @@ function TenantEditPage() {
         logo_url: '',
         background_image_url: '',
         background_image_urls: [],
+        base_hourly_rate: 6500.0,
+        enabled_features: [],
     });
     const [initialTenantData, setInitialTenantData] = useState(null);
     const [isLoadingData, setIsLoadingData] = useState(true);
     const [error, setError] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // Invoice and Subscription billing states
+    const [invoices, setInvoices] = useState([]);
+    const [isLoadingInvoices, setIsLoadingInvoices] = useState(false);
+    const [newInvoice, setNewInvoice] = useState({
+        amount: 23600,
+        due_date: new Date(Date.now() + 14 * 24 * 3600 * 1000).toISOString().split('T')[0],
+        status: 'Pending',
+        description: 'Monthly SaaS subscription fee'
+    });
 
     const isSuperuser = currentUser?.is_superuser;
 
@@ -54,7 +72,35 @@ function TenantEditPage() {
                     logo_url: tenant.logo_url ?? '',
                     background_image_url: tenant.background_image_url ?? '',
                     background_image_urls: Array.isArray(tenant.background_image_urls) ? tenant.background_image_urls : [],
+                    base_hourly_rate: tenant.base_hourly_rate ?? 6500.0,
+                    enabled_features: Array.isArray(tenant.enabled_features) ? tenant.enabled_features : [],
                 });
+
+                // Calculate default amount based on active user count
+                const users = tenant.user_count || 0;
+                let defaultAmount = 16390;
+                if (users <= 10) {
+                    const extra = Math.max(0, users - 2);
+                    const total = 16390 + extra * 3190;
+                    defaultAmount = Math.min(41910, total);
+                } else if (users <= 25) {
+                    const extra = Math.max(0, users - 10);
+                    const total = 43890 + extra * 2750;
+                    defaultAmount = Math.min(85140, total);
+                } else if (users <= 65) {
+                    const extra = Math.max(0, users - 25);
+                    const total = 82390 + extra * 2200;
+                    defaultAmount = Math.min(170390, total);
+                } else {
+                    const extra = Math.max(0, users - 65);
+                    defaultAmount = 164890 + extra * 1650;
+                }
+
+                setNewInvoice(prev => ({
+                    ...prev,
+                    amount: defaultAmount,
+                    description: `Monthly Subscription SaaS fee (${users} active user(s))`
+                }));
             } catch (err) {
                 console.error("Infrastructure Sync Error:", err);
                 const errorMsg = err.response?.status === 404 ? t('toast_tenant_not_found') : t('toast_tenant_sync_failed');
@@ -73,6 +119,79 @@ function TenantEditPage() {
     useEffect(() => {
         fetchTenantData();
     }, [fetchTenantData]);
+
+    const fetchInvoices = useCallback(async () => {
+        if (!tenantId) return;
+        setIsLoadingInvoices(true);
+        try {
+            const res = await axiosInstance.get(`/tenants/${tenantId}/invoices`);
+            setInvoices(res.data || []);
+        } catch (err) {
+            console.error("Failed to load invoices", err);
+        } finally {
+            setIsLoadingInvoices(false);
+        }
+    }, [tenantId]);
+
+    useEffect(() => {
+        if (tenantId) {
+            fetchInvoices();
+        }
+    }, [tenantId, fetchInvoices]);
+
+    const handleGenerateInvoice = async (e) => {
+        e.preventDefault();
+        try {
+            const payload = {
+                tenant_id: parseInt(tenantId, 10),
+                amount: parseFloat(newInvoice.amount),
+                due_date: newInvoice.due_date,
+                status: newInvoice.status,
+                provider: 'stripe',
+                description: newInvoice.description
+            };
+            await axiosInstance.post(`/tenants/${tenantId}/invoices`, payload);
+            toast.success("Invoice generated successfully!");
+            fetchInvoices();
+            const users = initialTenantData?.user_count || 0;
+            let defaultAmount = 16390;
+            if (users <= 10) {
+                const extra = Math.max(0, users - 2);
+                const total = 16390 + extra * 3190;
+                defaultAmount = Math.min(41910, total);
+            } else if (users <= 25) {
+                const extra = Math.max(0, users - 10);
+                const total = 43890 + extra * 2750;
+                defaultAmount = Math.min(85140, total);
+            } else if (users <= 65) {
+                const extra = Math.max(0, users - 25);
+                const total = 82390 + extra * 2200;
+                defaultAmount = Math.min(170390, total);
+            } else {
+                const extra = Math.max(0, users - 65);
+                defaultAmount = 164890 + extra * 1650;
+            }
+
+            setNewInvoice({
+                amount: defaultAmount,
+                due_date: new Date(Date.now() + 14 * 24 * 3600 * 1000).toISOString().split('T')[0],
+                status: 'Pending',
+                description: `Monthly Subscription SaaS fee (${users} active user(s))`
+            });
+        } catch (err) {
+            toast.error(err.response?.data?.detail || "Failed to generate invoice");
+        }
+    };
+
+    const handleMarkInvoicePaid = async (invoiceId) => {
+        try {
+            await axiosInstance.post(`/tenants/invoices/${invoiceId}/pay`);
+            toast.success("Invoice successfully marked as Paid!");
+            fetchInvoices();
+        } catch (err) {
+            toast.error(err.response?.data?.detail || "Failed to mark invoice as paid");
+        }
+    };
 
     const handleChange = (e) => {
     const { name, value } = e.target;
@@ -93,6 +212,9 @@ function TenantEditPage() {
         if (formData.background_image_url !== (initialTenantData.background_image_url ?? '')) updatePayload.background_image_url = formData.background_image_url || null;
         const initialBgUrls = Array.isArray(initialTenantData.background_image_urls) ? initialTenantData.background_image_urls : [];
         if (JSON.stringify(formData.background_image_urls || []) !== JSON.stringify(initialBgUrls)) updatePayload.background_image_urls = formData.background_image_urls || [];
+        if (parseFloat(formData.base_hourly_rate) !== initialTenantData.base_hourly_rate) updatePayload.base_hourly_rate = parseFloat(formData.base_hourly_rate) || 0.0;
+        const initialFeatures = Array.isArray(initialTenantData.enabled_features) ? initialTenantData.enabled_features : [];
+        if (JSON.stringify(formData.enabled_features || []) !== JSON.stringify(initialFeatures)) updatePayload.enabled_features = formData.enabled_features || [];
 
         if (Object.keys(updatePayload).length === 0) {
             toast.info(t('toast_no_modifications'));
@@ -127,7 +249,7 @@ function TenantEditPage() {
             {/* Header / Breadcrumbs */}
             <div className="mb-8">
                 <Link to="/tenants" className="flex items-center text-xs font-black text-gray-400 hover:text-orange-600 transition mb-2 uppercase tracking-widest">
-                    <ChevronLeftIcon className="h-3 w-3 mr-1" /> {t('back_to_registry')}
+                    <ChevronLeftIcon className="h-3 w-3 mr-1" /> {t('back_to_tenants')}
                 </Link>
                 <div className="flex items-center gap-3">
                     <div className="p-3 bg-orange-600 rounded-2xl shadow-lg shadow-orange-100 dark:shadow-none">
@@ -154,17 +276,31 @@ function TenantEditPage() {
                             <BuildingOfficeIcon className="h-4 w-4" /> {t('node_identity')}
                         </h2>
                         
-                        <div>
-                            <label className="block text-[10px] font-black text-gray-500 uppercase mb-1 ml-1 tracking-widest">{t('company_entity_name')}</label>
-                            <input 
-                                type="text" 
-                                name="name" 
-                                required 
-                                value={formData.name} 
-                                onChange={handleChange} 
-                                disabled={isSubmitting}
-                                className="block w-full h-12 rounded-2xl border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-orange-500 font-bold" 
-                            />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label className="block text-[10px] font-black text-gray-500 uppercase mb-1 ml-1 tracking-widest">{t('company_entity_name')}</label>
+                                <input 
+                                    type="text" 
+                                    name="name" 
+                                    required 
+                                    value={formData.name} 
+                                    onChange={handleChange} 
+                                    disabled={isSubmitting}
+                                    className="block w-full h-12 rounded-2xl border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-orange-500 font-bold" 
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-[10px] font-black text-gray-500 uppercase mb-1 ml-1 tracking-widest">Base Hourly Rate (ISK)</label>
+                                <input 
+                                    type="number" 
+                                    name="base_hourly_rate" 
+                                    required 
+                                    value={formData.base_hourly_rate} 
+                                    onChange={handleChange} 
+                                    disabled={isSubmitting}
+                                    className="block w-full h-12 rounded-2xl border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-orange-500 font-bold" 
+                                />
+                            </div>
                         </div>
 
                         <div className="space-y-6 pt-4 border-t border-gray-50 dark:border-gray-700">
@@ -277,6 +413,45 @@ function TenantEditPage() {
                             </div>
                         </div>
                     </section>
+
+                    {/* Module Configuration */}
+                    <section className="bg-white dark:bg-gray-800 p-6 rounded-[2.5rem] border border-gray-100 dark:border-gray-700 shadow-sm space-y-4">
+                        <h3 className="text-xs font-black text-gray-900 dark:text-white uppercase tracking-wider flex items-center gap-2 border-b pb-2">
+                            <WrenchScrewdriverIcon className="h-4 w-4 text-orange-600" /> Module Configuration
+                        </h3>
+                        <div className="grid grid-cols-2 gap-4">
+                            {[
+                                { key: 'fleet', label: 'Fleet Management' },
+                                { key: 'tools', label: 'Tool Inventory' },
+                                { key: 'tutorials', label: 'Tutorials & Standards' },
+                                { key: 'payroll', label: 'HR & Payroll' },
+                                { key: 'rates', label: 'Service Rates' },
+                                { key: 'risk', label: 'Risk Library' }
+                            ].map(({ key, label }) => {
+                                const isChecked = (formData.enabled_features || []).includes(key);
+                                return (
+                                    <label key={key} className="flex items-center gap-3 p-3 rounded-2xl border border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-900/50 cursor-pointer transition-all">
+                                        <input
+                                            type="checkbox"
+                                            className="h-4 w-4 rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                                            checked={isChecked}
+                                            onChange={(e) => {
+                                                const checked = e.target.checked;
+                                                setFormData(prev => {
+                                                    const current = prev.enabled_features || [];
+                                                    const updated = checked 
+                                                        ? [...current, key]
+                                                        : current.filter(k => k !== key);
+                                                    return { ...prev, enabled_features: updated };
+                                                });
+                                            }}
+                                        />
+                                        <span className="text-xs font-bold text-gray-700 dark:text-gray-300">{label}</span>
+                                    </label>
+                                );
+                            })}
+                        </div>
+                    </section>
                 </div>
 
                 {/* Right Column: Preview & Actions */}
@@ -311,6 +486,165 @@ function TenantEditPage() {
                         </div>
                         <p className="text-[9px] text-gray-500 text-center font-bold uppercase italic tracking-tighter">{t('verified_node_appearance')}</p>
                     </section>
+
+                    {/* Stats Section */}
+                    {/* Stats Section */}
+                    {initialTenantData && (
+                        <section className="bg-white dark:bg-gray-800 p-6 rounded-[2.5rem] border border-gray-100 dark:border-gray-700 shadow-sm space-y-4 text-left">
+                            <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2 border-b pb-2">
+                                <ChartBarIcon className="h-4 w-4" /> Node Telemetry
+                            </h3>
+                            
+                            {/* Registry Meta */}
+                            <div className="grid grid-cols-2 gap-3 text-[10px] font-bold text-gray-500 uppercase tracking-widest bg-gray-50 dark:bg-gray-900/40 p-4 rounded-2xl">
+                                <div>Created: <span className="text-gray-800 dark:text-gray-200">{new Date(initialTenantData.created_at).toLocaleDateString()}</span></div>
+                                <div>Billing: {initialTenantData.has_overdue_invoices ? (
+                                    <span className="text-red-500 font-black">Overdue ({initialTenantData.overdue_amount} ISK)</span>
+                                ) : (
+                                    <span className="text-emerald-500 font-black">Good Standing</span>
+                                )}</div>
+                                <div>Discount: <span className="text-indigo-500">{initialTenantData.discount_percent ? `${initialTenantData.discount_percent}%` : 'None'}</span></div>
+                                <div>Status: <span className="text-emerald-500">Active</span></div>
+                            </div>
+
+                            {/* Resource Counters */}
+                            <div className="grid grid-cols-3 gap-2">
+                                <div className="bg-gray-50 dark:bg-gray-900/50 p-2.5 rounded-2xl text-center border border-gray-100 dark:border-gray-700">
+                                    <UsersIcon className="h-4 w-4 text-gray-400 mx-auto mb-1" />
+                                    <div className="text-lg font-black text-gray-800 dark:text-gray-200">{initialTenantData.user_count || 0}</div>
+                                    <div className="text-[8px] font-bold text-gray-500 uppercase tracking-widest">Users</div>
+                                </div>
+                                <div className="bg-gray-50 dark:bg-gray-900/50 p-2.5 rounded-2xl text-center border border-gray-100 dark:border-gray-700">
+                                    <BriefcaseIcon className="h-4 w-4 text-gray-400 mx-auto mb-1" />
+                                    <div className="text-lg font-black text-gray-800 dark:text-gray-200">{initialTenantData.project_count || 0}</div>
+                                    <div className="text-[8px] font-bold text-gray-500 uppercase tracking-widest">Projects</div>
+                                </div>
+                                <div className="bg-gray-50 dark:bg-gray-900/50 p-2.5 rounded-2xl text-center border border-gray-100 dark:border-gray-700">
+                                    <UserGroupIcon className="h-4 w-4 text-gray-400 mx-auto mb-1" />
+                                    <div className="text-lg font-black text-gray-800 dark:text-gray-200">{initialTenantData.customer_count || 0}</div>
+                                    <div className="text-[8px] font-bold text-gray-500 uppercase tracking-widest">Clients</div>
+                                </div>
+                                <div className="bg-gray-50 dark:bg-gray-900/50 p-2.5 rounded-2xl text-center border border-gray-100 dark:border-gray-700">
+                                    <TruckIcon className="h-4 w-4 text-gray-400 mx-auto mb-1" />
+                                    <div className="text-lg font-black text-gray-800 dark:text-gray-200">{initialTenantData.car_count || 0}</div>
+                                    <div className="text-[8px] font-bold text-gray-500 uppercase tracking-widest">Fleet</div>
+                                </div>
+                                <div className="bg-gray-50 dark:bg-gray-900/50 p-2.5 rounded-2xl text-center border border-gray-100 dark:border-gray-700 col-span-2">
+                                    <WrenchScrewdriverIcon className="h-4 w-4 text-gray-400 mx-auto mb-1" />
+                                    <div className="text-lg font-black text-gray-800 dark:text-gray-200">{initialTenantData.tool_count || 0}</div>
+                                    <div className="text-[8px] font-bold text-gray-500 uppercase tracking-widest">Tools Assigned</div>
+                                </div>
+                            </div>
+                        </section>
+                    )}
+
+                    {/* Subscription & Invoices Panel */}
+                    {initialTenantData && (
+                        <section className="bg-white dark:bg-gray-800 p-6 rounded-[2.5rem] border border-gray-100 dark:border-gray-700 shadow-sm space-y-4 text-left">
+                            <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2 border-b pb-2">
+                                <span className="text-indigo-600">💳</span> Subscription & Billing Invoices
+                            </h3>
+
+                            {/* Invoices List */}
+                            <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                                {isLoadingInvoices ? (
+                                    <p className="text-[10px] text-gray-400 italic">Loading invoices...</p>
+                                ) : invoices.length === 0 ? (
+                                    <p className="text-[10px] text-gray-400 italic">No invoices issued yet.</p>
+                                ) : (
+                                    invoices.map((inv) => (
+                                        <div key={inv.id} className="p-3 bg-gray-50 dark:bg-gray-900/50 rounded-2xl border border-gray-100 dark:border-gray-700 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 text-xs">
+                                            <div>
+                                                <div className="font-bold text-gray-900 dark:text-white flex items-center gap-1.5">
+                                                    <span>{((inv.amount || 0) * 1.24).toLocaleString()} ISK</span>
+                                                    <span className="text-[8px] text-gray-400 font-normal">(Incl. 24% VSK)</span>
+                                                    <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider ${
+                                                        inv.status === 'Paid' 
+                                                            ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-400'
+                                                            : inv.status === 'Overdue'
+                                                                ? 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
+                                                                : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400'
+                                                    }`}>
+                                                        {inv.status}
+                                                    </span>
+                                                </div>
+                                                <p className="text-[9px] text-gray-500 mt-0.5">{inv.description || 'Monthly Subscription'}</p>
+                                                <p className="text-[8px] text-gray-400 font-mono mt-0.5">Due: {inv.due_date} | Base: {inv.amount.toLocaleString()} ISK + VSK</p>
+                                            </div>
+                                            {inv.status !== 'Paid' && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleMarkInvoicePaid(inv.id)}
+                                                    className="px-3 py-1.5 bg-[#0096FF] hover:bg-blue-500 text-white text-[9px] font-black uppercase tracking-wider rounded-xl transition shadow"
+                                                >
+                                                    Mark Paid
+                                                </button>
+                                            )}
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+
+                            {/* Generate Invoice Form */}
+                            <div className="border-t border-gray-100 dark:border-gray-700 pt-4 space-y-3">
+                                <h4 className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Issue New Invoice</h4>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <div>
+                                        <label className="block text-[8px] font-black text-gray-500 uppercase mb-0.5">Amount (ISK)</label>
+                                        <input
+                                            type="number"
+                                            value={newInvoice.amount}
+                                            onChange={e => setNewInvoice({ ...newInvoice, amount: e.target.value })}
+                                            className="block w-full h-8 px-2 rounded-xl text-xs border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-orange-500 font-bold"
+                                            required
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[8px] font-black text-gray-500 uppercase mb-0.5">Due Date</label>
+                                        <input
+                                            type="date"
+                                            value={newInvoice.due_date}
+                                            onChange={e => setNewInvoice({ ...newInvoice, due_date: e.target.value })}
+                                            className="block w-full h-8 px-2 rounded-xl text-xs border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-orange-500 font-bold"
+                                            required
+                                        />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-[8px] font-black text-gray-500 uppercase mb-0.5">Description</label>
+                                    <input
+                                        type="text"
+                                        value={newInvoice.description}
+                                        onChange={e => setNewInvoice({ ...newInvoice, description: e.target.value })}
+                                        className="block w-full h-8 px-2 rounded-xl text-xs border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-orange-500 font-bold"
+                                        placeholder="Monthly SaaS fee"
+                                        required
+                                    />
+                                </div>
+                                <div className="flex gap-2">
+                                    <div className="flex-1">
+                                        <label className="block text-[8px] font-black text-gray-500 uppercase mb-0.5">Initial Status</label>
+                                        <select
+                                            value={newInvoice.status}
+                                            onChange={e => setNewInvoice({ ...newInvoice, status: e.target.value })}
+                                            className="block w-full h-8 px-2 rounded-xl text-xs border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-orange-500 font-bold"
+                                        >
+                                            <option value="Pending">Pending</option>
+                                            <option value="Paid">Paid</option>
+                                            <option value="Overdue">Overdue</option>
+                                        </select>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={handleGenerateInvoice}
+                                        className="self-end h-8 px-4 bg-orange-600 hover:bg-orange-700 text-white text-[9px] font-black uppercase tracking-wider rounded-xl transition"
+                                    >
+                                        Generate Invoice
+                                    </button>
+                                </div>
+                            </div>
+                        </section>
+                    )}
 
                     <button 
                         type="submit" 

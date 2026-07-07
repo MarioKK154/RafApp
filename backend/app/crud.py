@@ -1,14 +1,24 @@
 from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import desc, asc, func, or_, and_, text
+from sqlalchemy import desc, asc, func, or_, and_, text, case
 from sqlalchemy.exc import OperationalError
 from typing import Optional, List, Dict, Any
 from datetime import date, datetime, timezone, timedelta
 import json
 from . import models, schemas
 from .database import engine
-from .inventory_search import escape_like_fragment, inventory_search_like_patterns
+from .inventory_search import escape_like_fragment, inventory_search_like_patterns, inventory_search_categorized_patterns
 from .security import get_password_hash
 from .labor_i18n import main_category_label_en
+
+def restore_string(s: Any) -> Any:
+    if not isinstance(s, str):
+        return s
+    if not any(ord(c) in (0xc2, 0xc3) for c in s):
+        return s
+    try:
+        return s.encode('latin-1').decode('utf-8')
+    except (UnicodeEncodeError, UnicodeDecodeError):
+        return s
 
 
 def _labor_ui_lang(lang: Optional[str]) -> str:
@@ -72,12 +82,14 @@ def get_tenants(db: Session, skip: int = 0, limit: int = 100) -> List[models.Ten
 
 def create_tenant(db: Session, tenant: schemas.TenantCreate) -> models.Tenant:
     bg_urls = tenant.background_image_urls if tenant.background_image_urls else None
+    features = tenant.enabled_features if tenant.enabled_features else None
     now = datetime.now(timezone.utc)
     db_tenant = models.Tenant(
         name=tenant.name,
         logo_url=str(tenant.logo_url) if tenant.logo_url else None,
         background_image_url=str(tenant.background_image_url) if tenant.background_image_url else None,
         background_image_urls=json.dumps(bg_urls) if bg_urls else None,
+        enabled_features=json.dumps(features) if features else None,
         created_at=now,
         updated_at=now,
     )
@@ -91,7 +103,7 @@ def update_tenant(db: Session, db_tenant: models.Tenant, tenant_update: schemas.
     for key, value in update_data.items():
         if key in ['logo_url', 'background_image_url'] and value:
             setattr(db_tenant, key, str(value))
-        elif key == 'background_image_urls':
+        elif key in ['background_image_urls', 'enabled_features']:
             setattr(db_tenant, key, json.dumps(value) if value else None)
         else:
             setattr(db_tenant, key, value)
@@ -713,6 +725,7 @@ def _inventory_shop_predicates() -> dict[str, Any]:
 def get_inventory_items(
     db: Session,
     search: Optional[str] = None,
+    master_category: Optional[str] = None,
     category: Optional[str] = None,
     subcategory: Optional[str] = None,
     shops: Optional[List[str]] = None,
@@ -722,10 +735,12 @@ def get_inventory_items(
 ) -> List[models.InventoryItem]:
     query = db.query(models.InventoryItem)
     m = models.InventoryItem
+    relevance_score = None
 
     if search:
-        patterns = inventory_search_like_patterns(search)
-        if patterns:
+        prim_pats, sec_pats = inventory_search_categorized_patterns(search)
+        all_patterns = prim_pats + sec_pats
+        if all_patterns:
             text_cols = [
                 m.name,
                 m.name_en,
@@ -736,16 +751,65 @@ def get_inventory_items(
                 m.reykjafell_sku,
             ]
             clauses: List[Any] = []
-            for p in patterns:
+            for p in all_patterns:
                 for col in text_cols:
                     clauses.append(_inventory_text_ilike_contains(col, p))
             query = query.filter(or_(*clauses))
 
+            # Build relevance scoring
+            score_parts = []
+            trimmed = search.strip().lower()
+            escaped_trimmed = f"%{escape_like_fragment(trimmed)}%"
+
+            # 1. Literal search substring match in name/name_en (Highest priority)
+            score_parts.append(case(
+                (or_(
+                    m.name.ilike(escaped_trimmed, escape="\\"),
+                    m.name_en.ilike(escaped_trimmed, escape="\\")
+                ), 100),
+                else_=0
+            ))
+
+            # 2. Match of primary patterns in name/name_en (without synonyms)
+            primary_name_clauses = []
+            for p in prim_pats:
+                escaped_p = f"%{escape_like_fragment(p)}%"
+                primary_name_clauses.append(m.name.ilike(escaped_p, escape="\\"))
+                primary_name_clauses.append(m.name_en.ilike(escaped_p, escape="\\"))
+            if primary_name_clauses:
+                score_parts.append(case((or_(*primary_name_clauses), 50), else_=0))
+
+            # 3. Match of secondary patterns (synonyms) in name/name_en
+            secondary_name_clauses = []
+            for p in sec_pats:
+                escaped_p = f"%{escape_like_fragment(p)}%"
+                secondary_name_clauses.append(m.name.ilike(escaped_p, escape="\\"))
+                secondary_name_clauses.append(m.name_en.ilike(escaped_p, escape="\\"))
+            if secondary_name_clauses:
+                score_parts.append(case((or_(*secondary_name_clauses), 10), else_=0))
+
+            # 4. Match of any patterns in description or SKUs
+            other_clauses = []
+            for p in all_patterns:
+                escaped_p = f"%{escape_like_fragment(p)}%"
+                for col in [m.description, m.description_en, m.ronning_sku, m.iskraft_sku, m.reykjafell_sku]:
+                    other_clauses.append(col.ilike(escaped_p, escape="\\"))
+            if other_clauses:
+                score_parts.append(case((or_(*other_clauses), 5), else_=0))
+
+            relevance_score = sum(score_parts)
+
+    # 3-level hierarchy filters
+    if master_category:
+        query = query.filter(func.lower(m.master_category) == master_category.lower())
+
     if category:
-        query = query.filter(models.InventoryItem.master_category == category)
+        # category = subcategory-level IS key
+        query = query.filter(func.lower(m.category) == category.lower())
 
     if subcategory:
-        query = query.filter(func.lower(models.InventoryItem.category) == subcategory.lower())
+        # subcategory = sub-subcategory IS key
+        query = query.filter(func.lower(m.subcategory) == subcategory.lower())
 
     preds = _inventory_shop_predicates()
     if shops:
@@ -760,74 +824,136 @@ def get_inventory_items(
             else:
                 query = query.filter(or_(*parts))
 
+    if search and relevance_score is not None:
+        return query.order_by(relevance_score.desc(), models.InventoryItem.name).offset(skip).limit(limit).all()
     return query.order_by(models.InventoryItem.name).offset(skip).limit(limit).all()
 
 
 def get_inventory_catalog_filters(db: Session, lang: Optional[str] = None) -> List[dict]:
     """
-    Build a category -> subcategory tree for the catalog UI.
-    Uses frontend's "base subcategory = first segment before '/'" convention.
-    When lang starts with 'en', fills category_display / subcategory labels from *_en fields when set.
+    Build a 3-level category tree for the catalog UI.
+
+    Field mapping (matches Excel import):
+      Level 1: master_category IS key, with EN display from a lookup
+      Level 2: category IS key (subcategory), category_en = EN display label
+      Level 3: subcategory IS key (sub-subcategory, optional), subcategory_en = EN display label
+               If a product has no sub-subcategory, it appears at level 2.
+
+    Returns list of:
+      {
+        "category": <master_cat IS key>,
+        "category_display": <EN or IS display>,
+        "subcategories": [
+          {
+            "key": <category IS key>,
+            "label": <EN or IS display>,
+            "subsubcategories": [{"key": <subcategory IS key>, "label": <EN or IS>}]
+          }
+        ]
+      }
     """
     rows = (
         db.query(
             models.InventoryItem.master_category,
             models.InventoryItem.category,
-            models.InventoryItem.master_category, # No EN for master yet
             models.InventoryItem.category_en,
+            models.InventoryItem.subcategory,
+            models.InventoryItem.subcategory_en,
         )
         .all()
     )
     use_en = (lang or "is").lower().startswith("en")
-    cat_order: List[str] = []
-    cat_to_sub_keys: dict = {}
-    cat_display: dict = {}
-    sub_labels: dict = {}
-    cat_to_sub_keys_lower = {}
 
-    for cat, sub, cat_en, sub_en in rows:
-        cat_val = (cat or "Annað").strip()
-        base_sub = (sub or "").strip()
+    # After import refactor:
+    #   category     = EN subcategory name (primary filter key)
+    #   category_en  = IS subcategory name (display label for IS language)
+    # So display logic: IS lang → show cat_en_val (IS); EN lang → show cat_val (EN key)
+    tree: dict = {}
+    master_order: List[str] = []
 
-        if cat_val not in cat_to_sub_keys:
-            cat_order.append(cat_val)
-            cat_to_sub_keys[cat_val] = []
-            cat_to_sub_keys_lower[cat_val] = set()
-            cat_display[cat_val] = cat_val
+    for master_cat, cat, cat_en, subsub, subsub_en in rows:
+        mc = (master_cat or "Annað").strip()
+        cat_val = (cat or "").strip()          # EN key
+        cat_is_val = (cat_en or "").strip()    # IS label
+        ss_val = (subsub or "").strip()        # EN key
+        ss_is_val = (subsub_en or "").strip()  # IS label
 
-        if use_en and (cat_en or "").strip():
-            cat_display[cat_val] = (cat_en or "").strip()
+        if mc not in tree:
+            master_order.append(mc)
+            tree[mc] = {"display": mc, "subcats": {}, "subcat_order": []}
 
-        if not base_sub:
+        if not cat_val:
             continue
-            
-        base_sub_lower = base_sub.lower()
-        if base_sub_lower not in cat_to_sub_keys_lower[cat_val]:
-            cat_to_sub_keys_lower[cat_val].add(base_sub_lower)
-            cat_to_sub_keys[cat_val].append(base_sub)
 
-        key = (cat_val, base_sub)
-        label = base_sub
-        if use_en and (sub_en or "").strip():
-            base_en = (sub_en or "").strip().split("/")[0].strip()
-            if base_en:
-                label = base_en
-        prev = sub_labels.get(key)
-        if prev is None or (use_en and label != base_sub):
-            sub_labels[key] = label
+        cat_lower = cat_val.lower()
+        if cat_lower not in {k.lower() for k in tree[mc]["subcats"]}:
+            tree[mc]["subcat_order"].append(cat_val)
+            # Display: IS → IS label (cat_is_val), EN → EN key (cat_val)
+            display = cat_is_val if (not use_en and cat_is_val) else cat_val
+            tree[mc]["subcats"][cat_val] = {
+                "display": display,
+                "subsubs": {},
+                "subsub_order": [],
+            }
+        else:
+            # Update display if we find a better IS label
+            if not use_en and cat_is_val:
+                tree[mc]["subcats"][cat_val]["display"] = cat_is_val
+
+        if not ss_val:
+            continue
+
+        ss_lower = ss_val.lower()
+        subsub_dict = tree[mc]["subcats"][cat_val]["subsubs"]
+        if ss_lower not in {k.lower() for k in subsub_dict}:
+            tree[mc]["subcats"][cat_val]["subsub_order"].append(ss_val)
+            # Display: IS → IS label (ss_is_val), EN → EN key (ss_val)
+            label = ss_is_val if (not use_en and ss_is_val) else ss_val
+            subsub_dict[ss_val] = label
+        elif not use_en and ss_is_val:
+            subsub_dict[ss_val] = ss_is_val
+
+    # Also build master EN display map from a separate query on category_en
+    # Since master_category_en isn't a separate field, we store the EN hint in a lookup
+    # by checking if items have a consistent category_en pattern. Instead, we'll do a simpler
+    # approach: query distinct (master_category, category_en) and use category_en as a proxy — no.
+    # The real fix: the import script now stores master_cat in master_category (IS). We query
+    # a separate field. For now, use the master_cat IS value but override display when we can.
+    # Master category EN display — map IS keys to EN labels.
+    # The import stores the IS name in master_category; EN labels are derived from known values.
+    # Unicode chars must match exactly (e.g. ö = \u00f6, ð = \u00f0).
+    MASTER_EN_FALLBACK = {
+        "strengir": "Cables",
+        "netbakkar": "Cable Trays",
+        "kapalstigar": "Cable Ladders",
+        "r\u00f6r og barkar": "Pipes & Conduits",
+        "anna\u00f0": "Other",
+    }
+    for mc_key in tree:
+        en_fallback = MASTER_EN_FALLBACK.get(mc_key.lower(), mc_key)
+        if use_en:
+            tree[mc_key]["display"] = en_fallback
 
     result = []
-    for cat_val in sorted(set(cat_order)):
-        subs_sorted = sorted(cat_to_sub_keys.get(cat_val, []))
-        result.append(
-            {
-                "category": cat_val,
-                "category_display": cat_display.get(cat_val, cat_val),
-                "subcategories": [
-                    {"key": s, "label": sub_labels.get((cat_val, s), s)} for s in subs_sorted
-                ],
-            }
-        )
+    for mc in sorted(set(master_order)):
+        node = tree[mc]
+        subcats_out = []
+        for cat_key in sorted(node["subcats"].keys()):
+            cat_node = node["subcats"][cat_key]
+            subsubs_out = [
+                {"key": ss_k, "label": cat_node["subsubs"][ss_k]}
+                for ss_k in sorted(cat_node["subsubs"].keys())
+            ]
+            subcats_out.append({
+                "key": cat_key,
+                "label": cat_node["display"],
+                "subsubcategories": subsubs_out,
+            })
+        result.append({
+            "category": mc,
+            "category_display": node["display"],
+            "subcategories": subcats_out,
+        })
     return result
 
 def create_inventory_item(db: Session, item: schemas.InventoryItemCreate) -> models.InventoryItem:
@@ -1590,6 +1716,7 @@ def update_timelog_by_id(
     end_time: Optional[datetime] = None,
     project_id: Optional[int] = None,
     notes: Optional[str] = None,
+    travel_hours: Optional[float] = None,
 ) -> Optional[models.TimeLog]:
     log = db.query(models.TimeLog).filter(models.TimeLog.id == timelog_id).first()
     if not log:
@@ -1602,6 +1729,8 @@ def update_timelog_by_id(
         log.project_id = project_id
     if notes is not None:
         log.notes = notes
+    if travel_hours is not None:
+        log.travel_hours = travel_hours
     if log.end_time and log.start_time:
         st = log.start_time if log.start_time.tzinfo else log.start_time.replace(tzinfo=timezone.utc)
         et = log.end_time if log.end_time.tzinfo else log.end_time.replace(tzinfo=timezone.utc)
@@ -1729,6 +1858,14 @@ def create_billing_invoice(db: Session, invoice: schemas.BillingInvoiceCreate) -
     db.commit()
     db.refresh(db_invoice)
     return db_invoice
+
+
+def get_billing_invoices_by_tenant(db: Session, tenant_id: int) -> List[models.BillingInvoice]:
+    return db.query(models.BillingInvoice).filter(models.BillingInvoice.tenant_id == tenant_id).order_by(models.BillingInvoice.due_date.desc()).all()
+
+
+def get_billing_invoice(db: Session, invoice_id: int) -> Optional[models.BillingInvoice]:
+    return db.query(models.BillingInvoice).filter(models.BillingInvoice.id == invoice_id).first()
 
 
 def get_overdue_billing_by_tenant(db: Session) -> List[Dict[str, Any]]:
@@ -2544,10 +2681,10 @@ def import_labor_catalog_from_ar_is_csv(
         return result
     for row in reader:
         try:
-            main_cat = _norm_cat(row.get("Main_category"))
-            sub_cat = _norm_cat(row.get("Sub_category"))
-            item_desc = (row.get("Item") or "").strip()
-            conditions = (row.get("Conditions") or "").strip() or None
+            main_cat = _norm_cat(restore_string(row.get("Main_category")))
+            sub_cat = _norm_cat(restore_string(row.get("Sub_category")))
+            item_desc = restore_string((row.get("Item") or "").strip())
+            conditions = restore_string((row.get("Conditions") or "").strip() or None)
             unit_cost_raw = row.get("Unit_cost", "0")
             try:
                 unit_cost = float(unit_cost_raw) if unit_cost_raw else 0.0
@@ -3165,6 +3302,30 @@ def delete_task_checklist_item(db: Session, item_id: int):
     db_item = db.query(models.TaskChecklistItem).filter(models.TaskChecklistItem.id == item_id).first()
     if db_item:
         db.delete(db_item)
+        db.commit()
+        return True
+    return False
+
+def create_suggestion(db: Session, suggestion: schemas.SuggestionCreate, user_id: Optional[int], email: Optional[str], tenant_id: Optional[int]) -> models.Suggestion:
+    db_suggestion = models.Suggestion(
+        category=suggestion.category,
+        content=suggestion.content,
+        user_id=user_id,
+        user_email=email,
+        tenant_id=tenant_id
+    )
+    db.add(db_suggestion)
+    db.commit()
+    db.refresh(db_suggestion)
+    return db_suggestion
+
+def get_suggestions(db: Session) -> List[models.Suggestion]:
+    return db.query(models.Suggestion).order_by(models.Suggestion.created_at.desc()).all()
+
+def delete_suggestion(db: Session, suggestion_id: int) -> bool:
+    db_suggestion = db.query(models.Suggestion).filter(models.Suggestion.id == suggestion_id).first()
+    if db_suggestion:
+        db.delete(db_suggestion)
         db.commit()
         return True
     return False

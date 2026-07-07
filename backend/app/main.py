@@ -214,6 +214,25 @@ app.include_router(api_router)
 
 
 @app.on_event("startup")
+def _ensure_tenant_enabled_features_column() -> None:
+    """Ensure enabled_features column exists on tenants table."""
+    from sqlalchemy import text
+    try:
+        with engine.begin() as conn:
+            if is_sqlite():
+                try:
+                    conn.execute(text("ALTER TABLE tenants ADD COLUMN enabled_features TEXT"))
+                except Exception as e:
+                    if "duplicate column name" not in str(e).lower():
+                        raise
+            else:
+                conn.execute(text("ALTER TABLE tenants ADD COLUMN IF NOT EXISTS enabled_features VARCHAR"))
+    except Exception as e:
+        import logging
+        logging.warning(f"Failed to add enabled_features column to tenants table: {e}")
+
+
+@app.on_event("startup")
 def _normalize_legacy_task_statuses() -> None:
     """
     Backward compatibility: normalize legacy task status labels to current ones.
@@ -227,6 +246,51 @@ def _normalize_legacy_task_statuses() -> None:
     except Exception as e:
         import logging
         logging.warning(f"Legacy task normalization failed: {e}")
+
+@app.on_event("startup")
+def _ensure_suggestions_table() -> None:
+    """Ensure suggestions table is created in database."""
+    try:
+        models.Base.metadata.create_all(bind=engine)
+    except Exception as e:
+        import logging
+        logging.warning(f"Failed to ensure suggestions table: {e}")
+
+@app.on_event("startup")
+def _ensure_suggestions_is_read_column() -> None:
+    """Ensure is_read column exists on suggestions table."""
+    from sqlalchemy import text
+    try:
+        with engine.begin() as conn:
+            if is_sqlite():
+                try:
+                    conn.execute(text("ALTER TABLE suggestions ADD COLUMN is_read BOOLEAN DEFAULT 0"))
+                except Exception as e:
+                    if "duplicate column name" not in str(e).lower():
+                        raise
+            else:
+                conn.execute(text("ALTER TABLE suggestions ADD COLUMN IF NOT EXISTS is_read BOOLEAN DEFAULT FALSE"))
+    except Exception as e:
+        import logging
+        logging.warning(f"Failed to add is_read column to suggestions table: {e}")
+
+@app.on_event("startup")
+def _ensure_timelogs_travel_hours_column() -> None:
+    """Ensure travel_hours column exists on time_logs table."""
+    from sqlalchemy import text
+    try:
+        with engine.begin() as conn:
+            if is_sqlite():
+                try:
+                    conn.execute(text("ALTER TABLE time_logs ADD COLUMN travel_hours FLOAT DEFAULT 0.0"))
+                except Exception as e:
+                    if "duplicate column name" not in str(e).lower():
+                        raise
+            else:
+                conn.execute(text("ALTER TABLE time_logs ADD COLUMN IF NOT EXISTS travel_hours DOUBLE PRECISION DEFAULT 0.0"))
+    except Exception as e:
+        import logging
+        logging.warning(f"Failed to add travel_hours column to time_logs table: {e}")
 
 @app.get("/health/db")
 @limiter.limit("60/minute")

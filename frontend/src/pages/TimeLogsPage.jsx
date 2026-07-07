@@ -82,12 +82,12 @@ function TimeLogsPage() {
 
     const isSuperuser = currentUser?.is_superuser;
     const isAdminOrManager = currentUser && (['admin', 'project manager', 'accountant'].includes(currentUser.role) || isSuperuser);
-    const isAdmin = currentUser?.role === 'admin' || isSuperuser;
+    const isAdmin = currentUser && (['admin', 'project manager'].includes(currentUser.role) || isSuperuser);
 
     // Admin edit timelog modal
     const [chartType, setChartType] = useState('pie');
     const [logToEdit, setLogToEdit] = useState(null);
-    const [editFormData, setEditFormData] = useState({ project_id: '', start_datetime: '', end_datetime: '', notes: '' });
+    const [editFormData, setEditFormData] = useState({ project_id: '', start_datetime: '', end_datetime: '', notes: '', travel_hours: '0' });
     const [isSavingEdit, setIsSavingEdit] = useState(false);
 
     /**
@@ -251,6 +251,7 @@ function TimeLogsPage() {
             start_datetime: start ? start.toISOString().slice(0, 16) : '',
             end_datetime: end ? end.toISOString().slice(0, 16) : '',
             notes: log.notes ?? '',
+            travel_hours: log.travel_hours?.toString() ?? '0',
         });
     };
 
@@ -264,6 +265,7 @@ function TimeLogsPage() {
             if (editFormData.start_datetime) payload.start_time = new Date(editFormData.start_datetime).toISOString();
             if (editFormData.end_datetime) payload.end_time = new Date(editFormData.end_datetime).toISOString();
             payload.notes = editFormData.notes || null;
+            payload.travel_hours = parseFloat(editFormData.travel_hours) || 0.0;
             await axiosInstance.patch(`/timelogs/${logToEdit.id}`, payload);
             toast.success(t('save_changes'));
             setLogToEdit(null);
@@ -483,14 +485,27 @@ function TimeLogsPage() {
                                     </p>
                                 </div>
 
-                                {/* Duration Badge */}
-                                <div className="lg:min-w-[120px] text-right">
-                                    <div className={`inline-flex items-center h-12 px-5 rounded-2xl font-black text-sm shadow-sm ${
-                                        log.end_time 
-                                        ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-800' 
-                                        : 'bg-green-50 text-green-600 border border-green-100 animate-pulse'
-                                    }`}>
-                                        {formatDuration(log.duration_hours)}
+                                {/* Duration Badge & Detailed Hours Breakdown */}
+                                <div className="lg:min-w-[220px] flex items-center gap-4 justify-end shrink-0">
+                                    <div className="text-right">
+                                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none">Billable</p>
+                                        <p className="text-xs font-black text-gray-800 dark:text-gray-200 mt-1">{log.billable_hours ?? 0} <span className="text-[9px] text-gray-400">HRS</span></p>
+                                    </div>
+                                    {log.travel_hours > 0 && (
+                                        <div className="text-right border-l border-gray-100 dark:border-gray-700 pl-3">
+                                            <p className="text-[9px] font-black text-orange-500 uppercase tracking-widest leading-none">Travel</p>
+                                            <p className="text-xs font-black text-orange-600 dark:text-orange-400 mt-1">{log.travel_hours} <span className="text-[9px] text-gray-400">HRS</span></p>
+                                        </div>
+                                    )}
+                                    <div className="text-right border-l border-gray-100 dark:border-gray-700 pl-3">
+                                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none">Paid</p>
+                                        <div className={`mt-0.5 inline-flex items-center h-8 px-3 rounded-xl font-black text-[11px] ${
+                                            log.end_time 
+                                            ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-800' 
+                                            : 'bg-green-50 text-green-600 border border-green-100 animate-pulse'
+                                        }`}>
+                                            {formatDuration(log.duration_hours)}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -573,6 +588,22 @@ function TimeLogsPage() {
                                     className="w-full h-12 rounded-xl border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white px-4 text-sm"
                                 />
                             </div>
+                        </div>
+                        <div>
+                            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Travel Hours (Ferðatímar)</label>
+                            <input
+                                type="number"
+                                step="0.25"
+                                min="0"
+                                max="24"
+                                value={editFormData.travel_hours}
+                                onChange={(e) => setEditFormData((p) => ({ ...p, travel_hours: e.target.value }))}
+                                className="w-full h-12 rounded-xl border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white px-4 text-sm font-bold"
+                                placeholder="0.0"
+                            />
+                            <p className="text-[9px] text-gray-400 dark:text-gray-500 mt-1 italic">
+                                Note: Travel hours are subtracted from the customer's billable total. The employee's total paid duration remains unchanged.
+                            </p>
                         </div>
                         <div>
                             <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">{t('details')}</label>

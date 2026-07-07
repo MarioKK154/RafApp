@@ -90,6 +90,13 @@ function Sidebar() {
         i18n.changeLanguage(newLang);
     };
 
+    const enabledFeatures = currentUser?.tenant?.enabled_features;
+    const isFeatureEnabled = (featureKey) => {
+        if (currentUser?.is_superuser) return true;
+        if (!enabledFeatures || enabledFeatures.length === 0) return true;
+        return enabledFeatures.includes(featureKey);
+    };
+
     if (!isAuthenticated) return null;
 
     return (
@@ -175,8 +182,8 @@ function Sidebar() {
                 {!isSubcontractor && (
                     <NavSection label={t('resources')} collapsed={isCollapsed}>
                         <NavItem to="/inventory"      icon={<CircleStackIcon />}          label={t('shop', { defaultValue: 'Shop' })} collapsed={isCollapsed} />
-                        <NavItem to="/tools"           icon={<WrenchScrewdriverIcon />}    label={t('tools')}         collapsed={isCollapsed} />
-                        <NavItem to="/cars"            icon={<TruckIcon />}               label={t('cars')}          collapsed={isCollapsed} />
+                        {isFeatureEnabled('tools') && <NavItem to="/tools"           icon={<WrenchScrewdriverIcon />}    label={t('tools')}         collapsed={isCollapsed} />}
+                        {isFeatureEnabled('fleet') && <NavItem to="/cars"            icon={<TruckIcon />}               label={t('cars')}          collapsed={isCollapsed} />}
                         <NavItem to="/shops"           icon={<BuildingStorefrontIcon />}   label={t('vendors')}       collapsed={isCollapsed} />
                         {isManagement && (
                             <NavItem to="/shopping-list" icon={<ListBulletIcon />}        label={t('shopping_list')} collapsed={isCollapsed} />
@@ -188,13 +195,13 @@ function Sidebar() {
                     <NavItem to="/timelogs" icon={<ClockIcon />}        label={t('time_tracking')} collapsed={isCollapsed} />
                     {!isSubcontractor && (
                         <>
-                            <NavItem to="/accounting" icon={<BanknotesIcon />} label={t('hr_payroll')} collapsed={isCollapsed} />
+                            {isFeatureEnabled('payroll') && <NavItem to="/accounting" icon={<BanknotesIcon />} label={t('hr_payroll')} collapsed={isCollapsed} />}
                             {isManagement && (
                                 <>
                                     <NavItem to="/customers"     icon={<UserGroupIcon />}           label={t('customers')}      collapsed={isCollapsed} />
-                                    <NavItem to="/labor-catalog" icon={<ListBulletIcon />}           label={t('service_rates')}  collapsed={isCollapsed} />
+                                    {isFeatureEnabled('rates') && <NavItem to="/labor-catalog" icon={<ListBulletIcon />}           label={t('service_rates')}  collapsed={isCollapsed} />}
                                     <NavItem to="/reports"       icon={<DocumentChartBarIcon />}     label={t('analytics')}      collapsed={isCollapsed} />
-                                    <NavItem to="/risk-library"  icon={<ShieldExclamationOutlineIcon />} label={t('risk_library')} collapsed={isCollapsed} />
+                                    {isFeatureEnabled('risk') && <NavItem to="/risk-library"  icon={<ShieldExclamationOutlineIcon />} label={t('risk_library')} collapsed={isCollapsed} />}
                                 </>
                             )}
                             <NavItem to="/users" icon={<UsersIcon />} label={t('personnel')} collapsed={isCollapsed} />
@@ -202,10 +209,12 @@ function Sidebar() {
                     )}
                 </NavSection>
 
-                <NavSection label={t('support')} collapsed={isCollapsed}>
-                    <NavItem to="/laws"      icon={<BookOpenIcon />}  label={t('laws_standards')} collapsed={isCollapsed} />
-                    <NavItem to="/tutorials" icon={<ListBulletIcon />} label={t('tutorials')}     collapsed={isCollapsed} />
-                </NavSection>
+                {isFeatureEnabled('tutorials') && (
+                    <NavSection label={t('support')} collapsed={isCollapsed}>
+                        <NavItem to="/laws"      icon={<BookOpenIcon />}  label={t('laws_standards')} collapsed={isCollapsed} />
+                        <NavItem to="/tutorials" icon={<ListBulletIcon />} label={t('tutorials')}     collapsed={isCollapsed} />
+                    </NavSection>
+                )}
 
                 {isSuperuser && (
                     <NavSection label={t('system_root')} collapsed={isCollapsed} accent="orange">

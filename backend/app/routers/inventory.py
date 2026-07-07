@@ -1,5 +1,6 @@
 # backend/app/routers/inventory.py
-from fastapi import APIRouter, Depends, HTTPException, status, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Request, UploadFile, File
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from typing import Annotated, List, Optional, Dict, Any
 from pydantic import BaseModel
@@ -31,6 +32,7 @@ class GlobalInventoryItem(BaseModel):
 class InventoryCatalogSubFilter(BaseModel):
     key: str
     label: str
+    subsubcategories: List['InventoryCatalogSubFilter'] = []
 
 
 class InventoryCatalogFilter(BaseModel):
@@ -72,14 +74,53 @@ async def create_catalog_item(
     """Registry: Define a new material SKU."""
     return crud.create_inventory_item(db=db, item=item)
 
+@router.post("/catalog/upload-image", response_class=JSONResponse)
+@limiter.limit("20/minute")
+async def upload_catalog_material_image(
+    request: Request,
+    db: DbDependency,
+    current_user: ManagerOrAdminDependency,
+    file: UploadFile = File(...),
+):
+    """Store a local catalog material image on disk; returns URL path for local_image_path."""
+    from pathlib import Path
+    import uuid
+
+    ALLOWED_EXTENSIONS = {".png", ".jpg", ".jpeg", ".webp"}
+    MAX_SIZE_MB = 10
+
+    ext = Path(file.filename or "").suffix.lower()
+    if ext not in ALLOWED_EXTENSIONS:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Image must be one of: {', '.join(sorted(ALLOWED_EXTENSIONS))}",
+        )
+    content = await file.read()
+    if len(content) > MAX_SIZE_MB * 1024 * 1024:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Image must be under {MAX_SIZE_MB}MB",
+        )
+    
+    target_dir = Path(__file__).resolve().parent.parent / "static" / "inventory_images"
+    target_dir.mkdir(parents=True, exist_ok=True)
+    filename = f"mat_{uuid.uuid4().hex[:16]}{ext}"
+    out_path = target_dir / filename
+    with open(out_path, "wb") as f:
+        f.write(content)
+    
+    url_path = f"/static/inventory_images/{filename}"
+    return JSONResponse({"url": url_path})
+
 @router.get("/catalog", response_model=List[schemas.InventoryItemRead])
 @limiter.limit("100/minute")
 async def read_catalog_items(
     request: Request,
     db: DbDependency,
     search: Optional[str] = Query(None),
-    category: Optional[str] = Query(None),
-    subcategory: Optional[str] = Query(None),
+    master_category: Optional[str] = Query(None, description="Top-level category IS key"),
+    category: Optional[str] = Query(None, description="Subcategory IS key"),
+    subcategory: Optional[str] = Query(None, description="Sub-subcategory IS key (optional)"),
     shops: Optional[str] = Query(
         None,
         description="Comma-separated supplier keys: ronning,iskraft,reykjafell",
@@ -93,9 +134,9 @@ async def read_catalog_items(
     limit: int = Query(100, ge=1, le=4000),
 ):
     """
-    Catalog SKUs with optional filters.
-    Search runs across names, descriptions, and supplier SKU columns using expanded variants
-    (e.g. comma/dot separators, g vs x between digits for multi-core markup).
+    Catalog SKUs with optional 3-level hierarchy filters.
+    Level 1: master_category, Level 2: category (subcategory), Level 3: subcategory (sub-subcategory).
+    Search runs across names, descriptions, and supplier SKU columns.
     """
     parsed_shops: List[str] = []
     allowed = frozenset({"ronning", "iskraft", "reykjafell"})
@@ -108,6 +149,7 @@ async def read_catalog_items(
     return crud.get_inventory_items(
         db=db,
         search=search,
+        master_category=master_category,
         category=category,
         subcategory=subcategory,
         shops=parsed_shops if parsed_shops else None,

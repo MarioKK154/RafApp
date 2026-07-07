@@ -21,11 +21,22 @@ class TenantReadBasic(BaseModel):
     logo_url: Optional[str] = None
     background_image_url: Optional[str] = None
     background_image_urls: Optional[List[str]] = None
+    enabled_features: Optional[List[str]] = None
     model_config = ConfigDict(from_attributes=True)
 
     @field_validator('background_image_urls', mode='before')
     @classmethod
     def parse_background_urls(cls, v):
+        if v is None: return None
+        if isinstance(v, list): return v
+        if isinstance(v, str):
+            try: return json.loads(v) if v.strip() else []
+            except Exception: return []
+        return []
+
+    @field_validator('enabled_features', mode='before')
+    @classmethod
+    def parse_enabled_features_basic(cls, v):
         if v is None: return None
         if isinstance(v, list): return v
         if isinstance(v, str):
@@ -151,10 +162,21 @@ class TenantBase(BaseModel):
     logo_url: Optional[HttpUrl | str] = None
     background_image_url: Optional[HttpUrl | str] = None
     background_image_urls: Optional[List[str]] = None
+    enabled_features: Optional[List[str]] = None
 
     @field_validator('background_image_urls', mode='before')
     @classmethod
     def parse_background_urls_base(cls, v):
+        if v is None: return None
+        if isinstance(v, list): return v
+        if isinstance(v, str):
+            try: return json.loads(v) if v.strip() else []
+            except Exception: return []
+        return []
+
+    @field_validator('enabled_features', mode='before')
+    @classmethod
+    def parse_enabled_features_base(cls, v):
         if v is None: return None
         if isinstance(v, list): return v
         if isinstance(v, str):
@@ -171,12 +193,17 @@ class TenantUpdate(BaseModel):
     logo_url: Optional[HttpUrl | str | None] = None
     background_image_url: Optional[HttpUrl | str | None] = None
     background_image_urls: Optional[List[str]] = None
+    enabled_features: Optional[List[str]] = None
 
 class TenantRead(TenantBase):
     id: int
     created_at: datetime
     updated_at: Optional[datetime] = None
     user_count: Optional[int] = None
+    project_count: Optional[int] = None
+    tool_count: Optional[int] = None
+    car_count: Optional[int] = None
+    customer_count: Optional[int] = None
     has_overdue_invoices: Optional[bool] = None
     overdue_amount: Optional[float] = None
     discount_percent: Optional[float] = None
@@ -764,6 +791,7 @@ class TimeLogBase(BaseModel):
     notes: Optional[str] = None
     project_id: Optional[int] = None
     task_id: Optional[int] = None
+    travel_hours: float = 0.0
 
 class TimeLogCreate(TimeLogBase):
     pass
@@ -784,6 +812,15 @@ class TimeLogRead(TimeLogBase):
         if self.duration:
             return round(self.duration.total_seconds() / 3600.0, 2)
         return None
+
+    @computed_field
+    @property
+    def billable_hours(self) -> Optional[float]:
+        if self.duration:
+            tot = self.duration.total_seconds() / 3600.0
+            return max(0.0, round(tot - self.travel_hours, 2))
+        return None
+
     model_config = ConfigDict(from_attributes=True)
 
 class TimeLogStatus(BaseModel):
@@ -794,11 +831,12 @@ class TimeLogClockOut(BaseModel):
     notes: str
 
 class TimeLogUpdate(BaseModel):
-    """Admin-only: adjust clocked hours or reassign project."""
+    """Admin/PM: adjust clocked hours, travel hours, or reassign project."""
     start_time: Optional[datetime] = None
     end_time: Optional[datetime] = None
     project_id: Optional[int] = None
     notes: Optional[str] = None
+    travel_hours: Optional[float] = None
 
 # --- Asset Schemas (Tools) ---
 
@@ -973,6 +1011,10 @@ class DashboardStats(BaseModel):
     pending_tasks: int
     active_users: int
     weekly_hours: float
+    damaged_tools: Optional[int] = 0
+    pending_leaves: Optional[int] = 0
+    pending_material_requests: Optional[int] = 0
+
 
 
 class TenantHeatmapItem(BaseModel):
@@ -1309,7 +1351,7 @@ class YearlyMoneyOverview(BaseModel):
 
 
 BillingStatusLiteral = Literal["Pending", "Paid", "Overdue"]
-BillingProviderLiteral = Literal["manual", "stripe", "bokun"]
+BillingProviderLiteral = Literal["manual", "stripe", "paypal", "bokun"]
 
 
 class BillingInvoiceBase(BaseModel):
@@ -1795,4 +1837,19 @@ class SalesLeadCreate(BaseModel):
     company: str
     phone: Optional[str] = None
     selected_tier: str
+
+class SuggestionCreate(BaseModel):
+    category: str
+    content: str = Field(..., min_length=1)
+
+class SuggestionRead(BaseModel):
+    id: int
+    user_id: Optional[int] = None
+    user_email: Optional[str] = None
+    tenant_id: Optional[int] = None
+    category: str
+    content: str
+    is_read: bool
+    created_at: datetime
+    model_config = ConfigDict(from_attributes=True)
 

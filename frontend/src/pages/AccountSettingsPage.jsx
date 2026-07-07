@@ -43,6 +43,158 @@ function AccountSettingsPage() {
     const [previewUrl, setPreviewUrl] = useState(null);
     const [isUploading, setIsUploading] = useState(false);
 
+    // Subscription Billing states
+    const [invoices, setInvoices] = useState([]);
+    const [isLoadingInvoices, setIsLoadingInvoices] = useState(false);
+
+    // PayPal checkout modal states
+    const [selectedInvoiceForPayment, setSelectedInvoiceForPayment] = useState(null);
+    const [paypalClientId, setPaypalClientId] = useState('sb');
+    const [paypalLoaded, setPaypalLoaded] = useState(false);
+    const [paymentStep, setPaymentStep] = useState('input'); // 'input' | 'processing' | 'success'
+
+    const fetchTenantInvoices = async () => {
+        setIsLoadingInvoices(true);
+        try {
+            const res = await axiosInstance.get('/system/my-tenant/invoices');
+            setInvoices(res.data || []);
+        } catch (err) {
+            console.error("Failed to load tenant invoices", err);
+        } finally {
+            setIsLoadingInvoices(false);
+        }
+    };
+
+    useEffect(() => {
+        if (user && (user.role === 'admin' || user.is_superuser)) {
+            fetchTenantInvoices();
+        }
+    }, [user]);
+
+    useEffect(() => {
+        const fetchAndLoadPaypal = async () => {
+            let cid = 'sb';
+            try {
+                const res = await axiosInstance.get('/system/paypal-client-id');
+                if (res.data && res.data.client_id) {
+                    cid = res.data.client_id;
+                }
+            } catch (err) {
+                console.warn("Failed to retrieve paypal client_id, falling back to sandbox (sb)", err);
+            }
+            setPaypalClientId(cid);
+
+            const scriptId = "paypal-js-sdk";
+            const existingScript = document.getElementById(scriptId);
+            if (existingScript) {
+                existingScript.remove();
+            }
+
+            const script = document.createElement("script");
+            script.id = scriptId;
+            script.src = `https://www.paypal.com/sdk/js?client-id=${cid}&currency=ISK`;
+            script.async = true;
+            script.onload = () => {
+                setPaypalLoaded(true);
+            };
+            script.onerror = () => {
+                console.error("Failed to load PayPal SDK script.");
+            };
+            document.body.appendChild(script);
+        };
+        
+        if (user && (user.role === 'admin' || user.is_superuser)) {
+            fetchAndLoadPaypal();
+        }
+
+        return () => {
+            const script = document.getElementById("paypal-js-sdk");
+            if (script) {
+                script.remove();
+            }
+        };
+    }, [user]);
+
+    useEffect(() => {
+        if (!selectedInvoiceForPayment || !paypalLoaded) return;
+
+        const timer = setTimeout(() => {
+            const container = document.getElementById("paypal-button-container");
+            if (container && window.paypal) {
+                container.innerHTML = "";
+                window.paypal.Buttons({
+                    style: {
+                        layout: 'vertical',
+                        color:  'gold',
+                        shape:  'rect',
+                        label:  'paypal'
+                    },
+                    createOrder: async (data, actions) => {
+                        try {
+                            const res = await axiosInstance.post(`/system/my-tenant/invoices/${selectedInvoiceForPayment.id}/paypal-order`);
+                            return res.data.order_id;
+                        } catch (err) {
+                            toast.error("Failed to initiate PayPal Order.");
+                            throw err;
+                        }
+                    },
+                    onApprove: async (data, actions) => {
+                        setPaymentStep('processing');
+                        try {
+                            const res = await axiosInstance.post(`/system/my-tenant/invoices/${selectedInvoiceForPayment.id}/paypal-capture`, {
+                                order_id: data.orderID
+                            });
+                            if (res.data && res.data.status === 'COMPLETED') {
+                                setPaymentStep('success');
+                                toast.success(t('payment_success', { defaultValue: "Payment processed via PayPal successfully!" }));
+                                fetchTenantInvoices();
+                                setTimeout(() => {
+                                    setSelectedInvoiceForPayment(null);
+                                    setPaymentStep('input');
+                                }, 2000);
+                            } else {
+                                toast.warning(`PayPal payment state: ${res.data.status}`);
+                                setPaymentStep('input');
+                            }
+                        } catch (err) {
+                            toast.error(err.response?.data?.detail || "PayPal transaction capture failed.");
+                            setPaymentStep('input');
+                        }
+                    },
+                    onError: (err) => {
+                        console.error("PayPal Checkout Error:", err);
+                        toast.error("An error occurred during PayPal checkout.");
+                        setPaymentStep('input');
+                    }
+                }).render("#paypal-button-container");
+            }
+        }, 150);
+
+        return () => clearTimeout(timer);
+    }, [selectedInvoiceForPayment, paypalLoaded]);
+
+    const handleOpenPaymentModal = (invoice) => {
+        setSelectedInvoiceForPayment(invoice);
+        setPaymentStep('input');
+    };
+
+    const handleDownloadInvoicePdf = async (invoiceId) => {
+        try {
+            const res = await axiosInstance.get(`/system/invoices/${invoiceId}/pdf`, {
+                responseType: 'blob'
+            });
+            const blob = new Blob([res.data], { type: 'application/pdf' });
+            const link = document.createElement('a');
+            link.href = window.URL.createObjectURL(blob);
+            link.download = `rafapp-invoice-${invoiceId}.pdf`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        } catch (err) {
+            toast.error("Failed to download invoice PDF.");
+        }
+    };
+
     /**
      * Protocol: Security Boundary Check
      */
@@ -180,7 +332,8 @@ function AccountSettingsPage() {
     if (authIsLoading) return <LoadingSpinner text={t('syncing')} size="lg" />;
 
     return (
-        <div className="container mx-auto p-4 md:p-8 max-w-7xl animate-in fade-in duration-500">
+        <>
+            <div className="container mx-auto p-4 md:p-8 max-w-7xl animate-in fade-in duration-500">
             {/* Header: Identity Management */}
             <header className="mb-10">
                 <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5">
@@ -395,6 +548,69 @@ function AccountSettingsPage() {
                         </div>
                     </div>
                     
+                    {/* Subscription & Billing Invoices Panel */}
+                    {(user.role === 'admin' || user.is_superuser) && (
+                        <div className="bg-white dark:bg-gray-800 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden text-left mb-8">
+                            <div className="p-8 border-b border-gray-50 dark:border-gray-700 flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <span className="text-indigo-600 text-lg">💳</span>
+                                    <h2 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-widest">
+                                        Subscription & Billing Invoices
+                                    </h2>
+                                </div>
+                            </div>
+                            <div className="p-8 space-y-4">
+                                {isLoadingInvoices ? (
+                                    <p className="text-xs text-gray-400 italic">Loading invoices...</p>
+                                ) : invoices.length === 0 ? (
+                                    <p className="text-xs text-gray-400 italic">No subscription invoices found.</p>
+                                ) : (
+                                    <div className="space-y-3">
+                                        {invoices.map((inv) => (
+                                            <div key={inv.id} className="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-3xl border border-gray-100 dark:border-gray-700 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 text-sm">
+                                                <div>
+                                                    <div className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                                                        <span>{((inv.amount || 0) * 1.24).toLocaleString()} ISK</span>
+                                                        <span className="text-[10px] text-gray-400 font-normal">(Incl. 24% VSK)</span>
+                                                        <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider ${
+                                                            inv.status === 'Paid' 
+                                                                ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-400'
+                                                                : inv.status === 'Overdue'
+                                                                    ? 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
+                                                                    : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400'
+                                                        }`}>
+                                                            {inv.status}
+                                                        </span>
+                                                    </div>
+                                                    <p className="text-[10px] text-gray-500 mt-1">{inv.description || 'Monthly Subscription Fee'}</p>
+                                                    <p className="text-[9px] text-gray-400 font-mono mt-0.5">Due Date: {inv.due_date} | Base: {inv.amount.toLocaleString()} ISK + VSK</p>
+                                                </div>
+                                                <div className="flex gap-2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleDownloadInvoicePdf(inv.id)}
+                                                        className="px-3.5 py-2 bg-gray-700 hover:bg-gray-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition flex items-center gap-1.5"
+                                                    >
+                                                        PDF
+                                                    </button>
+                                                    {inv.status !== 'Paid' && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleOpenPaymentModal(inv)}
+                                                            className="px-4 py-2 bg-[#0096FF] hover:bg-blue-500 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition shadow shadow-blue-500/25"
+                                                        >
+                                                            Pay Bill (PayPal)
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+                    
                     <IntegrationsSettings canManage={user.role === 'admin' || user.is_superuser || user.role === 'project manager'} />
                 </div>
 
@@ -467,6 +683,82 @@ function AccountSettingsPage() {
                 </div>
             </div>
         </div>
+
+        {/* PayPal Premium Payment Modal */}
+        {selectedInvoiceForPayment && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-300">
+                <div className="bg-white dark:bg-gray-800 rounded-[2.5rem] border border-gray-100 dark:border-gray-700 shadow-2xl max-w-md w-full overflow-hidden p-8 text-left space-y-6">
+                    {paymentStep === 'input' && (
+                        <div className="space-y-6">
+                            <div className="flex justify-between items-center border-b pb-4">
+                                <div>
+                                    <h3 className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-tight">PayPal Secure Checkout</h3>
+                                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">RafApp Subscription Service</p>
+                                </div>
+                                <button 
+                                    type="button" 
+                                    onClick={() => setSelectedInvoiceForPayment(null)}
+                                    className="text-gray-400 hover:text-gray-600 dark:hover:text-white text-lg font-black"
+                                >
+                                    ✕
+                                </button>
+                            </div>
+
+                            <div className="p-4 bg-indigo-50 dark:bg-indigo-950/30 rounded-2xl border border-indigo-100 dark:border-indigo-900/50 flex justify-between items-center text-xs">
+                                <div>
+                                    <span className="block text-[8px] font-black text-indigo-500 uppercase tracking-widest">Amount to Pay</span>
+                                    <span className="text-lg font-black text-indigo-950 dark:text-white">
+                                        {((selectedInvoiceForPayment.amount || 0) * 1.24).toLocaleString()} ISK
+                                    </span>
+                                    <span className="block text-[8px] text-indigo-400 font-bold uppercase mt-0.5">
+                                        (Subtotal: {selectedInvoiceForPayment.amount.toLocaleString()} ISK + 24% VSK)
+                                    </span>
+                                </div>
+                                <span className="px-3 py-1 bg-white dark:bg-gray-800 text-[10px] font-black text-indigo-600 dark:text-indigo-400 rounded-xl border border-indigo-100 dark:border-indigo-800 uppercase tracking-wider">
+                                    SECURE
+                                </span>
+                            </div>
+
+                            <div className="space-y-4">
+                                {!paypalLoaded ? (
+                                    <div className="flex flex-col items-center justify-center py-6 space-y-2">
+                                        <svg className="animate-spin h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                        </svg>
+                                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Loading PayPal SDK...</p>
+                                    </div>
+                                ) : (
+                                    <div id="paypal-button-container" className="w-full relative z-10 min-h-[150px]"></div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {paymentStep === 'processing' && (
+                        <div className="flex flex-col items-center justify-center py-12 space-y-4">
+                            <svg className="animate-spin h-10 w-10 text-indigo-600" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                            </svg>
+                            <p className="text-sm font-black text-gray-800 dark:text-white uppercase tracking-wider text-center">Processing SECURE PayPal Checkout...</p>
+                            <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest text-center">Do not close this window or refresh the page.</p>
+                        </div>
+                    )}
+
+                    {paymentStep === 'success' && (
+                        <div className="flex flex-col items-center justify-center py-12 space-y-4 text-center">
+                            <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center text-emerald-600 text-3xl animate-bounce">
+                                ✓
+                            </div>
+                            <p className="text-base font-black text-gray-900 dark:text-white uppercase tracking-widest text-center">Payment Confirmed!</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">Subscription invoice has been successfully paid.</p>
+                        </div>
+                    )}
+                </div>
+            </div>
+        )}
+        </>
     );
 }
 

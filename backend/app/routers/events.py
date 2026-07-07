@@ -45,6 +45,13 @@ def create_new_event(
     Creates a new calendar event (Meeting, Task, or Custom). 
     Logic: Automatically handles attendee linkage and type categorization.
     """
+    # Enforce calendar events/meetings cannot be scheduled in the past
+    now = datetime.now()
+    if event_data.start_time.replace(tzinfo=None) < now:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot schedule calendar events or meetings in the past."
+        )
     if event_data.project_id:
         effective_tenant_id = current_user.tenant_id
         project = crud.get_project(db, project_id=event_data.project_id, tenant_id=effective_tenant_id)

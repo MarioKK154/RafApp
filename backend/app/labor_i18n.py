@@ -9,10 +9,11 @@ LABOR_MAIN_CATEGORY_EN: dict[str, str] = {
     "ALMENNT": "General & site",
     "LAGNALEIÐIR": "Cable routes & containment",
     "LAGNALEIDIR": "Cable routes & containment",
+    "LÁGSPENNUKERFI": "Low-voltage distribution",
     "LAGSPENNUKERFI": "Low-voltage distribution",
     "LÝSINGARKERFI": "Lighting systems",
     "LYSINGARKERFI": "Lighting systems",
-    "SÍR- OG STÝRNKERFI": "Control & automation systems",
+    "SÉR- OG STJÓRNKERFI": "Control & automation systems",
     "SIR- OG STJORNKERFI": "Control & automation systems",
 }
 

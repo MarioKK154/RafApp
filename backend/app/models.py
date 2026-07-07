@@ -142,6 +142,7 @@ class Tenant(Base):
     logo_url: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     background_image_url: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     background_image_urls: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # JSON array of URLs for rotating backgrounds
+    enabled_features: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # JSON array of enabled feature keys
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     
@@ -599,6 +600,7 @@ class TimeLog(Base):
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     project_id = Column(Integer, ForeignKey("projects.id", ondelete="SET NULL"), nullable=True)
     task_id = Column(Integer, ForeignKey("tasks.id", ondelete="SET NULL"), nullable=True)
+    travel_hours = Column(Float, default=0.0, nullable=False)
     user = relationship("User", back_populates="time_logs")
     project = relationship("Project")
     task = relationship("Task")
@@ -827,7 +829,7 @@ class BillingInvoice(Base):
     currency: Mapped[str] = mapped_column(String, default="ISK")
     due_date: Mapped[date] = mapped_column(Date, nullable=False)
     status: Mapped[str] = mapped_column(String, default="Pending")  # Pending, Paid, Overdue
-    provider: Mapped[str] = mapped_column(String, default="manual")  # manual, stripe, bokun
+    provider: Mapped[str] = mapped_column(String, default="manual")  # manual, stripe, paypal, bokun
     external_invoice_id: Mapped[Optional[str]] = mapped_column(String)
     description: Mapped[Optional[str]] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
@@ -951,3 +953,17 @@ class SalesLead(Base):
     selected_tier: Mapped[str] = mapped_column(String, nullable=False)
     status: Mapped[str] = mapped_column(String, default="New", nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+class Suggestion(Base):
+    __tablename__ = "suggestions"
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    user_id: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    user_email: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    tenant_id: Mapped[Optional[int]] = mapped_column(ForeignKey("tenants.id", ondelete="SET NULL"), nullable=True)
+    category: Mapped[str] = mapped_column(String, nullable=False)
+    content: Mapped[str] = mapped_column(Text, nullable=False)
+    is_read: Mapped[bool] = mapped_column(Boolean, default=False, server_default="0")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    user = relationship("User")
+    tenant = relationship("Tenant")

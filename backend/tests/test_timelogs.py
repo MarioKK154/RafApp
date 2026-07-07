@@ -60,3 +60,25 @@ def test_clock_in_and_clock_out(client: TestClient, authenticated_user_token: Di
     status_data_2 = response_status_2.json()
     assert status_data_2["is_clocked_in"] is False
     assert status_data_2["current_log"] is None
+
+    # ACT 5: Upgrade user to Project Manager and adjust travel hours
+    user.role = "project manager"
+    db.commit()
+
+    res_patch = client.patch(
+        f"/timelogs/{clock_out_data['id']}",
+        headers=headers,
+        json={"travel_hours": 1.5, "notes": "Adjusted travel time"},
+    )
+
+    # ASSERT 5: Verify PATCH succeeded and recalculated billable hours
+    assert res_patch.status_code == 200, res_patch.text
+    patched = res_patch.json()
+    assert patched["travel_hours"] == 1.5
+    assert patched["notes"] == "Adjusted travel time"
+    # duration_hours is total time logged
+    duration_hours = patched["duration_hours"]
+    assert duration_hours is not None
+    # billable_hours should be max(0.0, duration_hours - 1.5)
+    expected_billable = max(0.0, round(duration_hours - 1.5, 2))
+    assert patched["billable_hours"] == expected_billable

@@ -133,6 +133,36 @@ function AppShell() {
     }, []);
 
     useEffect(() => {
+        const checkVersion = async () => {
+            try {
+                const res = await axiosInstance.get('/system/version');
+                const latestBuildTime = res.data?.build_time;
+                if (!latestBuildTime) return;
+                
+                const storedBuildTime = localStorage.getItem('app_build_time');
+                if (storedBuildTime && storedBuildTime !== latestBuildTime) {
+                    console.log(`New version detected! Stored: ${storedBuildTime}, Latest: ${latestBuildTime}. Busting PWA cache...`);
+                    if ('caches' in window) {
+                        const keys = await caches.keys();
+                        await Promise.all(keys.map(key => caches.delete(key)));
+                    }
+                    if ('serviceWorker' in navigator) {
+                        const registrations = await navigator.serviceWorker.getRegistrations();
+                        await Promise.all(registrations.map(r => r.unregister()));
+                    }
+                    localStorage.setItem('app_build_time', latestBuildTime);
+                    window.location.reload(true);
+                } else if (!storedBuildTime) {
+                    localStorage.setItem('app_build_time', latestBuildTime);
+                }
+            } catch (err) {
+                console.error("Failed to check app version", err);
+            }
+        };
+        checkVersion();
+    }, []);
+
+    useEffect(() => {
         if (!isAuthenticated) return;
         const fetchBanner = async () => {
             try {

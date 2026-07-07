@@ -50,6 +50,19 @@ def _sync_tenant_id_sequence(db) -> None:
 
 
 def _delete_existing_tenant_data(db, tenant_id: int) -> None:
+    # Get user IDs for the tenant
+    user_ids = [u.id for u in db.query(models.User).filter(models.User.tenant_id == tenant_id).all()]
+    
+    # Delete child objects referencing users
+    if user_ids:
+        db.query(models.Notification).filter(models.Notification.user_id.in_(user_ids)).delete(synchronize_session=False)
+        db.query(models.Payslip).filter(models.Payslip.user_id.in_(user_ids)).delete(synchronize_session=False)
+        db.query(models.TimeLog).filter(models.TimeLog.user_id.in_(user_ids)).delete(synchronize_session=False)
+        db.query(models.MaterialRequest).filter(models.MaterialRequest.requested_by_id.in_(user_ids)).delete(synchronize_session=False)
+        db.query(models.CarLog).filter(models.CarLog.user_id.in_(user_ids)).delete(synchronize_session=False)
+        db.query(models.ToolLog).filter(models.ToolLog.user_id.in_(user_ids)).delete(synchronize_session=False)
+        db.flush()
+
     # Projects first (tasks/comments/photos are ORM-cascaded from Project)
     for p in db.query(models.Project).filter(models.Project.tenant_id == tenant_id).all():
         db.delete(p)
@@ -109,6 +122,11 @@ def _create_users(db, tenant_id: int) -> dict[str, models.User]:
         dict(email="el3.demo@rafapp.is", full_name="Fridrik Volt", role="electrician", employee_id="2008", kennitala="2808088901", phone="5551008", city="Mosfellsbaer", hourly=5600),
         dict(email="el4.demo@rafapp.is", full_name="Greta Wire", role="electrician", employee_id="2009", kennitala="0909099012", phone="5551009", city="Selfoss", hourly=5600),
         dict(email="el5.demo@rafapp.is", full_name="Hakon Ohm", role="electrician", employee_id="2010", kennitala="1010100123", phone="5551010", city="Reykjavik", hourly=5600),
+        dict(email="el6.demo@rafapp.is", full_name="Inga Resistance", role="electrician", employee_id="2011", kennitala="1111110234", phone="5551011", city="Reykjavik", hourly=5600),
+        dict(email="el7.demo@rafapp.is", full_name="Jon Capacitor", role="electrician", employee_id="2012", kennitala="1212120345", phone="5551012", city="Kopavogur", hourly=5600),
+        dict(email="el8.demo@rafapp.is", full_name="Kristin Inductor", role="electrician", employee_id="2013", kennitala="1301130456", phone="5551013", city="Hafnarfjordur", hourly=5600),
+        dict(email="el9.demo@rafapp.is", full_name="Ludvik Transistor", role="electrician", employee_id="2014", kennitala="1402140567", phone="5551014", city="Gardabaer", hourly=5600),
+        dict(email="el10.demo@rafapp.is", full_name="Maria Diode", role="electrician", employee_id="2015", kennitala="1503150678", phone="5551015", city="Mosfellsbaer", hourly=5600),
     ]
 
     out: dict[str, models.User] = {}
@@ -159,6 +177,36 @@ def _create_customers(db, tenant_id: int) -> None:
                 phone_number="5552202",
                 email="aron@northharbor.is",
                 notes="Warehouse and outdoor area maintenance customer.",
+            ),
+            models.Customer(
+                tenant_id=tenant_id,
+                name="Landsvirkjun",
+                kennitala="4202691239",
+                address="Háaleitisbraut 68, Reykjavík",
+                contact_person="Bjarni Benediktsson",
+                phone_number="5159000",
+                email="landsvirkjun@lv.is",
+                notes="National power company of Iceland, focus on substation wiring.",
+            ),
+            models.Customer(
+                tenant_id=tenant_id,
+                name="Reykjavíkurborg",
+                kennitala="5302697609",
+                address="Tjarnargötu 11, Reykjavík",
+                contact_person="Dagur B. Eggertsson",
+                phone_number="4111111",
+                email="rvk@rvk.is",
+                notes="City municipality, maintenance contracts for schools.",
+            ),
+            models.Customer(
+                tenant_id=tenant_id,
+                name="Orkuveita Reykjavíkur",
+                kennitala="4302694409",
+                address="Bæjarhálsi 1, Reykjavík",
+                contact_person="Sólrún Gísladóttir",
+                phone_number="5166000",
+                email="or@or.is",
+                notes="Municipal utility utility installations and EV charging grids.",
             ),
         ]
     )
@@ -248,114 +296,128 @@ def _create_projects_and_tasks(db, tenant_id: int, users: dict[str, models.User]
 
 
 def _create_cars(db, tenant_id: int, users: dict[str, models.User]) -> None:
-    db.add_all(
-        [
-            models.Car(
-                make="Ford",
-                model="Transit Custom",
-                year=2022,
-                license_plate="DEMO01",
-                status=models.CarStatus.Available,
-                vin="WF0XXXTTGXNY10001",
-                tenant_id=tenant_id,
-                current_user_id=users["tl1.demo@rafapp.is"].id,
-                service_needed=False,
-            ),
-            models.Car(
-                make="Volkswagen",
-                model="Caddy",
-                year=2021,
-                license_plate="DEMO02",
-                status=models.CarStatus.Checked_Out,
-                vin="WV1ZZZSKZMY20002",
-                tenant_id=tenant_id,
-                current_user_id=users["el1.demo@rafapp.is"].id,
-                service_needed=False,
-            ),
-            models.Car(
-                make="Toyota",
-                model="Hilux",
-                year=2020,
-                license_plate="DEMO03",
-                status=models.CarStatus.In_Service,
-                vin="AHTBA3CD703000003",
-                tenant_id=tenant_id,
-                current_user_id=None,
-                service_needed=True,
-                service_notes="Brake service scheduled next week.",
-            ),
-        ]
+    now = _utc_now()
+    c1 = models.Car(
+        make="Ford", model="Transit Custom", year=2022, license_plate="DEMO01",
+        status=models.CarStatus.Available, vin="WF0XXXTTGXNY10001",
+        tenant_id=tenant_id, current_user_id=users["tl1.demo@rafapp.is"].id, service_needed=False,
     )
+    c2 = models.Car(
+        make="Volkswagen", model="Caddy", year=2021, license_plate="DEMO02",
+        status=models.CarStatus.Checked_Out, vin="WV1ZZZSKZMY20002",
+        tenant_id=tenant_id, current_user_id=users["el1.demo@rafapp.is"].id, service_needed=False,
+    )
+    c3 = models.Car(
+        make="Toyota", model="Hilux", year=2020, license_plate="DEMO03",
+        status=models.CarStatus.In_Service, vin="AHTBA3CD703000003",
+        tenant_id=tenant_id, current_user_id=None, service_needed=True,
+        service_notes="Brake service scheduled next week.",
+    )
+    db.add_all([c1, c2, c3])
+    db.commit()
+    db.refresh(c1)
+    db.refresh(c2)
+    db.refresh(c3)
+
+    # Seed Tyres for cars
+    for car in [c1, c2, c3]:
+        db.add_all([
+            models.TyreSet(type=models.TyreType.Summer, brand="Michelin Primacy", notes="Summer tires, good tread", is_on_car=True, car_id=car.id),
+            models.TyreSet(type=models.TyreType.Winter, brand="Nokian Hakkapeliitta", notes="Studded winter tires, 7mm depth", is_on_car=False, car_id=car.id)
+        ])
+
+        # Seed Car history logs
+        db.add_all([
+            models.CarLog(action=models.CarLogAction.Created, odometer_reading=25000, notes="Fleet asset entry", car_id=car.id, user_id=users["admin.demo@rafapp.is"].id, timestamp=now - timedelta(days=90)),
+            models.CarLog(action=models.CarLogAction.Checked_Out, odometer_reading=26100, notes="Project dispatch", car_id=car.id, user_id=users["tl1.demo@rafapp.is"].id, timestamp=now - timedelta(days=60)),
+            models.CarLog(action=models.CarLogAction.Checked_In, odometer_reading=26450, notes="Returned to lot", car_id=car.id, user_id=users["tl1.demo@rafapp.is"].id, timestamp=now - timedelta(days=59)),
+            models.CarLog(action=models.CarLogAction.Maintenance, odometer_reading=27000, notes="Oil and filter change", car_id=car.id, user_id=users["admin.demo@rafapp.is"].id, timestamp=now - timedelta(days=30))
+        ])
     db.commit()
 
 
 def _create_tools(db, tenant_id: int, users: dict[str, models.User]) -> None:
-    db.add_all(
-        [
-            models.Tool(
-                name="Fluke 179 Multimeter",
-                brand="Fluke",
-                model="179",
-                serial_number="FLK179-DEM-001",
-                status=models.ToolStatus.In_Use,
-                tenant_id=tenant_id,
-                current_user_id=users["el2.demo@rafapp.is"].id,
-                description="Primary diagnostics multimeter.",
-            ),
-            models.Tool(
-                name="Milwaukee Hammer Drill",
-                brand="Milwaukee",
-                model="M18 FPD2",
-                serial_number="MIL-M18-DEM-002",
-                status=models.ToolStatus.Available,
-                tenant_id=tenant_id,
-                current_user_id=None,
-                description="General site drilling.",
-            ),
-            models.Tool(
-                name="Cable Cutter 1000V",
-                brand="Knipex",
-                model="95 16 165",
-                serial_number="KPX-DEM-003",
-                status=models.ToolStatus.In_Repair,
-                tenant_id=tenant_id,
-                current_user_id=None,
-                description="Insulated heavy duty cutter.",
-            ),
-        ]
+    now = _utc_now()
+    t1 = models.Tool(
+        name="Fluke 179 Multimeter", brand="Fluke", model="179",
+        serial_number="FLK179-DEM-001", status=models.ToolStatus.In_Use,
+        tenant_id=tenant_id, current_user_id=users["el2.demo@rafapp.is"].id,
+        description="Primary diagnostics multimeter.",
     )
+    t2 = models.Tool(
+        name="Milwaukee Hammer Drill", brand="Milwaukee", model="M18 FPD2",
+        serial_number="MIL-M18-DEM-002", status=models.ToolStatus.Available,
+        tenant_id=tenant_id, current_user_id=None,
+        description="General site drilling.",
+    )
+    t3 = models.Tool(
+        name="Cable Cutter 1000V", brand="Knipex", model="95 16 165",
+        serial_number="KPX-DEM-003", status=models.ToolStatus.In_Repair,
+        tenant_id=tenant_id, current_user_id=None,
+        description="Insulated heavy duty cutter.",
+    )
+    db.add_all([t1, t2, t3])
+    db.commit()
+    db.refresh(t1)
+    db.refresh(t2)
+    db.refresh(t3)
+
+    # Seed Tool history logs
+    for tool in [t1, t2, t3]:
+        db.add_all([
+            models.ToolLog(action=models.ToolLogAction.Created, notes="Initial purchase", tool_id=tool.id, user_id=users["admin.demo@rafapp.is"].id, timestamp=now - timedelta(days=120)),
+            models.ToolLog(action=models.ToolLogAction.Checked_Out, notes="Dispatched to site", tool_id=tool.id, user_id=users["el2.demo@rafapp.is"].id, timestamp=now - timedelta(days=10)),
+            models.ToolLog(action=models.ToolLogAction.Checked_In, notes="Returned to tool crib", tool_id=tool.id, user_id=users["el2.demo@rafapp.is"].id, timestamp=now - timedelta(days=9))
+        ])
     db.commit()
 
 
 def _create_timelogs(db, tenant_id: int, users: dict[str, models.User]) -> None:
     now = _utc_now()
-    el1 = users["el1.demo@rafapp.is"]
-    tl1 = users["tl1.demo@rafapp.is"]
-    
-    project = db.query(models.Project).filter(models.Project.tenant_id == tenant_id).first()
-    if not project:
+    projects = db.query(models.Project).filter(models.Project.tenant_id == tenant_id).all()
+    if not projects:
         return
-        
-    db.add_all([
-        models.TimeLog(
-            user_id=el1.id, project_id=project.id,
-            start_time=now - timedelta(days=1, hours=8),
-            end_time=now - timedelta(days=1, hours=0),
-            notes="General wiring work", duration=timedelta(hours=8)
-        ),
-        models.TimeLog(
-            user_id=tl1.id, project_id=project.id,
-            start_time=now - timedelta(days=2, hours=8),
-            end_time=now - timedelta(days=2, hours=2),
-            notes="Project planning and site visit", duration=timedelta(hours=6)
-        ),
-    ])
+    
+    for email, user in users.items():
+        for d in range(1, 6): # Exactly 5 logs per user across projects
+            proj = projects[d % len(projects)]
+            db.add(models.TimeLog(
+                user_id=user.id,
+                project_id=proj.id,
+                start_time=now - timedelta(days=d, hours=8),
+                end_time=now - timedelta(days=d, hours=0),
+                notes=f"Daily electrical installation task - Day {d}",
+                duration=timedelta(hours=8)
+            ))
     db.commit()
 
 def _create_shops(db, tenant_id: int) -> None:
     db.add_all([
-        models.Shop(tenant_id=tenant_id, name="Ískraft", address="Smiðjuvegur 11", phone_number="5551234", email="sala@iskraft.is"),
-        models.Shop(tenant_id=tenant_id, name="Johan Rönning", address="Kringlan 7", phone_number="5559876", email="info@ronning.is")
+        models.Shop(
+            tenant_id=tenant_id, name="Ískraft", address="Smiðjuvegur 11, Kópavogur", 
+            phone_number="5551234", email="sala@iskraft.is", contact_person="Aron Þórsson", 
+            notes="Preferred vendor for conduit and electrical panels."
+        ),
+        models.Shop(
+            tenant_id=tenant_id, name="Johan Rönning", address="Klettagörðum 25, Reykjavík", 
+            phone_number="5559800", email="ronning@ronning.is", contact_person="Elín Jónsdóttir", 
+            notes="Special agreement for 15% discount on cable trays."
+        ),
+        models.Shop(
+            tenant_id=tenant_id, name="Reykjafell", address="Skipholti 35, Reykjavík", 
+            phone_number="5200200", email="reykjafell@reykjafell.is", contact_person="Gunnar Pétursson", 
+            notes="Supplier for switches, sockets, and local lighting fixtures."
+        ),
+        models.Shop(
+            tenant_id=tenant_id, name="Smith & Norland", address="Nóatúni 4, Reykjavík", 
+            phone_number="5203000", email="sminor@sminor.is", contact_person="Birgir Smith", 
+            notes="Industrial motors and complex automation relays."
+        ),
+        models.Shop(
+            tenant_id=tenant_id, name="Húsasmiðjan", address="Kjalarvogi 7-11, Reykjavík", 
+            phone_number="5253000", email="husa@husa.is", contact_person="Sigurður Skarphéðinsson", 
+            notes="General tools and fixing materials/screws."
+        ),
     ])
     db.commit()
 
@@ -396,18 +458,99 @@ def _create_offers(db, tenant_id: int, users: dict[str, models.User]) -> None:
     db.commit()
 
 def _create_time_off(db, tenant_id: int, users: dict[str, models.User]) -> None:
-    el2 = users["el2.demo@rafapp.is"]
     now = _utc_now()
+    leave_types = ["Vacation", "Sick Leave", "Parental Leave"]
+    leave_statuses = [models.LeaveStatus.Approved, models.LeaveStatus.Pending, models.LeaveStatus.Rejected]
+    
+    for email, user in users.items():
+        # 1. Leave Request for everyone
+        start_offset = 10 + (user.id % 20)
+        db.add(models.LeaveRequest(
+            tenant_id=tenant_id,
+            user_id=user.id,
+            leave_type=leave_types[user.id % len(leave_types)],
+            start_date=(now + timedelta(days=start_offset)).date(),
+            end_date=(now + timedelta(days=start_offset + 5)).date(),
+            status=leave_statuses[user.id % len(leave_statuses)],
+            reason="Scheduled absence / personal matters"
+        ))
+        
+        # 2. Payslip for everyone
+        hourly = user.hourly_rate or 5600
+        brutto = hourly * 160
+        netto = brutto * 0.63
+        db.add(models.Payslip(
+            tenant_id=tenant_id,
+            user_id=user.id,
+            issue_date=(now - timedelta(days=15)).date(),
+            amount_brutto=float(brutto),
+            amount_netto=float(netto),
+            file_path=f"/static/payslips/demo_payslip_{user.id}.pdf",
+            filename=f"payslip_2026_06_{user.employee_id or user.id}.pdf"
+        ))
+    
+    # Active overlapping sick leaves
+    el6 = users.get("el6.demo@rafapp.is")
+    el7 = users.get("el7.demo@rafapp.is")
+    if el6:
+        db.add(models.LeaveRequest(
+            tenant_id=tenant_id, user_id=el6.id, leave_type="Sick Leave",
+            start_date=(now - timedelta(days=1)).date(), end_date=(now + timedelta(days=3)).date(),
+            status=models.LeaveStatus.Approved, reason="Flu and high fever"
+        ))
+    if el7:
+        db.add(models.LeaveRequest(
+            tenant_id=tenant_id, user_id=el7.id, leave_type="Sick Leave",
+            start_date=(now - timedelta(days=2)).date(), end_date=(now + timedelta(days=2)).date(),
+            status=models.LeaveStatus.Approved, reason="Dental surgery recovery"
+        ))
+        
+    db.commit()
+
+
+def _create_material_requests(db, tenant_id: int, users: dict[str, models.User]) -> None:
+    projects = db.query(models.Project).filter(models.Project.tenant_id == tenant_id).all()
+    items = db.query(models.InventoryItem).limit(6).all()
+    if not projects or not items:
+        return
+        
+    el1 = users["el1.demo@rafapp.is"]
+    el2 = users["el2.demo@rafapp.is"]
+    tl1 = users["tl1.demo@rafapp.is"]
+    
     db.add_all([
-        models.LeaveRequest(
-            tenant_id=tenant_id, user_id=el2.id, leave_type="Vacation",
-            start_date=(now + timedelta(days=14)).date(), end_date=(now + timedelta(days=21)).date(),
-            status=models.LeaveStatus.Approved, reason="Summer vacation"
+        models.MaterialRequest(
+            project_id=projects[0].id,
+            inventory_item_id=items[0].id,
+            requested_by_id=el1.id,
+            quantity=25.0,
+            note="Need extra copper cable coils for the second floor corridor layout.",
+            status="Pending"
         ),
-        models.LeaveRequest(
-            tenant_id=tenant_id, user_id=users["el3.demo@rafapp.is"].id, leave_type="Sick Leave",
-            start_date=(now - timedelta(days=2)).date(), end_date=(now - timedelta(days=1)).date(),
-            status=models.LeaveStatus.Pending, reason="Flu"
+        models.MaterialRequest(
+            project_id=projects[1].id,
+            inventory_item_id=items[1].id,
+            requested_by_id=el2.id,
+            quantity=10.0,
+            note="EV Charger mounting frames damaged in shipping; requesting replacements.",
+            status="Pending"
+        ),
+        models.MaterialRequest(
+            project_id=projects[2].id,
+            inventory_item_id=items[2].id,
+            requested_by_id=tl1.id,
+            quantity=4.0,
+            note="Replacement switch fuses for the main distribution panel upgrade.",
+            status="Approved",
+            resolved_at=_utc_now()
+        ),
+        models.MaterialRequest(
+            project_id=projects[0].id,
+            inventory_item_id=items[3].id,
+            requested_by_id=el1.id,
+            quantity=50.0,
+            note="Plastic conduit pipes - short on primary stock.",
+            status="Pending"
         )
     ])
     db.commit()
@@ -431,6 +574,7 @@ def seed_demo_tenant(reset_existing: bool = True) -> None:
         _create_schedules(db, tenant.id, users)
         _create_offers(db, tenant.id, users)
         _create_time_off(db, tenant.id, users)
+        _create_material_requests(db, tenant.id, users)
 
         users_count = db.query(models.User).filter(models.User.tenant_id == tenant.id).count()
         customers_count = db.query(models.Customer).filter(models.Customer.tenant_id == tenant.id).count()

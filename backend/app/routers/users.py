@@ -362,6 +362,16 @@ async def delete_user_by_admin_endpoint(request: Request, user_id_to_delete: int
     crud.delete_user_by_admin(db, user_id=user_id_to_delete)
     return None
 
+def restore_string(s: Any) -> Any:
+    if not isinstance(s, str):
+        return s
+    if not any(ord(c) in (0xc2, 0xc3) for c in s):
+        return s
+    try:
+        return s.encode('latin-1').decode('utf-8')
+    except (UnicodeEncodeError, UnicodeDecodeError):
+        return s
+
 @router.post("/import-csv", response_model=Dict[str, Any])
 @limiter.limit("5/minute")
 async def import_users_from_csv(request: Request, db: DbDependency, current_admin: CurrentUserDependency, file: UploadFile = File(...)):
@@ -374,9 +384,25 @@ async def import_users_from_csv(request: Request, db: DbDependency, current_admi
     
     try:
         contents = await file.read()
-        csv_file = io.StringIO(contents.decode('utf-8-sig'))
+        try:
+            decoded_text = contents.decode('utf-8-sig')
+        except UnicodeDecodeError:
+            try:
+                decoded_text = contents.decode('cp1252')
+            except UnicodeDecodeError:
+                decoded_text = contents.decode('latin-1')
+
+        csv_file = io.StringIO(decoded_text)
         csv_reader = csv.DictReader(csv_file)
-        users_to_create: List[schemas.UserImportCSVRow] = [schemas.UserImportCSVRow.model_validate(row) for row in csv_reader]
+        
+        cleaned_rows = []
+        for row in csv_reader:
+            cleaned_row = {}
+            for k, v in row.items():
+                cleaned_row[k] = restore_string(v) if v is not None else None
+            cleaned_rows.append(cleaned_row)
+
+        users_to_create: List[schemas.UserImportCSVRow] = [schemas.UserImportCSVRow.model_validate(row) for row in cleaned_rows]
         
         DEFAULT_PASSWORD = "testpassword123"
         DEFAULT_ROLE = "electrician"

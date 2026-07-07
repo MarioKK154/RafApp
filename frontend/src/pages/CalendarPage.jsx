@@ -249,6 +249,12 @@ function CalendarPage() {
 
     const handleDateClick = (arg) => {
         const start = arg.date;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        if (start < today) {
+            toast.warn(t('cannot_schedule_past', { defaultValue: 'Cannot schedule events in the past.' }));
+            return;
+        }
         const end = new Date(start.getTime() + 60 * 60 * 1000); // +1 hour
         setModalMode('create');
         setFormData({
@@ -280,6 +286,11 @@ function CalendarPage() {
 
     const handleCreateEvent = async (e) => {
         e.preventDefault();
+        const startTime = new Date(formData.start);
+        if (startTime < new Date()) {
+            toast.error(t('cannot_schedule_past', { defaultValue: 'Cannot schedule events in the past.' }));
+            return;
+        }
         try {
             const payload = {
                 title: formData.title,

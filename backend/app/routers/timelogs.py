@@ -196,9 +196,9 @@ async def update_timelog_admin(
     timelog_id: int,
     payload: schemas.TimeLogUpdate,
     db: DbDependency,
-    current_user: AdminOnlyDependency,
+    current_user: ManagerOrAdminDependency,
 ):
-    """Admin only: Edit clocked hours (start/end) or reassign to a different project."""
+    """Admin/PM/Accountant: Edit clocked hours, travel hours, or reassign to a different project."""
     effective_tenant_id = current_user.tenant_id
     existing = crud.get_timelog_by_id(db, timelog_id=timelog_id, tenant_id=effective_tenant_id)
     if not existing:
@@ -212,5 +212,6 @@ async def update_timelog_admin(
         end_time=payload.end_time,
         project_id=payload.project_id,
         notes=payload.notes,
+        travel_hours=payload.travel_hours,
     )
     return updated

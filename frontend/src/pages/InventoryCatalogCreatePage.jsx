@@ -26,6 +26,7 @@ function InventoryCatalogCreatePage() {
     const [formData, setFormData] = useState({
         name: '',
         name_en: '',
+        master_category: '',
         category: '',
         subcategory: '',
         category_en: '',
@@ -41,14 +42,139 @@ function InventoryCatalogCreatePage() {
         reykjafell_sku: '',
         local_image_path: '',
     });
+    
+    const [existingFilters, setExistingFilters] = useState([]);
+    const [isLoadingFilters, setIsLoadingFilters] = useState(false);
+    const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+    
+    const [showNewMaster, setShowNewMaster] = useState(false);
+    const [showNewCategory, setShowNewCategory] = useState(false);
+    const [showNewSubcategory, setShowNewSubcategory] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const isSuperuser = user?.is_superuser;
     const canManageCatalog = !!isSuperuser;
 
+    React.useEffect(() => {
+        const fetchFilters = async () => {
+            setIsLoadingFilters(true);
+            try {
+                const res = await axiosInstance.get('/inventory/catalog/filters');
+                setExistingFilters(Array.isArray(res.data) ? res.data : []);
+            } catch (err) {
+                console.error("Failed to load catalog filters:", err);
+            } finally {
+                setIsLoadingFilters(false);
+            }
+        };
+        fetchFilters();
+    }, []);
+
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleMasterChange = (e) => {
+        const val = e.target.value;
+        if (val === 'NEW') {
+            setShowNewMaster(true);
+            setFormData(prev => ({ 
+                ...prev, 
+                master_category: '', 
+                category: '', 
+                category_en: '', 
+                subcategory: '', 
+                subcategory_en: '' 
+            }));
+            setShowNewCategory(true);
+            setShowNewSubcategory(true);
+        } else {
+            setShowNewMaster(false);
+            setFormData(prev => ({ 
+                ...prev, 
+                master_category: val, 
+                category: '', 
+                category_en: '', 
+                subcategory: '', 
+                subcategory_en: '' 
+            }));
+            setShowNewCategory(false);
+            setShowNewSubcategory(false);
+        }
+    };
+
+    const handleCategoryChange = (e) => {
+        const val = e.target.value;
+        const selectedMasterNode = existingFilters.find(f => f.category === formData.master_category);
+        const availableCategories = selectedMasterNode ? selectedMasterNode.subcategories : [];
+
+        if (val === 'NEW') {
+            setShowNewCategory(true);
+            setFormData(prev => ({ 
+                ...prev, 
+                category: '', 
+                category_en: '', 
+                subcategory: '', 
+                subcategory_en: '' 
+            }));
+            setShowNewSubcategory(true);
+        } else {
+            setShowNewCategory(false);
+            const node = availableCategories.find(c => c.key === val);
+            setFormData(prev => ({
+                ...prev,
+                category: val,
+                category_en: node ? node.label : val,
+                subcategory: '',
+                subcategory_en: ''
+            }));
+            setShowNewSubcategory(false);
+        }
+    };
+
+    const handleSubcategoryChange = (e) => {
+        const val = e.target.value;
+        const selectedMasterNode = existingFilters.find(f => f.category === formData.master_category);
+        const availableCategories = selectedMasterNode ? selectedMasterNode.subcategories : [];
+        const selectedCategoryNode = availableCategories.find(c => c.key === formData.category);
+        const availableSubsubcategories = selectedCategoryNode ? selectedCategoryNode.subsubcategories : [];
+
+        if (val === 'NEW') {
+            setShowNewSubcategory(true);
+            setFormData(prev => ({ ...prev, subcategory: '', subcategory_en: '' }));
+        } else {
+            setShowNewSubcategory(false);
+            const node = availableSubsubcategories.find(s => s.key === val);
+            setFormData(prev => ({
+                ...prev,
+                subcategory: val,
+                subcategory_en: node ? node.label : val
+            }));
+        }
+    };
+
+    const handlePhotoUpload = async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setIsUploadingPhoto(true);
+        try {
+            const fd = new FormData();
+            fd.append('file', file);
+            const res = await axiosInstance.post('/inventory/catalog/upload-image', fd, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            const url = res.data?.url;
+            if (url) {
+                setFormData(prev => ({ ...prev, local_image_path: url }));
+                toast.success('Material image uploaded successfully!');
+            }
+        } catch (err) {
+            console.error("Image upload failed:", err);
+            toast.error(err.response?.data?.detail || 'Failed to upload image.');
+        } finally {
+            setIsUploadingPhoto(false);
+        }
     };
 
     const handleSubmit = async (e) => {
@@ -60,11 +186,8 @@ function InventoryCatalogCreatePage() {
 
         setIsSubmitting(true);
         try {
-            // Align with backend inventory catalog endpoint
             await axiosInstance.post('/inventory/catalog', formData);
             toast.success(`${t('toast_material_initialized')} ${formData.name}`);
-            
-            // REDIRECT SYNC: Pointing back to the main Global Inventory Node
             navigate('/inventory'); 
         } catch (err) {
             console.error("Catalog Entry Error:", err);
@@ -143,16 +266,28 @@ function InventoryCatalogCreatePage() {
                             </div>
                             <div className="space-y-1">
                                 <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">{t('visual_telemetry_path')}</label>
-                                <div className="relative">
-                                    <PhotoIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                                    <input 
-                                        type="text" 
-                                        name="local_image_path" 
-                                        value={formData.local_image_path} 
-                                        onChange={handleChange} 
-                                        placeholder={t('placeholder_visual_path')}
-                                        className="modern-input h-14 pl-12 font-mono text-xs" 
-                                    />
+                                <div className="flex gap-2">
+                                    <div className="relative flex-1">
+                                        <PhotoIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                        <input 
+                                            type="text" 
+                                            name="local_image_path" 
+                                            value={formData.local_image_path} 
+                                            onChange={handleChange} 
+                                            placeholder={t('placeholder_visual_path')}
+                                            className="modern-input h-14 pl-12 font-mono text-xs" 
+                                        />
+                                    </div>
+                                    <label className="h-14 px-4 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-2xl flex items-center justify-center cursor-pointer border border-gray-200 dark:border-gray-600 transition text-[10px] font-black uppercase tracking-widest select-none shrink-0">
+                                        {isUploadingPhoto ? 'Uploading...' : 'Upload File'}
+                                        <input 
+                                            type="file" 
+                                            accept="image/*" 
+                                            onChange={handlePhotoUpload} 
+                                            className="hidden" 
+                                            disabled={isUploadingPhoto}
+                                        />
+                                    </label>
                                 </div>
                             </div>
                         </div>
@@ -169,50 +304,146 @@ function InventoryCatalogCreatePage() {
                             ></textarea>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <div className="space-y-1">
-                                <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">{t('category_is_primary')}</label>
-                                <input 
-                                    type="text" 
-                                    name="category" 
-                                    value={formData.category} 
-                                    onChange={handleChange} 
-                                    placeholder={t('placeholder_kaplar')}
-                                    className="modern-input h-12" 
-                                />
+                        {/* 3-Level Category Selector */}
+                        <div className="space-y-6 pt-6 border-t border-gray-100 dark:border-gray-700">
+                            <h3 className="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-4">Material Categorization</h3>
+                            
+                            {/* Master Category (Level 1) */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div className="space-y-1">
+                                    <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">Master Category (Level 1)</label>
+                                    <select 
+                                        name="master_category_select"
+                                        value={showNewMaster ? 'NEW' : formData.master_category} 
+                                        onChange={handleMasterChange}
+                                        className="modern-input h-14 font-black"
+                                    >
+                                        <option value="">-- Select Master Category --</option>
+                                        {existingFilters.map(f => (
+                                            <option key={f.category} value={f.category}>{f.category_display || f.category}</option>
+                                        ))}
+                                        <option value="NEW" className="text-indigo-600 font-bold">+ Create New Category...</option>
+                                    </select>
+                                </div>
+                                {showNewMaster && (
+                                    <div className="space-y-1 animate-in slide-in-from-left duration-200">
+                                        <label className="block text-[10px] font-black text-indigo-500 uppercase mb-2 ml-1 tracking-widest">New Master Category Name</label>
+                                        <input 
+                                            type="text" 
+                                            name="master_category" 
+                                            value={formData.master_category} 
+                                            onChange={handleChange} 
+                                            placeholder="e.g. Strengir"
+                                            className="modern-input h-14 font-black border-indigo-200 focus:border-indigo-500" 
+                                        />
+                                    </div>
+                                )}
                             </div>
-                            <div className="space-y-1">
-                                <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">{t('category_en')}</label>
-                                <input 
-                                    type="text" 
-                                    name="category_en" 
-                                    value={formData.category_en} 
-                                    onChange={handleChange} 
-                                    placeholder={t('placeholder_cables')}
-                                    className="modern-input h-12" 
-                                />
+
+                            {/* Category / Subcategory (Level 2) */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div className="space-y-1">
+                                    <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">Category / Subcategory (Level 2)</label>
+                                    <select 
+                                        name="category_select"
+                                        value={showNewCategory ? 'NEW' : formData.category} 
+                                        onChange={handleCategoryChange}
+                                        disabled={!formData.master_category && !showNewMaster}
+                                        className="modern-input h-14 font-black"
+                                    >
+                                        <option value="">-- Select Category --</option>
+                                        {(() => {
+                                            const selectedMasterNode = existingFilters.find(f => f.category === formData.master_category);
+                                            const availableCategories = selectedMasterNode ? selectedMasterNode.subcategories : [];
+                                            return availableCategories.map(c => (
+                                                <option key={c.key} value={c.key}>{c.key} ({c.label})</option>
+                                            ));
+                                        })()}
+                                        {(formData.master_category || showNewMaster) && (
+                                            <option value="NEW" className="text-indigo-600 font-bold">+ Create New Subcategory...</option>
+                                        )}
+                                    </select>
+                                </div>
+                                {showNewCategory && (
+                                    <div className="grid grid-cols-2 gap-4 animate-in slide-in-from-left duration-200 col-span-1">
+                                        <div className="space-y-1">
+                                            <label className="block text-[8px] font-black text-indigo-500 uppercase mb-2 ml-1 tracking-widest">Category Key (EN)</label>
+                                            <input 
+                                                type="text" 
+                                                name="category" 
+                                                value={formData.category} 
+                                                onChange={handleChange} 
+                                                placeholder="e.g. Power cables"
+                                                className="modern-input h-14 font-black border-indigo-200 focus:border-indigo-500" 
+                                            />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <label className="block text-[8px] font-black text-indigo-500 uppercase mb-2 ml-1 tracking-widest">Category Display (IS)</label>
+                                            <input 
+                                                type="text" 
+                                                name="category_en" 
+                                                value={formData.category_en} 
+                                                onChange={handleChange} 
+                                                placeholder="e.g. Aflstrengir"
+                                                className="modern-input h-14 border-indigo-200 focus:border-indigo-500" 
+                                            />
+                                        </div>
+                                    </div>
+                                )}
                             </div>
-                            <div className="space-y-1">
-                                <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">{t('subcategory_is_primary')}</label>
-                                <input 
-                                    type="text" 
-                                    name="subcategory" 
-                                    value={formData.subcategory} 
-                                    onChange={handleChange} 
-                                    placeholder={t('placeholder_kraftkaplar')}
-                                    className="modern-input h-12" 
-                                />
-                            </div>
-                            <div className="space-y-1">
-                                <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">{t('subcategory_en')}</label>
-                                <input 
-                                    type="text" 
-                                    name="subcategory_en" 
-                                    value={formData.subcategory_en} 
-                                    onChange={handleChange} 
-                                    placeholder={t('placeholder_power_cables')}
-                                    className="modern-input h-12" 
-                                />
+
+                            {/* Subcategory / Sub-subcategory (Level 3) */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div className="space-y-1">
+                                    <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">Sub-subcategory (Level 3 - Optional)</label>
+                                    <select 
+                                        name="subcategory_select"
+                                        value={showNewSubcategory ? 'NEW' : formData.subcategory} 
+                                        onChange={handleSubcategoryChange}
+                                        disabled={!formData.category && !showNewCategory}
+                                        className="modern-input h-14 font-black"
+                                    >
+                                        <option value="">-- Select Sub-subcategory (None) --</option>
+                                        {(() => {
+                                            const selectedMasterNode = existingFilters.find(f => f.category === formData.master_category);
+                                            const availableCategories = selectedMasterNode ? selectedMasterNode.subcategories : [];
+                                            const selectedCategoryNode = availableCategories.find(c => c.key === formData.category);
+                                            const availableSubsubcategories = selectedCategoryNode ? selectedCategoryNode.subsubcategories : [];
+                                            return availableSubsubcategories.map(s => (
+                                                <option key={s.key} value={s.key}>{s.key} ({s.label})</option>
+                                            ));
+                                        })()}
+                                        {(formData.category || showNewCategory) && (
+                                            <option value="NEW" className="text-indigo-600 font-bold">+ Create New Sub-subcategory...</option>
+                                        )}
+                                    </select>
+                                </div>
+                                {showNewSubcategory && (
+                                    <div className="grid grid-cols-2 gap-4 animate-in slide-in-from-left duration-200 col-span-1">
+                                        <div className="space-y-1">
+                                            <label className="block text-[8px] font-black text-indigo-500 uppercase mb-2 ml-1 tracking-widest">Sub-subcat Key (EN)</label>
+                                            <input 
+                                                type="text" 
+                                                name="subcategory" 
+                                                value={formData.subcategory} 
+                                                onChange={handleChange} 
+                                                placeholder="e.g. Copper power cables"
+                                                className="modern-input h-14 font-black border-indigo-200 focus:border-indigo-500" 
+                                            />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <label className="block text-[8px] font-black text-indigo-500 uppercase mb-2 ml-1 tracking-widest">Sub-subcat Display (IS)</label>
+                                            <input 
+                                                type="text" 
+                                                name="subcategory_en" 
+                                                value={formData.subcategory_en} 
+                                                onChange={handleChange} 
+                                                placeholder="e.g. Kopar aflstrengir"
+                                                className="modern-input h-14 border-indigo-200 focus:border-indigo-500" 
+                                            />
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </section>

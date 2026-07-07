@@ -102,9 +102,12 @@ async def import_ar_is_global(
             raise HTTPException(status_code=400, detail=f"Invalid Excel file: {str(e)}")
     else:
         try:
-            csv_content = content.decode("utf-8")
-        except UnicodeDecodeError:
             csv_content = content.decode("utf-8-sig")
+        except UnicodeDecodeError:
+            try:
+                csv_content = content.decode("cp1252")
+            except UnicodeDecodeError:
+                csv_content = content.decode("latin-1")
     result = crud.import_labor_catalog_from_ar_is_csv(
         db, csv_content=csv_content, tenant_id=None, skip_duplicates=skip_duplicates, global_only=True
     )
@@ -208,8 +211,8 @@ async def import_work_load_ratios_xlsx(
         for row in rows[1:]:
             if not row or len(row) < 2:
                 continue
-            code = str(row[0]).strip() if row[0] is not None else ""
-            desc = str(row[1]).strip() if row[1] is not None else ""
+            code = crud.restore_string(str(row[0]).strip() if row[0] is not None else "")
+            desc = crud.restore_string(str(row[1]).strip() if row[1] is not None else "")
             try:
                 ratio = float(row[2]) if len(row) > 2 and row[2] is not None else 0.0
             except (TypeError, ValueError):
@@ -272,8 +275,8 @@ async def import_main_categories_xlsx(
         for row in rows[1:]:
             if not row or len(row) < 2:
                 continue
-            code = str(row[0]).strip() if row[0] is not None else ""
-            name = str(row[1]).strip() if row[1] is not None else ""
+            code = crud.restore_string(str(row[0]).strip() if row[0] is not None else "")
+            name = crud.restore_string(str(row[1]).strip() if row[1] is not None else "")
             if code:
                 data.append({"code": code, "name": name or code})
         result = crud.import_labor_main_category_refs(db, data)
@@ -373,10 +376,10 @@ async def import_condition_variants(
         for row in rows[1:]:
             if not row or len(row) < 2:
                 continue
-            code = str(row[0]).strip() if row[0] is not None else ""
+            code = crud.restore_string(str(row[0]).strip() if row[0] is not None else "")
             if not code:
                 continue
-            cond_desc = str(row[1]).strip() if row[1] is not None else code
+            cond_desc = crud.restore_string(str(row[1]).strip() if row[1] is not None else code)
             eff = str(row[2]).strip() if len(row) > 2 and row[2] is not None else None
             end = str(row[3]).strip() if len(row) > 3 and row[3] is not None else None
             eining = None

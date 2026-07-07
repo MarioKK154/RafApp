@@ -3,7 +3,8 @@
 
 import os
 
-os.environ.setdefault("DATABASE_URL", "sqlite:///./test.db")
+# Force SQLite test database to prevent dropping tables in Postgres development database
+os.environ["DATABASE_URL"] = "sqlite:///./test.db"
 
 import pytest
 from typing import Generator, Dict, Any
@@ -52,7 +53,7 @@ def client(db: Session) -> Generator:
         yield db
 
     app.dependency_overrides[get_db] = override_get_db
-    yield TestClient(app)
+    yield TestClient(app, base_url="http://testserver/api")
     app.dependency_overrides.clear()
 
 

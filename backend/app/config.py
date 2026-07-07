@@ -16,10 +16,13 @@ from functools import lru_cache
 from pathlib import Path
 from typing import List, Optional
 
+import sys
 from dotenv import load_dotenv
 
 _ENV_PATH = Path(__file__).resolve().parent.parent / ".env"
-load_dotenv(_ENV_PATH, override=True)
+# Do not load .env when running tests via pytest to avoid overriding SQLite DATABASE_URL
+if "pytest" not in sys.modules and not any("pytest" in arg for arg in sys.argv):
+    load_dotenv(_ENV_PATH, override=True)
 
 
 def _env_str(name: str, default: str = "") -> str:
@@ -70,6 +73,8 @@ class AppSettings:
     smtp_password: Optional[str]
     smtp_from_email: Optional[str]
     admin_email: Optional[str]
+    paypal_client_id: Optional[str]
+    paypal_client_secret: Optional[str]
 
 
 @lru_cache
@@ -111,4 +116,6 @@ def get_settings() -> AppSettings:
         smtp_password=_env_str("SMTP_PASSWORD") or None,
         smtp_from_email=_env_str("SMTP_FROM_EMAIL") or "noreply@rafapp.is",
         admin_email=_env_str("ADMIN_EMAIL") or None,
+        paypal_client_id=_env_str("PAYPAL_CLIENT_ID") or None,
+        paypal_client_secret=_env_str("PAYPAL_CLIENT_SECRET") or None,
     )

@@ -18,7 +18,10 @@ import {
     GlobeAltIcon,
     ChartBarSquareIcon,
     BoltIcon,
-    Cog6ToothIcon
+    Cog6ToothIcon,
+    LightBulbIcon,
+    SparklesIcon,
+    CpuChipIcon
 } from '@heroicons/react/24/outline';
 
 const CONFIRMATION_PHRASE = "PERFORM CLEAN SLATE";
@@ -69,6 +72,57 @@ function AdminToolsPage() {
     const [isSeedingDemo, setIsSeedingDemo] = useState(false);
     const [isUploadingLandingBg, setIsUploadingLandingBg] = useState(false);
 
+    const [suggestions, setSuggestions] = useState([]);
+    const [isAnalyzing, setIsAnalyzing] = useState(false);
+    const [aiAnalysis, setAiAnalysis] = useState(null);
+
+    const handleDismissSuggestion = async (id) => {
+        try {
+            await axiosInstance.delete(`/admin/super/suggestions/${id}`);
+            toast.success("Feedback dismissed successfully.");
+            setSuggestions(prev => prev.filter(s => s.id !== id));
+            setAiAnalysis(null);
+        } catch (err) {
+            console.error("Failed to delete suggestion:", err);
+            toast.error("Failed to dismiss feedback.");
+        }
+    };
+
+    const handleToggleReadSuggestion = async (id) => {
+        try {
+            const res = await axiosInstance.put(`/admin/super/suggestions/${id}/read`);
+            const updated = res.data;
+            toast.success(updated.is_read ? "Suggestion marked as read." : "Suggestion marked as unread.");
+            setSuggestions(prev => prev.map(s => s.id === id ? updated : s));
+            if (aiAnalysis && aiAnalysis.clusters) {
+                setAiAnalysis(prev => ({
+                    ...prev,
+                    clusters: prev.clusters.map(cluster => ({
+                        ...cluster,
+                        suggestions: cluster.suggestions.map(s => s.id === id ? { ...s, is_read: updated.is_read } : s)
+                    }))
+                }));
+            }
+        } catch (err) {
+            console.error("Failed to toggle read status:", err);
+            toast.error("Failed to update status.");
+        }
+    };
+
+    const handleRunAIAnalysis = async () => {
+        setIsAnalyzing(true);
+        try {
+            const res = await axiosInstance.post('/admin/super/suggestions/analyze');
+            setAiAnalysis(res.data);
+            toast.success("AI Suggestions Analysis Complete!");
+        } catch (err) {
+            console.error("AI scanning failed:", err);
+            toast.error("AI Scanning failed.");
+        } finally {
+            setIsAnalyzing(false);
+        }
+    };
+
     const isSuperuser = currentUser && currentUser.is_superuser;
 
     const toLocalInputValue = (value) => {
@@ -108,7 +162,7 @@ function AdminToolsPage() {
             if (!isSuperuser) return;
             setIsLoadingMetrics(true);
             try {
-                const [heatmapRes, growthRes, loadRes, billingRes, statusRes, logsRes, auditRes, healthRes, bannerRes, landingFeedRes] = await Promise.all([
+                const [heatmapRes, growthRes, loadRes, billingRes, statusRes, logsRes, auditRes, healthRes, bannerRes, landingFeedRes, suggestionsRes] = await Promise.all([
                     axiosInstance.get('/admin/super/tenant-heatmap'),
                     axiosInstance.get('/admin/super/growth-metrics'),
                     axiosInstance.get('/admin/super/system-load'),
@@ -119,6 +173,7 @@ function AdminToolsPage() {
                     axiosInstance.get('/admin/super/tenant-health'),
                     axiosInstance.get('/system/banner'),
                     axiosInstance.get('/system/landing-feed'),
+                    axiosInstance.get('/admin/super/suggestions'),
                 ]);
                 setHeatmap(heatmapRes.data);
                 setGrowth(growthRes.data);
@@ -130,6 +185,7 @@ function AdminToolsPage() {
                 setAuditLogs(Array.isArray(auditRes.data) ? auditRes.data : []);
                 setTenantHealth(Array.isArray(healthRes.data) ? healthRes.data : []);
                 setActiveBanner(bannerRes.data || null);
+                setSuggestions(Array.isArray(suggestionsRes.data) ? suggestionsRes.data : []);
                 const lf = landingFeedRes.data || {};
                 setLandingFeed({
                     news: hydrateFeedItems(lf.news),
@@ -1540,6 +1596,216 @@ function AdminToolsPage() {
                             )}
                             {!isLoadingMetrics && (!tenantHealth.length || tenantHealth.every(t => t.churn_risk === 'none')) && (
                                 <p className="text-xs text-gray-600 dark:text-gray-300 italic">No tenants flagged for churn risk.</p>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                {/* User Feedback & Suggestions */}
+                <div className="space-y-4 pt-4 border-t border-gray-100 dark:border-gray-800">
+                    <h2 className="text-sm font-black text-gray-400 uppercase tracking-widest pb-2">User Feedback & Suggestions</h2>
+                    
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                        {/* AI Scanning Brain Panel */}
+                        <div className="lg:col-span-4 space-y-6">
+                            <div className="bg-gradient-to-br from-indigo-900 via-indigo-950 to-purple-950 text-white rounded-3xl p-6 shadow-xl relative overflow-hidden flex flex-col justify-between border border-indigo-500/20">
+                                <div className="absolute -top-12 -right-12 w-32 h-32 bg-indigo-500 rounded-full blur-3xl opacity-20"></div>
+                                <div className="absolute -bottom-12 -left-12 w-32 h-32 bg-purple-500 rounded-full blur-3xl opacity-20"></div>
+                                
+                                <div className="relative z-10 space-y-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2 bg-white/10 rounded-xl">
+                                            <LightBulbIcon className="h-6 w-6 text-yellow-300" />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-sm font-black uppercase tracking-widest leading-none">AI Suggestions Brain</h3>
+                                            <span className="text-[8px] font-black uppercase tracking-[0.2em] text-indigo-400">Semantic Topic Clusterer</span>
+                                        </div>
+                                    </div>
+                                    <p className="text-[10px] text-gray-300 leading-relaxed font-medium uppercase tracking-tight">
+                                        Use the AI Brain to scan the registry of user feedback. This clusters similar user suggestions, highlights repeated requests, and generates automated enhancement tickets.
+                                    </p>
+                                    
+                                    <button
+                                        type="button"
+                                        onClick={handleRunAIAnalysis}
+                                        disabled={isAnalyzing || suggestions.length === 0}
+                                        className="w-full h-12 bg-white text-indigo-950 font-black text-[10px] uppercase tracking-widest rounded-2xl hover:bg-gray-100 transition duration-150 transform active:scale-95 disabled:opacity-40 flex items-center justify-center gap-2 cursor-pointer shadow-md shadow-indigo-950/50"
+                                    >
+                                        {isAnalyzing ? (
+                                            <>
+                                                <ArrowPathIcon className="h-4 w-4 animate-spin text-indigo-900" />
+                                                Analyzing registry...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <CpuChipIcon className="h-4 w-4 text-indigo-900" />
+                                                Run AI Suggestions Scan
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* AI Insights display */}
+                            {aiAnalysis && (
+                                <div className="bg-indigo-50/50 dark:bg-indigo-950/20 rounded-3xl p-6 border border-indigo-100/60 dark:border-indigo-900/30 space-y-4 animate-in slide-in-from-bottom duration-300">
+                                    <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-700 dark:text-indigo-300 flex items-center gap-2">
+                                        <SparklesIcon className="h-4 w-4" /> AI Recommendations
+                                    </h4>
+                                    <div className="space-y-3">
+                                        {aiAnalysis.insights?.map((insight, idx) => (
+                                            <div key={idx} className="bg-white/80 dark:bg-gray-800/80 p-4 rounded-2xl text-xs text-gray-700 dark:text-gray-200 border-l-4 border-indigo-500 shadow-sm leading-relaxed">
+                                                {insight}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Suggestions Registry List / AI Clustered view */}
+                        <div className="lg:col-span-8 space-y-6">
+                            {aiAnalysis && aiAnalysis.clusters?.length > 0 ? (
+                                <div className="space-y-6">
+                                    <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-2">
+                                        <h3 className="text-xs font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-400">AI Clustered Results</h3>
+                                        <button 
+                                            type="button" 
+                                            onClick={() => setAiAnalysis(null)} 
+                                            className="text-[9px] font-black uppercase tracking-widest text-gray-400 hover:text-indigo-600"
+                                        >
+                                            Show raw list
+                                        </button>
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        {aiAnalysis.clusters.map((cluster, cIdx) => (
+                                            <div key={cIdx} className="bg-white dark:bg-gray-800 p-6 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm space-y-4">
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-[10px] font-black uppercase tracking-widest text-gray-900 dark:text-white">
+                                                        {cluster.theme}
+                                                    </span>
+                                                    <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-black ${
+                                                        cluster.similar_count_detected > 0 
+                                                            ? 'bg-orange-100 text-orange-700 dark:bg-orange-950/30 dark:text-orange-400 animate-pulse' 
+                                                            : 'bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400'
+                                                    }`}>
+                                                        {cluster.count} {cluster.similar_count_detected > 0 ? 'Similar Requests' : 'Feedback'}
+                                                    </span>
+                                                </div>
+                                                <div className="space-y-2 divide-y divide-gray-50 dark:divide-gray-700/50">
+                                                    {cluster.suggestions.map((s, sIdx) => (
+                                                        <div key={sIdx} className={`pt-2 first:pt-0 space-y-1.5 transition-opacity duration-200 ${s.is_read ? 'opacity-50' : ''}`}>
+                                                            <div className="flex justify-between items-center text-[9px] font-bold text-gray-400 uppercase tracking-tight">
+                                                                <span>{s.email}</span>
+                                                                <span>{s.date}</span>
+                                                            </div>
+                                                            <p className="text-xs text-gray-700 dark:text-gray-300 leading-relaxed font-medium">
+                                                                "{s.content}"
+                                                            </p>
+                                                            <div className="flex justify-between items-center pt-1">
+                                                                <span className="text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded bg-gray-50 dark:bg-gray-900 text-gray-400">
+                                                                    {s.category}
+                                                                </span>
+                                                                <div className="flex items-center gap-2.5">
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => handleToggleReadSuggestion(s.id)}
+                                                                        className="text-[9px] font-black uppercase text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300"
+                                                                    >
+                                                                        {s.is_read ? 'Mark Unread' : 'Mark Read'}
+                                                                    </button>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => handleDismissSuggestion(s.id)}
+                                                                        className="text-[9px] font-black uppercase text-red-500 hover:text-red-700"
+                                                                    >
+                                                                        Dismiss
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 border border-gray-100 dark:border-gray-700 shadow-sm space-y-6">
+                                    <div className="flex justify-between items-center border-b border-gray-50 dark:border-gray-700 pb-4">
+                                        <h3 className="text-xs font-black uppercase tracking-widest text-gray-900 dark:text-white">Feedback Registry</h3>
+                                        <span className="text-[9px] font-black uppercase tracking-widest bg-gray-50 dark:bg-gray-900 text-gray-500 px-3 py-1 rounded-full">
+                                            {suggestions.length} items
+                                        </span>
+                                    </div>
+                                    
+                                    {isLoadingMetrics ? (
+                                        <p className="text-xs text-gray-400 italic">Refreshing feedback...</p>
+                                    ) : suggestions.length === 0 ? (
+                                        <div className="text-center py-12 text-gray-400 uppercase tracking-widest text-[10px] font-bold italic leading-relaxed">
+                                            No user suggestions logged.
+                                        </div>
+                                    ) : (
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-h-[500px] overflow-y-auto pr-1">
+                                            {suggestions.map((s) => (
+                                                <div 
+                                                    key={s.id} 
+                                                    className={`p-5 rounded-2xl border flex flex-col justify-between space-y-4 transition-all duration-200 ${
+                                                        s.is_read 
+                                                            ? 'bg-gray-50/20 dark:bg-gray-900/10 border-gray-100/30 dark:border-gray-800/20 opacity-60' 
+                                                            : 'bg-white dark:bg-gray-800 border-indigo-100 dark:border-indigo-950 shadow-md shadow-indigo-100/5 dark:shadow-none'
+                                                    }`}
+                                                >
+                                                    <div className="space-y-2">
+                                                        <div className="flex justify-between items-center">
+                                                            <div className="flex items-center gap-2">
+                                                                {!s.is_read && (
+                                                                    <span className="h-1.5 w-1.5 rounded-full bg-indigo-600 animate-pulse" />
+                                                                )}
+                                                                <span className={`px-2.5 py-0.5 rounded text-[8px] font-black uppercase border ${
+                                                                    s.category === 'Bug' ? 'bg-red-50 text-red-600 border-red-100 dark:bg-red-950/20 dark:text-red-400 dark:border-red-900/30' :
+                                                                    s.category === 'Feature Request' ? 'bg-purple-50 text-purple-600 border-purple-100 dark:bg-purple-950/20 dark:text-purple-400 dark:border-purple-900/30' :
+                                                                    s.category === 'Improvement' ? 'bg-blue-50 text-blue-600 border-blue-100 dark:bg-blue-950/20 dark:text-blue-400 dark:border-red-900/30' :
+                                                                    'bg-gray-50 text-gray-500 border-gray-100 dark:bg-gray-800 dark:text-gray-400'
+                                                                }`}>
+                                                                    {s.category}
+                                                                </span>
+                                                            </div>
+                                                            <span className="text-[9px] font-black text-gray-400 uppercase tracking-tight">
+                                                                {new Date(s.created_at).toLocaleDateString()}
+                                                            </span>
+                                                        </div>
+                                                        <p className="text-xs text-gray-800 dark:text-gray-200 leading-relaxed font-semibold">
+                                                            "{s.content}"
+                                                        </p>
+                                                    </div>
+                                                    <div className="flex justify-between items-center pt-2 border-t border-gray-100 dark:border-gray-800/60">
+                                                        <span className="text-[8px] font-bold text-gray-400 uppercase tracking-tight">
+                                                            {s.user_email || 'anonymous'}
+                                                        </span>
+                                                        <div className="flex items-center gap-3">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleToggleReadSuggestion(s.id)}
+                                                                className="text-[9px] font-black uppercase text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300"
+                                                            >
+                                                                {s.is_read ? 'Mark Unread' : 'Mark Read'}
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleDismissSuggestion(s.id)}
+                                                                className="text-[9px] font-black uppercase text-red-500 hover:text-red-700"
+                                                            >
+                                                                Delete
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
                             )}
                         </div>
                     </div>

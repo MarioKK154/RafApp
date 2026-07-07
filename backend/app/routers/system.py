@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Request, UploadFile, File
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
-from typing import Annotated, Optional
+from typing import Annotated, Optional, List
 from pathlib import Path
 import json
 import uuid
@@ -9,6 +9,7 @@ import uuid
 from .. import crud, models, schemas, security
 from ..database import get_db
 from ..limiter import limiter
+from ..config import get_settings
 
 
 router = APIRouter(
@@ -142,6 +143,23 @@ async def get_system_status(
     return schemas.SystemStatus(**data)
 
 
+@router.get("/version")
+@limiter.limit("120/minute")
+async def get_system_version(request: Request):
+    """
+    Get backend version and build timestamp for client-side cache busting.
+    """
+    import os
+    info_path = Path(__file__).resolve().parent.parent / "build_info.json"
+    if os.path.exists(info_path):
+        try:
+            with open(info_path, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return {"version": "1.0.0", "build_time": "1970-01-01T00:00:00Z"}
+
+
 @router.post("/maintenance", response_model=schemas.SystemStatus)
 @limiter.limit("30/minute")
 async def set_maintenance_mode(
@@ -222,4 +240,328 @@ async def upload_landing_background(
         f.write(content)
     url_path = f"/static/landing_backgrounds/{filename}"
     return JSONResponse({"url": url_path})
+
+
+@router.get("/my-tenant/invoices", response_model=List[schemas.BillingInvoiceRead])
+@limiter.limit("50/minute")
+async def get_my_tenant_invoices(
+    request: Request,
+    db: DbDependency,
+    current_user: Annotated[models.User, Depends(security.get_current_active_user)],
+):
+    """Retrieves all invoices for the current user's tenant (admin/member only)."""
+    if not current_user.tenant_id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No tenant context associated with user")
+    return crud.get_billing_invoices_by_tenant(db, tenant_id=current_user.tenant_id)
+
+
+@router.post("/my-tenant/invoices/{invoice_id}/pay", response_model=schemas.BillingInvoiceRead)
+@limiter.limit("30/minute")
+async def pay_my_tenant_invoice(
+    request: Request,
+    invoice_id: int,
+    db: DbDependency,
+    current_user: Annotated[models.User, Depends(security.get_current_active_user)],
+):
+    """Marks an invoice as Paid, simulating payment checkout confirmation for own tenant."""
+    db_invoice = crud.get_billing_invoice(db, invoice_id=invoice_id)
+    if not db_invoice:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invoice not found")
+    if db_invoice.tenant_id != current_user.tenant_id and not current_user.is_superuser:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied: unauthorized invoice context")
+    
+    from datetime import datetime, timezone
+    db_invoice.status = "Paid"
+    db_invoice.paid_at = datetime.now(timezone.utc)
+    db.add(db_invoice)
+    db.commit()
+    db.refresh(db_invoice)
+    return db_invoice
+
+
+@router.get("/invoices/{invoice_id}/pdf")
+@limiter.limit("20/minute")
+async def export_invoice_pdf(
+    request: Request,
+    invoice_id: int,
+    db: DbDependency,
+    current_user: Annotated[models.User, Depends(security.get_current_active_user)],
+):
+    """
+    Export a beautiful PDF document for a specific subscription invoice.
+    """
+    db_invoice = crud.get_billing_invoice(db, invoice_id=invoice_id)
+    if not db_invoice:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invoice not found")
+        
+    if not current_user.is_superuser and current_user.tenant_id != db_invoice.tenant_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied: unauthorized tenant context")
+        
+    db_tenant = crud.get_tenant(db, tenant_id=db_invoice.tenant_id)
+    if not db_tenant:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tenant details not found")
+
+    from io import BytesIO
+    from reportlab.lib.pagesizes import A4
+    from reportlab.pdfgen import canvas
+    from datetime import datetime
+    
+    buffer = BytesIO()
+    pdf = canvas.Canvas(buffer, pagesize=A4)
+    width, height = A4
+    
+    # Corporate Header Slate background accent bar at top
+    pdf.setFillColorRGB(0.12, 0.16, 0.23)
+    pdf.rect(0, height - 80, width, 80, fill=True, stroke=False)
+    
+    # Title Text
+    pdf.setFillColorRGB(1.0, 1.0, 1.0)
+    pdf.setFont("Helvetica-Bold", 18)
+    pdf.drawString(40, height - 48, "RAFAPP SUBSCRIPTION INVOICE")
+    
+    # Subheader / Timestamp
+    pdf.setFont("Helvetica", 9)
+    pdf.setFillColorRGB(0.7, 0.8, 0.9)
+    invoice_date_str = db_invoice.created_at.strftime("%Y-%m-%d %H:%M") if db_invoice.created_at else "N/A"
+    pdf.drawString(40, height - 64, f"Generated: {invoice_date_str} UTC  |  Status: {db_invoice.status.upper()}")
+    
+    # Reset Fill color to dark slate for body text
+    pdf.setFillColorRGB(0.12, 0.16, 0.23)
+    
+    # Drawing Details
+    y = height - 130
+    
+    # Tenant details
+    pdf.setFont("Helvetica-Bold", 12)
+    pdf.drawString(40, y, "BILLED TO:")
+    pdf.setFont("Helvetica", 10)
+    pdf.drawString(40, y - 18, f"Company Name: {db_tenant.name}")
+    pdf.drawString(40, y - 32, f"Tenant Registry ID: #{db_tenant.id}")
+    
+    # Issuer Info (Right side)
+    pdf.setFont("Helvetica-Bold", 12)
+    pdf.drawString(340, y, "ISSUED BY:")
+    pdf.setFont("Helvetica", 10)
+    pdf.drawString(340, y - 18, "RafApp")
+    pdf.drawString(340, y - 32, "Hlyngerði 3, Reykjavik")
+    pdf.drawString(340, y - 46, "billing@rafapp.com")
+    
+    # Invoice Identifiers
+    y -= 90
+    pdf.setFont("Helvetica-Bold", 12)
+    pdf.drawString(40, y, "INVOICE METRICS:")
+    
+    pdf.setFont("Helvetica", 10)
+    pdf.drawString(40, y - 18, f"Invoice Reference ID: #{db_invoice.id}")
+    pdf.drawString(40, y - 32, f"Billing Cycle / Service: {db_invoice.description or 'SaaS Subscription Plan'}")
+    pdf.drawString(40, y - 46, f"Payment Due Date: {db_invoice.due_date}")
+    payment_status_text = f"Paid Date: {db_invoice.paid_at.strftime('%Y-%m-%d %H:%M')}" if db_invoice.paid_at else "Status: UNPAID"
+    pdf.drawString(40, y - 60, payment_status_text)
+    
+    # Itemized Table
+    y -= 100
+    pdf.setFont("Helvetica-Bold", 12)
+    pdf.drawString(40, y, "ITEMIZED CHARGES:")
+    
+    # Table Header Accent Bar
+    pdf.setFillColorRGB(0.95, 0.96, 0.98)
+    pdf.rect(40, y - 25, width - 80, 20, fill=True, stroke=False)
+    
+    pdf.setFillColorRGB(0.12, 0.16, 0.23)
+    pdf.setFont("Helvetica-Bold", 9)
+    pdf.drawString(50, y - 20, "DESCRIPTION")
+    pdf.drawRightString(width - 50, y - 20, "TOTAL AMOUNT")
+    
+    # Calculation of VSK (24%)
+    subtotal = db_invoice.amount
+    vsk_amount = subtotal * 0.24
+    total_amount = subtotal + vsk_amount
+
+    pdf.setFont("Helvetica", 10)
+    pdf.drawString(50, y - 45, f"RafApp Subscription Package ({db_invoice.description or 'Monthly Plan'}) - Subtotal")
+    pdf.drawRightString(width - 50, y - 45, f"{subtotal:,.0f} {db_invoice.currency}")
+    
+    # Horizontal line below item
+    pdf.setStrokeColorRGB(0.9, 0.9, 0.9)
+    pdf.setLineWidth(1)
+    pdf.line(40, y - 55, width - 40, y - 55)
+    
+    # Subtotal, VSK and Total Due block
+    pdf.setFont("Helvetica", 10)
+    pdf.drawString(340, y - 75, "Subtotal:")
+    pdf.drawRightString(width - 50, y - 75, f"{subtotal:,.0f} {db_invoice.currency}")
+    
+    pdf.drawString(340, y - 90, "VSK (24% Tax):")
+    pdf.drawRightString(width - 50, y - 90, f"{vsk_amount:,.0f} {db_invoice.currency}")
+    
+    pdf.setFont("Helvetica-Bold", 11)
+    pdf.drawString(340, y - 110, "TOTAL DUE (Incl. VSK):")
+    pdf.drawRightString(width - 50, y - 110, f"{total_amount:,.0f} {db_invoice.currency}")
+    
+    # Footer
+    pdf.setFont("Helvetica-Oblique", 8)
+    pdf.setFillColorRGB(0.5, 0.5, 0.5)
+    pdf.drawCentredString(width / 2.0, 40, "Thank you for partnering with RafApp. For inquiries, email billing@rafapp.com")
+    
+    pdf.showPage()
+    pdf.save()
+    buffer.seek(0)
+    
+    from fastapi.responses import StreamingResponse
+    filename = f"rafapp-invoice-{invoice_id}.pdf"
+    return StreamingResponse(
+        buffer,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename=\"{filename}\"'},
+    )
+
+
+async def get_paypal_access_token() -> str:
+    settings = get_settings()
+    if not settings.paypal_client_id or not settings.paypal_client_secret:
+        raise HTTPException(
+            status_code=status.HTTP_501_NOT_IMPLEMENTED,
+            detail="PayPal credentials are not configured on the server. Please set PAYPAL_CLIENT_ID in backend .env"
+        )
+    
+    import requests
+    from requests.auth import HTTPBasicAuth
+    
+    base_url = "https://api-m.sandbox.paypal.com" if settings.app_env != "production" else "https://api-m.paypal.com"
+    url = f"{base_url}/v1/oauth2/token"
+    
+    headers = {"Accept": "application/json", "Accept-Language": "en_US"}
+    data = {"grant_type": "client_credentials"}
+    
+    res = requests.post(url, headers=headers, data=data, auth=HTTPBasicAuth(settings.paypal_client_id, settings.paypal_client_secret))
+    if res.status_code != 200:
+        raise HTTPException(status_code=400, detail=f"Failed to retrieve PayPal OAuth token: {res.text}")
+        
+    return res.json().get("access_token")
+
+
+@router.post("/my-tenant/invoices/{invoice_id}/paypal-order")
+@limiter.limit("20/minute")
+async def create_paypal_order(
+    request: Request,
+    invoice_id: int,
+    db: DbDependency,
+    current_user: Annotated[models.User, Depends(security.get_current_active_user)],
+):
+    """
+    Creates a real PayPal Order for a tenant subscription invoice.
+    """
+    db_invoice = crud.get_billing_invoice(db, invoice_id=invoice_id)
+    if not db_invoice:
+        raise HTTPException(status_code=404, detail="Invoice not found")
+        
+    if db_invoice.tenant_id != current_user.tenant_id and not current_user.is_superuser:
+        raise HTTPException(status_code=403, detail="Unauthorized invoice context")
+        
+    access_token = await get_paypal_access_token()
+    settings = get_settings()
+    base_url = "https://api-m.sandbox.paypal.com" if settings.app_env != "production" else "https://api-m.paypal.com"
+    
+    total_amount_isk = int(db_invoice.amount * 1.24)
+    
+    url = f"{base_url}/v2/checkout/orders"
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {access_token}"
+    }
+    body = {
+        "intent": "CAPTURE",
+        "purchase_units": [{
+            "amount": {
+                "currency_code": "ISK",
+                "value": str(total_amount_isk)
+            },
+            "description": f"RafApp SaaS Subscription - Invoice #{db_invoice.id}"
+        }]
+    }
+    
+    import requests
+    res = requests.post(url, headers=headers, json=body)
+    if res.status_code not in (200, 201):
+        raise HTTPException(status_code=400, detail=f"PayPal Order creation failed: {res.text}")
+        
+    order_data = res.json()
+    return {"order_id": order_data.get("id")}
+
+
+@router.post("/my-tenant/invoices/{invoice_id}/paypal-capture")
+@limiter.limit("20/minute")
+async def capture_paypal_order(
+    request: Request,
+    invoice_id: int,
+    payload: dict,
+    db: DbDependency,
+    current_user: Annotated[models.User, Depends(security.get_current_active_user)],
+):
+    """
+    Captures the authorized PayPal order and flags the invoice as Paid.
+    """
+    order_id = payload.get("order_id")
+    if not order_id:
+        raise HTTPException(status_code=400, detail="Missing PayPal order_id")
+        
+    db_invoice = crud.get_billing_invoice(db, invoice_id=invoice_id)
+    if not db_invoice:
+        raise HTTPException(status_code=404, detail="Invoice not found")
+        
+    if db_invoice.tenant_id != current_user.tenant_id and not current_user.is_superuser:
+        raise HTTPException(status_code=403, detail="Unauthorized invoice context")
+        
+    access_token = await get_paypal_access_token()
+    settings = get_settings()
+    base_url = "https://api-m.sandbox.paypal.com" if settings.app_env != "production" else "https://api-m.paypal.com"
+    
+    url = f"{base_url}/v2/checkout/orders/{order_id}/capture"
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {access_token}"
+    }
+    
+    import requests
+    res = requests.post(url, headers=headers)
+    if res.status_code not in (200, 201):
+        raise HTTPException(status_code=400, detail=f"PayPal Capture failed: {res.text}")
+        
+    capture_data = res.json()
+    status = capture_data.get("status")
+    
+    if status == "COMPLETED":
+        from datetime import datetime, timezone
+        db_invoice.status = "Paid"
+        db_invoice.paid_at = datetime.now(timezone.utc)
+        db_invoice.provider = "paypal"
+        db.add(db_invoice)
+        db.commit()
+        db.refresh(db_invoice)
+        return {"status": "COMPLETED", "invoice": schemas.BillingInvoiceRead.from_orm(db_invoice)}
+    return {"status": status}
+
+
+@router.get("/paypal-client-id")
+async def get_paypal_client_id():
+    settings = get_settings()
+    return {"client_id": settings.paypal_client_id or "sb"}
+
+@router.post("/suggestions", response_model=schemas.SuggestionRead, status_code=status.HTTP_201_CREATED)
+@limiter.limit("20/minute")
+async def create_user_suggestion(
+    request: Request,
+    suggestion: schemas.SuggestionCreate,
+    db: DbDependency,
+    current_user: Annotated[models.User, Depends(security.get_current_active_user)],
+):
+    """Saves a user suggestion / feedback submission."""
+    return crud.create_suggestion(
+        db=db,
+        suggestion=suggestion,
+        user_id=current_user.id,
+        email=current_user.email,
+        tenant_id=current_user.tenant_id
+    )
+
 

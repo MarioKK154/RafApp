@@ -12,6 +12,15 @@ import './i18n';
  * 2. BrowserRouter: Contextual provider for industrial-grade routing
  * 3. App: Root shell & Infrastructure provider
  */
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then(function(registrations) {
+    for(let registration of registrations) {
+      registration.unregister();
+    }
+  });
+}
+
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter>

@@ -982,35 +982,6 @@ function OfferPage() {
                             {/* Labor from catalog: category browser + items + work load ratios + Add line to offer */}
                             {newItemType === 'Labor' && !showCustomLaborForm && (
                             <>
-                                    {/* Work load ratios: multi-select with exclusivity by ratio_type (e.g. one floor only) */}
-                                    {(workLoadRatios || []).filter(r => r.is_active !== false).length > 0 && (
-                                        <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 mb-6">
-                                            <p className="text-[10px] font-black text-amber-800 dark:text-amber-200 uppercase tracking-widest mb-3">Work load ratios (select one per group where applicable; e.g. one floor)</p>
-                                            <div className="flex flex-wrap gap-3">
-                                                {(workLoadRatios || []).filter(r => r.is_active !== false).map((r) => {
-                                                    const checked = offerRatioCodes.includes(r.code);
-                                                    const sameTypeSelected = r.ratio_type != null && offerRatioCodes.some((c) => {
-                                                        const other = (workLoadRatios || []).find((x) => x.code === c);
-                                                        return other && other.ratio_type === r.ratio_type && other.code !== r.code;
-                                                    });
-                                                    const disabled = !checked && sameTypeSelected;
-                                                    return (
-                                                        <label key={r.id} className={`inline-flex items-center gap-2 ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}>
-                                                            <input
-                                                                type="checkbox"
-                                                                checked={checked}
-                                                                disabled={disabled}
-                                                                onChange={(e) => !disabled && handleWorkRatioToggle(r.code, e.target.checked)}
-                                                                className="rounded border-amber-300 text-amber-600 focus:ring-amber-500"
-                                                            />
-                                                            <span className="text-sm font-medium text-gray-800 dark:text-gray-200">{r.description}</span>
-                                                            <span className="text-xs text-amber-600 dark:text-amber-400">(+{((r.ratio ?? 0) * 100).toFixed(0)}%)</span>
-                                                        </label>
-                                                    );
-                                                })}
-                                            </div>
-                                        </div>
-                                    )}
 
                                     <div className="flex flex-col lg:flex-row gap-6">
                                         {/* Category sidebar (like Labor Catalog tab) */}
@@ -1198,6 +1169,43 @@ function OfferPage() {
                             </div>
                         )}
                     </section>
+
+                    {/* Work Load Modifiers (Modifiers) Card */}
+                    {(workLoadRatios || []).filter(r => r.is_active !== false).length > 0 && (
+                        <section className="bg-white dark:bg-gray-800 p-8 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-700 space-y-4">
+                            <h2 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] flex items-center gap-2 border-b pb-4">
+                                <ReceiptPercentIcon className="h-4 w-4 text-orange-500" /> Work Load Modifiers
+                            </h2>
+                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wide">
+                                Applied modifiers (e.g. height, evening shift) will automatically scale all catalog labor rates in real time.
+                            </p>
+                            <div className="space-y-3 pt-2">
+                                {(workLoadRatios || []).filter(r => r.is_active !== false).map((r) => {
+                                    const checked = offerRatioCodes.includes(r.code);
+                                    const sameTypeSelected = r.ratio_type != null && offerRatioCodes.some((c) => {
+                                        const other = (workLoadRatios || []).find((x) => x.code === c);
+                                        return other && other.ratio_type === r.ratio_type && other.code !== r.code;
+                                    });
+                                    const disabled = !checked && sameTypeSelected;
+                                    return (
+                                        <label key={r.id} className={`flex items-center justify-between p-2.5 rounded-xl border border-gray-50 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-900/30 transition-colors ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}>
+                                            <div className="flex items-center gap-2.5">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={checked}
+                                                    disabled={disabled}
+                                                    onChange={(e) => !disabled && handleWorkRatioToggle(r.code, e.target.checked)}
+                                                    className="rounded border-gray-300 text-orange-600 focus:ring-orange-500 h-4 w-4"
+                                                />
+                                                <span className="text-xs font-bold text-gray-700 dark:text-gray-300">{r.description}</span>
+                                            </div>
+                                            <span className="text-xs font-black text-orange-600 dark:text-orange-400">+{((r.ratio ?? 0) * 100).toFixed(0)}%</span>
+                                        </label>
+                                    );
+                                })}
+                            </div>
+                        </section>
+                    )}
 
                     {/* Command Center */}
                     {canManageOffer && (
