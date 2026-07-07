@@ -5,7 +5,7 @@ import 'react-toastify/dist/ReactToastify.css';
 
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { PushNotificationProvider } from './context/PushNotificationContext';
-import Sidebar from './components/Sidebar'; 
+import Sidebar, { HamburgerButton } from './components/Sidebar';
 import { useTenantBranding } from './hooks/useTenantBranding';
 
 // --- FEATURE PAGE IMPORTS ---
@@ -105,11 +105,22 @@ const ProtectedRoute = ({ children }) => {
     return isAuthenticated ? children : <Navigate to="/login" replace />;
 };
 
+function useIsMobile() {
+    const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
+    useEffect(() => {
+        const handler = () => setIsMobile(window.innerWidth < 768);
+        window.addEventListener('resize', handler);
+        return () => window.removeEventListener('resize', handler);
+    }, []);
+    return isMobile;
+}
+
 function AppShell() {
     const { background } = useTenantBranding();
     const { isAuthenticated, user: currentUser, isImpersonating, stopImpersonation } = useAuth();
     const [systemStatus, setSystemStatus] = useState(null);
     const [globalBanner, setGlobalBanner] = useState(null);
+    const isMobile = useIsMobile();
 
     const style = background && isAuthenticated
         ? {
@@ -184,7 +195,13 @@ function AppShell() {
         >
             <Sidebar />
 
-            <main className="flex-1 overflow-x-hidden overflow-y-auto flex flex-col" style={{ background: 'var(--bg-base)' }}>
+            <main className="flex-1 overflow-x-hidden overflow-y-auto flex flex-col relative" style={{ background: 'var(--bg-base)' }}>
+                {/* Mobile hamburger — floats top-left, only visible when sidebar is hidden */}
+                {isMobile && isAuthenticated && (
+                    <div style={{ position: 'absolute', top: '16px', left: '16px', zIndex: 100 }}>
+                        <HamburgerButton />
+                    </div>
+                )}
                 {globalBanner && globalBanner.message && (
                     <div
                         className="flex-shrink-0 flex items-center justify-center gap-4 px-6 py-3 text-white text-sm font-medium text-center"

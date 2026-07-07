@@ -650,3 +650,65 @@
     display: none !important;
   }
 }
+
+/* ============================================================
+   RESPONSIVE — Automatic device-size adjustments
+   ============================================================ */
+
+/* ── Phone (< 768px): compact density + large touch targets ── */
+@media (max-width: 767px) {
+  /* Shrink base font so the layout fits without needing browser zoom */
+  html {
+    font-size: 90%;
+  }
+
+  /* Ensure every tappable element meets Apple/Google 44px min touch target */
+  button,
+  a,
+  [role="button"],
+  input[type="submit"],
+  input[type="button"],
+  .btn {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Tighten page padding so content isn't wasted on gutters */
+  .page-content {
+    padding-left: 1rem;
+    padding-right: 1rem;
+    padding-top: 4.5rem; /* room for floating hamburger button */
+  }
+
+  /* Slightly smaller cards on mobile */
+  .card,
+  .saas-card,
+  .card-interactive {
+    border-radius: 0.75rem;
+  }
+
+  /* Make modals full-width on small screens */
+  .modal-content {
+    border-radius: 1rem;
+    max-width: 100%;
+  }
+
+  /* Reduce table cell padding so tables fit on narrow screens */
+  .data-table td,
+  .data-table th {
+    padding: 0.625rem 0.75rem;
+    font-size: 0.75rem;
+  }
+}
+
+/* ── Tablet (768px – 1023px): medium density ── */
+@media (min-width: 768px) and (max-width: 1023px) {
+  html {
+    font-size: 95%;
+  }
+
+  .page-content {
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+  }
+}
