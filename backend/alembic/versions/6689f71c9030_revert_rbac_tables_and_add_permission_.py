@@ -21,7 +21,7 @@ depends_on: Union[str, Sequence[str], None] = None
 CONSTRAINT_NAME = 'fk_users_role_id'
 
 # Define the ENUM type
-userrole_enum = postgresql.ENUM('admin', 'project_manager', 'team_lead', 'regular_user', 'superuser', name='userrole')
+userrole_enum = postgresql.ENUM('admin', 'project_manager', 'team_lead', 'regular_user', 'superuser', 'accountant', name='userrole')
 
 def upgrade() -> None:
     bind = op.get_bind()
