@@ -251,7 +251,8 @@ def _normalize_legacy_task_statuses() -> None:
 def _ensure_suggestions_table() -> None:
     """Ensure suggestions table is created in database."""
     try:
-        models.Base.metadata.create_all(bind=engine)
+        if is_sqlite():
+            models.Base.metadata.create_all(bind=engine)
     except Exception as e:
         import logging
         logging.warning(f"Failed to ensure suggestions table: {e}")
