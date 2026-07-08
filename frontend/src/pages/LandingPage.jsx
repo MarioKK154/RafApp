@@ -57,15 +57,27 @@ function LandingPage() {
         news: [
             {
                 title: 'Interactive Gantt & Task Scheduler',
-                text: 'Project managers can now schedule milestones, map task dependencies, and allocate technicians directly on the interactive Gantt chart. Schedules sync instantly to field technicians\' mobile calendars.'
+                title_en: 'Interactive Gantt & Task Scheduler',
+                title_is: 'Gagnvirk skipulags- og Gantt-kort',
+                text: 'Project managers can now schedule milestones, map task dependencies, and allocate technicians directly on the interactive Gantt chart. Schedules sync instantly to field technicians\' mobile calendars.',
+                text_en: 'Project managers can now schedule milestones, map task dependencies, and allocate technicians directly on the interactive Gantt chart. Schedules sync instantly to field technicians\' mobile calendars.',
+                text_is: 'Verkstjórar geta nú skipulagt áfanga, tengt verkþætti og úthlutað mönnum beint á verk í Gantt-kortinu. Skráningar samstillast strax í síma starfsmanna.'
             },
             {
                 title: 'Relevance-Sorted Materials Search',
-                text: 'Search our materials index with a smart sorting engine that prioritizes exact matches (e.g. \'nym-j\') and lists similar items (e.g. halogen-free cables) lower down. Eliminates catalog search friction.'
+                title_en: 'Relevance-Sorted Materials Search',
+                title_is: 'Snjöll og hraðvirk efnisleit',
+                text: 'Search our materials index with a smart sorting engine that prioritizes exact matches (e.g. \'nym-j\') and lists similar items (e.g. halogen-free cables) lower down. Eliminates catalog search friction.',
+                text_en: 'Search our materials index with a smart sorting engine that prioritizes exact matches (e.g. \'nym-j\') and lists similar items (e.g. halogen-free cables) lower down. Eliminates catalog search friction.',
+                text_is: 'Leitaðu í efnisskrá með snjallri leit sem forgangsraðar nákvæmum niðurstöðum (t.d. \'nym-j\') en sýnir svipaðar vörur neðar.'
             },
             {
                 title: 'Advanced HR & Leave Pipeline',
-                text: 'Track electrician logs, check-in locations, and request reviews in a unified workspace. Approve leave requests and export certified hours directly to accounting for payroll.'
+                title_en: 'Advanced HR & Leave Pipeline',
+                title_is: 'Tíma- og orlofsstjórnun',
+                text: 'Track electrician logs, check-in locations, and request reviews in a unified workspace. Approve leave requests and export certified hours directly to accounting for payroll.',
+                text_en: 'Track electrician logs, check-in locations, and request reviews in a unified workspace. Approve leave requests and export certified hours directly to accounting for payroll.',
+                text_is: 'Fylgstu með stimplunum, staðsetningu og yfirferð í samræmdu vinnusvæði. Samþykktu orlof og flyttu út tíma í bókhald.'
             }
         ],
         pricing_tiers: [
@@ -109,11 +121,11 @@ function LandingPage() {
         about_us_text_is: 'RafApp er fyrsta flokks rekstrarlausn hönnuð sérstaklega fyrir rafvirkjafyrirtæki og undirverktaka. Kerfið leysir helstu flöskuhálsa í skipulagningu og daglegum rekstri á vettvangi:\n\n• Rauntíma tímaskráning á verk: Rafvirkjar stimpla sig inn og út af verknúmerum með snjallsíma. Kerfið kemur í veg fyrir skörun og tvískráningar.\n• Gagnvirkt Gantt-skipulag: PMs geta skipulagt verkþætti, fylgst með framvindu í prósentum og úthlutað mönnum á verk.\n• Stafrænn efnislisti: Leitaðu í yfir 640 vörum (kaplar, brautir, rör) til að búa til innkaupalista og efnispantanir af vettvangi.\n• Samnýtt Verkfæraskrá: Fylgstu með hvaða starfsmaður er með hvaða verkfæri í láni, skráðu skemmd verkfæri í viðgerð og tryggðu gagnsæi.\n\nRafApp tengir saman alla ferla frá tilboðsgerð til vettvangsvinnu og launavinnslu. Sparar tíma, lágmarkar mistök og útrýmir pappírsvinnu.',
         contact_persons: [
             {
-                name: 'Maríus Rafn',
+                name: 'Mario',
                 title: 'Founder & Lead Architect',
                 title_en: 'Founder & Lead Architect',
                 title_is: 'Stofnandi og yfirhönnuður',
-                email: 'marius@rafapp.com',
+                email: 'mario@rafapp.com',
                 phone: '+354 888 1234',
                 image_url: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80'
             }
@@ -138,18 +150,10 @@ function LandingPage() {
                 const res = await axiosInstance.get('/system/landing-feed');
                 const data = res.data || {};
                 
-                // If it returned default values (e.g. empty or default title), let's merge or use our rich defaults!
-                if (!data.hero_title || 
-                    data.hero_title === 'Welcome to Our Platform' || 
-                    data.hero_title === 'Welcome' || 
-                    !data.news || 
-                    data.news.length === 0) {
-                    return;
-                }
 
                 setFeed(prev => ({
-                    news: Array.isArray(data.news) && data.news.length > 0 ? data.news : prev.news,
-                    pricing_tiers: Array.isArray(data.pricing_tiers) && data.pricing_tiers.length > 0 ? data.pricing_tiers : prev.pricing_tiers,
+                    news: Array.isArray(data.news) ? data.news : prev.news,
+                    pricing_tiers: Array.isArray(data.pricing_tiers) ? data.pricing_tiers : prev.pricing_tiers,
                     hero_title: data.hero_title || prev.hero_title,
                     hero_title_en: data.hero_title_en || data.hero_title || prev.hero_title_en,
                     hero_title_is: data.hero_title_is || data.hero_title || prev.hero_title_is,
@@ -159,8 +163,8 @@ function LandingPage() {
                     about_us_text: data.about_us_text || prev.about_us_text,
                     about_us_text_en: data.about_us_text_en || prev.about_us_text_en,
                     about_us_text_is: data.about_us_text_is || prev.about_us_text_is,
-                    contact_persons: Array.isArray(data.contact_persons) && data.contact_persons.length > 0 ? data.contact_persons : prev.contact_persons,
-                    background_image_urls: Array.isArray(data.background_image_urls) && data.background_image_urls.length > 0 ? data.background_image_urls : prev.background_image_urls,
+                    contact_persons: Array.isArray(data.contact_persons) ? data.contact_persons : prev.contact_persons,
+                    background_image_urls: Array.isArray(data.background_image_urls) ? data.background_image_urls : prev.background_image_urls,
                 }));
             } catch (err) {
                 console.error("Failed to load landing feed", err);
@@ -574,37 +578,79 @@ function LandingPage() {
                                                         [Delete]
                                                     </button>
                                                 </div>
-                                                <input 
-                                                    type="text" 
-                                                    value={item.title || ''} 
-                                                    onChange={(e) => {
-                                                        const arr = [...feed.news];
-                                                        arr[idx] = { ...arr[idx], title: e.target.value };
-                                                        setFeed({ ...feed, news: arr });
-                                                    }}
-                                                    className="w-full bg-gray-900 border border-gray-700 rounded-xl px-3 py-2 text-white text-sm font-bold focus:ring-1 focus:ring-indigo-500 focus:outline-none"
-                                                    placeholder="Announcement Title"
-                                                />
-                                                <textarea 
-                                                    value={item.text || ''} 
-                                                    onChange={(e) => {
-                                                        const arr = [...feed.news];
-                                                        arr[idx] = { ...arr[idx], text: e.target.value };
-                                                        setFeed({ ...feed, news: arr });
-                                                    }}
-                                                    className="w-full bg-gray-900 border border-gray-700 rounded-xl px-3 py-2 text-white text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none"
-                                                    placeholder="Details or text body..."
-                                                    rows={3}
-                                                />
-                                            </div>
-                                        ) : (
-                                            <>
-                                                <div className="mb-4 text-[#0096FF]">
-                                                    <ShieldCheckIcon className="h-8 w-8" />
-                                                </div>
-                                                <h3 className="text-xl font-bold mb-3 group-hover:text-[#0096FF] transition text-left">{t(item.title, { defaultValue: item.title })}</h3>
-                                                <p className="text-gray-400 text-sm leading-relaxed text-left">{t(item.text, { defaultValue: item.text })}</p>
-                                            </>
+                                                 <div className="grid grid-cols-2 gap-2">
+                                                     <div>
+                                                         <label className="block text-[7px] text-indigo-400 font-bold mb-0.5">Title (English)</label>
+                                                         <input 
+                                                             type="text" 
+                                                             value={item.title_en || item.title || ''} 
+                                                             onChange={(e) => {
+                                                                 const arr = [...feed.news];
+                                                                 arr[idx] = { ...arr[idx], title_en: e.target.value, title: e.target.value };
+                                                                 setFeed({ ...feed, news: arr });
+                                                             }}
+                                                             className="w-full bg-gray-900 border border-gray-700 rounded-xl px-2 py-1 text-white text-[10px] focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                                                             placeholder="Title (EN)"
+                                                         />
+                                                     </div>
+                                                     <div>
+                                                         <label className="block text-[7px] text-indigo-400 font-bold mb-0.5">Title (Icelandic)</label>
+                                                         <input 
+                                                             type="text" 
+                                                             value={item.title_is || item.title || ''} 
+                                                             onChange={(e) => {
+                                                                 const arr = [...feed.news];
+                                                                 arr[idx] = { ...arr[idx], title_is: e.target.value };
+                                                                 setFeed({ ...feed, news: arr });
+                                                             }}
+                                                             className="w-full bg-gray-900 border border-gray-700 rounded-xl px-2 py-1 text-white text-[10px] focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                                                             placeholder="Title (IS)"
+                                                         />
+                                                     </div>
+                                                 </div>
+                                                 <div className="grid grid-cols-2 gap-2">
+                                                     <div>
+                                                         <label className="block text-[7px] text-indigo-400 font-bold mb-0.5">Text (English)</label>
+                                                         <textarea 
+                                                             value={item.text_en || item.text || ''} 
+                                                             onChange={(e) => {
+                                                                 const arr = [...feed.news];
+                                                                 arr[idx] = { ...arr[idx], text_en: e.target.value, text: e.target.value };
+                                                                 setFeed({ ...feed, news: arr });
+                                                             }}
+                                                             className="w-full bg-gray-900 border border-gray-700 rounded-xl px-2 py-1 text-white text-[10px] focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                                                             placeholder="Text (EN)"
+                                                             rows={3}
+                                                         />
+                                                     </div>
+                                                     <div>
+                                                         <label className="block text-[7px] text-indigo-400 font-bold mb-0.5">Text (Icelandic)</label>
+                                                         <textarea 
+                                                             value={item.text_is || item.text || ''} 
+                                                             onChange={(e) => {
+                                                                 const arr = [...feed.news];
+                                                                 arr[idx] = { ...arr[idx], text_is: e.target.value };
+                                                                 setFeed({ ...feed, news: arr });
+                                                             }}
+                                                             className="w-full bg-gray-900 border border-gray-700 rounded-xl px-2 py-1 text-white text-[10px] focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                                                             placeholder="Text (IS)"
+                                                             rows={3}
+                                                         />
+                                                     </div>
+                                                 </div>
+                                             </div>
+                                         ) : (
+                                             <>
+                                                 <div className="mb-4 text-[#0096FF]">
+                                                     <ShieldCheckIcon className="h-8 w-8" />
+                                                 </div>
+                                                 <h3 className="text-xl font-bold mb-3 group-hover:text-[#0096FF] transition text-left">
+                                                     {i18n.language.startsWith('en') ? (item.title_en || item.title) : (item.title_is || item.title)}
+                                                 </h3>
+                                                 <p className="text-gray-400 text-sm leading-relaxed text-left">
+                                                     {i18n.language.startsWith('en') ? (item.text_en || item.text) : (item.text_is || item.text)}
+                                                 </p>
+                                             </>
                                         )}
                                     </div>
                                 ))
@@ -620,7 +666,14 @@ function LandingPage() {
                                             ...feed,
                                             news: [
                                                 ...feed.news,
-                                                { title: 'New Announcement', text: 'Detail explanation goes here...' }
+                                                { 
+                                                    title: 'New Announcement', 
+                                                    title_en: 'New Announcement', 
+                                                    title_is: 'Ný tilkynning', 
+                                                    text: 'Detail explanation goes here...', 
+                                                    text_en: 'Detail explanation goes here...', 
+                                                    text_is: 'Nánari útskýring hér...' 
+                                                }
                                             ]
                                         });
                                     }}

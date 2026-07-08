@@ -122,6 +122,10 @@ def _normalize_landing_payload(payload: dict) -> dict:
         for item in items:
             if not isinstance(item, dict):
                 continue
+            item.setdefault("title_en", item.get("title", ""))
+            item.setdefault("title_is", item.get("title", ""))
+            item.setdefault("text_en", item.get("text", ""))
+            item.setdefault("text_is", item.get("text", ""))
             item.setdefault("link_url", None)
             item.setdefault("link_label", None)
             item.setdefault("image_url", None)

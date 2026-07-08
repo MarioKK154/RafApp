@@ -1058,7 +1058,11 @@ class SystemStatus(BaseModel):
 
 class LandingFeedItem(BaseModel):
     title: str
+    title_en: Optional[str] = None
+    title_is: Optional[str] = None
     text: str
+    text_en: Optional[str] = None
+    text_is: Optional[str] = None
     link_url: Optional[str] = None
     link_label: Optional[str] = None
     image_url: Optional[str] = None
