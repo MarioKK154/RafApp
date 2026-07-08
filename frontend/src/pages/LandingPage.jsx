@@ -569,8 +569,8 @@ function LandingPage() {
                                                 <div className="mb-4 text-[#0096FF]">
                                                     <ShieldCheckIcon className="h-8 w-8" />
                                                 </div>
-                                                <h3 className="text-xl font-bold mb-3 group-hover:text-[#0096FF] transition text-left">{item.title}</h3>
-                                                <p className="text-gray-400 text-sm leading-relaxed text-left">{item.text}</p>
+                                                <h3 className="text-xl font-bold mb-3 group-hover:text-[#0096FF] transition text-left">{t(item.title, { defaultValue: item.title })}</h3>
+                                                <p className="text-gray-400 text-sm leading-relaxed text-left">{t(item.text, { defaultValue: item.text })}</p>
                                             </>
                                         )}
                                     </div>
@@ -781,7 +781,7 @@ function LandingPage() {
                                                     ? 'bg-[#0096FF] hover:bg-blue-500 text-white' 
                                                     : 'bg-gray-700 hover:bg-gray-600 text-white'
                                             }`}>
-                                                {tier.button_text || t('get_started', { defaultValue: 'Get Started' })}
+                                                {t(tier.button_text, { defaultValue: tier.button_text || 'Get Started' })}
                                             </button>
                                         )}
                                     </div>
@@ -1033,7 +1033,7 @@ function LandingPage() {
                                                     <div className="flex-1">
                                                         <div className="mb-3">
                                                             <h3 className="text-xl font-bold text-white">{person.name}</h3>
-                                                            {person.title && <p className="text-[#0096FF] text-sm font-black uppercase tracking-widest">{person.title}</p>}
+                                                            {person.title && <p className="text-[#0096FF] text-sm font-black uppercase tracking-widest">{t(person.title, { defaultValue: person.title })}</p>}
                                                         </div>
                                                         <div className="space-y-2">
                                                             {person.email && (

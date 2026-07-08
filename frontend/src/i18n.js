@@ -2692,6 +2692,16 @@ const resources = {
       "Go Business": "Velja Business",
       "Contact Sales": "Hafa samband",
 
+      "Unify Your Electrical Business Operations": "Samræmdu allan rekstur rafvirkjafyrirtækisins",
+      "The ultimate operating system for electrical contractors. Merging time logs, scheduling, materials tracking, and asset telemetry in one sleek dashboard.": "Fullkomið rekstrarkerfi fyrir rafvirkja. Stimplun, skipulag, efnisleit og tækjaumsjón á einum stað.",
+      "Interactive Gantt & Task Scheduler": "Gagnvirk skipulags- og Gantt-kort",
+      "Project managers can now schedule milestones, map task dependencies, and allocate technicians directly on the interactive Gantt chart. Schedules sync instantly to field technicians' mobile calendars.": "Verkstjórar geta nú skipulagt áfanga, tengt verkþætti og úthlutað mönnum beint á verk í Gantt-kortinu. Skráningar samstillast strax í síma starfsmanna.",
+      "Relevance-Sorted Materials Search": "Snjöll og hraðvirk efnisleit",
+      "Search our materials index with a smart sorting engine that prioritizes exact matches (e.g. 'nym-j') and lists similar items (e.g. halogen-free cables) lower down. Eliminates catalog search friction.": "Leitaðu í efnisskrá með snjallri leit sem forgangsraðar nákvæmum niðurstöðum (t.d. 'nym-j') en sýnir svipaðar vörur neðar.",
+      "Advanced HR & Leave Pipeline": "Tíma- og orlofsstjórnun",
+      "Track electrician logs, check-in locations, and request reviews in a unified workspace. Approve leave requests and export certified hours directly to accounting for payroll.": "Fylgstu með stimplunum, staðsetningu og yfirferð í samræmdu vinnusvæði. Samþykktu orlof og flyttu út tíma í bókhald.",
+      "CEO": "Forstjóri",
+
       "general": "Almennt"
     }
   }
