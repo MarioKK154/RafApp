@@ -378,7 +378,7 @@ function LoginPage() {
                             <div className="text-center pt-2">
                                 <button
                                     type="button"
-                                    onClick={() => navigate('/', { state: { scrollTo: 'contact' } })}
+                                    onClick={() => navigate('/', { state: { openRequestAccess: true } })}
                                     className="text-[10px] font-black uppercase tracking-widest text-indigo-500 hover:text-indigo-600 transition"
                                 >
                                     {t('request_access', { defaultValue: 'Request Access / Contact Us' })}

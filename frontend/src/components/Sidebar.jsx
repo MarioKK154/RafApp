@@ -340,24 +340,26 @@ function Sidebar() {
                     className="p-2 flex-shrink-0"
                 >
                     {/* Language toggle */}
-                    <button
-                        onClick={toggleLanguage}
-                        style={{ color: 'var(--brand)', minHeight: '44px' }}
-                        className="flex items-center w-full px-3 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-[0.15em] hover:opacity-75 transition-opacity"
-                    >
-                        <LanguageIcon className="h-4 w-4 flex-shrink-0" />
-                        {!isCollapsed && (
-                            <div className="flex items-center justify-between flex-1 ml-3">
-                                <span>{i18n.language === 'en' ? 'Íslenska' : 'English'}</span>
-                                <span
-                                    style={{ background: 'var(--brand-pale)', color: 'var(--brand)', border: '1px solid var(--brand-border)' }}
-                                    className="text-[8px] px-2 py-0.5 rounded-md font-black"
-                                >
-                                    {i18n.language.toUpperCase()}
-                                </span>
-                            </div>
-                        )}
-                    </button>
+                    {!isOverlay && (
+                        <button
+                            onClick={toggleLanguage}
+                            style={{ color: 'var(--brand)', minHeight: '44px' }}
+                            className="flex items-center w-full px-3 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-[0.15em] hover:opacity-75 transition-opacity"
+                        >
+                            <LanguageIcon className="h-4 w-4 flex-shrink-0" />
+                            {!isCollapsed && (
+                                <div className="flex items-center justify-between flex-1 ml-3">
+                                    <span>{i18n.language === 'en' ? 'Íslenska' : 'English'}</span>
+                                    <span
+                                        style={{ background: 'var(--brand-pale)', color: 'var(--brand)', border: '1px solid var(--brand-border)' }}
+                                        className="text-[8px] px-2 py-0.5 rounded-md font-black"
+                                    >
+                                        {i18n.language.toUpperCase()}
+                                    </span>
+                                </div>
+                            )}
+                        </button>
+                    )}
 
                     {/* Account settings */}
                     <NavLink

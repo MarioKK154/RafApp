@@ -75,6 +75,11 @@ def _delete_existing_tenant_data(db, tenant_id: int) -> None:
     db.query(models.Shop).filter(models.Shop.tenant_id == tenant_id).delete(synchronize_session=False)
     db.query(models.Customer).filter(models.Customer.tenant_id == tenant_id).delete(synchronize_session=False)
     db.query(models.Tool).filter(models.Tool.tenant_id == tenant_id).delete(synchronize_session=False)
+    # Delete dependent car logs and tyre sets first to satisfy foreign key constraints
+    car_ids = [c.id for c in db.query(models.Car).filter(models.Car.tenant_id == tenant_id).all()]
+    if car_ids:
+        db.query(models.CarLog).filter(models.CarLog.car_id.in_(car_ids)).delete(synchronize_session=False)
+        db.query(models.TyreSet).filter(models.TyreSet.car_id.in_(car_ids)).delete(synchronize_session=False)
     db.query(models.Car).filter(models.Car.tenant_id == tenant_id).delete(synchronize_session=False)
     db.query(models.User).filter(models.User.tenant_id == tenant_id).delete(synchronize_session=False)
     db.commit()

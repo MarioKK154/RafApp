@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { useTranslation } from 'react-i18next';
+import { LanguageIcon } from '@heroicons/react/24/outline';
 
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { PushNotificationProvider } from './context/PushNotificationContext';
@@ -116,6 +118,7 @@ function useIsMobile() {
 }
 
 function AppShell() {
+    const { i18n } = useTranslation();
     const { background } = useTenantBranding();
     const { isAuthenticated, user: currentUser, isImpersonating, stopImpersonation } = useAuth();
     const [systemStatus, setSystemStatus] = useState(null);
@@ -190,43 +193,65 @@ function AppShell() {
 
     return (
         <div
-            className="relative flex h-screen w-screen overflow-hidden font-sans"
+            className="relative flex flex-col h-screen w-screen overflow-hidden font-sans"
             style={{ background: 'var(--bg-base)', color: 'var(--text-primary)', ...style }}
         >
-            <Sidebar />
-
-            <main className="flex-1 overflow-x-hidden overflow-y-auto flex flex-col relative" style={{ background: 'var(--bg-base)' }}>
-                {/* Mobile hamburger — floats top-left, only visible when sidebar is hidden */}
-                {isMobile && isAuthenticated && (
-                    <div style={{ position: 'absolute', top: '16px', left: '16px', zIndex: 100 }}>
+            {/* Mobile Top Bar */}
+            {isMobile && isAuthenticated && (
+                <div 
+                    style={{ borderBottom: '1px solid var(--border-subtle)', background: 'var(--bg-elevated)', height: '56px' }}
+                    className="flex items-center justify-between px-4 py-2 shrink-0 z-40"
+                >
+                    <div className="flex items-center gap-3">
                         <HamburgerButton />
-                    </div>
-                )}
-                {globalBanner && globalBanner.message && (
-                    <div
-                        className="flex-shrink-0 flex items-center justify-center gap-4 px-6 py-3 text-white text-sm font-medium text-center"
-                        style={{ background: 'var(--brand)' }}
-                    >
-                        <span>{globalBanner.message}</span>
-                    </div>
-                )}
-                {isImpersonating && (
-                    <div className="flex-shrink-0 flex items-center justify-between gap-4 px-6 py-3 bg-amber-500 text-black text-sm font-bold">
-                        <span>
-                            Viewing as <strong>{currentUser?.full_name || currentUser?.email}</strong>
-                            {currentUser?.impersonated_by_email && (
-                                <span className="opacity-90 ml-1">(impersonated by {currentUser.impersonated_by_email})</span>
-                            )}
+                        <span style={{ color: 'var(--text-primary)' }} className="font-black text-sm tracking-tight truncate leading-none">
+                            {currentUser?.tenant?.name || 'System'}
                         </span>
-                        <button
-                            type="button"
-                            onClick={stopImpersonation}
-                            className="px-4 py-1.5 rounded-xl bg-black/20 hover:bg-black/30 font-black uppercase tracking-wider transition-colors"
-                        >
-                            Stop impersonation
-                        </button>
                     </div>
-                )}
+                    
+                    <button
+                        onClick={() => {
+                            const newLang = i18n.language === 'en' ? 'is' : 'en';
+                            i18n.changeLanguage(newLang);
+                        }}
+                        style={{ color: 'var(--brand)', minHeight: '44px' }}
+                        className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-[0.15em] hover:opacity-75 transition-opacity"
+                    >
+                        <LanguageIcon className="h-4 w-4" />
+                        <span>{i18n.language.toUpperCase()}</span>
+                    </button>
+                </div>
+            )}
+
+            <div className="flex flex-1 overflow-hidden relative">
+                <Sidebar />
+
+                <main className="flex-1 overflow-x-hidden overflow-y-auto flex flex-col relative" style={{ background: 'var(--bg-base)' }}>
+                    {globalBanner && globalBanner.message && (
+                        <div
+                            className="flex-shrink-0 flex items-center justify-center gap-4 px-6 py-3 text-white text-sm font-medium text-center"
+                            style={{ background: 'var(--brand)' }}
+                        >
+                            <span>{globalBanner.message}</span>
+                        </div>
+                    )}
+                    {isImpersonating && (
+                        <div className="flex-shrink-0 flex items-center justify-between gap-4 px-6 py-3 bg-amber-500 text-black text-sm font-bold">
+                            <span>
+                                Viewing as <strong>{currentUser?.full_name || currentUser?.email}</strong>
+                                {currentUser?.impersonated_by_email && (
+                                    <span className="opacity-90 ml-1">(impersonated by {currentUser.impersonated_by_email})</span>
+                                )}
+                            </span>
+                            <button
+                                type="button"
+                                onClick={stopImpersonation}
+                                className="px-4 py-1.5 rounded-xl bg-black/20 hover:bg-black/30 font-black uppercase tracking-wider transition-colors"
+                            >
+                                Stop impersonation
+                            </button>
+                        </div>
+                    )}
                     <Routes>
                         <Route path="/login" element={<LoginPage />} />
                         <Route path="/" element={<LandingPage />} />
@@ -309,6 +334,7 @@ function AppShell() {
                         <Route path="*" element={<NotFoundPage />} />
                     </Routes>
                 </main>
+            </div>
 
             {showMaintenanceOverlay && (
                 <div className="fixed inset-0 z-60 flex flex-col items-center justify-center bg-gray-900/90 text-white text-center px-4">

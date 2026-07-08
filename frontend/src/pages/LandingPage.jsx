@@ -38,6 +38,9 @@ function LandingPage() {
             }, 300);
             return () => clearTimeout(timer);
         }
+        if (location.state?.openRequestAccess) {
+            handleOpenLeadForm("Request Access");
+        }
     }, [location.state]);
     
     const [editMode, setEditMode] = useState(false);
