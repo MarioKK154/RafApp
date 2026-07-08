@@ -845,7 +845,9 @@ const resources = {
       "capped_msg": "Tier maximum cap applied!",
       "Samræmdu allan rekstur rafvirkjafyrirtækisins": "Unify Your Electrical Business Operations",
       "Fullkomið rekstrarkerfi fyrir rafvirkja. Stimplun, skipulag, efnisleit og tækjaumsjón á einum stað.": "The ultimate operating system for electrical contractors. Merging time logs, scheduling, materials tracking, and asset telemetry in one sleek dashboard.",
+      "Fullkomið rekstrarkerfi fyrir rafvirkja. Stimplun, skipulag, efnisleit og tækjaumsjón á einum stað": "The ultimate operating system for electrical contractors. Merging time logs, scheduling, materials tracking, and asset telemetry in one sleek dashboard.",
       "Forstjóri": "CEO",
+      "Forstjori": "CEO",
 
       
       "home": "Home",
@@ -2717,6 +2719,7 @@ const resources = {
       "Advanced HR & Leave Pipeline": "Tíma- og orlofsstjórnun",
       "Track electrician logs, check-in locations, and request reviews in a unified workspace. Approve leave requests and export certified hours directly to accounting for payroll.": "Fylgstu með stimplunum, staðsetningu og yfirferð í samræmdu vinnusvæði. Samþykktu orlof og flyttu út tíma í bókhald.",
       "CEO": "Forstjóri",
+      "Forstjori": "Forstjóri",
       "subtotal_excl_vsk": "Millitala (án VSK):",
       "vsk_label": "VSK (24%):",
       "billed_yearly_calc": "(Innheimt árlega: {{total}} ISK / ár)",
