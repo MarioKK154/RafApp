@@ -6,7 +6,7 @@ from pathlib import Path
 import json
 import uuid
 
-from .. import crud, models, schemas, security
+from .. import crud, models, schemas, security, storage
 from ..database import get_db
 from ..limiter import limiter
 from ..config import get_settings
@@ -233,12 +233,9 @@ async def upload_landing_background(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Image must be under {LANDING_BG_MAX_MB}MB",
         )
-    LANDING_BG_DIR.mkdir(parents=True, exist_ok=True)
     filename = f"bg_{uuid.uuid4().hex[:16]}{ext}"
-    out_path = LANDING_BG_DIR / filename
-    with open(out_path, "wb") as f:
-        f.write(content)
-    url_path = f"/static/landing_backgrounds/{filename}"
+    content_type = file.content_type or "image/png"
+    url_path = storage.upload_file(content, filename, "landing_backgrounds", content_type=content_type)
     return JSONResponse({"url": url_path})
 
 

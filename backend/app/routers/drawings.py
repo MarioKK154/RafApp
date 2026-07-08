@@ -9,7 +9,7 @@ import uuid
 from pathlib import Path
 from datetime import date
 
-from .. import crud, models, schemas, security
+from .. import crud, models, schemas, security, storage
 from ..database import get_db
 from ..limiter import limiter
 
@@ -110,16 +110,14 @@ async def upload_drawing_for_project(
     
     file_extension = Path(file.filename).suffix
     unique_filename = f"{uuid.uuid4()}{file_extension}"
-    file_location_on_disk = UPLOAD_DIRECTORY_DRAWINGS / unique_filename
-    db_filepath_relative = f"static/project_drawings/{unique_filename}"
 
     try:
-        with open(file_location_on_disk, "wb+") as file_object:
-            shutil.copyfileobj(file.file, file_object)
-        file_size = file_location_on_disk.stat().st_size
+        content = await file.read()
+        file_size = len(content)
+        content_type = file.content_type or "application/octet-stream"
+        db_filepath_relative = storage.upload_file(content, unique_filename, "project_drawings", content_type=content_type)
     except Exception as e:
-        if file_location_on_disk.exists(): os.remove(file_location_on_disk)
-        raise HTTPException(status_code=500, detail="Storage engine failure.")
+        raise HTTPException(status_code=500, detail=f"Storage engine failure: {e}")
     finally:
         await file.close()
 
@@ -174,7 +172,7 @@ async def get_drawings_for_project_endpoint(
     # Pass tenant_id to CRUD for filtering
     return crud.get_drawings_for_project(db, project_id=project_id, tenant_id=current_user.tenant_id)
 
-@router.get("/download/{drawing_id}", response_class=FileResponse)
+@router.get("/download/{drawing_id}")
 @limiter.limit("30/minute")
 async def download_drawing_file(
     request: Request,
@@ -183,8 +181,11 @@ async def download_drawing_file(
     current_user: CurrentUserDependency
 ):
     db_drawing = await get_drawing_from_tenant(drawing_id, db, current_user)
+    if db_drawing.filepath.startswith("http://") or db_drawing.filepath.startswith("https://"):
+        from fastapi.responses import RedirectResponse
+        return RedirectResponse(url=db_drawing.filepath)
+        
     full_disk_path = APP_DIR / db_drawing.filepath
-    
     if not full_disk_path.is_file():
         raise HTTPException(status_code=404, detail="File missing on storage.")
     
@@ -203,12 +204,12 @@ async def delete_drawing_metadata_endpoint(
     current_user: ProjectContentManagerDependency
 ):
     db_drawing = await get_drawing_from_tenant(drawing_id, db, current_user)
-    full_disk_path = APP_DIR / db_drawing.filepath 
-
+    
     # Pass tenant_id to CRUD to ensure uploader can only delete their own tenant's data
     deleted = crud.delete_drawing_metadata(db=db, drawing_id=db_drawing.id, tenant_id=current_user.tenant_id)
     
-    if deleted:
+    if deleted and not (db_drawing.filepath.startswith("http://") or db_drawing.filepath.startswith("https://")):
+        full_disk_path = APP_DIR / db_drawing.filepath 
         try:
             if full_disk_path.is_file():
                 os.remove(full_disk_path)
@@ -230,22 +231,28 @@ async def replace_drawing_file(
     # 1. Fetch existing record
     db_drawing = await get_drawing_from_tenant(drawing_id, db, current_user)
     
-    # 2. Delete old file from disk
-    old_file_path = APP_DIR / db_drawing.filepath
-    if old_file_path.is_file():
-        try:
-            os.remove(old_file_path)
-        except Exception as e:
-            print(f"Warning: Could not delete old file {old_file_path}: {e}")
+    # 2. Delete old file from disk if it was local
+    if not (db_drawing.filepath.startswith("http://") or db_drawing.filepath.startswith("https://")):
+        old_file_path = APP_DIR / db_drawing.filepath
+        if old_file_path.is_file():
+            try:
+                os.remove(old_file_path)
+            except Exception as e:
+                print(f"Warning: Could not delete old file {old_file_path}: {e}")
 
     # 3. Save new file
     file_extension = Path(file.filename).suffix
     unique_filename = f"{uuid.uuid4()}{file_extension}"
-    new_db_path = f"static/project_drawings/{unique_filename}"
-    full_disk_path = UPLOAD_DIRECTORY_DRAWINGS / unique_filename
 
-    with open(full_disk_path, "wb+") as buffer:
-        shutil.copyfileobj(file.file, buffer)
+    try:
+        content = await file.read()
+        file_size = len(content)
+        content_type = file.content_type or "application/octet-stream"
+        new_db_path = storage.upload_file(content, unique_filename, "project_drawings", content_type=content_type)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Storage engine failure: {e}")
+    finally:
+        await file.close()
 
     # 4. Logic: Bump Revision String (A -> B, etc.)
     current_rev = db_drawing.revision or "A"
@@ -264,7 +271,7 @@ async def replace_drawing_file(
     db_drawing.revision = next_rev
     db_drawing.author = current_user.full_name
     db_drawing.drawing_date = date.today()
-    db_drawing.size_bytes = full_disk_path.stat().st_size
+    db_drawing.size_bytes = file_size
     db_drawing.content_type = file.content_type
 
     db.commit()

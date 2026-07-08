@@ -80,3 +80,4 @@ frontend/coverage
 /backend/.reykjafell_scraper_progress.txt
 # .gitignore (add this line)
 /backend/create_initial_admin.py
+*.db

@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import React, { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import {
     ArrowRightIcon,
     ShieldCheckIcon,
@@ -29,6 +29,16 @@ function LandingPage() {
     const { t, i18n } = useTranslation();
     const { isAuthenticated, user } = useAuth();
     const isSuperadmin = user?.is_superuser;
+    const location = useLocation();
+    
+    useEffect(() => {
+        if (location.state?.scrollTo) {
+            const timer = setTimeout(() => {
+                scrollToSection(location.state.scrollTo);
+            }, 300);
+            return () => clearTimeout(timer);
+        }
+    }, [location.state]);
     
     const [editMode, setEditMode] = useState(false);
     const [draggedIndex, setDraggedIndex] = useState(null);

@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from typing import Annotated, List, Optional, Dict, Any
 from pydantic import BaseModel
 
-from .. import crud, models, schemas, security
+from .. import crud, models, schemas, security, storage
 from ..database import get_db
 from ..limiter import limiter
 
@@ -102,14 +102,9 @@ async def upload_catalog_material_image(
             detail=f"Image must be under {MAX_SIZE_MB}MB",
         )
     
-    target_dir = Path(__file__).resolve().parent.parent / "static" / "inventory_images"
-    target_dir.mkdir(parents=True, exist_ok=True)
     filename = f"mat_{uuid.uuid4().hex[:16]}{ext}"
-    out_path = target_dir / filename
-    with open(out_path, "wb") as f:
-        f.write(content)
-    
-    url_path = f"/static/inventory_images/{filename}"
+    content_type = file.content_type or "image/png"
+    url_path = storage.upload_file(content, filename, "inventory_images", content_type=content_type)
     return JSONResponse({"url": url_path})
 
 @router.get("/catalog", response_model=List[schemas.InventoryItemRead])

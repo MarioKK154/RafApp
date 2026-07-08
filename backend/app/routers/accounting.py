@@ -11,7 +11,7 @@ from datetime import date, datetime
 from io import BytesIO
 import logging
 
-from .. import crud, models, schemas, security
+from .. import crud, models, schemas, security, storage
 from ..database import get_db
 from ..limiter import limiter
 from reportlab.lib.pagesizes import A4
@@ -60,14 +60,13 @@ async def upload_payslip(
         raise HTTPException(status_code=400, detail="Protocol Error: Only PDF assets accepted for payroll.")
         
     unique_filename = f"payslip_{user_id}_{uuid.uuid4()}{file_extension}"
-    file_path_on_disk = UPLOAD_DIR_PAYSLIPS / unique_filename
     
     try:
-        with open(file_path_on_disk, "wb+") as file_object:
-            shutil.copyfileobj(file.file, file_object)
+        content = await file.read()
+        db_file_path = storage.upload_file(content, unique_filename, "payslips", content_type="application/pdf")
     except Exception as e:
         logger.error(f"IO Error during payslip upload: {str(e)}")
-        raise HTTPException(status_code=500, detail="Registry Error: Failed to commit file to disk.")
+        raise HTTPException(status_code=500, detail=f"Registry Error: Failed to commit file to disk: {e}")
     finally:
         await file.close()
 
@@ -82,7 +81,7 @@ async def upload_payslip(
         db=db, 
         payslip=payslip_data, 
         tenant_id=target_user.tenant_id, 
-        file_path=f"static/payslips/{unique_filename}",
+        file_path=db_file_path,
         filename=file.filename
     )
 
@@ -91,7 +90,7 @@ async def upload_payslip(
 async def get_my_payslips(request: Request, db: DbDependency, current_user: CurrentUserDependency):
     return crud.get_payslips_for_user(db, user_id=current_user.id)
 
-@router.get("/payslips/download/{payslip_id}", response_class=FileResponse)
+@router.get("/payslips/download/{payslip_id}")
 @limiter.limit("10/minute")
 async def download_payslip(
     request: Request, 
@@ -108,6 +107,10 @@ async def download_payslip(
     
     if not (is_owner or is_hr or current_user.is_superuser):
         raise HTTPException(status_code=403, detail="Clearance Denied: Unauthorized document access.")
+
+    if db_payslip.file_path.startswith("http://") or db_payslip.file_path.startswith("https://"):
+        from fastapi.responses import RedirectResponse
+        return RedirectResponse(url=db_payslip.file_path)
 
     full_path = APP_DIR / db_payslip.file_path
     if not full_path.exists():
@@ -187,9 +190,8 @@ async def generate_and_store_payslip(
     buffer.seek(0)
 
     unique_filename = f"payslip_auto_{payload.user_id}_{uuid.uuid4()}.pdf"
-    file_path_on_disk = UPLOAD_DIR_PAYSLIPS / unique_filename
-    with open(file_path_on_disk, "wb") as f:
-        f.write(buffer.getvalue())
+    file_content = buffer.getvalue()
+    db_file_path = storage.upload_file(file_content, unique_filename, "payslips", content_type="application/pdf")
 
     payslip_data = schemas.PayslipCreate(
         user_id=payload.user_id,
@@ -202,7 +204,7 @@ async def generate_and_store_payslip(
         db=db,
         payslip=payslip_data,
         tenant_id=target_user.tenant_id,
-        file_path=f"static/payslips/{unique_filename}",
+        file_path=db_file_path,
         filename=unique_filename,
     )
 

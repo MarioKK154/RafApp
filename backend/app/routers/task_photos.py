@@ -8,7 +8,7 @@ import shutil
 import uuid
 from pathlib import Path
 
-from .. import crud, models, schemas, security
+from .. import crud, models, schemas, security, storage
 from ..database import get_db
 from ..limiter import limiter
 
@@ -78,15 +78,16 @@ async def upload_photo_for_task(
     # 1. Verify task existence and tenant access
     db_task = await get_task_and_verify_tenant_from_photos_router(task_id, db, current_user)
     
-    # 2. Prepare file paths
+    # 2. Prepare file name
     file_extension = Path(file.filename).suffix
     unique_filename = f"{uuid.uuid4()}{file_extension}"
-    file_location_on_disk = UPLOAD_DIRECTORY_TASK_PHOTOS / unique_filename
     
-    # 3. Save file to static directory
+    # 3. Save file using storage helper
     try:
-        with open(file_location_on_disk, "wb+") as file_object:
-            shutil.copyfileobj(file.file, file_object)
+        content = await file.read()
+        file_size = len(content)
+        content_type = file.content_type or "image/png"
+        db_image_path = storage.upload_file(content, unique_filename, "task_photos", content_type=content_type)
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Could not save file: {str(e)}")
     finally:
@@ -95,10 +96,10 @@ async def upload_photo_for_task(
     # 4. Save metadata to Database
     photo_data = schemas.TaskPhotoCreate(
         filename=file.filename, 
-        filepath=str(file_location_on_disk), 
+        filepath=db_image_path, 
         description=description,
         content_type=file.content_type, 
-        size_bytes=file.size if file.size else 0,
+        size_bytes=file_size,
         task_id=db_task.id, 
         uploader_id=current_user.id
     )
@@ -120,7 +121,7 @@ async def get_photos_for_task_endpoint(
     await get_task_and_verify_tenant_from_photos_router(task_id, db, current_user)
     return crud.get_photos_for_task(db, task_id=task_id)
 
-@router.get("/download/{photo_id}", response_class=FileResponse)
+@router.get("/download/{photo_id}")
 @limiter.limit("30/minute")
 async def download_task_photo_file(
     request: Request,
@@ -132,6 +133,9 @@ async def download_task_photo_file(
     Downloads the actual photo file from the server.
     """
     db_photo = await get_photo_and_verify_tenant(photo_id, db, current_user)
+    if db_photo.filepath.startswith("http://") or db_photo.filepath.startswith("https://"):
+        from fastapi.responses import RedirectResponse
+        return RedirectResponse(url=db_photo.filepath)
     
     if not os.path.exists(db_photo.filepath):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Photo file not found on server disk.")
@@ -171,7 +175,7 @@ async def delete_task_photo_metadata_endpoint(
     
     deleted_photo_meta = crud.delete_task_photo_metadata(db=db, photo_id=db_photo.id)
     
-    if deleted_photo_meta:
+    if deleted_photo_meta and not (file_path_on_disk.startswith("http://") or file_path_on_disk.startswith("https://")):
         # Cleanup disk file
         if os.path.exists(file_path_on_disk):
             try:
@@ -179,7 +183,7 @@ async def delete_task_photo_metadata_endpoint(
             except OSError as e:
                 # Log error but don't fail request since DB entry is already gone
                 print(f"Error removing file from disk: {e}")
-    else:
+    elif not deleted_photo_meta:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Photo metadata could not be removed.")
     
     return None

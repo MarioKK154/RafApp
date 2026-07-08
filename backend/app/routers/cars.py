@@ -6,7 +6,7 @@ import uuid
 import aiofiles
 from pathlib import Path
 
-from .. import crud, models, schemas, security
+from .. import crud, models, schemas, security, storage
 from ..database import get_db
 from ..limiter import limiter
 
@@ -107,16 +107,14 @@ async def upload_car_image(request: Request, car_id: int, db: DbDependency, curr
     db_car = get_car_for_user(car_id, db, current_user)
     file_extension = Path(file.filename).suffix
     unique_filename = f"car_{car_id}_{uuid.uuid4()}{file_extension}"
-    save_path = UPLOAD_DIR / unique_filename
     
     try:
-        async with aiofiles.open(save_path, 'wb') as out_file:
-            content = await file.read()
-            await out_file.write(content)
-    except Exception:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error saving image file.")
+        content = await file.read()
+        content_type = file.content_type or "image/png"
+        db_image_path = storage.upload_file(content, unique_filename, "car_images", content_type=content_type)
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error saving image file: {e}")
     
-    db_image_path = f"static/car_images/{unique_filename}"
     return crud.update_car_image_path(db=db, db_car=db_car, image_path=db_image_path)
 
 @router.post("/{car_id}/checkout", response_model=schemas.CarRead)
