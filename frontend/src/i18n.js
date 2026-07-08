@@ -833,6 +833,19 @@ const resources = {
       "subtotal_excl_vsk": "Subtotal (Excl. VSK):",
       "vsk_label": "VSK (24%):",
       "billed_yearly_calc": "(Billed yearly: {{total}} ISK / yr)",
+      "calc_title": "Calculate Your Monthly Cost",
+      "calc_subtitle": "Drag the slider to input your company size and get an instant pricing breakdown.",
+      "company_size_label": "Company Size:",
+      "people_label": "People",
+      "calculated_tier": "Active Tier",
+      "base_price": "Base Price (Excl. VSK):",
+      "additional_users": "Additional Users:",
+      "total_price_label": "Total (Incl. 24% VSK)",
+      "month": "mo",
+      "capped_msg": "Tier maximum cap applied!",
+      "Samræmdu allan rekstur rafvirkjafyrirtækisins": "Unify Your Electrical Business Operations",
+      "Fullkomið rekstrarkerfi fyrir rafvirkja. Stimplun, skipulag, efnisleit og tækjaumsjón á einum stað.": "The ultimate operating system for electrical contractors. Merging time logs, scheduling, materials tracking, and asset telemetry in one sleek dashboard.",
+      "Forstjóri": "CEO",
 
       
       "home": "Home",
@@ -2707,6 +2720,16 @@ const resources = {
       "subtotal_excl_vsk": "Millitala (án VSK):",
       "vsk_label": "VSK (24%):",
       "billed_yearly_calc": "(Innheimt árlega: {{total}} ISK / ár)",
+      "calc_title": "Reiknaðu mánaðarlegan kostnað",
+      "calc_subtitle": "Dragðu sleðann til að slá inn stærð fyrirtækisins og fá kostnaðaráætlun.",
+      "company_size_label": "Stærð fyrirtækis:",
+      "people_label": "manns",
+      "calculated_tier": "Virkt verðplan",
+      "base_price": "Grunnverð (án VSK):",
+      "additional_users": "Viðbótarnotendur:",
+      "total_price_label": "Samtals (með 24% VSK)",
+      "month": "mán",
+      "capped_msg": "Hámarksgjaldi náð fyrir þetta verðplan!",
 
       "general": "Almennt"
     }
