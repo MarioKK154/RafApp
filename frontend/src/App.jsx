@@ -213,6 +213,7 @@ function AppShell() {
                         onClick={() => {
                             const newLang = i18n.language === 'en' ? 'is' : 'en';
                             i18n.changeLanguage(newLang);
+                            localStorage.setItem('i18nextLng', newLang);
                         }}
                         style={{ color: 'var(--brand)', minHeight: '44px' }}
                         className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-[0.15em] hover:opacity-75 transition-opacity"

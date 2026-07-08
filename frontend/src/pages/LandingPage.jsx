@@ -50,6 +50,7 @@ function LandingPage() {
     const toggleLanguage = () => {
         const newLang = i18n.language === 'en' ? 'is' : 'en';
         i18n.changeLanguage(newLang);
+        localStorage.setItem('i18nextLng', newLang);
     };
 
     const [feed, setFeed] = useState({
@@ -836,7 +837,7 @@ function LandingPage() {
                                     </div>
                                     <div className="bg-gray-900 rounded-2xl p-4 min-w-[180px] text-center border border-gray-800">
                                         <span className="block text-[8px] font-black text-gray-500 uppercase tracking-wider">{t('calculated_tier', { defaultValue: 'Active Tier' })}</span>
-                                        <span className="text-sm font-black text-white">{calcResult.tier}</span>
+                                        <span className="text-sm font-black text-white">{t(calcResult.tier, { defaultValue: calcResult.tier })}</span>
                                     </div>
                                 </div>
                                 
@@ -851,11 +852,11 @@ function LandingPage() {
                                             <span className="text-white font-bold">{(calcResult.extraUsers * calcResult.extraRate).toLocaleString()} ISK</span>
                                         </div>
                                         <div className="flex justify-between border-t border-gray-700/50 pt-2 font-bold text-gray-300">
-                                            <span>Subtotal (Excl. VSK):</span>
+                                            <span>{t('subtotal_excl_vsk', { defaultValue: 'Subtotal (Excl. VSK):' })}</span>
                                             <span>{calcResult.total.toLocaleString()} ISK</span>
                                         </div>
                                         <div className="flex justify-between text-gray-400">
-                                            <span>VSK (24%):</span>
+                                            <span>{t('vsk_label', { defaultValue: 'VSK (24%):' })}</span>
                                             <span>{(calcResult.total * 0.24).toLocaleString()} ISK</span>
                                         </div>
                                         {calcResult.capped && (
@@ -872,7 +873,7 @@ function LandingPage() {
                                         </span>
                                         {billingCycle === 'yearly' && (
                                             <span className="text-[10px] font-bold text-green-400 mt-2">
-                                                (Billed yearly: {(calcResult.total * 1.24 * 12).toLocaleString()} ISK / yr)
+                                                {t('billed_yearly_calc', { defaultValue: '(Billed yearly: {{total}} ISK / yr)', total: (calcResult.total * 1.24 * 12).toLocaleString() })}
                                             </span>
                                         )}
                                     </div>
@@ -1088,7 +1089,7 @@ function LandingPage() {
             <Modal
                 isOpen={isLeadModalOpen}
                 onClose={() => !isSubmittingLead && setIsLeadModalOpen(false)}
-                title={`${t('get_started', { defaultValue: 'Get Started' })} - ${selectedTierForLead}`}
+                title={`${t('get_started', { defaultValue: 'Get Started' })} - ${t(selectedTierForLead, { defaultValue: selectedTierForLead })}`}
                 showFooter={false}
             >
                 <form onSubmit={handleLeadSubmit} className="space-y-4 pt-4 text-left">

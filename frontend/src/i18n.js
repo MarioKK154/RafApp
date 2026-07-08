@@ -830,6 +830,9 @@ const resources = {
       "phone_optional": "Phone Number (Optional)",
       "sending": "Sending...",
       "request_access": "Request Access",
+      "subtotal_excl_vsk": "Subtotal (Excl. VSK):",
+      "vsk_label": "VSK (24%):",
+      "billed_yearly_calc": "(Billed yearly: {{total}} ISK / yr)",
 
       
       "home": "Home",
@@ -2701,6 +2704,9 @@ const resources = {
       "Advanced HR & Leave Pipeline": "Tíma- og orlofsstjórnun",
       "Track electrician logs, check-in locations, and request reviews in a unified workspace. Approve leave requests and export certified hours directly to accounting for payroll.": "Fylgstu með stimplunum, staðsetningu og yfirferð í samræmdu vinnusvæði. Samþykktu orlof og flyttu út tíma í bókhald.",
       "CEO": "Forstjóri",
+      "subtotal_excl_vsk": "Millitala (án VSK):",
+      "vsk_label": "VSK (24%):",
+      "billed_yearly_calc": "(Innheimt árlega: {{total}} ISK / ár)",
 
       "general": "Almennt"
     }
