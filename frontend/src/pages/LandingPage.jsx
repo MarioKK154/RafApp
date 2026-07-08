@@ -99,7 +99,11 @@ function LandingPage() {
             }
         ],
         hero_title: 'Unify Your Electrical Business Operations',
+        hero_title_en: 'Unify Your Electrical Business Operations',
+        hero_title_is: 'Samræmdu allan rekstur rafvirkjafyrirtækisins',
         hero_subtitle: 'The ultimate operating system for electrical contractors. Merging time logs, scheduling, materials tracking, and asset telemetry in one sleek dashboard.',
+        hero_subtitle_en: 'The ultimate operating system for electrical contractors. Merging time logs, scheduling, materials tracking, and asset telemetry in one sleek dashboard.',
+        hero_subtitle_is: 'Fullkomið rekstrarkerfi fyrir rafvirkja. Stimplun, skipulag, efnisleit og tækjaumsjón á einum stað.',
         about_us_text: '',
         about_us_text_en: 'RafApp is a premium operations dashboard tailor-made for electrical contractors. Built by industry experts, it addresses the core operational bottlenecks of field-service coordination:\n\n• Real-Time Mobile Time-Tracking: Electricians can clock in or out of specific project codes, with built-in location and overlap safety checks.\n• Visual Gantt Project Milestones: Plan dependencies, track project percentage status, and manage schedules.\n• Material Requests Index: Search our 640+ item catalog (including Cables, Trays, and Pipes) to construct shopping and requisition lists.\n• Shared Tool Registry: Log tool check-outs, report damaged assets needing workshop repair, and ensure telemetry transparency.\n\nRafApp streamlines the entire workflow from the initial client offer to field execution and final payroll export, replacing spreadsheets and paperwork with a fast, modern app.',
         about_us_text_is: 'RafApp er fyrsta flokks rekstrarlausn hönnuð sérstaklega fyrir rafvirkjafyrirtæki og undirverktaka. Kerfið leysir helstu flöskuhálsa í skipulagningu og daglegum rekstri á vettvangi:\n\n• Rauntíma tímaskráning á verk: Rafvirkjar stimpla sig inn og út af verknúmerum með snjallsíma. Kerfið kemur í veg fyrir skörun og tvískráningar.\n• Gagnvirkt Gantt-skipulag: PMs geta skipulagt verkþætti, fylgst með framvindu í prósentum og úthlutað mönnum á verk.\n• Stafrænn efnislisti: Leitaðu í yfir 640 vörum (kaplar, brautir, rör) til að búa til innkaupalista og efnispantanir af vettvangi.\n• Samnýtt Verkfæraskrá: Fylgstu með hvaða starfsmaður er með hvaða verkfæri í láni, skráðu skemmd verkfæri í viðgerð og tryggðu gagnsæi.\n\nRafApp tengir saman alla ferla frá tilboðsgerð til vettvangsvinnu og launavinnslu. Sparar tíma, lágmarkar mistök og útrýmir pappírsvinnu.',
@@ -107,6 +111,8 @@ function LandingPage() {
             {
                 name: 'Maríus Rafn',
                 title: 'Founder & Lead Architect',
+                title_en: 'Founder & Lead Architect',
+                title_is: 'Stofnandi og yfirhönnuður',
                 email: 'marius@rafapp.com',
                 phone: '+354 888 1234',
                 image_url: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80'
@@ -145,7 +151,11 @@ function LandingPage() {
                     news: Array.isArray(data.news) && data.news.length > 0 ? data.news : prev.news,
                     pricing_tiers: Array.isArray(data.pricing_tiers) && data.pricing_tiers.length > 0 ? data.pricing_tiers : prev.pricing_tiers,
                     hero_title: data.hero_title || prev.hero_title,
+                    hero_title_en: data.hero_title_en || data.hero_title || prev.hero_title_en,
+                    hero_title_is: data.hero_title_is || data.hero_title || prev.hero_title_is,
                     hero_subtitle: data.hero_subtitle || prev.hero_subtitle,
+                    hero_subtitle_en: data.hero_subtitle_en || data.hero_subtitle || prev.hero_subtitle_en,
+                    hero_subtitle_is: data.hero_subtitle_is || data.hero_subtitle || prev.hero_subtitle_is,
                     about_us_text: data.about_us_text || prev.about_us_text,
                     about_us_text_en: data.about_us_text_en || prev.about_us_text_en,
                     about_us_text_is: data.about_us_text_is || prev.about_us_text_is,
@@ -427,23 +437,45 @@ function LandingPage() {
                             
                             {editMode ? (
                                 <div className="space-y-4 mb-6">
-                                    <div>
-                                        <label className="block text-[8px] font-black text-indigo-400 uppercase tracking-widest mb-1">Hero Title</label>
-                                        <input 
-                                            type="text" 
-                                            value={feed.hero_title}
-                                            onChange={(e) => setFeed({ ...feed, hero_title: e.target.value })}
-                                            className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white text-2xl font-black focus:ring-1 focus:ring-[#0096FF] focus:outline-none"
-                                        />
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-[8px] font-black text-indigo-400 uppercase tracking-widest mb-1">Hero Title (English)</label>
+                                            <input 
+                                                type="text" 
+                                                value={feed.hero_title_en || ''}
+                                                onChange={(e) => setFeed({ ...feed, hero_title_en: e.target.value, hero_title: e.target.value })}
+                                                className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white text-base font-black focus:ring-1 focus:ring-[#0096FF] focus:outline-none"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-[8px] font-black text-indigo-400 uppercase tracking-widest mb-1">Hero Title (Icelandic)</label>
+                                            <input 
+                                                type="text" 
+                                                value={feed.hero_title_is || ''}
+                                                onChange={(e) => setFeed({ ...feed, hero_title_is: e.target.value })}
+                                                className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white text-base font-black focus:ring-1 focus:ring-[#0096FF] focus:outline-none"
+                                            />
+                                        </div>
                                     </div>
-                                    <div>
-                                        <label className="block text-[8px] font-black text-indigo-400 uppercase tracking-widest mb-1">Hero Subtitle</label>
-                                        <textarea 
-                                            value={feed.hero_subtitle}
-                                            onChange={(e) => setFeed({ ...feed, hero_subtitle: e.target.value })}
-                                            className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white text-sm font-medium focus:ring-1 focus:ring-[#0096FF] focus:outline-none"
-                                            rows={3}
-                                        />
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-[8px] font-black text-indigo-400 uppercase tracking-widest mb-1">Hero Subtitle (English)</label>
+                                            <textarea 
+                                                value={feed.hero_subtitle_en || ''}
+                                                onChange={(e) => setFeed({ ...feed, hero_subtitle_en: e.target.value, hero_subtitle: e.target.value })}
+                                                className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white text-xs font-medium focus:ring-1 focus:ring-[#0096FF] focus:outline-none"
+                                                rows={3}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-[8px] font-black text-indigo-400 uppercase tracking-widest mb-1">Hero Subtitle (Icelandic)</label>
+                                            <textarea 
+                                                value={feed.hero_subtitle_is || ''}
+                                                onChange={(e) => setFeed({ ...feed, hero_subtitle_is: e.target.value })}
+                                                className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white text-xs font-medium focus:ring-1 focus:ring-[#0096FF] focus:outline-none"
+                                                rows={3}
+                                            />
+                                        </div>
                                     </div>
                                     <div>
                                         <label className="block text-[8px] font-black text-indigo-400 uppercase tracking-widest mb-1">Hero Image URL</label>
@@ -463,10 +495,10 @@ function LandingPage() {
                             ) : (
                                 <>
                                     <h1 className="text-5xl md:text-7xl font-black leading-tight mb-6">
-                                        {t(feed.hero_title, { defaultValue: feed.hero_title })}
+                                        {i18n.language.startsWith('en') ? (feed.hero_title_en || feed.hero_title) : (feed.hero_title_is || feed.hero_title)}
                                     </h1>
                                     <p className="text-gray-400 text-lg md:text-xl mb-10 max-w-lg leading-relaxed">
-                                        {t(feed.hero_subtitle, { defaultValue: feed.hero_subtitle })}
+                                        {i18n.language.startsWith('en') ? (feed.hero_subtitle_en || feed.hero_subtitle) : (feed.hero_subtitle_is || feed.hero_subtitle)}
                                     </p>
                                 </>
                             )}
@@ -964,17 +996,36 @@ function LandingPage() {
                                                         className="w-full bg-gray-800 border border-gray-700 rounded-xl px-2 py-1 text-white text-xs font-bold focus:ring-1 focus:ring-indigo-500 focus:outline-none"
                                                         placeholder="Name"
                                                     />
-                                                    <input 
-                                                        type="text" 
-                                                        value={person.title || ''} 
-                                                        onChange={(e) => {
-                                                            const arr = [...feed.contact_persons];
-                                                            arr[idx] = { ...arr[idx], title: e.target.value };
-                                                            setFeed({ ...feed, contact_persons: arr });
-                                                        }}
-                                                        className="w-full bg-gray-800 border border-gray-700 rounded-xl px-2 py-1 text-white text-[10px] focus:ring-1 focus:ring-indigo-500 focus:outline-none"
-                                                        placeholder="Title (e.g. Lead Developer)"
-                                                    />
+                                                    <div className="grid grid-cols-2 gap-2">
+                                                        <div>
+                                                            <label className="block text-[7px] text-indigo-400 font-bold mb-0.5">Title (English)</label>
+                                                            <input 
+                                                                type="text" 
+                                                                value={person.title_en || person.title || ''} 
+                                                                onChange={(e) => {
+                                                                    const arr = [...feed.contact_persons];
+                                                                    arr[idx] = { ...arr[idx], title_en: e.target.value, title: e.target.value };
+                                                                    setFeed({ ...feed, contact_persons: arr });
+                                                                }}
+                                                                className="w-full bg-gray-800 border border-gray-700 rounded-xl px-2 py-1 text-white text-[9px] focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                                                                placeholder="Title (EN)"
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-[7px] text-indigo-400 font-bold mb-0.5">Title (Icelandic)</label>
+                                                            <input 
+                                                                type="text" 
+                                                                value={person.title_is || person.title || ''} 
+                                                                onChange={(e) => {
+                                                                    const arr = [...feed.contact_persons];
+                                                                    arr[idx] = { ...arr[idx], title_is: e.target.value };
+                                                                    setFeed({ ...feed, contact_persons: arr });
+                                                                }}
+                                                                className="w-full bg-gray-800 border border-gray-700 rounded-xl px-2 py-1 text-white text-[9px] focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                                                                placeholder="Title (IS)"
+                                                            />
+                                                        </div>
+                                                    </div>
                                                     <input 
                                                         type="email" 
                                                         value={person.email || ''} 
@@ -1034,7 +1085,11 @@ function LandingPage() {
                                                     <div className="flex-1">
                                                         <div className="mb-3">
                                                             <h3 className="text-xl font-bold text-white">{person.name}</h3>
-                                                            {person.title && <p className="text-[#0096FF] text-sm font-black uppercase tracking-widest">{t(person.title, { defaultValue: person.title })}</p>}
+                                                            {person.title && (
+                                                                <p className="text-[#0096FF] text-sm font-black uppercase tracking-widest">
+                                                                    {i18n.language.startsWith('en') ? (person.title_en || person.title) : (person.title_is || person.title)}
+                                                                </p>
+                                                            )}
                                                         </div>
                                                         <div className="space-y-2">
                                                             {person.email && (
@@ -1066,7 +1121,7 @@ function LandingPage() {
                                                 ...feed,
                                                 contact_persons: [
                                                     ...feed.contact_persons,
-                                                    { name: 'Contact Name', title: 'Consultant', email: 'sales@rafapp.com', phone: '', image_url: '' }
+                                                    { name: 'Contact Name', title: 'Consultant', title_en: 'Consultant', title_is: 'Ráðgjafi', email: 'sales@rafapp.com', phone: '', image_url: '' }
                                                 ]
                                             });
                                         }}

@@ -92,12 +92,24 @@ def _normalize_landing_payload(payload: dict) -> dict:
     payload["background_slide_seconds"] = max(3, min(600, slide))
     
     payload.setdefault("hero_title", "Welcome to Our Platform")
+    payload.setdefault("hero_title_en", payload.get("hero_title", "Welcome to Our Platform"))
+    payload.setdefault("hero_title_is", payload.get("hero_title", "Velkomin á okkar svæði"))
     payload.setdefault("hero_subtitle", "We provide the best tools for your business.")
+    payload.setdefault("hero_subtitle_en", payload.get("hero_subtitle", "We provide the best tools for your business."))
+    payload.setdefault("hero_subtitle_is", payload.get("hero_subtitle", "Við bjóðum bestu tólin fyrir þinn rekstur."))
     payload.setdefault("about_us_text", "Add your company's story here.")
     payload.setdefault("about_us_text_en", "Add your company's story here.")
     payload.setdefault("about_us_text_is", "Bættu við sögu fyrirtækisins hér.")
     if not isinstance(payload.get("contact_persons"), list):
         payload["contact_persons"] = []
+    else:
+        normalized_persons = []
+        for person in payload["contact_persons"]:
+            if isinstance(person, dict):
+                person.setdefault("title_en", person.get("title", ""))
+                person.setdefault("title_is", person.get("title", ""))
+                normalized_persons.append(person)
+        payload["contact_persons"] = normalized_persons
     if not isinstance(payload.get("pricing_tiers"), list):
         payload["pricing_tiers"] = []
 

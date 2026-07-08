@@ -1079,6 +1079,8 @@ class LandingPricingTier(BaseModel):
 class LandingContactPerson(BaseModel):
     name: str = ""
     title: str = ""
+    title_en: Optional[str] = None
+    title_is: Optional[str] = None
     email: str = ""
     phone: str = ""
     image_url: Optional[str] = None
@@ -1095,7 +1097,11 @@ class LandingFeed(BaseModel):
 
     # Expanded content
     hero_title: str = "Welcome to Our Platform"
+    hero_title_en: Optional[str] = None
+    hero_title_is: Optional[str] = None
     hero_subtitle: str = "We provide the best tools for your business."
+    hero_subtitle_en: Optional[str] = None
+    hero_subtitle_is: Optional[str] = None
     about_us_text: str = ""
     about_us_text_en: str = ""
     about_us_text_is: str = ""
