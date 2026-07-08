@@ -287,7 +287,7 @@ function AccountingPage() {
                                 <div key={ps.id} className="p-6 flex justify-between items-center hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
                                     <div>
                                         <p className="font-bold text-gray-900 dark:text-white uppercase tracking-tight">
-                                            {new Date(ps.issue_date).toLocaleDateString(i18n.language === 'is' ? 'is-IS' : 'en-GB', { month: 'long', year: 'numeric' })}
+                                            {new Date(ps.issue_date).toLocaleDateString(i18n.language.startsWith('is') ? 'is-IS' : 'en-GB', { month: 'long', year: 'numeric' })}
                                         </p>
                                         <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">
                                             {t('netto')}: <span className="text-indigo-600">{ps.amount_netto?.toLocaleString()} ISK</span>
