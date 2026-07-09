@@ -121,12 +121,12 @@ function LandingPage() {
         about_us_text_is: 'RafApp er fyrsta flokks rekstrarlausn hönnuð sérstaklega fyrir rafvirkjafyrirtæki og undirverktaka. Kerfið leysir helstu flöskuhálsa í skipulagningu og daglegum rekstri á vettvangi:\n\n• Rauntíma tímaskráning á verk: Rafvirkjar stimpla sig inn og út af verknúmerum með snjallsíma. Kerfið kemur í veg fyrir skörun og tvískráningar.\n• Gagnvirkt Gantt-skipulag: PMs geta skipulagt verkþætti, fylgst með framvindu í prósentum og úthlutað mönnum á verk.\n• Stafrænn efnislisti: Leitaðu í yfir 640 vörum (kaplar, brautir, rör) til að búa til innkaupalista og efnispantanir af vettvangi.\n• Samnýtt Verkfæraskrá: Fylgstu með hvaða starfsmaður er með hvaða verkfæri í láni, skráðu skemmd verkfæri í viðgerð og tryggðu gagnsæi.\n\nRafApp tengir saman alla ferla frá tilboðsgerð til vettvangsvinnu og launavinnslu. Sparar tíma, lágmarkar mistök og útrýmir pappírsvinnu.',
         contact_persons: [
             {
-                name: 'Mario',
-                title: 'Founder & Lead Architect',
-                title_en: 'Founder & Lead Architect',
-                title_is: 'Stofnandi og yfirhönnuður',
-                email: 'mario@rafapp.com',
-                phone: '+354 888 1234',
+                name: 'Mario Klaric Kukuz',
+                title: 'CEO / Forstjóri',
+                title_en: 'CEO',
+                title_is: 'Forstjóri',
+                email: 'mario@rafapp.is',
+                phone: '+354 858 9280',
                 image_url: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80'
             }
         ],
@@ -1671,171 +1671,39 @@ function LandingPage() {
                                     feed.contact_persons.map((person, idx) => (
                                         <div 
                                             key={idx} 
-                                            className={`bg-gray-900/50 p-4 rounded-2xl border flex items-start gap-4 transition text-left ${editMode ? 'border-dashed border-indigo-500/80 cursor-move' : 'border-gray-700/50'}`}
-                                            draggable={editMode}
-                                            onDragStart={() => setDraggedIndex(idx)}
-                                            onDragOver={handleDragOver}
-                                            onDrop={() => handleDrop('contact_persons', idx)}
+                                            className="bg-gray-900/50 p-4 rounded-2xl border flex items-start gap-4 transition text-left border-gray-700/50"
                                         >
-                                            {editMode ? (
-                                                <div className="flex-1 space-y-3">
-                                                    <div className="flex justify-between items-center text-[8px] font-black text-indigo-400">
-                                                        <span>☰ DRAG CONTACT</span>
-                                                        <button 
-                                                            type="button" 
-                                                            onClick={() => {
-                                                                const arr = feed.contact_persons.filter((_, i) => i !== idx);
-                                                                setFeed({ ...feed, contact_persons: arr });
-                                                            }}
-                                                            className="text-red-400 font-bold"
-                                                        >
-                                                            [Delete]
-                                                        </button>
-                                                    </div>
-                                                    <input 
-                                                        type="text" 
-                                                        value={person.name || ''} 
-                                                        onChange={(e) => {
-                                                            const arr = [...feed.contact_persons];
-                                                            arr[idx] = { ...arr[idx], name: e.target.value };
-                                                            setFeed({ ...feed, contact_persons: arr });
-                                                        }}
-                                                        className="w-full bg-gray-800 border border-gray-700 rounded-xl px-2 py-1 text-white text-xs font-bold focus:ring-1 focus:ring-indigo-500 focus:outline-none"
-                                                        placeholder="Name"
-                                                    />
-                                                    <div className="grid grid-cols-2 gap-2">
-                                                        <div>
-                                                            <label className="block text-[7px] text-indigo-400 font-bold mb-0.5">Title (English)</label>
-                                                            <input 
-                                                                type="text" 
-                                                                value={person.title_en || person.title || ''} 
-                                                                onChange={(e) => {
-                                                                    const arr = [...feed.contact_persons];
-                                                                    arr[idx] = { ...arr[idx], title_en: e.target.value, title: e.target.value };
-                                                                    setFeed({ ...feed, contact_persons: arr });
-                                                                }}
-                                                                className="w-full bg-gray-800 border border-gray-700 rounded-xl px-2 py-1 text-white text-[9px] focus:ring-1 focus:ring-indigo-500 focus:outline-none"
-                                                                placeholder="Title (EN)"
-                                                            />
-                                                        </div>
-                                                        <div>
-                                                            <label className="block text-[7px] text-indigo-400 font-bold mb-0.5">Title (Icelandic)</label>
-                                                            <input 
-                                                                type="text" 
-                                                                value={person.title_is || person.title || ''} 
-                                                                onChange={(e) => {
-                                                                    const arr = [...feed.contact_persons];
-                                                                    arr[idx] = { ...arr[idx], title_is: e.target.value };
-                                                                    setFeed({ ...feed, contact_persons: arr });
-                                                                }}
-                                                                className="w-full bg-gray-800 border border-gray-700 rounded-xl px-2 py-1 text-white text-[9px] focus:ring-1 focus:ring-indigo-500 focus:outline-none"
-                                                                placeholder="Title (IS)"
-                                                            />
-                                                        </div>
-                                                    </div>
-                                                    <input 
-                                                        type="email" 
-                                                        value={person.email || ''} 
-                                                        onChange={(e) => {
-                                                            const arr = [...feed.contact_persons];
-                                                            arr[idx] = { ...arr[idx], email: e.target.value };
-                                                            setFeed({ ...feed, contact_persons: arr });
-                                                        }}
-                                                        className="w-full bg-gray-800 border border-gray-700 rounded-xl px-2 py-1 text-white text-[10px] focus:ring-1 focus:ring-indigo-500 focus:outline-none"
-                                                        placeholder="Email Address"
-                                                    />
-                                                    <input 
-                                                        type="text" 
-                                                        value={person.phone || ''} 
-                                                        onChange={(e) => {
-                                                            const arr = [...feed.contact_persons];
-                                                            arr[idx] = { ...arr[idx], phone: e.target.value };
-                                                            setFeed({ ...feed, contact_persons: arr });
-                                                        }}
-                                                        className="w-full bg-gray-800 border border-gray-700 rounded-xl px-2 py-1 text-white text-[10px] focus:ring-1 focus:ring-indigo-500 focus:outline-none"
-                                                        placeholder="Phone Number"
-                                                    />
-                                                    
-                                                    {/* Photo Upload Widget */}
-                                                    <div className="space-y-1">
-                                                        <label className="block text-[8px] font-black text-gray-400 uppercase tracking-wider">Photo Upload</label>
-                                                        <input
-                                                            type="file"
-                                                            accept="image/*"
-                                                            onChange={async (e) => {
-                                                                const file = e.target.files?.[0];
-                                                                if (!file) return;
-                                                                const fd = new FormData();
-                                                                fd.append('file', file);
-                                                                try {
-                                                                    const res = await axiosInstance.post('/system/landing-background', fd);
-                                                                    const url = res.data?.url;
-                                                                    if (url) {
-                                                                        const arr = [...feed.contact_persons];
-                                                                        arr[idx] = { ...arr[idx], image_url: url };
-                                                                        setFeed({ ...feed, contact_persons: arr });
-                                                                        toast.success('Contact photo uploaded successfully!');
-                                                                    }
-                                                                } catch (err) {
-                                                                    toast.error('Upload failed. Please try again.');
-                                                                }
-                                                            }}
-                                                            className="w-full text-[10px] text-gray-400 file:mr-2 file:py-1 file:px-2 file:rounded-lg file:border-0 file:text-[10px] file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-700 cursor-pointer"
-                                                        />
-                                                    </div>
-                                                </div>
-                                            ) : (
-                                                <>
-                                                    {person.image_url && (
-                                                        <img src={resolveMediaUrl(person.image_url)} alt={person.name} className="w-16 h-16 rounded-full object-cover shrink-0 border-2 border-gray-700 animate-in fade-in" />
-                                                    )}
-                                                    <div className="flex-1">
-                                                        <div className="mb-3">
-                                                            <h3 className="text-xl font-bold text-white">{person.name}</h3>
-                                                            {person.title && (
-                                                                <p className="text-[#0096FF] text-sm font-black uppercase tracking-widest">
-                                                                    {i18n.language.startsWith('en') ? (person.title_en || person.title) : (person.title_is || person.title)}
-                                                                </p>
-                                                            )}
-                                                        </div>
-                                                        <div className="space-y-2">
-                                                            {person.email && (
-                                                                <div className="flex items-center gap-3">
-                                                                    <EnvelopeIcon className="h-4 w-4 text-gray-400" />
-                                                                    <a href={`mailto:${person.email}`} className="text-gray-300 hover:text-white transition">{person.email}</a>
-                                                                </div>
-                                                            )}
-                                                            {person.phone && (
-                                                                <div className="flex items-center gap-3">
-                                                                    <PhoneIcon className="h-4 w-4 text-gray-400" />
-                                                                    <a href={`tel:${person.phone}`} className="text-gray-300 hover:text-white transition">{person.phone}</a>
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                </>
+                                            {person.image_url && (
+                                                <img src={resolveMediaUrl(person.image_url)} alt={person.name} className="w-16 h-16 rounded-full object-cover shrink-0 border-2 border-gray-700 animate-in fade-in" />
                                             )}
+                                            <div className="flex-1">
+                                                <div className="mb-3">
+                                                    <h3 className="text-xl font-bold text-white">{person.name}</h3>
+                                                    {person.title && (
+                                                        <p className="text-[#0096FF] text-sm font-black uppercase tracking-widest">
+                                                            {i18n.language.startsWith('en') ? (person.title_en || person.title) : (person.title_is || person.title)}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                                <div className="space-y-2">
+                                                    {person.email && (
+                                                        <div className="flex items-center gap-3">
+                                                            <EnvelopeIcon className="h-4 w-4 text-gray-400" />
+                                                            <a href={`mailto:${person.email}`} className="text-gray-300 hover:text-white transition">{person.email}</a>
+                                                        </div>
+                                                    )}
+                                                    {person.phone && (
+                                                        <div className="flex items-center gap-3">
+                                                            <PhoneIcon className="h-4 w-4 text-gray-400" />
+                                                            <a href={`tel:${person.phone}`} className="text-gray-300 hover:text-white transition">{person.phone}</a>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
                                         </div>
                                     ))
                                 ) : (
                                     <p className="text-gray-400 italic">{i18n.language.startsWith('en') ? 'No contact information available.' : 'Engar upplýsingar um tengiliði skráðar.'}</p>
-                                )}
-                                {editMode && (
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            setFeed({
-                                                ...feed,
-                                                contact_persons: [
-                                                    ...feed.contact_persons,
-                                                    { name: 'Contact Name', title: 'Consultant', title_en: 'Consultant', title_is: 'Ráðgjafi', email: 'sales@rafapp.com', phone: '', image_url: '' }
-                                                ]
-                                            });
-                                        }}
-                                        className="w-full py-4 border-2 border-dashed border-indigo-500/40 rounded-2xl text-indigo-400 font-black uppercase tracking-widest text-[10px] hover:bg-indigo-950/20 transition"
-                                    >
-                                        + Add Contact Person
-                                    </button>
                                 )}
                             </div>
                         </div>
