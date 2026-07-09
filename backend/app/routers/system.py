@@ -110,8 +110,10 @@ def _normalize_landing_payload(payload: dict) -> dict:
         normalized_persons = []
         for person in payload["contact_persons"]:
             if isinstance(person, dict):
-                person.setdefault("title_en", person.get("title", ""))
-                person.setdefault("title_is", person.get("title", ""))
+                if not person.get("title_en"):
+                    person["title_en"] = person.get("title") or ""
+                if not person.get("title_is"):
+                    person["title_is"] = person.get("title") or ""
                 normalized_persons.append(person)
         payload["contact_persons"] = normalized_persons
     if not isinstance(payload.get("pricing_tiers"), list):
@@ -120,81 +122,89 @@ def _normalize_landing_payload(payload: dict) -> dict:
         normalized_tiers = []
         for tier in payload["pricing_tiers"]:
             if isinstance(tier, dict):
-                tier.setdefault("name_en", tier.get("name", "Basic"))
-                tier.setdefault("name_is", tier.get("name", "Grunnleið"))
-                tier.setdefault("button_text_en", tier.get("button_text", "Get Started"))
-                tier.setdefault("button_text_is", tier.get("button_text", "Hefja prufu"))
-                if not isinstance(tier.get("features_en"), list):
+                if not tier.get("name_en"):
+                    tier["name_en"] = tier.get("name") or "Basic"
+                if not tier.get("name_is"):
+                    tier["name_is"] = tier.get("name") or "Grunnleið"
+                if not tier.get("button_text_en"):
+                    tier["button_text_en"] = tier.get("button_text") or "Get Started"
+                if not tier.get("button_text_is"):
+                    tier["button_text_is"] = tier.get("button_text") or "Hefja prufu"
+                
+                features_en = tier.get("features_en")
+                if not isinstance(features_en, list):
                     tier["features_en"] = tier.get("features", [])
-                if not isinstance(tier.get("features_is"), list):
+                
+                features_is = tier.get("features_is")
+                if not isinstance(features_is, list):
                     tier["features_is"] = tier.get("features", [])
                 normalized_tiers.append(tier)
         payload["pricing_tiers"] = normalized_tiers
 
-    payload.setdefault("nav_home_en", "Home")
-    payload.setdefault("nav_home_is", "Heim")
-    payload.setdefault("nav_news_en", "News")
-    payload.setdefault("nav_news_is", "Fréttir")
-    payload.setdefault("nav_pricing_en", "Pricing")
-    payload.setdefault("nav_pricing_is", "Verðskrá")
-    payload.setdefault("nav_about_en", "About Us")
-    payload.setdefault("nav_about_is", "Um okkur")
-    payload.setdefault("nav_contact_en", "Contact")
-    payload.setdefault("nav_contact_is", "Hafa samband")
+    if not payload.get("nav_home_en"): payload["nav_home_en"] = "Home"
+    if not payload.get("nav_home_is"): payload["nav_home_is"] = "Heim"
+    if not payload.get("nav_news_en"): payload["nav_news_en"] = "News"
+    if not payload.get("nav_news_is"): payload["nav_news_is"] = "Fréttir"
+    if not payload.get("nav_pricing_en"): payload["nav_pricing_en"] = "Pricing"
+    if not payload.get("nav_pricing_is"): payload["nav_pricing_is"] = "Verðskrá"
+    if not payload.get("nav_about_en"): payload["nav_about_en"] = "About Us"
+    if not payload.get("nav_about_is"): payload["nav_about_is"] = "Um okkur"
+    if not payload.get("nav_contact_en"): payload["nav_contact_en"] = "Contact"
+    if not payload.get("nav_contact_is"): payload["nav_contact_is"] = "Hafa samband"
 
-    payload.setdefault("hero_eyebrow_en", "RafApp - Elevating Your Workflow")
-    payload.setdefault("hero_eyebrow_is", "RafApp - Bætir þinn vinnuferil")
+    if not payload.get("hero_eyebrow_en"): payload["hero_eyebrow_en"] = "RafApp - Elevating Your Workflow"
+    if not payload.get("hero_eyebrow_is"): payload["hero_eyebrow_is"] = "RafApp - Bætir þinn vinnuferil"
 
-    payload.setdefault("news_title_en", "Latest News & Updates")
-    payload.setdefault("news_title_is", "Nýjustu fréttir & tilkynningar")
-    payload.setdefault("news_subtitle_en", "Stay up to date with the latest features, releases, and announcements.")
-    payload.setdefault("news_subtitle_is", "Fylgstu með nýjustu eiginleikum, útgáfum og tilkynningum.")
+    if not payload.get("news_title_en"): payload["news_title_en"] = "Latest News & Updates"
+    if not payload.get("news_title_is"): payload["news_title_is"] = "Nýjustu fréttir & tilkynningar"
+    if not payload.get("news_subtitle_en"): payload["news_subtitle_en"] = "Stay up to date with the latest features, releases, and announcements."
+    if not payload.get("news_subtitle_is"): payload["news_subtitle_is"] = "Fylgstu með nýjustu eiginleikum, útgáfum og tilkynningum."
 
-    payload.setdefault("pricing_title_en", "Pricing Plans")
-    payload.setdefault("pricing_title_is", "Verðskrá")
-    payload.setdefault("pricing_subtitle_en", "Choose the perfect plan for your business needs.")
-    payload.setdefault("pricing_subtitle_is", "Veldu áskriftarleið sem hentar þínum rekstri.")
+    if not payload.get("pricing_title_en"): payload["pricing_title_en"] = "Pricing Plans"
+    if not payload.get("pricing_title_is"): payload["pricing_title_is"] = "Verðskrá"
+    if not payload.get("pricing_subtitle_en"): payload["pricing_subtitle_en"] = "Choose the perfect plan for your business needs."
+    if not payload.get("pricing_subtitle_is"): payload["pricing_subtitle_is"] = "Veldu áskriftarleið sem hentar þínum rekstri."
 
-    payload.setdefault("calculator_title_en", "Calculate Your Monthly Cost")
-    payload.setdefault("calculator_title_is", "Reiknaðu mánaðarlegan kostnað")
-    payload.setdefault("calculator_subtitle_en", "Drag the slider to input your company size and get an instant pricing breakdown.")
-    payload.setdefault("calculator_subtitle_is", "Dragðu sleðann til að velja fjölda starfsmanna og sjáðu kostnaðinn.")
+    if not payload.get("calculator_title_en"): payload["calculator_title_en"] = "Calculate Your Monthly Cost"
+    if not payload.get("calculator_title_is"): payload["calculator_title_is"] = "Reiknaðu mánaðarlegan kostnað"
+    if not payload.get("calculator_subtitle_en"): payload["calculator_subtitle_en"] = "Drag the slider to input your company size and get an instant pricing breakdown."
+    if not payload.get("calculator_subtitle_is"): payload["calculator_subtitle_is"] = "Dragðu sleðann til að velja fjölda starfsmanna og sjáðu kostnaðinn."
 
-    payload.setdefault("calculator_size_label_en", "Company Size:")
-    payload.setdefault("calculator_size_label_is", "Fjöldi starfsmanna:")
-    payload.setdefault("calculator_people_label_en", "People")
-    payload.setdefault("calculator_people_label_is", "starfsmenn")
-    payload.setdefault("calculator_tier_label_en", "Active Tier")
-    payload.setdefault("calculator_tier_label_is", "Áskriftarleið")
-    payload.setdefault("calculator_base_label_en", "Base Price (Excl. VSK):")
-    payload.setdefault("calculator_base_label_is", "Grunnverð (án VSK):")
-    payload.setdefault("calculator_extra_label_en", "Additional Users:")
-    payload.setdefault("calculator_extra_label_is", "Auka starfsmenn:")
-    payload.setdefault("calculator_vsk_label_en", "VSK (24%):")
-    payload.setdefault("calculator_vsk_label_is", "VSK (24%):")
-    payload.setdefault("calculator_total_label_en", "Total Monthly Cost:")
-    payload.setdefault("calculator_total_label_is", "Heildarkostnaður á mánuði:")
-    payload.setdefault("calculator_month_label_en", "/ month")
-    payload.setdefault("calculator_month_label_is", "/ mánuði")
+    if not payload.get("calculator_size_label_en"): payload["calculator_size_label_en"] = "Company Size:"
+    if not payload.get("calculator_size_label_is"): payload["calculator_size_label_is"] = "Fjöldi starfsmanna:"
+    if not payload.get("calculator_people_label_en"): payload["calculator_people_label_en"] = "People"
+    if not payload.get("calculator_people_label_is"): payload["calculator_people_label_is"] = "starfsmenn"
+    if not payload.get("calculator_tier_label_en"): payload["calculator_tier_label_en"] = "Active Tier"
+    if not payload.get("calculator_tier_label_is"): payload["calculator_tier_label_is"] = "Áskriftarleið"
+    if not payload.get("calculator_base_label_en"): payload["calculator_base_label_en"] = "Base Price (Excl. VSK):"
+    if not payload.get("calculator_base_label_is"): payload["calculator_base_label_is"] = "Grunnverð (án VSK):"
+    if not payload.get("calculator_extra_label_en"): payload["calculator_extra_label_en"] = "Additional Users:"
+    if not payload.get("calculator_extra_label_is"): payload["calculator_extra_label_is"] = "Auka starfsmenn:"
+    if not payload.get("calculator_vsk_label_en"): payload["calculator_vsk_label_en"] = "VSK (24%):"
+    if not payload.get("calculator_vsk_label_is"): payload["calculator_vsk_label_is"] = "VSK (24%):"
+    if not payload.get("calculator_total_label_en"): payload["calculator_total_label_en"] = "Total Monthly Cost:"
+    if not payload.get("calculator_total_label_is"): payload["calculator_total_label_is"] = "Heildarkostnaður á mánuði:"
+    if not payload.get("calculator_month_label_en"): payload["calculator_month_label_en"] = "/ month"
+    if not payload.get("calculator_month_label_is"): payload["calculator_month_label_is"] = "/ mánuði"
 
-    payload.setdefault("lead_title_en", "Get Started with RafApp")
-    payload.setdefault("lead_title_is", "Hefja vinnu með RafApp")
-    payload.setdefault("lead_subtitle_en", "Fill out this form and our team will set up your workspace.")
-    payload.setdefault("lead_subtitle_is", "Fylltu út formið og við stofnum þitt vinnusvæði.")
-    payload.setdefault("lead_name_label_en", "Your Name")
-    payload.setdefault("lead_name_label_is", "Fullt nafn")
-    payload.setdefault("lead_email_label_en", "Email Address")
-    payload.setdefault("lead_email_label_is", "Netfang")
-    payload.setdefault("lead_company_label_en", "Company Name")
-    payload.setdefault("lead_company_label_is", "Nafn fyrirtækis")
-    payload.setdefault("lead_phone_label_en", "Phone Number")
-    payload.setdefault("lead_phone_label_is", "Símanúmer")
-    payload.setdefault("lead_button_text_en", "Submit Request")
-    payload.setdefault("lead_button_text_is", "Senda beiðni")
-    payload.setdefault("lead_success_en", "Thank you! We will be in touch shortly.")
-    payload.setdefault("lead_success_is", "Takk fyrir! Við verðum í sambandi fljótlega.")
-    payload.setdefault("lead_error_en", "Failed to submit form. Please try again or contact us directly.")
-    payload.setdefault("lead_error_is", "Tenging mistókst. Vinsamlegast reynið aftur síðar.")
+    if not payload.get("lead_title_en"): payload["lead_title_en"] = "Get Started with RafApp"
+    if not payload.get("lead_title_is"): payload["lead_title_is"] = "Hefja vinnu með RafApp"
+    if not payload.get("lead_subtitle_en"): payload["lead_subtitle_en"] = "Fill out this form and our team will set up your workspace."
+    if not payload.get("lead_subtitle_is"): payload["lead_subtitle_is"] = "Fylltu út formið og við stofnum þitt vinnusvæði."
+    if not payload.get("lead_name_label_en"): payload["lead_name_label_en"] = "Your Name"
+    if not payload.get("lead_name_label_is"): payload["lead_name_label_is"] = "Fullt nafn"
+    if not payload.get("lead_email_label_en"): payload["lead_email_label_en"] = "Email Address"
+    if not payload.get("lead_email_label_is"): payload["lead_email_label_is"] = "Netfang"
+    if not payload.get("lead_company_label_en"): payload["lead_company_label_en"] = "Company Name"
+    if not payload.get("lead_company_label_is"): payload["lead_company_label_is"] = "Nafn fyrirtækis"
+    if not payload.get("lead_phone_label_en"): payload["lead_phone_label_en"] = "Phone Number"
+    if not payload.get("lead_phone_label_is"): payload["lead_phone_label_is"] = "Símanúmer"
+    if not payload.get("lead_button_text_en"): payload["lead_button_text_en"] = "Submit Request"
+    if not payload.get("lead_button_text_is"): payload["lead_button_text_is"] = "Senda beiðni"
+    if not payload.get("lead_success_en"): payload["lead_success_en"] = "Thank you! We will be in touch shortly."
+    if not payload.get("lead_success_is"): payload["lead_success_is"] = "Takk fyrir! Við verðum í sambandi fljótlega."
+    if not payload.get("lead_error_en"): payload["lead_error_en"] = "Failed to submit form. Please try again or contact us directly."
+    if not payload.get("lead_error_is"): payload["lead_error_is"] = "Tenging mistókst. Vinsamlegast reynið aftur síðar."
 
     for section_key in ("news", "updates", "tools", "interesting", "random"):
         items = payload.get(section_key)
