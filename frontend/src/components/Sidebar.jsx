@@ -39,8 +39,8 @@ import {
 } from '@heroicons/react/24/outline';
 
 /* ── Breakpoints ── */
-const BP_MOBILE  = 768;   // < 768px  → overlay mode (hamburger)
-const BP_TABLET  = 1024;  // 768–1023 → icon-only strip
+const BP_MOBILE  = 1024;   // < 1024px → overlay mode (hamburger)
+const BP_TABLET  = 1024;  // disable icon-only strip
 // ≥ 1024px → full sidebar, user-collapsible
 
 function useBreakpoint() {

@@ -651,12 +651,8 @@
   }
 }
 
-/* ============================================================
-   RESPONSIVE — Automatic device-size adjustments
-   ============================================================ */
-
-/* ── Phone (< 768px): compact density + large touch targets ── */
-@media (max-width: 767px) {
+/* ── Mobile & Zoomed-in screens (< 1024px): compact density + large touch targets ── */
+@media (max-width: 1023px) {
   /* Shrink base font so the layout fits without needing browser zoom */
   html {
     font-size: 90%;
@@ -677,7 +673,7 @@
   .page-content {
     padding-left: 1rem;
     padding-right: 1rem;
-    padding-top: 4.5rem; /* room for floating hamburger button */
+    padding-top: 1.5rem; /* room for page layout spacing */
   }
 
   /* Slightly smaller cards on mobile */
@@ -698,17 +694,5 @@
   .data-table th {
     padding: 0.625rem 0.75rem;
     font-size: 0.75rem;
-  }
-}
-
-/* ── Tablet (768px – 1023px): medium density ── */
-@media (min-width: 768px) and (max-width: 1023px) {
-  html {
-    font-size: 95%;
-  }
-
-  .page-content {
-    padding-left: 1.25rem;
-    padding-right: 1.25rem;
   }
 }

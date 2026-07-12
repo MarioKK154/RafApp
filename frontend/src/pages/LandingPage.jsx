@@ -83,30 +83,54 @@ function LandingPage() {
         pricing_tiers: [
             {
                 name: 'Sóló & Lítil (1-10)',
+                name_en: 'Solo & Small (1-10)',
+                name_is: 'Sóló & Lítil (1-10)',
                 price: '16,390 ISK / mo',
                 features: ['Includes 2 users in base', '3,190 ISK per additional user', 'Maximum cap of 41,910 ISK / mo'],
+                features_en: ['Includes 2 users in base', '3,190 ISK per additional user', 'Maximum cap of 41,910 ISK / mo'],
+                features_is: ['2 notendur innifaldir í grunni', '3.190 ISK á hvern auka notanda', 'Hámarksgjald 41.910 ISK / mánuði'],
                 button_text: 'Get Started',
+                button_text_en: 'Get Started',
+                button_text_is: 'Hefja prufu',
                 is_popular: false
             },
             {
                 name: 'Meðalstór (11-25)',
+                name_en: 'Medium (11-25)',
+                name_is: 'Meðalstór (11-25)',
                 price: '43,890 ISK / mo',
                 features: ['Includes 10 users in base', '2,750 ISK per additional user', 'Maximum cap of 85,140 ISK / mo'],
+                features_en: ['Includes 10 users in base', '2,750 ISK per additional user', 'Maximum cap of 85,140 ISK / mo'],
+                features_is: ['10 notendur innifaldir í grunni', '2.750 ISK á hvern auka notanda', 'Hámarksgjald 85.140 ISK / mánuði'],
                 button_text: 'Go Team',
+                button_text_en: 'Go Team',
+                button_text_is: 'Velja Team',
                 is_popular: true
             },
             {
                 name: 'Stórhópur (26-65)',
+                name_en: 'Large Group (26-65)',
+                name_is: 'Stórhópur (26-65)',
                 price: '82,390 ISK / mo',
                 features: ['Includes 25 users in base', '2,200 ISK per additional user', 'Maximum cap of 170,390 ISK / mo'],
+                features_en: ['Includes 25 users in base', '2,200 ISK per additional user', 'Maximum cap of 170,390 ISK / mo'],
+                features_is: ['25 notendur innifaldir í grunni', '2.200 ISK á hvern auka notanda', 'Hámarksgjald 170.390 ISK / mánuði'],
                 button_text: 'Go Business',
+                button_text_en: 'Go Business',
+                button_text_is: 'Velja Business',
                 is_popular: false
             },
             {
                 name: 'Fyrirtæki (66+)',
+                name_en: 'Enterprise (66+)',
+                name_is: 'Fyrirtæki (66+)',
                 price: '164,890 ISK / mo',
                 features: ['Includes 65 users in base', '1,650 ISK per additional user', 'Scales with growth'],
+                features_en: ['Includes 65 users in base', '1,650 ISK per additional user', 'Scales with growth'],
+                features_is: ['65 notendur innifaldir í grunni', '1.650 ISK á hvern auka notanda', 'Skalar með vexti fyrirtækisins'],
                 button_text: 'Contact Sales',
+                button_text_en: 'Contact Sales',
+                button_text_is: 'Hafa samband',
                 is_popular: false
             }
         ],
@@ -211,7 +235,24 @@ function LandingPage() {
 
                 setFeed(prev => ({
                     news: Array.isArray(data.news) ? data.news : prev.news,
-                    pricing_tiers: Array.isArray(data.pricing_tiers) ? data.pricing_tiers : prev.pricing_tiers,
+                    pricing_tiers: Array.isArray(data.pricing_tiers)
+                        ? data.pricing_tiers.map((tier, idx) => {
+                            const def = prev.pricing_tiers[idx] || {};
+                            return {
+                                ...tier,
+                                name_en: tier.name_en || def.name_en || tier.name || '',
+                                name_is: tier.name_is || def.name_is || tier.name || '',
+                                features_en: Array.isArray(tier.features_en) && tier.features_en.length > 0 
+                                    ? tier.features_en 
+                                    : (Array.isArray(tier.features) && tier.features.length > 0 ? tier.features : (def.features_en || [])),
+                                features_is: Array.isArray(tier.features_is) && tier.features_is.length > 0 
+                                    ? tier.features_is 
+                                    : (def.features_is || (Array.isArray(tier.features) && tier.features.length > 0 ? tier.features : [])),
+                                button_text_en: tier.button_text_en || def.button_text_en || tier.button_text || '',
+                                button_text_is: tier.button_text_is || def.button_text_is || tier.button_text || '',
+                            };
+                        })
+                        : prev.pricing_tiers,
                     hero_title: data.hero_title || prev.hero_title,
                     hero_title_en: data.hero_title_en || data.hero_title || prev.hero_title_en,
                     hero_title_is: data.hero_title_is || prev.hero_title_is,
