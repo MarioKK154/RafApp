@@ -88,7 +88,7 @@ function ChatPage() {
 
     const fetchUsers = async () => {
         try {
-            const res = await axiosInstance.get('/users', { params: { tenant_id: user.tenant_id } });
+            const res = await axiosInstance.get('/users/', { params: { limit: 1000 } });
             setUsers(res.data);
         } catch (err) {
             console.error("Failed to fetch users", err);
