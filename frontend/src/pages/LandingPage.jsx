@@ -127,7 +127,7 @@ function LandingPage() {
                 title_is: 'Forstjóri',
                 email: 'mario@rafapp.is',
                 phone: '+354 858 9280',
-                image_url: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80'
+                image_url: 'https://tntvbultwjeyizswvqax.supabase.co/storage/v1/object/public/rafapp-uploads/contact_photos/linkedin.png'
             }
         ],
         background_image_urls: ['https://images.unsplash.com/photo-1581092921461-eab62e97a780?auto=format&fit=crop&q=80'],
@@ -735,7 +735,7 @@ function LandingPage() {
                                 </Link>
                                 <button 
                                     onClick={() => scrollToSection('about')}
-                                    className="px-8 py-4 rounded-full font-bold uppercase tracking-widest text-sm border border-gray-600 hover:border-gray-400 hover:bg-gray-800 transition"
+                                    className="px-8 py-4 rounded-full font-bold uppercase tracking-widest text-sm text-white bg-gray-900/90 border border-gray-600 hover:border-gray-400 hover:bg-gray-800 transition shadow-lg backdrop-blur-sm"
                                 >
                                     {i18n.language.startsWith('en') ? 'Learn More' : 'Sjá meira'}
                                 </button>
