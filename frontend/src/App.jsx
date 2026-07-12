@@ -211,7 +211,7 @@ function AppShell() {
                     
                     <button
                         onClick={() => {
-                            const newLang = i18n.language === 'en' ? 'is' : 'en';
+                            const newLang = i18n.language.startsWith('en') ? 'is' : 'en';
                             i18n.changeLanguage(newLang);
                             localStorage.setItem('i18nextLng', newLang);
                         }}

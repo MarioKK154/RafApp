@@ -5,7 +5,7 @@ import i18n from '../i18n';
  * Automatically switches between ISK format and International format
  */
 export const formatCurrency = (value) => {
-    const locale = i18n.language === 'is' ? 'is-IS' : 'en-US';
+    const locale = i18n.language.startsWith('is') ? 'is-IS' : 'en-US';
     return new Intl.NumberFormat(locale, {
         style: 'currency',
         currency: 'ISK',
@@ -17,6 +17,6 @@ export const formatCurrency = (value) => {
  * Standard Date Formatter
  */
 export const formatDate = (dateString) => {
-    const locale = i18n.language === 'is' ? 'is-IS' : 'en-GB';
+    const locale = i18n.language.startsWith('is') ? 'is-IS' : 'en-GB';
     return new Date(dateString).toLocaleDateString(locale);
 };

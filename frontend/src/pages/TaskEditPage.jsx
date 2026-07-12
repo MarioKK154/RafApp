@@ -398,7 +398,7 @@ function TaskEditPage() {
                             <div>
                                 <p className="text-[8px] text-gray-500 dark:text-gray-400 uppercase font-black tracking-widest mb-1">{t('created_at', { defaultValue: 'Created' })}</p>
                                 <p className="text-xs font-bold text-gray-700 dark:text-gray-100 tracking-tight">
-                                    {taskData?.created_at ? new Date(taskData.created_at).toLocaleString(i18n.language === 'is' ? 'is-IS' : 'en-GB') : '---'}
+                                    {taskData?.created_at ? new Date(taskData.created_at).toLocaleString(i18n.language.startsWith('is') ? 'is-IS' : 'en-GB') : '---'}
                                 </p>
                             </div>
                         </div>

@@ -127,7 +127,7 @@ function Sidebar() {
         : 'RafApp';
 
     const toggleLanguage = () => {
-        const newLang = i18n.language === 'en' ? 'is' : 'en';
+        const newLang = i18n.language.startsWith('en') ? 'is' : 'en';
         i18n.changeLanguage(newLang);
     };
 
@@ -349,7 +349,7 @@ function Sidebar() {
                             <LanguageIcon className="h-4 w-4 flex-shrink-0" />
                             {!isCollapsed && (
                                 <div className="flex items-center justify-between flex-1 ml-3">
-                                    <span>{i18n.language === 'en' ? 'Íslenska' : 'English'}</span>
+                                    <span>{i18n.language.startsWith('en') ? 'Íslenska' : 'English'}</span>
                                     <span
                                         style={{ background: 'var(--brand-pale)', color: 'var(--brand)', border: '1px solid var(--brand-border)' }}
                                         className="text-[8px] px-2 py-0.5 rounded-md font-black"

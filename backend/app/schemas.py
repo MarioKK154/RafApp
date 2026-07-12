@@ -1074,9 +1074,15 @@ class LandingFeedItem(BaseModel):
 
 class LandingPricingTier(BaseModel):
     name: str = "Basic"
+    name_en: Optional[str] = None
+    name_is: Optional[str] = None
     price: str = "0 ISK"
     features: List[str] = []
+    features_en: Optional[List[str]] = None
+    features_is: Optional[List[str]] = None
     button_text: str = "Get Started"
+    button_text_en: Optional[str] = None
+    button_text_is: Optional[str] = None
     is_popular: bool = False
 
 
@@ -1111,6 +1117,74 @@ class LandingFeed(BaseModel):
     about_us_text_is: str = ""
     contact_persons: List[LandingContactPerson] = []
     pricing_tiers: List[LandingPricingTier] = []
+
+    # Navigation titles
+    nav_home_en: Optional[str] = "Home"
+    nav_home_is: Optional[str] = "Heim"
+    nav_news_en: Optional[str] = "News"
+    nav_news_is: Optional[str] = "Fréttir"
+    nav_pricing_en: Optional[str] = "Pricing"
+    nav_pricing_is: Optional[str] = "Verðskrá"
+    nav_about_en: Optional[str] = "About Us"
+    nav_about_is: Optional[str] = "Um okkur"
+    nav_contact_en: Optional[str] = "Contact"
+    nav_contact_is: Optional[str] = "Hafa samband"
+
+    # Hero Eyebrow
+    hero_eyebrow_en: Optional[str] = "RafApp - Elevating Your Workflow"
+    hero_eyebrow_is: Optional[str] = "RafApp - Bætir þinn vinnuferil"
+
+    # Section Headers
+    news_title_en: Optional[str] = "Latest News & Updates"
+    news_title_is: Optional[str] = "Nýjustu fréttir & tilkynningar"
+    news_subtitle_en: Optional[str] = "Stay up to date with the latest features, releases, and announcements."
+    news_subtitle_is: Optional[str] = "Fylgstu með nýjustu eiginleikum, útgáfum og tilkynningum."
+
+    pricing_title_en: Optional[str] = "Pricing Plans"
+    pricing_title_is: Optional[str] = "Verðskrá"
+    pricing_subtitle_en: Optional[str] = "Choose the perfect plan for your business needs."
+    pricing_subtitle_is: Optional[str] = "Veldu áskriftarleið sem hentar þínum rekstri."
+
+    calculator_title_en: Optional[str] = "Calculate Your Monthly Cost"
+    calculator_title_is: Optional[str] = "Reiknaðu mánaðarlegan kostnað"
+    calculator_subtitle_en: Optional[str] = "Drag the slider to input your company size and get an instant pricing breakdown."
+    calculator_subtitle_is: Optional[str] = "Dragðu sleðann til að velja fjölda starfsmanna og sjáðu kostnaðinn."
+
+    calculator_size_label_en: Optional[str] = "Company Size:"
+    calculator_size_label_is: Optional[str] = "Fjöldi starfsmanna:"
+    calculator_people_label_en: Optional[str] = "People"
+    calculator_people_label_is: Optional[str] = "starfsmenn"
+    calculator_tier_label_en: Optional[str] = "Active Tier"
+    calculator_tier_label_is: Optional[str] = "Áskriftarleið"
+    calculator_base_label_en: Optional[str] = "Base Price (Excl. VSK):"
+    calculator_base_label_is: Optional[str] = "Grunnverð (án VSK):"
+    calculator_extra_label_en: Optional[str] = "Additional Users:"
+    calculator_extra_label_is: Optional[str] = "Auka starfsmenn:"
+    calculator_vsk_label_en: Optional[str] = "VSK (24%):"
+    calculator_vsk_label_is: Optional[str] = "VSK (24%):"
+    calculator_total_label_en: Optional[str] = "Total Monthly Cost:"
+    calculator_total_label_is: Optional[str] = "Heildarkostnaður á mánuði:"
+    calculator_month_label_en: Optional[str] = "/ month"
+    calculator_month_label_is: Optional[str] = "/ mánuði"
+
+    lead_title_en: Optional[str] = "Get Started with RafApp"
+    lead_title_is: Optional[str] = "Hefja vinnu með RafApp"
+    lead_subtitle_en: Optional[str] = "Fill out this form and our team will set up your workspace."
+    lead_subtitle_is: Optional[str] = "Fylltu út formið og við stofnum þitt vinnusvæði."
+    lead_name_label_en: Optional[str] = "Your Name"
+    lead_name_label_is: Optional[str] = "Fullt nafn"
+    lead_email_label_en: Optional[str] = "Email Address"
+    lead_email_label_is: Optional[str] = "Netfang"
+    lead_company_label_en: Optional[str] = "Company Name"
+    lead_company_label_is: Optional[str] = "Nafn fyrirtækis"
+    lead_phone_label_en: Optional[str] = "Phone Number"
+    lead_phone_label_is: Optional[str] = "Símanúmer"
+    lead_button_text_en: Optional[str] = "Submit Request"
+    lead_button_text_is: Optional[str] = "Senda beiðni"
+    lead_success_en: Optional[str] = "Thank you! We will be in touch shortly."
+    lead_success_is: Optional[str] = "Takk fyrir! Við verðum í sambandi fljótlega."
+    lead_error_en: Optional[str] = "Failed to submit form. Please try again or contact us directly."
+    lead_error_is: Optional[str] = "Tenging mistókst. Vinsamlegast reynið aftur síðar."
 
 class ReportTimeLogEntry(BaseModel):
     user_name: str

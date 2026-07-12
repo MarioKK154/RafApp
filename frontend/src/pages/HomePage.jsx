@@ -84,7 +84,7 @@ function HomePage() {
     };
 
     const updateTitle = (id, title) => {
-        const langKey = i18n.language === 'en' ? 'title_en' : 'title_is';
+        const langKey = i18n.language.startsWith('en') ? 'title_en' : 'title_is';
         setLayout(prev => prev.map(item => item.id === id ? { ...item, [langKey]: title } : item));
     };
 
@@ -168,7 +168,7 @@ function HomePage() {
 
     const getGreeting = () => {
         const hour = new Date().getHours();
-        const isIcelandic = i18n.language === 'is';
+        const isIcelandic = i18n.language.startsWith('is');
 
         if (hour < 12) {
             return t('greeting_morning', { defaultValue: isIcelandic ? 'Góðan daginn' : 'Good morning' });
@@ -227,7 +227,7 @@ function HomePage() {
     };
 
     const renderBlockContent = (item) => {
-        const title = i18n.language === 'en' ? item.title_en : item.title_is;
+        const title = i18n.language.startsWith('en') ? item.title_en : item.title_is;
         
         switch (item.id) {
             case 'stat-cards':
@@ -635,7 +635,7 @@ function HomePage() {
 
                                     <input
                                         type="text"
-                                        value={i18n.language === 'en' ? item.title_en : item.title_is}
+                                        value={i18n.language.startsWith('en') ? item.title_en : item.title_is}
                                         onChange={(e) => updateTitle(item.id, e.target.value)}
                                         className="bg-gray-800 text-white border-none text-[8px] rounded h-5 w-24 px-1 focus:ring-0 focus:outline-none font-bold"
                                         placeholder="Rename title"

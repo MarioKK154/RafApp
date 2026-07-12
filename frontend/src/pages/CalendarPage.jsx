@@ -394,7 +394,7 @@ function CalendarPage() {
                     <FullCalendar
                         plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
                         initialView="dayGridMonth"
-                        locale={i18n.language === 'is' ? 'is' : 'en-gb'}
+                        locale={i18n.language.startsWith('is') ? 'is' : 'en-gb'}
                         events={filteredEvents}
                         eventClick={handleEventClick}
                         dateClick={handleDateClick}
@@ -555,8 +555,8 @@ function CalendarPage() {
                             )}
                             {(formData.start || formData.end) && (
                                 <p className="text-[11px] text-gray-500 dark:text-gray-400">
-                                    {formData.start ? new Date(formData.start).toLocaleString(i18n.language === 'is' ? 'is-IS' : 'en-GB', { dateStyle: 'short', timeStyle: 'short' }) : '—'}
-                                    {formData.end ? ` → ${new Date(formData.end).toLocaleString(i18n.language === 'is' ? 'is-IS' : 'en-GB', { dateStyle: 'short', timeStyle: 'short' })}` : ''}
+                                    {formData.start ? new Date(formData.start).toLocaleString(i18n.language.startsWith('is') ? 'is-IS' : 'en-GB', { dateStyle: 'short', timeStyle: 'short' }) : '—'}
+                                    {formData.end ? ` → ${new Date(formData.end).toLocaleString(i18n.language.startsWith('is') ? 'is-IS' : 'en-GB', { dateStyle: 'short', timeStyle: 'short' })}` : ''}
                                 </p>
                             )}
                             {formData.location && (

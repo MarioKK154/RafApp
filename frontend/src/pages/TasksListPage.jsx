@@ -426,7 +426,7 @@ function TasksListPage() {
                                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-3 gap-x-12 ml-1">
                                         <DetailItem icon={<BriefcaseIcon />} label={t('project')} value={task.project?.name || 'N/A'} />
                                         <DetailItem icon={<UserIcon />} label={t('lead')} value={task.assignee?.full_name || 'Unassigned'} />
-                                        <DetailItem icon={<CalendarIcon />} label={t('due')} value={task.due_date ? new Date(task.due_date).toLocaleDateString(i18n.language === 'is' ? 'is-IS' : 'en-GB') : t('not_specified')} />
+                                        <DetailItem icon={<CalendarIcon />} label={t('due')} value={task.due_date ? new Date(task.due_date).toLocaleDateString(i18n.language.startsWith('is') ? 'is-IS' : 'en-GB') : t('not_specified')} />
                                     </div>
                                 </div>
 
