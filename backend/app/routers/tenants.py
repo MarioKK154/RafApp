@@ -13,6 +13,7 @@ import secrets
 from .. import crud, models, schemas, security
 from ..database import get_db
 from ..limiter import limiter
+from ..storage import upload_file
 
 # The entire router is restricted to Superusers (God Mode)
 router = APIRouter(
@@ -201,20 +202,17 @@ async def upload_tenant_logo(
             detail=f"Logo must be under {MAX_LOGO_SIZE_MB}MB",
         )
 
-    tenant_dir = TENANT_ASSETS_DIR / str(tenant_id)
-    tenant_dir.mkdir(parents=True, exist_ok=True)
-    # Remove old logo files to avoid clutter
-    for f in tenant_dir.glob("logo.*"):
-        try:
-            f.unlink()
-        except OSError:
-            pass
     logo_filename = f"logo{ext}"
-    logo_path = tenant_dir / logo_filename
-    with open(logo_path, "wb") as f:
-        f.write(content)
-    url_path = f"/static/tenant_assets/{tenant_id}/{logo_filename}"
-    # Update tenant record so logo_url is set
+    # upload_file() tries Supabase Storage first, falls back to local disk
+    content_type_map = {".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
+                        ".svg": "image/svg+xml", ".webp": "image/webp"}
+    mime = content_type_map.get(ext, "image/png")
+    url_path = upload_file(
+        content=content,
+        filename=logo_filename,
+        folder=f"tenant_assets/{tenant_id}",
+        content_type=mime,
+    )
     crud.update_tenant(db, db_tenant, schemas.TenantUpdate(logo_url=url_path))
     return JSONResponse({"url": url_path})
 
@@ -245,13 +243,15 @@ async def upload_tenant_background(
             detail=f"Background must be under {MAX_BACKGROUND_SIZE_MB}MB",
         )
 
-    tenant_dir = TENANT_ASSETS_DIR / str(tenant_id)
-    tenant_dir.mkdir(parents=True, exist_ok=True)
     bg_filename = f"bg_{uuid.uuid4().hex[:12]}{ext}"
-    bg_path = tenant_dir / bg_filename
-    with open(bg_path, "wb") as f:
-        f.write(content)
-    url_path = f"/static/tenant_assets/{tenant_id}/{bg_filename}"
+    content_type_map = {".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp"}
+    mime = content_type_map.get(ext, "image/jpeg")
+    url_path = upload_file(
+        content=content,
+        filename=bg_filename,
+        folder=f"tenant_assets/{tenant_id}",
+        content_type=mime,
+    )
 
     # Append to background_image_urls (JSON array in DB)
     current = []

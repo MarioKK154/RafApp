@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import React, { useEffect, useMemo, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
     ArrowRightIcon,
     ShieldCheckIcon,
@@ -30,6 +30,19 @@ function LandingPage() {
     const { isAuthenticated, user } = useAuth();
     const isSuperadmin = user?.is_superuser;
     const location = useLocation();
+    const navigate = useNavigate();
+
+    // Subdomain redirect: if visiting [tenant].rafapp.is, go straight to /login
+    useEffect(() => {
+        const hostname = window.location.hostname;
+        const parts = hostname.split('.');
+        if (parts.length > 2) {
+            const sub = parts[0].toLowerCase();
+            if (sub !== 'www' && sub !== 'api') {
+                navigate('/login', { replace: true });
+            }
+        }
+    }, [navigate]);
     
     useEffect(() => {
         if (location.state?.scrollTo) {

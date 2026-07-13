@@ -44,6 +44,7 @@ function LoginPage() {
     const [totpCode, setTotpCode] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [tenantMenuOpen, setTenantMenuOpen] = useState(false);
+    const [isSubdomainLocked, setIsSubdomainLocked] = useState(false);
     const tenantPickerRef = useRef(null);
 
     const from = location.state?.from?.pathname || '/';
@@ -73,7 +74,24 @@ function LoginPage() {
         const loadTenants = async () => {
             try {
                 const response = await axiosInstance.get('/auth/login-tenants');
-                setTenants(Array.isArray(response.data) ? response.data : []);
+                const tenantsList = Array.isArray(response.data) ? response.data : [];
+                setTenants(tenantsList);
+
+                // Subdomain auto-selection
+                const hostname = window.location.hostname;
+                const parts = hostname.split('.');
+                if (parts.length > 2) {
+                    const sub = parts[0].toLowerCase();
+                    if (sub !== 'www' && sub !== 'api') {
+                        const matched = tenantsList.find(
+                            (tnt) => (tnt.name || '').toLowerCase().replace(/\s+/g, '') === sub
+                        );
+                        if (matched) {
+                            setSelectedTenantId(String(matched.id));
+                            setIsSubdomainLocked(true);
+                        }
+                    }
+                }
             } catch (error) {
                 console.error('Tenant fetch failed:', error);
                 toast.error('Could not load company list.');
@@ -183,7 +201,11 @@ function LoginPage() {
                 
                 <div className="text-center mb-10">
                     <div className="inline-flex p-6 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-800 mb-6">
-                        <img src={defaultLogo} alt="Logo" className="h-28 w-28 object-contain" />
+                        <img 
+                            src={(selectedTenant && selectedTenant.logo_url) ? resolveLoginAssetUrl(selectedTenant.logo_url) : defaultLogo} 
+                            alt="Logo" 
+                            className="h-28 w-28 object-contain" 
+                        />
                     </div>
                     
                     <h1 className="text-5xl font-black text-gray-900 dark:text-white tracking-tighter italic leading-none">
@@ -207,107 +229,126 @@ function LoginPage() {
                                     <BuildingOffice2Icon className="h-3 w-3" /> {t('company', { defaultValue: 'Company' })}
                                 </label>
                                 <div className="relative" ref={tenantPickerRef}>
-                                    <div className="relative mb-2">
-                                        <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                                        <input
-                                            type="text"
-                                            value={tenantSearch}
-                                            onChange={(e) => {
-                                                setTenantSearch(e.target.value);
-                                                setTenantMenuOpen(true);
-                                            }}
-                                            placeholder={t('search_company', { defaultValue: 'Search company...' })}
-                                            className="modern-input h-12 pl-11 text-sm"
-                                        />
-                                    </div>
-                                    <button
-                                        type="button"
-                                        onClick={() => setTenantMenuOpen((o) => !o)}
-                                        aria-haspopup="listbox"
-                                        aria-expanded={tenantMenuOpen}
-                                        className="modern-input h-14 font-bold w-full flex items-center gap-3 text-left"
-                                    >
-                                        {selectedTenant ? (
-                                            <>
-                                                {selectedTenant.logo_url ? (
-                                                    <img
-                                                        src={resolveLoginAssetUrl(selectedTenant.logo_url)}
-                                                        alt=""
-                                                        className="h-9 w-9 shrink-0 rounded-lg object-contain border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900"
-                                                    />
-                                                ) : (
-                                                    <div className="h-9 w-9 shrink-0 rounded-lg bg-gray-200 dark:bg-gray-700 flex items-center justify-center border border-gray-200 dark:border-gray-600">
-                                                        <BuildingOffice2Icon className="h-5 w-5 text-gray-500" />
-                                                    </div>
-                                                )}
-                                                <span className="truncate flex-1">{selectedTenant.name}</span>
-                                            </>
-                                        ) : (
-                                            <span className="text-gray-400 flex-1">{t('select_company', { defaultValue: '-- SELECT COMPANY --' })}</span>
-                                        )}
-                                        <ChevronDownIcon className={`h-5 w-5 shrink-0 text-gray-400 transition ${tenantMenuOpen ? 'rotate-180' : ''}`} />
-                                    </button>
-                                    {tenantMenuOpen && (
-                                        <ul
-                                            role="listbox"
-                                            className="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 py-1 shadow-xl"
-                                        >
-                                            <li role="presentation">
-                                                <button
-                                                    type="button"
-                                                    role="option"
-                                                    aria-selected={!selectedTenantId}
-                                                    className="flex w-full items-center gap-3 px-3 py-2.5 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700/80"
-                                                    onClick={() => {
-                                                        setSelectedTenantId('');
-                                                        setTenantMenuOpen(false);
+                                    {isSubdomainLocked ? (
+                                        <div className="modern-input h-14 font-bold w-full flex items-center gap-3 bg-gray-50 dark:bg-gray-700/30 border border-gray-150 dark:border-gray-700 cursor-not-allowed">
+                                            {selectedTenant && selectedTenant.logo_url ? (
+                                                <img
+                                                    src={resolveLoginAssetUrl(selectedTenant.logo_url)}
+                                                    alt=""
+                                                    className="h-9 w-9 shrink-0 rounded-lg object-contain border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900"
+                                                />
+                                            ) : (
+                                                <div className="h-9 w-9 shrink-0 rounded-lg bg-gray-200 dark:bg-gray-700 flex items-center justify-center border border-gray-200 dark:border-gray-600">
+                                                    <BuildingOffice2Icon className="h-5 w-5 text-gray-500" />
+                                                </div>
+                                            )}
+                                            <span className="truncate flex-1">{selectedTenant ? selectedTenant.name : 'Loading...'}</span>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <div className="relative mb-2">
+                                                <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                                <input
+                                                    type="text"
+                                                    value={tenantSearch}
+                                                    onChange={(e) => {
+                                                        setTenantSearch(e.target.value);
+                                                        setTenantMenuOpen(true);
                                                     }}
+                                                    placeholder={t('search_company', { defaultValue: 'Search company...' })}
+                                                    className="modern-input h-12 pl-11 text-sm"
+                                                />
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => setTenantMenuOpen((o) => !o)}
+                                                aria-haspopup="listbox"
+                                                aria-expanded={tenantMenuOpen}
+                                                className="modern-input h-14 font-bold w-full flex items-center gap-3 text-left"
+                                            >
+                                                {selectedTenant ? (
+                                                    <>
+                                                        {selectedTenant.logo_url ? (
+                                                            <img
+                                                                src={resolveLoginAssetUrl(selectedTenant.logo_url)}
+                                                                alt=""
+                                                                className="h-9 w-9 shrink-0 rounded-lg object-contain border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900"
+                                                            />
+                                                        ) : (
+                                                            <div className="h-9 w-9 shrink-0 rounded-lg bg-gray-200 dark:bg-gray-700 flex items-center justify-center border border-gray-200 dark:border-gray-600">
+                                                                <BuildingOffice2Icon className="h-5 w-5 text-gray-500" />
+                                                            </div>
+                                                        )}
+                                                        <span className="truncate flex-1">{selectedTenant.name}</span>
+                                                    </>
+                                                ) : (
+                                                    <span className="text-gray-400 flex-1">{t('select_company', { defaultValue: '-- SELECT COMPANY --' })}</span>
+                                                )}
+                                                <ChevronDownIcon className={`h-5 w-5 shrink-0 text-gray-400 transition ${tenantMenuOpen ? 'rotate-180' : ''}`} />
+                                            </button>
+                                            {tenantMenuOpen && (
+                                                <ul
+                                                    role="listbox"
+                                                    className="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 py-1 shadow-xl"
                                                 >
-                                                    <div className="h-9 w-9 shrink-0 rounded-lg bg-gray-100 dark:bg-gray-700" />
-                                                    <span className="text-gray-500 dark:text-gray-400 font-semibold">
-                                                        {t('select_company', { defaultValue: '-- SELECT COMPANY --' })}
-                                                    </span>
-                                                </button>
-                                            </li>
-                                            {filteredTenants.map((tenant) => {
-                                                const selected = String(tenant.id) === String(selectedTenantId);
-                                                const logoSrc = tenant.logo_url ? resolveLoginAssetUrl(tenant.logo_url) : '';
-                                                return (
-                                                    <li key={tenant.id} role="presentation">
+                                                    <li role="presentation">
                                                         <button
                                                             type="button"
                                                             role="option"
-                                                            aria-selected={selected}
-                                                            className={`flex w-full items-center gap-3 px-3 py-2.5 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700/80 ${
-                                                                selected ? 'bg-indigo-50 dark:bg-indigo-900/30' : ''
-                                                            }`}
+                                                            aria-selected={!selectedTenantId}
+                                                            className="flex w-full items-center gap-3 px-3 py-2.5 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700/80"
                                                             onClick={() => {
-                                                                setSelectedTenantId(String(tenant.id));
+                                                                setSelectedTenantId('');
                                                                 setTenantMenuOpen(false);
                                                             }}
                                                         >
-                                                            {logoSrc ? (
-                                                                <img
-                                                                    src={logoSrc}
-                                                                    alt=""
-                                                                    className="h-9 w-9 shrink-0 rounded-lg object-contain border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900"
-                                                                />
-                                                            ) : (
-                                                                <div className="h-9 w-9 shrink-0 rounded-lg bg-gray-200 dark:bg-gray-700 flex items-center justify-center border border-gray-200 dark:border-gray-600">
-                                                                    <BuildingOffice2Icon className="h-5 w-5 text-gray-500" />
-                                                                </div>
-                                                            )}
-                                                            <span className="truncate font-bold text-gray-900 dark:text-white">{tenant.name}</span>
+                                                            <div className="h-9 w-9 shrink-0 rounded-lg bg-gray-100 dark:bg-gray-700" />
+                                                            <span className="text-gray-500 dark:text-gray-400 font-semibold">
+                                                                {t('select_company', { defaultValue: '-- SELECT COMPANY --' })}
+                                                            </span>
                                                         </button>
                                                     </li>
-                                                );
-                                            })}
-                                            {filteredTenants.length === 0 && (
-                                                <li className="px-3 py-3 text-xs text-gray-500 dark:text-gray-400 text-center">
-                                                    No companies match your search.
-                                                </li>
+                                                    {filteredTenants.map((tenant) => {
+                                                        const selected = String(tenant.id) === String(selectedTenantId);
+                                                        const logoSrc = tenant.logo_url ? resolveLoginAssetUrl(tenant.logo_url) : '';
+                                                        return (
+                                                            <li key={tenant.id} role="presentation">
+                                                                <button
+                                                                    type="button"
+                                                                    role="option"
+                                                                    aria-selected={selected}
+                                                                    className={`flex w-full items-center gap-3 px-3 py-2.5 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700/80 ${
+                                                                        selected ? 'bg-indigo-50 dark:bg-indigo-900/30' : ''
+                                                                    }`}
+                                                                    onClick={() => {
+                                                                        setSelectedTenantId(String(tenant.id));
+                                                                        setTenantMenuOpen(false);
+                                                                    }}
+                                                                >
+                                                                    {logoSrc ? (
+                                                                        <img
+                                                                            src={logoSrc}
+                                                                            alt=""
+                                                                            className="h-9 w-9 shrink-0 rounded-lg object-contain border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900"
+                                                                        />
+                                                                    ) : (
+                                                                        <div className="h-9 w-9 shrink-0 rounded-lg bg-gray-200 dark:bg-gray-700 flex items-center justify-center border border-gray-200 dark:border-gray-600">
+                                                                            <BuildingOffice2Icon className="h-5 w-5 text-gray-500" />
+                                                                        </div>
+                                                                    )}
+                                                                    <span className="truncate font-bold text-gray-900 dark:text-white">{tenant.name}</span>
+                                                                </button>
+                                                            </li>
+                                                        );
+                                                    })}
+                                                    {filteredTenants.length === 0 && (
+                                                        <li className="px-3 py-3 text-xs text-gray-500 dark:text-gray-400 text-center">
+                                                            No companies match your search.
+                                                        </li>
+                                                    )}
+                                                </ul>
                                             )}
-                                        </ul>
+                                        </>
                                     )}
                                 </div>
                                 {selectedTenant && (
