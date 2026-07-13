@@ -77,6 +77,89 @@ def create_new_offer(
         
     return crud.create_offer(db, offer_data=offer_data, user=current_user)
 
+
+@router.post("/from-catalog", response_model=schemas.OfferRead, status_code=status.HTTP_201_CREATED)
+@limiter.limit("50/minute")
+def create_offer_from_catalog(
+    request: Request,
+    payload: schemas.OfferFromCatalogCreate,
+    db: DbDependency,
+    current_user: OfferManagerDependency,
+):
+    """
+    F2: Creates an offer from selected labor catalog items.
+    Each catalog item becomes a Labor line item on the offer.
+    unit_price = verdlag_per_eining × item.reference_price (einingar).
+    """
+    from ..models import LaborCatalogItem, OfferLineItemType, Offer, OfferLineItem, OfferStatus
+    import uuid, json
+    from datetime import datetime as dt
+
+    effective_tenant_id = current_user.tenant_id
+
+    # Verify project access
+    project = crud.get_project(db, project_id=payload.project_id, tenant_id=effective_tenant_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found or not accessible.")
+
+    # Load catalog items
+    catalog_items = (
+        db.query(LaborCatalogItem)
+        .filter(LaborCatalogItem.id.in_(payload.catalog_item_ids))
+        .all()
+    )
+    if not catalog_items:
+        raise HTTPException(status_code=404, detail="No matching labor catalog items found.")
+
+    # Build a map for ordering
+    item_map = {item.id: item for item in catalog_items}
+
+    # Generate offer number: OFF-<year>-<random 6 hex>
+    offer_number = f"OFF-{dt.utcnow().year}-{uuid.uuid4().hex[:6].upper()}"
+
+    db_offer = Offer(
+        offer_number=offer_number,
+        title=payload.title or "Work Offer",
+        status=OfferStatus.Draft,
+        client_name=payload.client_name,
+        client_address=payload.client_address,
+        client_email=payload.client_email,
+        expiry_date=payload.expiry_date,
+        verdlag_per_eining=payload.verdlag_per_eining,
+        project_id=payload.project_id,
+        tenant_id=effective_tenant_id,
+        created_by_user_id=current_user.id,
+    )
+    db.add(db_offer)
+    db.flush()  # get db_offer.id
+
+    total = 0.0
+    for item_id in payload.catalog_item_ids:
+        item = item_map.get(item_id)
+        if not item:
+            continue
+        eining = item.reference_price or 0.0  # ar.is work units
+        unit_price = payload.verdlag_per_eining * eining
+        total_price = unit_price  # qty = 1 per line; user can adjust after creation
+        line = OfferLineItem(
+            item_type=OfferLineItemType.Labor,
+            description=item.description,
+            quantity=1.0,
+            unit_price=unit_price,
+            total_price=total_price,
+            offer_id=db_offer.id,
+            labor_catalog_item_id=item.id,
+            eining_value=eining,
+        )
+        db.add(line)
+        total += total_price
+
+    db_offer.total_amount = total
+    db.commit()
+    db.refresh(db_offer)
+    return db_offer
+
+
 @router.get("/project/{project_id}", response_model=List[schemas.OfferRead])
 @limiter.limit("100/minute")
 def get_offers_for_a_project(

@@ -1503,11 +1503,24 @@ class OfferBase(BaseModel):
 
 class OfferCreate(OfferBase):
     project_id: int
+    verdlag_per_eining: Optional[float] = None  # ISK/eining rate used for catalog-based offer creation
+
+class OfferFromCatalogCreate(BaseModel):
+    """F2: Create an offer directly from selected labor catalog items."""
+    project_id: int
+    title: Optional[str] = "Work Offer"
+    client_name: Optional[str] = None
+    client_address: Optional[str] = None
+    client_email: Optional[str] = None
+    expiry_date: Optional[date] = None
+    verdlag_per_eining: float = Field(..., gt=0, description="ISK per eining rate. Total = sum(eining) x this rate.")
+    catalog_item_ids: List[int] = Field(..., min_length=1, description="Labor catalog item IDs to include.")
 
 class OfferUpdate(OfferBase):
     title: Optional[str] = None
     status: Optional[OfferStatus] = None
     work_load_ratio_codes: Optional[str] = None
+    verdlag_per_eining: Optional[float] = None
 
 class OfferRead(OfferBase):
     id: int
@@ -1517,8 +1530,64 @@ class OfferRead(OfferBase):
     created_by_user_id: int
     issue_date: datetime
     total_amount: Optional[float] = None
+    verdlag_per_eining: Optional[float] = None
     line_items: List[OfferLineItemRead] = []
     creator: Optional[UserReadBasic] = None
+    model_config = ConfigDict(from_attributes=True)
+
+# --- F3: Global Shop Catalog Schemas ---
+
+class GlobalShopBase(BaseModel):
+    name: str
+    website_url: Optional[str] = None
+    logo_url: Optional[str] = None
+    is_active: Optional[bool] = True
+
+class GlobalShopCreate(GlobalShopBase):
+    pass
+
+class GlobalShopUpdate(BaseModel):
+    name: Optional[str] = None
+    website_url: Optional[str] = None
+    logo_url: Optional[str] = None
+    is_active: Optional[bool] = None
+
+class GlobalShopRead(GlobalShopBase):
+    id: int
+    created_at: datetime
+    model_config = ConfigDict(from_attributes=True)
+
+class ShopItemPriceBase(BaseModel):
+    shop_id: int
+    inventory_item_id: int
+    sku: Optional[str] = None
+    price: Optional[float] = None
+    currency: Optional[str] = "ISK"
+
+class ShopItemPriceCreate(ShopItemPriceBase):
+    pass
+
+class ShopItemPriceUpsert(BaseModel):
+    """Upsert price for a specific shop+item combo."""
+    sku: Optional[str] = None
+    price: Optional[float] = None
+    currency: Optional[str] = "ISK"
+
+class ShopItemPriceRead(ShopItemPriceBase):
+    id: int
+    last_updated: datetime
+    model_config = ConfigDict(from_attributes=True)
+
+class InventoryItemWithPricesRead(BaseModel):
+    """Inventory item enriched with per-shop prices for comparison view."""
+    id: int
+    name: str
+    name_en: Optional[str] = None
+    category: Optional[str] = None
+    subcategory: Optional[str] = None
+    unit: Optional[str] = None
+    brand: Optional[str] = None
+    shop_prices: List[ShopItemPriceRead] = []
     model_config = ConfigDict(from_attributes=True)
 
 # --- User License Schemas ---

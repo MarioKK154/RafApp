@@ -497,6 +497,7 @@ class Offer(Base):
     tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id"), nullable=False)
     created_by_user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
     work_load_ratio_codes: Mapped[Optional[str]] = mapped_column(Text)  # JSON array of codes; applied to labor lines
+    verdlag_per_eining: Mapped[Optional[float]] = mapped_column(Float, nullable=True)  # ISK/eining rate used when creating from catalog
     project: Mapped["Project"] = relationship(back_populates="offers")
     tenant: Mapped["Tenant"] = relationship(back_populates="offers")
     creator: Mapped["User"] = relationship()
@@ -512,6 +513,9 @@ class OfferLineItem(Base):
     total_price: Mapped[float] = mapped_column(Float, nullable=False)
     offer_id: Mapped[int] = mapped_column(ForeignKey("offers.id"), nullable=False)
     inventory_item_id: Mapped[Optional[int]] = mapped_column(ForeignKey("inventory_items.id"))
+    # F2: traceability back to labor catalog source item
+    labor_catalog_item_id: Mapped[Optional[int]] = mapped_column(ForeignKey("labor_catalog_items.id"), nullable=True, index=True)
+    eining_value: Mapped[Optional[float]] = mapped_column(Float, nullable=True)  # snapshot of reference_price at offer creation
     offer: Mapped["Offer"] = relationship(back_populates="line_items")
     inventory_item: Mapped[Optional["InventoryItem"]] = relationship(back_populates="offer_line_items")
 
@@ -740,6 +744,35 @@ class Shop(Base):
     notes: Mapped[Optional[str]] = mapped_column(Text)
     tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id"), nullable=False)
     tenant: Mapped["Tenant"] = relationship(back_populates="shops")
+
+# F3: Global shop catalog (cross-tenant, no tenant_id — shared price directory)
+class GlobalShop(Base):
+    """Global supplier/shop directory shared across all tenants."""
+    __tablename__ = "global_shops"
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    name: Mapped[str] = mapped_column(String, index=True, nullable=False, unique=True)
+    website_url: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    logo_url: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    # Relationships
+    item_prices: Mapped[list["ShopItemPrice"]] = relationship(back_populates="shop", cascade="all, delete-orphan")
+
+class ShopItemPrice(Base):
+    """Per-shop per-inventory-item price record (global — no tenant)."""
+    __tablename__ = "shop_item_prices"
+    __table_args__ = (UniqueConstraint("shop_id", "inventory_item_id", name="uq_shop_item_price"),)
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    shop_id: Mapped[int] = mapped_column(ForeignKey("global_shops.id"), nullable=False, index=True)
+    inventory_item_id: Mapped[int] = mapped_column(ForeignKey("inventory_items.id"), nullable=False, index=True)
+    sku: Mapped[Optional[str]] = mapped_column(String, nullable=True)      # item code at this shop
+    price: Mapped[Optional[float]] = mapped_column(Float, nullable=True)   # current price (ISK)
+    currency: Mapped[str] = mapped_column(String, default="ISK")
+    last_updated: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    # Relationships
+    shop: Mapped["GlobalShop"] = relationship(back_populates="item_prices")
+    inventory_item: Mapped["InventoryItem"] = relationship()
+
 
 class BoQ(Base):
     __tablename__ = "boqs"

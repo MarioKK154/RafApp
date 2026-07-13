@@ -67,6 +67,7 @@ import SchedulingGridPage from './pages/SchedulingGridPage';
 import axiosInstance from './api/axiosInstance';
 import RiskLibraryPage from './pages/RiskLibraryPage';
 import ChatPage from './pages/ChatPage';
+import ShopCatalogPage from './pages/ShopCatalogPage';
 
 const ProtectedRoute = ({ children }) => {
     const { isAuthenticated, isLoading } = useAuth();
@@ -284,6 +285,7 @@ function AppShell() {
                         <Route path="/inventory" element={<ProtectedRoute><InventoryCatalogPage /></ProtectedRoute>} />
                         <Route path="/inventory/new" element={<ProtectedRoute><InventoryCatalogCreatePage /></ProtectedRoute>} />
                         <Route path="/inventory/edit/:itemId" element={<ProtectedRoute><InventoryCatalogEditPage /></ProtectedRoute>} />
+                        <Route path="/shop-catalog" element={<ProtectedRoute><ShopCatalogPage /></ProtectedRoute>} />
 
                         {/* --- ASSETS & LOGISTICS --- */}
                         <Route path="/tools" element={<ProtectedRoute><ToolInventoryPage /></ProtectedRoute>} />

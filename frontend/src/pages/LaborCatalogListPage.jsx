@@ -6,6 +6,7 @@ import axiosInstance from '../api/axiosInstance';
 import { toast } from 'react-toastify';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ConfirmationModal from '../components/ConfirmationModal';
+import CreateOfferFromCatalogModal from '../components/CreateOfferFromCatalogModal';
 import {
     PlusIcon,
     PencilIcon,
@@ -19,15 +20,26 @@ import {
     ChevronRightIcon,
     FolderIcon,
     FolderOpenIcon,
+    DocumentPlusIcon,
+    CheckIcon,
 } from '@heroicons/react/24/outline';
 
-const formatCurrencyISK = (value) => {
-    if (value === null || value === undefined) return '0 kr.';
+/** Format a decimal eining value: 1.25 → "1.250 ein." */
+const formatEining = (value) => {
+    if (value === null || value === undefined || value === '') return '—';
+    const n = Number(value);
+    if (isNaN(n)) return '—';
+    return `${n.toFixed(3)} ein.`;
+};
+
+/** Format ISK/eining rate */
+const formatISKRate = (value) => {
+    if (value === null || value === undefined) return null;
     return new Intl.NumberFormat('is-IS', {
         style: 'currency',
         currency: 'ISK',
         maximumFractionDigits: 0,
-    }).format(value);
+    }).format(value) + '/ein.';
 };
 
 /** ar.is Eining: units per hour → time per unit. 0 = hourly rate; positive = 60/u min per unit */
@@ -81,6 +93,9 @@ function LaborCatalogListPage() {
     const [tenantBasePriceInput, setTenantBasePriceInput] = useState('');
     const [applyingBasePrice, setApplyingBasePrice] = useState(false);
     const [modifiers, setModifiers] = useState([]);
+    // F2: offer creation from catalog
+    const [selectedItemIds, setSelectedItemIds] = useState(new Set());
+    const [isOfferModalOpen, setIsOfferModalOpen] = useState(false);
     
     const isSuperuser = user?.is_superuser;
     const canManageCatalog = user && (['admin', 'project manager'].includes(user.role) || isSuperuser);
@@ -548,10 +563,12 @@ function LaborCatalogListPage() {
                                     <table className={`w-full text-sm text-left min-w-[500px] ${!canExportData ? 'protect-data' : ''}`}>
                                         <thead className="text-xs text-gray-400 uppercase bg-gray-50 dark:bg-gray-700/50 font-black">
                                             <tr>
+                                                {canManageCatalog && <th className="py-4 px-3 w-8"></th>}
                                                 <th className="py-4 px-6">{t('service_description')}</th>
                                                 <th className="py-4 px-4">{t('conditions', 'Conditions')}</th>
-                                                <th className="py-4 px-4 text-right">{t('standard_rate')}</th>
-                                                <th className="py-4 px-4">ar.is Eining</th>
+                                                <th className="py-4 px-4 text-right" title="ar.is reference work units (Einingar)">Eining (ein.)</th>
+                                                <th className="py-4 px-4 text-right" title="Your company rate per Eining (ISK/ein.)">ISK/ein.</th>
+                                                <th className="py-4 px-4">Tímahlutfall</th>
                                                 {canManageCatalog && (
                                                     <th className="py-4 px-6 text-center w-24">{t('management')}</th>
                                                 )}
@@ -559,12 +576,29 @@ function LaborCatalogListPage() {
                                         </thead>
                                         <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                                             {items.length > 0 ? (
-                                                items.map((item) => (
+                                                items.map((item) => {
+                                                    const isSelected = selectedItemIds.has(item.id);
+                                                    return (
                                                     <tr
                                                         key={item.id}
                                                         onClick={() => navigate(`/labor-catalog/edit/${item.id}`)}
-                                                        className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors cursor-pointer"
+                                                        className={`hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors cursor-pointer ${isSelected ? 'bg-indigo-50 dark:bg-indigo-900/20' : ''}`}
                                                     >
+                                                        {canManageCatalog && (
+                                                            <td className="py-4 px-3" onClick={e => e.stopPropagation()}>
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={isSelected}
+                                                                    onChange={(e) => {
+                                                                        const next = new Set(selectedItemIds);
+                                                                        if (e.target.checked) next.add(item.id);
+                                                                        else next.delete(item.id);
+                                                                        setSelectedItemIds(next);
+                                                                    }}
+                                                                    className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                                                                />
+                                                            </td>
+                                                        )}
                                                         <td className="py-4 px-6">
                                                             <div className="flex items-center gap-2">
                                                                 <TagIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
@@ -576,8 +610,11 @@ function LaborCatalogListPage() {
                                                         <td className="py-4 px-4 text-gray-500 dark:text-gray-400 text-xs">
                                                             {item.conditions || '—'}
                                                         </td>
-                                                        <td className="py-4 px-4 text-right font-semibold text-indigo-600 dark:text-indigo-400">
-                                                            {formatCurrencyISK(item.tenant_price ?? item.reference_price)}
+                                                        <td className="py-4 px-4 text-right font-mono font-semibold text-indigo-600 dark:text-indigo-400">
+                                                            {formatEining(item.reference_price)}
+                                                        </td>
+                                                        <td className="py-4 px-4 text-right text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+                                                            {item.tenant_price ? formatISKRate(item.tenant_price) : <span className="text-gray-300 dark:text-gray-600">—</span>}
                                                         </td>
                                                         <td className="py-4 px-4 text-[10px] text-gray-500 dark:text-gray-400">
                                                             {einingFullLabel(item.units_per_hour) || '—'}
@@ -610,11 +647,12 @@ function LaborCatalogListPage() {
                                                             </td>
                                                         )}
                                                     </tr>
-                                                ))
+                                                    );
+                                                })
                                             ) : (
                                                 <tr>
                                                     <td
-                                                        colSpan={canManageCatalog ? 5 : 4}
+                                                        colSpan={canManageCatalog ? 7 : 5}
                                                         className="py-16 text-center text-gray-500 dark:text-gray-400"
                                                     >
                                                         No items in this category.
@@ -630,6 +668,32 @@ function LaborCatalogListPage() {
                 </main>
             </div>
 
+            {/* F2: Floating action bar when items are selected */}
+            {canManageCatalog && selectedItemIds.size > 0 && (
+                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-4 px-6 py-4 bg-indigo-700 dark:bg-indigo-800 text-white rounded-2xl shadow-2xl border border-indigo-500 animate-in slide-in-from-bottom-4 duration-300">
+                    <div className="flex items-center gap-2">
+                        <CheckIcon className="h-5 w-5 text-indigo-200" />
+                        <span className="font-bold">{selectedItemIds.size} item{selectedItemIds.size > 1 ? 's' : ''} selected</span>
+                        <span className="text-indigo-300 text-sm ml-2">
+                            Total: {formatEining(items.filter(i => selectedItemIds.has(i.id)).reduce((sum, i) => sum + (i.reference_price || 0), 0))}
+                        </span>
+                    </div>
+                    <button
+                        onClick={() => setIsOfferModalOpen(true)}
+                        className="flex items-center gap-2 px-5 py-2 bg-white text-indigo-700 font-black rounded-xl hover:bg-indigo-50 transition"
+                    >
+                        <DocumentPlusIcon className="h-5 w-5" />
+                        Create Offer
+                    </button>
+                    <button
+                        onClick={() => setSelectedItemIds(new Set())}
+                        className="px-4 py-2 text-indigo-200 hover:text-white text-sm font-medium transition"
+                    >
+                        Clear
+                    </button>
+                </div>
+            )}
+
             <ConfirmationModal
                 isOpen={isDeleteModalOpen}
                 onClose={() => setIsDeleteModalOpen(false)}
@@ -639,6 +703,19 @@ function LaborCatalogListPage() {
                 confirmText={t('purge_service')}
                 type="danger"
             />
+
+            {/* F2: Create Offer from Catalog Modal */}
+            {isOfferModalOpen && (
+                <CreateOfferFromCatalogModal
+                    selectedItems={items.filter(i => selectedItemIds.has(i.id))}
+                    onClose={() => setIsOfferModalOpen(false)}
+                    onCreated={(offerId) => {
+                        setSelectedItemIds(new Set());
+                        setIsOfferModalOpen(false);
+                        navigate(`/offers/${offerId}`);
+                    }}
+                />
+            )}
         </div>
     );
 }

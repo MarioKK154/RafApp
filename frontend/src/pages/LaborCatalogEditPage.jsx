@@ -256,7 +256,7 @@ function LaborCatalogEditPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label className="block text-[10px] font-black text-gray-400 uppercase mb-1 ml-1 tracking-widest">
-                            Base price (ISK){isSuperuser ? '*' : ''}
+                            ar.is Eining (work units){isSuperuser ? '*' : ''}
                         </label>
                         <div className="relative">
                             <BanknotesIcon className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
@@ -267,19 +267,21 @@ function LaborCatalogEditPage() {
                                 value={formData.base_price} 
                                 onChange={handleChange} 
                                 min="0" 
-                                step="1" 
+                                step="0.001" 
                                 readOnly={!isSuperuser}
                                 className="pl-10 block w-full rounded-2xl border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-indigo-500 disabled:opacity-70" 
                             />
                         </div>
-                        {!isSuperuser && (
+                        {!isSuperuser ? (
                             <p className="mt-1 text-[10px] text-gray-500 dark:text-gray-400">{t('catalog_reference_helper')}</p>
+                        ) : (
+                            <p className="mt-1 text-[10px] text-gray-400 dark:text-gray-500">Eining value from ar.is catalog (e.g. 1.250). This is a work unit, not ISK.</p>
                         )}
                     </div>
 
                     <div>
                         <label className="block text-[10px] font-black text-gray-400 uppercase mb-1 ml-1 tracking-widest">
-                            Your price (ISK){!isSuperuser ? '*' : ''}
+                            Your rate (ISK/eining){!isSuperuser ? '*' : ''}
                         </label>
                         <div className="relative">
                             <BanknotesIcon className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
@@ -294,7 +296,7 @@ function LaborCatalogEditPage() {
                                 className="pl-10 block w-full rounded-2xl border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-indigo-500" 
                             />
                         </div>
-                        <p className="mt-1 text-[10px] text-gray-500 dark:text-gray-400">{t('your_price_helper')}</p>
+                        <p className="mt-1 text-[10px] text-gray-500 dark:text-gray-400">Your company's ISK rate per Eining. Total cost = Einingar × this rate.</p>
                     </div>
                 </div>
 
