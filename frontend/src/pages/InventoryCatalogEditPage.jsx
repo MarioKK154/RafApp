@@ -181,12 +181,40 @@ function InventoryCatalogEditPage() {
         }
     };
 
-    const [isEditingShop1, setIsEditingShop1] = useState(false);
-    const [isEditingShop2, setIsEditingShop2] = useState(false);
-    const [isEditingShop3, setIsEditingShop3] = useState(false);
+    const [globalShops, setGlobalShops] = useState([]);
+    const [shopPrices, setShopPrices] = useState({}); // { [shopId]: { price: '', sku: '' } }
+    const [isLoadingShops, setIsLoadingShops] = useState(true);
 
     const isSuperuser = user?.is_superuser;
     const canManageCatalog = !!isSuperuser;
+
+    useEffect(() => {
+        const fetchShopsAndPrices = async () => {
+            try {
+                const shopsRes = await axiosInstance.get('/shop-catalog/shops');
+                const shopsData = Array.isArray(shopsRes.data) ? shopsRes.data : [];
+                setGlobalShops(shopsData);
+
+                if (itemId) {
+                    const pricesRes = await axiosInstance.get(`/shop-catalog/items/${itemId}/prices`);
+                    const pricesData = Array.isArray(pricesRes.data) ? pricesRes.data : [];
+                    const mappedPrices = {};
+                    pricesData.forEach(p => {
+                        mappedPrices[p.shop_id] = {
+                            price: p.price != null ? String(p.price) : '',
+                            sku: p.sku || '',
+                        };
+                    });
+                    setShopPrices(mappedPrices);
+                }
+            } catch (err) {
+                console.error("Failed to fetch shops/prices:", err);
+            } finally {
+                setIsLoadingShops(false);
+            }
+        };
+        fetchShopsAndPrices();
+    }, [itemId]);
 
     /**
      * Protocol: Sync with /inventory/catalog/{item_id}
@@ -239,6 +267,43 @@ function InventoryCatalogEditPage() {
         if (itemId) fetchItemData();
     }, [itemId, fetchItemData]);
 
+    // Fallback sync for legacy shops to keep their SKUs populated from formData if not present in shopPrices
+    useEffect(() => {
+        if (!isLoadingData && !isLoadingShops && globalShops.length > 0) {
+            setShopPrices(prev => {
+                const updated = { ...prev };
+                let changed = false;
+                globalShops.forEach(shop => {
+                    const sName = shop.name.toLowerCase();
+                    const shopId = shop.id;
+                    if (!updated[shopId]) {
+                        updated[shopId] = { price: '', sku: '' };
+                        changed = true;
+                    }
+                    if (!updated[shopId].sku) {
+                        if (sName.includes("ronning") || sName.includes("rönning")) {
+                            if (formData.ronning_sku) {
+                                updated[shopId].sku = formData.ronning_sku;
+                                changed = true;
+                            }
+                        } else if (sName.includes("iskraft")) {
+                            if (formData.iskraft_sku) {
+                                updated[shopId].sku = formData.iskraft_sku;
+                                changed = true;
+                            }
+                        } else if (sName.includes("reykjafell")) {
+                            if (formData.reykjafell_sku) {
+                                updated[shopId].sku = formData.reykjafell_sku;
+                                changed = true;
+                            }
+                        }
+                    }
+                });
+                return changed ? updated : prev;
+            });
+        }
+    }, [isLoadingData, isLoadingShops, globalShops, formData.ronning_sku, formData.iskraft_sku, formData.reykjafell_sku]);
+
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
@@ -259,8 +324,39 @@ function InventoryCatalogEditPage() {
             } else {
                 payload.warehouse_quantity = parseFloat(payload.warehouse_quantity);
             }
-            // FIXED: Path aligned with backend @router.put("/catalog/{item_id}")
+
+            // Sync legacy columns in payload with entered dynamic shop prices to ensure consistency
+            globalShops.forEach(shop => {
+                const sName = shop.name.toLowerCase();
+                const shopId = shop.id;
+                const data = shopPrices[shopId];
+                if (data) {
+                    if (sName.includes("ronning") || sName.includes("rönning")) {
+                        payload.ronning_sku = data.sku || '';
+                    } else if (sName.includes("iskraft")) {
+                        payload.iskraft_sku = data.sku || '';
+                    } else if (sName.includes("reykjafell")) {
+                        payload.reykjafell_sku = data.sku || '';
+                    }
+                }
+            });
+
+            // Update core material details
             await axiosInstance.put(`/inventory/catalog/${itemId}`, payload);
+
+            // Update prices/skus for all shops
+            const pricePromises = Object.entries(shopPrices).map(([shopId, data]) => {
+                const price = data.price === '' || data.price == null ? null : parseFloat(data.price);
+                const sku = data.sku === '' || data.sku == null ? null : data.sku;
+                return axiosInstance.put(`/shop-catalog/shops/${shopId}/items/${itemId}/price`, {
+                    sku,
+                    price,
+                    currency: "ISK"
+                });
+            });
+
+            await Promise.all(pricePromises);
+
             toast.success(`${t('toast_registry_node_updated')} ${formData.name}`);
             navigate('/inventory'); 
         } catch (err) {
@@ -667,10 +763,10 @@ function InventoryCatalogEditPage() {
                 </div>
 
                 <div className="lg:col-span-4 space-y-8">
-                    <section className="bg-white dark:bg-gray-800 p-8 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-700 space-y-4">
+                    <section className="bg-white dark:bg-gray-800 p-8 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-700 space-y-6">
                         <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] flex items-center justify-between ml-1">
                             <span className="flex items-center gap-2">
-                                <ShoppingBagIcon className="h-4 w-4 text-indigo-500" /> Procurement Links
+                                <ShoppingBagIcon className="h-4 w-4 text-indigo-500" /> Supplier Prices & SKUs
                             </span>
                             {!isSuperuser && (
                                 <span className="text-[8px] font-black text-gray-400 uppercase tracking-[0.2em]">
@@ -678,211 +774,87 @@ function InventoryCatalogEditPage() {
                                 </span>
                             )}
                         </label>
-                        <div className="space-y-3">
-                            {/* Jóhann Rönning */}
-                            <div className="space-y-1">
-                                <label className="block text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">Jóhann Rönning</label>
-                                {isSuperuser ? (
-                                    isEditingShop1 ? (
-                                        <input
-                                            type="url"
-                                            name="shop_url_1"
-                                            value={formData.shop_url_1}
-                                            onChange={handleChange}
-                                            disabled={isSubmitting}
-                                            placeholder="https://ronning.is/..."
-                                            className="modern-input text-xs italic"
-                                            onBlur={() => !isSubmitting && setIsEditingShop1(false)}
-                                        />
-                                    ) : (
-                                        <div className="flex items-center gap-2">
-                                            {formData.shop_url_1 ? (
-                                                <a
-                                                    href={formData.shop_url_1}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="inline-flex items-center justify-center px-4 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[10px] font-black uppercase tracking-[0.2em]"
-                                                >
-                                                    johann ronning
-                                                </a>
-                                            ) : (
-                                                <span className="text-[10px] text-gray-400 italic">{t('no_link_configured')}</span>
-                                            )}
-                                            <button
-                                                type="button"
-                                                onClick={() => setIsEditingShop1(true)}
-                                                className="text-[9px] font-black text-gray-400 hover:text-indigo-600 uppercase tracking-[0.2em]"
-                                            >
-                                                Edit
-                                            </button>
-                                        </div>
-                                    )
-                                ) : (
-                                    <div>
-                                        {formData.shop_url_1 ? (
-                                            <a
-                                                href={formData.shop_url_1}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="inline-flex items-center justify-center px-4 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[10px] font-black uppercase tracking-[0.2em]"
-                                            >
-                                                johann ronning
-                                            </a>
-                                        ) : (
-                                            <span className="text-[10px] text-gray-400 italic">{t('no_link_configured')}</span>
-                                        )}
-                                    </div>
-                                )}
+                        
+                        {isLoadingShops ? (
+                            <div className="flex justify-center py-4">
+                                <ArrowPathIcon className="h-5 w-5 animate-spin text-gray-400" />
                             </div>
-
-                            {/* Iskraft */}
-                            <div className="space-y-1">
-                                <label className="block text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">Iskraft</label>
-                                {isSuperuser ? (
-                                    isEditingShop2 ? (
-                                        <input
-                                            type="url"
-                                            name="shop_url_2"
-                                            value={formData.shop_url_2}
-                                            onChange={handleChange}
-                                            disabled={isSubmitting}
-                                            placeholder="https://iskraft.is/..."
-                                            className="modern-input text-xs italic"
-                                            onBlur={() => !isSubmitting && setIsEditingShop2(false)}
-                                        />
-                                    ) : (
-                                        <div className="flex items-center gap-2">
-                                            {formData.shop_url_2 ? (
-                                                <a
-                                                    href={formData.shop_url_2}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="inline-flex items-center justify-center px-4 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[10px] font-black uppercase tracking-[0.2em]"
-                                                >
-                                                    iskraft
-                                                </a>
-                                            ) : (
-                                                <span className="text-[10px] text-gray-400 italic">{t('no_link_configured')}</span>
-                                            )}
-                                            <button
-                                                type="button"
-                                                onClick={() => setIsEditingShop2(true)}
-                                                className="text-[9px] font-black text-gray-400 hover:text-indigo-600 uppercase tracking-[0.2em]"
-                                            >
-                                                Edit
-                                            </button>
+                        ) : globalShops.length === 0 ? (
+                            <p className="text-xs text-gray-400 italic">No suppliers configured. Go to Inventory list to add suppliers.</p>
+                        ) : (
+                            <div className="space-y-6">
+                                {globalShops.map((shop) => {
+                                    const shopId = shop.id;
+                                    const priceVal = shopPrices[shopId]?.price ?? '';
+                                    const skuVal = shopPrices[shopId]?.sku ?? '';
+                                    
+                                    return (
+                                        <div key={shopId} className="p-4 rounded-2xl bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 space-y-3">
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-xs font-black text-gray-800 dark:text-gray-100 uppercase tracking-wider">
+                                                    {shop.name}
+                                                </span>
+                                                {shop.website_url && (
+                                                    <a
+                                                        href={shop.website_url}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="text-[9px] font-black text-indigo-600 hover:underline uppercase tracking-widest"
+                                                    >
+                                                        Visit Site
+                                                    </a>
+                                                )}
+                                            </div>
+                                            
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div className="space-y-1">
+                                                    <label className="block text-[8px] font-black text-gray-400 uppercase tracking-widest">
+                                                        Article Code (SKU)
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        disabled={isSubmitting || !isSuperuser}
+                                                        value={skuVal}
+                                                        onChange={(e) => {
+                                                            const val = e.target.value;
+                                                            setShopPrices(prev => ({
+                                                                ...prev,
+                                                                [shopId]: {
+                                                                    ...prev[shopId],
+                                                                    sku: val
+                                                                }
+                                                            }));
+                                                        }}
+                                                        placeholder="SKU"
+                                                        className="modern-input h-10 text-xs font-mono"
+                                                    />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="block text-[8px] font-black text-gray-400 uppercase tracking-widest">
+                                                        Price (ISK)
+                                                    </label>
+                                                    <input
+                                                        type="number"
+                                                        disabled={isSubmitting || !isSuperuser}
+                                                        value={priceVal}
+                                                        onChange={(e) => {
+                                                            const val = e.target.value;
+                                                            setShopPrices(prev => ({
+                                                                ...prev,
+                                                                [shopId]: {
+                                                                    ...prev[shopId],
+                                                                    price: val
+                                                                }
+                                                            }));
+                                                        }}
+                                                        placeholder="ISK"
+                                                        className="modern-input h-10 text-xs font-mono"
+                                                    />
+                                                </div>
+                                            </div>
                                         </div>
-                                    )
-                                ) : (
-                                    <div>
-                                        {formData.shop_url_2 ? (
-                                            <a
-                                                href={formData.shop_url_2}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="inline-flex items-center justify-center px-4 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[10px] font-black uppercase tracking-[0.2em]"
-                                            >
-                                                iskraft
-                                            </a>
-                                        ) : (
-                                            <span className="text-[10px] text-gray-400 italic">{t('no_link_configured')}</span>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Reykjafell */}
-                            <div className="space-y-1">
-                                <label className="block text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">Reykjafell</label>
-                                {isSuperuser ? (
-                                    isEditingShop3 ? (
-                                        <input
-                                            type="url"
-                                            name="shop_url_3"
-                                            value={formData.shop_url_3}
-                                            onChange={handleChange}
-                                            disabled={isSubmitting}
-                                            placeholder="https://reykjafell.is/..."
-                                            className="modern-input text-xs italic"
-                                            onBlur={() => !isSubmitting && setIsEditingShop3(false)}
-                                        />
-                                    ) : (
-                                        <div className="flex items-center gap-2">
-                                            {formData.shop_url_3 ? (
-                                                <a
-                                                    href={formData.shop_url_3}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="inline-flex items-center justify-center px-4 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[10px] font-black uppercase tracking-[0.2em]"
-                                            >
-                                                reykjafell
-                                            </a>
-                                            ) : (
-                                                <span className="text-[10px] text-gray-400 italic">{t('no_link_configured')}</span>
-                                            )}
-                                            <button
-                                                type="button"
-                                                onClick={() => setIsEditingShop3(true)}
-                                                className="text-[9px] font-black text-gray-400 hover:text-indigo-600 uppercase tracking-[0.2em]"
-                                            >
-                                                Edit
-                                            </button>
-                                        </div>
-                                    )
-                                ) : (
-                                    <div>
-                                        {formData.shop_url_3 ? (
-                                            <a
-                                                href={formData.shop_url_3}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="inline-flex items-center justify-center px-4 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[10px] font-black uppercase tracking-[0.2em]"
-                                            >
-                                                reykjafell
-                                            </a>
-                                        ) : (
-                                            <span className="text-[10px] text-gray-400 italic">{t('no_link_configured')}</span>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                        {isSuperuser && (
-                            <div className="pt-4 mt-2 border-t border-gray-100 dark:border-gray-700 space-y-3">
-                                <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">{t('supplier_article_codes')}</p>
-                                <div className="space-y-1">
-                                    <label className="block text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">Rönning SKU</label>
-                                    <input
-                                        type="text"
-                                        name="ronning_sku"
-                                        value={formData.ronning_sku}
-                                        onChange={handleChange}
-                                        disabled={isSubmitting}
-                                        className="modern-input text-xs font-mono h-10"
-                                    />
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="block text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">Ískraft SKU</label>
-                                    <input
-                                        type="text"
-                                        name="iskraft_sku"
-                                        value={formData.iskraft_sku}
-                                        onChange={handleChange}
-                                        disabled={isSubmitting}
-                                        className="modern-input text-xs font-mono h-10"
-                                    />
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="block text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">Reykjafell SKU</label>
-                                    <input
-                                        type="text"
-                                        name="reykjafell_sku"
-                                        value={formData.reykjafell_sku}
-                                        onChange={handleChange}
-                                        disabled={isSubmitting}
-                                        className="modern-input text-xs font-mono h-10"
-                                    />
-                                </div>
+                                    );
+                                })}
                             </div>
                         )}
                     </section>

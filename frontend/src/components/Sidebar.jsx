@@ -292,7 +292,6 @@ function Sidebar() {
                     {!isSubcontractor && (
                         <NavSection label={t('resources')} collapsed={isCollapsed}>
                             <NavItem to="/inventory"      icon={<CircleStackIcon />}          label={t('shop', { defaultValue: 'Shop' })} collapsed={isCollapsed} navProps={navItemClickProps} />
-                            <NavItem to="/shop-catalog"   icon={<BuildingStorefrontIcon />}   label="Shop Prices"        collapsed={isCollapsed} navProps={navItemClickProps} />
                             {isFeatureEnabled('tools') && <NavItem to="/tools"           icon={<WrenchScrewdriverIcon />}    label={t('tools')}         collapsed={isCollapsed} navProps={navItemClickProps} />}
                             {isFeatureEnabled('fleet') && <NavItem to="/cars"            icon={<TruckIcon />}               label={t('cars')}          collapsed={isCollapsed} navProps={navItemClickProps} />}
                             <NavItem to="/shops"           icon={<BuildingStorefrontIcon />}   label={t('vendors')}       collapsed={isCollapsed} navProps={navItemClickProps} />

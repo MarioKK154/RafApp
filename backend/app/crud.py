@@ -811,13 +811,54 @@ def get_inventory_items(
         # subcategory = sub-subcategory IS key
         query = query.filter(func.lower(m.subcategory) == subcategory.lower())
 
-    preds = _inventory_shop_predicates()
     if shops:
+        from sqlalchemy import exists
+        global_shops = db.query(models.GlobalShop).all()
         parts = []
-        for s in shops:
-            key = (s or "").strip().lower()
-            if key in preds:
-                parts.append(preds[key])
+        for s_val in shops:
+            s_str = (s_val or "").strip().lower()
+            # Find shop by ID or name
+            shop = None
+            if s_str.isdigit():
+                shop_id = int(s_str)
+                shop = next((sh for sh in global_shops if sh.id == shop_id), None)
+            else:
+                shop = next((sh for sh in global_shops if sh.name.lower() == s_str or s_str in sh.name.lower()), None)
+            
+            if shop:
+                # Check ShopItemPrice exists for this shop and item
+                shop_price_exists = exists().where(
+                    and_(
+                        models.ShopItemPrice.inventory_item_id == models.InventoryItem.id,
+                        models.ShopItemPrice.shop_id == shop.id,
+                        models.ShopItemPrice.price.isnot(None)
+                    )
+                )
+                
+                # Check legacy columns based on shop name
+                legacy_pred = None
+                s_name = shop.name.lower()
+                if "ronning" in s_name or "rönning" in s_name:
+                    legacy_pred = or_(
+                        _inventory_nonempty_optional_str(models.InventoryItem.shop_url_1),
+                        _inventory_nonempty_optional_str(models.InventoryItem.ronning_sku)
+                    )
+                elif "iskraft" in s_name:
+                    legacy_pred = or_(
+                        _inventory_nonempty_optional_str(models.InventoryItem.shop_url_2),
+                        _inventory_nonempty_optional_str(models.InventoryItem.iskraft_sku)
+                    )
+                elif "reykjafell" in s_name:
+                    legacy_pred = or_(
+                        _inventory_nonempty_optional_str(models.InventoryItem.shop_url_3),
+                        _inventory_nonempty_optional_str(models.InventoryItem.reykjafell_sku)
+                    )
+                
+                if legacy_pred is not None:
+                    parts.append(or_(shop_price_exists, legacy_pred))
+                else:
+                    parts.append(shop_price_exists)
+                    
         if parts:
             if shop_match_all and len(parts) > 1:
                 query = query.filter(and_(*parts))

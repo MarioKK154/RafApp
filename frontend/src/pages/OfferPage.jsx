@@ -31,6 +31,8 @@ import {
     PaperAirplaneIcon,
     FolderIcon,
     FolderOpenIcon,
+    CheckIcon,
+    XMarkIcon,
 } from '@heroicons/react/24/outline';
 
 /**
@@ -131,6 +133,12 @@ function OfferPage() {
     const [variantsLoading, setVariantsLoading] = useState(false);
     const [addQty, setAddQty] = useState(1);
     const [showCustomLaborForm, setShowCustomLaborForm] = useState(false);
+
+    // Inline Line Item Editing States
+    const [editingLineId, setEditingLineId] = useState(null);
+    const [editingQty, setEditingQty] = useState('');
+    const [editingRate, setEditingRate] = useState('');
+    const [isSavingLine, setIsSavingLine] = useState(false);
 
     // Material category browser (from Shop inventory) – mimic labor catalog style
     const [materialExpandedMain, setMaterialExpandedMain] = useState(null);
@@ -517,6 +525,40 @@ function OfferPage() {
         }
     };
 
+    const handleStartEditLine = (item) => {
+        setEditingLineId(item.id);
+        setEditingQty(String(item.quantity));
+        setEditingRate(String(item.unit_price));
+    };
+
+    const handleSaveLineEdit = async (itemId) => {
+        const qty = parseFloat(editingQty);
+        const rate = parseFloat(editingRate);
+        if (isNaN(qty) || qty <= 0) {
+            toast.error("Quantity must be greater than zero.");
+            return;
+        }
+        if (isNaN(rate) || rate < 0) {
+            toast.error("Unit price must be positive.");
+            return;
+        }
+        setIsSavingLine(true);
+        try {
+            await axiosInstance.put(`/offers/items/${itemId}`, {
+                quantity: qty,
+                unit_price: rate,
+            });
+            toast.success("Line item updated.");
+            setEditingLineId(null);
+            reloadOfferFromServer();
+        } catch (err) {
+            console.error("Failed to save line item edit:", err);
+            toast.error(err.response?.data?.detail || "Failed to update line item.");
+        } finally {
+            setIsSavingLine(false);
+        }
+    };
+
     const confirmDeleteOffer = async () => {
         try {
             await axiosInstance.delete(`/offers/${offerId}`);
@@ -635,32 +677,96 @@ function OfferPage() {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-50 dark:divide-gray-700">
-                                    {lineItems.map(item => (
-                                        <tr key={item.id} className="group hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
-                                            <td className="py-5 px-8">
-                                                <p className="font-bold text-gray-900 dark:text-white tracking-tight">{item.description}</p>
-                                                <span
-                                                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border mt-1 ${
-                                                        item.item_type === 'Labor'
-                                                            ? 'bg-indigo-50 text-indigo-700 border-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-200 dark:border-indigo-700'
-                                                            : 'bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-200 dark:border-emerald-700'
-                                                    }`}
-                                                >
-                                                    {item.item_type}
-                                                </span>
-                                            </td>
-                                            <td className="py-5 px-4 text-right font-mono font-bold text-gray-600">{item.quantity}</td>
-                                            <td className="py-5 px-6 text-right text-gray-400 font-medium italic">{formatCurrency(item.unit_price)}</td>
-                                            <td className="py-5 px-8 text-right font-black text-gray-900 dark:text-white">{formatCurrency(item.total_price)}</td>
-                                            {canEditOffer && (
-                                                <td className="py-5 px-6 text-center">
-                                                    <button onClick={() => handleRemoveLineItem(item.id)} className="p-2 text-gray-300 hover:text-red-600 transition opacity-0 group-hover:opacity-100">
-                                                        <TrashIcon className="h-5 w-5" />
-                                                    </button>
+                                    {lineItems.map(item => {
+                                        const isEditing = editingLineId === item.id;
+                                        return (
+                                            <tr key={item.id} className="group hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
+                                                <td className="py-5 px-8">
+                                                    <p className="font-bold text-gray-900 dark:text-white tracking-tight">{item.description}</p>
+                                                    <span
+                                                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border mt-1 ${
+                                                            item.item_type === 'Labor'
+                                                                ? 'bg-indigo-50 text-indigo-700 border-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-200 dark:border-indigo-700'
+                                                                : 'bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-200 dark:border-emerald-700'
+                                                        }`}
+                                                    >
+                                                        {item.item_type}
+                                                    </span>
                                                 </td>
-                                            )}
-                                        </tr>
-                                    ))}
+                                                <td className="py-5 px-4 text-right font-mono font-bold text-gray-600">
+                                                    {isEditing ? (
+                                                        <input
+                                                            type="number"
+                                                            value={editingQty}
+                                                            onChange={(e) => setEditingQty(e.target.value)}
+                                                            disabled={isSavingLine}
+                                                            className="modern-input text-right font-mono font-bold text-xs h-8 w-20 px-1 inline-block"
+                                                            autoFocus
+                                                        />
+                                                    ) : (
+                                                        item.quantity
+                                                    )}
+                                                </td>
+                                                <td className="py-5 px-6 text-right text-gray-400 font-medium italic">
+                                                    {isEditing ? (
+                                                        <input
+                                                            type="number"
+                                                            value={editingRate}
+                                                            onChange={(e) => setEditingRate(e.target.value)}
+                                                            disabled={isSavingLine}
+                                                            className="modern-input text-right font-mono font-bold text-xs h-8 w-28 px-1 inline-block"
+                                                        />
+                                                    ) : (
+                                                        formatCurrency(item.unit_price)
+                                                    )}
+                                                </td>
+                                                <td className="py-5 px-8 text-right font-black text-gray-900 dark:text-white">
+                                                    {formatCurrency(item.total_price)}
+                                                </td>
+                                                {canEditOffer && (
+                                                    <td className="py-5 px-6 text-center">
+                                                        {isEditing ? (
+                                                            <div className="flex items-center justify-center gap-1">
+                                                                <button
+                                                                    onClick={() => handleSaveLineEdit(item.id)}
+                                                                    disabled={isSavingLine}
+                                                                    className="p-1.5 text-green-600 hover:text-green-700 transition"
+                                                                    title="Save changes"
+                                                                >
+                                                                    <CheckIcon className="h-4.5 w-4.5" />
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => setEditingLineId(null)}
+                                                                    disabled={isSavingLine}
+                                                                    className="p-1.5 text-gray-400 hover:text-gray-600 transition"
+                                                                    title="Cancel edit"
+                                                                >
+                                                                    <XMarkIcon className="h-4.5 w-4.5" />
+                                                                </button>
+                                                            </div>
+                                                        ) : (
+                                                            <div className="flex items-center justify-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                <button
+                                                                    onClick={() => handleStartEditLine(item)}
+                                                                    className="p-2 text-gray-400 hover:text-indigo-600 transition"
+                                                                    title="Edit line"
+                                                                >
+                                                                    <PencilIcon className="h-4.5 w-4.5" />
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => handleRemoveLineItem(item.id)}
+                                                                    className="p-2 text-gray-300 hover:text-red-650 transition"
+                                                                    title="Delete line"
+                                                                >
+                                                                    <TrashIcon className="h-4.5 w-4.5" />
+                                                                </button>
+                                                            </div>
+                                                        )}
+                                                    </td>
+                                                )}
+                                            </tr>
+                                        );
+                                    })}
                                     {lineItems.length === 0 && (
                                         <tr><td colSpan="5" className="py-20 text-center text-gray-400 italic font-medium">Registry empty: No commercial lines defined.</td></tr>
                                     )}

@@ -134,11 +134,10 @@ async def read_catalog_items(
     Search runs across names, descriptions, and supplier SKU columns.
     """
     parsed_shops: List[str] = []
-    allowed = frozenset({"ronning", "iskraft", "reykjafell"})
     if shops:
         for part in shops.split(","):
             key = part.strip().lower()
-            if key in allowed:
+            if key:
                 parsed_shops.append(key)
 
     return crud.get_inventory_items(
