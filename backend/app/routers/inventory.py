@@ -69,7 +69,7 @@ async def create_catalog_item(
     request: Request, 
     item: schemas.InventoryItemCreate, 
     db: DbDependency, 
-    current_user: ManagerOrAdminDependency
+    current_user: SuperuserDependency
 ):
     """Registry: Define a new material SKU."""
     return crud.create_inventory_item(db=db, item=item)
@@ -79,7 +79,7 @@ async def create_catalog_item(
 async def upload_catalog_material_image(
     request: Request,
     db: DbDependency,
-    current_user: ManagerOrAdminDependency,
+    current_user: SuperuserDependency,
     file: UploadFile = File(...),
 ):
     """Store a local catalog material image on disk; returns URL path for local_image_path."""
@@ -211,12 +211,13 @@ async def update_catalog_item(
     item_id: int, 
     item_update: schemas.InventoryItemUpdate, 
     db: DbDependency, 
-    current_user: ManagerOrAdminDependency
+    current_user: SuperuserDependency
 ):
     """Registry: Synchronize SKU metadata (units, thresholds, identifiers)."""
     db_item = crud.get_inventory_item(db, item_id=item_id)
     if db_item is None:
         raise HTTPException(status_code=404, detail="Inventory node not found")
+    
     return crud.update_inventory_item(db=db, db_item=db_item, item_update=item_update)
 
 @router.delete("/catalog/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -225,7 +226,7 @@ async def delete_catalog_item(
     request: Request, 
     item_id: int, 
     db: DbDependency, 
-    current_user: ManagerOrAdminDependency
+    current_user: SuperuserDependency
 ):
     """Protocol: Purge SKU from registry."""
     db_item = crud.get_inventory_item(db, item_id=item_id)

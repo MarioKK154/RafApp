@@ -1000,3 +1000,30 @@ class Suggestion(Base):
 
     user = relationship("User")
     tenant = relationship("Tenant")
+
+def add_dynamic_shop_column(db, shop_id: int):
+    col_name = f"shop_url_{shop_id}"
+    from sqlalchemy import text, inspect
+    inspector = inspect(db.bind)
+    try:
+        columns = [c["name"] for c in inspector.get_columns("inventory_items")]
+    except Exception:
+        columns = []
+    if col_name not in columns:
+        try:
+            db.execute(text(f"ALTER TABLE inventory_items ADD COLUMN {col_name} TEXT"))
+            db.commit()
+        except Exception as e:
+            import logging
+            logging.warning(f"Failed to add dynamic column {col_name} via SQL: {e}")
+            db.rollback()
+    
+    import sqlalchemy as sa
+    from sqlalchemy.orm import class_mapper, ColumnProperty
+    
+    if col_name not in InventoryItem.__table__.columns:
+        column = sa.Column(col_name, sa.String, nullable=True)
+        InventoryItem.__table__.append_column(column)
+        
+        mapper = class_mapper(InventoryItem)
+        mapper.add_property(col_name, ColumnProperty(column))

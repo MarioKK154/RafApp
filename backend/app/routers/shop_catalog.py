@@ -51,6 +51,11 @@ def create_shop(request: Request, shop: schemas.GlobalShopCreate, db: DbDependen
     db.add(db_shop)
     db.commit()
     db.refresh(db_shop)
+    try:
+        models.add_dynamic_shop_column(db, db_shop.id)
+    except Exception as e:
+        import logging
+        logging.warning(f"Failed to add dynamic shop column for shop {db_shop.id}: {e}")
     return db_shop
 
 

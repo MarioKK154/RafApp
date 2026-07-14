@@ -56,6 +56,13 @@ function InventoryCatalogCreatePage() {
     const canManageCatalog = !!isSuperuser;
 
     React.useEffect(() => {
+        if (!canManageCatalog) {
+            toast.error("Superadmin clearance level required.");
+            navigate('/inventory');
+        }
+    }, [canManageCatalog, navigate]);
+
+    React.useEffect(() => {
         const fetchFilters = async () => {
             setIsLoadingFilters(true);
             try {
@@ -67,8 +74,10 @@ function InventoryCatalogCreatePage() {
                 setIsLoadingFilters(false);
             }
         };
-        fetchFilters();
-    }, []);
+        if (canManageCatalog) {
+            fetchFilters();
+        }
+    }, [canManageCatalog]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;

@@ -182,39 +182,25 @@ function InventoryCatalogEditPage() {
     };
 
     const [globalShops, setGlobalShops] = useState([]);
-    const [shopPrices, setShopPrices] = useState({}); // { [shopId]: { price: '', sku: '' } }
     const [isLoadingShops, setIsLoadingShops] = useState(true);
 
     const isSuperuser = user?.is_superuser;
     const canManageCatalog = !!isSuperuser;
 
     useEffect(() => {
-        const fetchShopsAndPrices = async () => {
+        const fetchShops = async () => {
             try {
                 const shopsRes = await axiosInstance.get('/shop-catalog/shops');
                 const shopsData = Array.isArray(shopsRes.data) ? shopsRes.data : [];
                 setGlobalShops(shopsData);
-
-                if (itemId) {
-                    const pricesRes = await axiosInstance.get(`/shop-catalog/items/${itemId}/prices`);
-                    const pricesData = Array.isArray(pricesRes.data) ? pricesRes.data : [];
-                    const mappedPrices = {};
-                    pricesData.forEach(p => {
-                        mappedPrices[p.shop_id] = {
-                            price: p.price != null ? String(p.price) : '',
-                            sku: p.sku || '',
-                        };
-                    });
-                    setShopPrices(mappedPrices);
-                }
             } catch (err) {
-                console.error("Failed to fetch shops/prices:", err);
+                console.error("Failed to fetch shops:", err);
             } finally {
                 setIsLoadingShops(false);
             }
         };
-        fetchShopsAndPrices();
-    }, [itemId]);
+        fetchShops();
+    }, []);
 
     /**
      * Protocol: Sync with /inventory/catalog/{item_id}
@@ -227,7 +213,7 @@ function InventoryCatalogEditPage() {
             const response = await axiosInstance.get(`/inventory/catalog/${itemId}`);
             const item = response.data;
             if (item) {
-                setFormData({
+                const newFormData = {
                     name: item.name ?? '',
                     name_en: item.name_en ?? '',
                     category: item.category ?? '',
@@ -252,7 +238,13 @@ function InventoryCatalogEditPage() {
                     ar_labor_tasks_list: item.ar_labor_tasks_list ?? '',
                     warehouse_quantity:
                         item.warehouse_quantity != null ? String(item.warehouse_quantity) : '',
+                };
+                Object.keys(item).forEach(key => {
+                    if (key.startsWith("shop_url_")) {
+                        newFormData[key] = item[key] ?? '';
+                    }
                 });
+                setFormData(newFormData);
             }
         } catch (err) {
             console.error("Registry Sync Failure:", err);
@@ -264,45 +256,15 @@ function InventoryCatalogEditPage() {
     }, [itemId, navigate]);
 
     useEffect(() => {
-        if (itemId) fetchItemData();
-    }, [itemId, fetchItemData]);
-
-    // Fallback sync for legacy shops to keep their SKUs populated from formData if not present in shopPrices
-    useEffect(() => {
-        if (!isLoadingData && !isLoadingShops && globalShops.length > 0) {
-            setShopPrices(prev => {
-                const updated = { ...prev };
-                let changed = false;
-                globalShops.forEach(shop => {
-                    const sName = shop.name.toLowerCase();
-                    const shopId = shop.id;
-                    if (!updated[shopId]) {
-                        updated[shopId] = { price: '', sku: '' };
-                        changed = true;
-                    }
-                    if (!updated[shopId].sku) {
-                        if (sName.includes("ronning") || sName.includes("rönning")) {
-                            if (formData.ronning_sku) {
-                                updated[shopId].sku = formData.ronning_sku;
-                                changed = true;
-                            }
-                        } else if (sName.includes("iskraft")) {
-                            if (formData.iskraft_sku) {
-                                updated[shopId].sku = formData.iskraft_sku;
-                                changed = true;
-                            }
-                        } else if (sName.includes("reykjafell")) {
-                            if (formData.reykjafell_sku) {
-                                updated[shopId].sku = formData.reykjafell_sku;
-                                changed = true;
-                            }
-                        }
-                    }
-                });
-                return changed ? updated : prev;
-            });
+        if (!canManageCatalog) {
+            toast.error("Superadmin clearance level required.");
+            navigate('/inventory');
         }
-    }, [isLoadingData, isLoadingShops, globalShops, formData.ronning_sku, formData.iskraft_sku, formData.reykjafell_sku]);
+    }, [canManageCatalog, navigate]);
+
+    useEffect(() => {
+        if (itemId && canManageCatalog) fetchItemData();
+    }, [itemId, fetchItemData, canManageCatalog]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -325,37 +287,8 @@ function InventoryCatalogEditPage() {
                 payload.warehouse_quantity = parseFloat(payload.warehouse_quantity);
             }
 
-            // Sync legacy columns in payload with entered dynamic shop prices to ensure consistency
-            globalShops.forEach(shop => {
-                const sName = shop.name.toLowerCase();
-                const shopId = shop.id;
-                const data = shopPrices[shopId];
-                if (data) {
-                    if (sName.includes("ronning") || sName.includes("rönning")) {
-                        payload.ronning_sku = data.sku || '';
-                    } else if (sName.includes("iskraft")) {
-                        payload.iskraft_sku = data.sku || '';
-                    } else if (sName.includes("reykjafell")) {
-                        payload.reykjafell_sku = data.sku || '';
-                    }
-                }
-            });
-
             // Update core material details
             await axiosInstance.put(`/inventory/catalog/${itemId}`, payload);
-
-            // Update prices/skus for all shops
-            const pricePromises = Object.entries(shopPrices).map(([shopId, data]) => {
-                const price = data.price === '' || data.price == null ? null : parseFloat(data.price);
-                const sku = data.sku === '' || data.sku == null ? null : data.sku;
-                return axiosInstance.put(`/shop-catalog/shops/${shopId}/items/${itemId}/price`, {
-                    sku,
-                    price,
-                    currency: "ISK"
-                });
-            });
-
-            await Promise.all(pricePromises);
 
             toast.success(`${t('toast_registry_node_updated')} ${formData.name}`);
             navigate('/inventory'); 
@@ -766,7 +699,7 @@ function InventoryCatalogEditPage() {
                     <section className="bg-white dark:bg-gray-800 p-8 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-700 space-y-6">
                         <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] flex items-center justify-between ml-1">
                             <span className="flex items-center gap-2">
-                                <ShoppingBagIcon className="h-4 w-4 text-indigo-500" /> Supplier Prices & SKUs
+                                <ShoppingBagIcon className="h-4 w-4 text-indigo-500" /> Procurement Links
                             </span>
                             {!isSuperuser && (
                                 <span className="text-[8px] font-black text-gray-400 uppercase tracking-[0.2em]">
@@ -782,75 +715,61 @@ function InventoryCatalogEditPage() {
                         ) : globalShops.length === 0 ? (
                             <p className="text-xs text-gray-400 italic">No suppliers configured. Go to Inventory list to add suppliers.</p>
                         ) : (
-                            <div className="space-y-6">
+                            <div className="space-y-4">
                                 {globalShops.map((shop) => {
                                     const shopId = shop.id;
-                                    const priceVal = shopPrices[shopId]?.price ?? '';
-                                    const skuVal = shopPrices[shopId]?.sku ?? '';
+                                    const sName = shop.name.toLowerCase();
                                     
+                                    // Determine if legacy and identify correct legacy field names
+                                    const isLegacy = sName.includes("ronning") || sName.includes("rönning") || sName.includes("iskraft") || sName.includes("reykjafell");
+                                    let legacyUrlField = "";
+                                    if (sName.includes("ronning") || sName.includes("rönning")) {
+                                        legacyUrlField = "shop_url_1";
+                                    } else if (sName.includes("iskraft")) {
+                                        legacyUrlField = "shop_url_2";
+                                    } else if (sName.includes("reykjafell")) {
+                                        legacyUrlField = "shop_url_3";
+                                    }
+
+                                    const urlField = isLegacy ? legacyUrlField : `shop_url_${shopId}`;
+                                    const urlVal = formData[urlField] || '';
+
                                     return (
-                                        <div key={shopId} className="p-4 rounded-2xl bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 space-y-3">
+                                        <div key={shopId} className="p-4 bg-gray-50/70 dark:bg-gray-900/40 rounded-2xl border border-gray-150 dark:border-gray-700/65 space-y-3">
                                             <div className="flex items-center justify-between">
-                                                <span className="text-xs font-black text-gray-800 dark:text-gray-100 uppercase tracking-wider">
+                                                <span className="text-[10px] font-black uppercase tracking-wider text-gray-800 dark:text-gray-200">
                                                     {shop.name}
                                                 </span>
-                                                {shop.website_url && (
+                                                {urlVal && (
                                                     <a
-                                                        href={shop.website_url}
+                                                        href={urlVal}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
-                                                        className="text-[9px] font-black text-indigo-600 hover:underline uppercase tracking-widest"
+                                                        className="text-[8px] font-black text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 uppercase tracking-wider transition-colors"
                                                     >
-                                                        Visit Site
+                                                        Visit Page →
                                                     </a>
                                                 )}
                                             </div>
                                             
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div className="space-y-1">
-                                                    <label className="block text-[8px] font-black text-gray-400 uppercase tracking-widest">
-                                                        Article Code (SKU)
-                                                    </label>
+                                            <div className="space-y-1">
+                                                <span className="block text-[8px] font-black text-gray-400 uppercase tracking-wider ml-0.5">Webshop Link</span>
+                                                {isSuperuser ? (
                                                     <input
-                                                        type="text"
-                                                        disabled={isSubmitting || !isSuperuser}
-                                                        value={skuVal}
+                                                        type="url"
+                                                        disabled={isSubmitting}
+                                                        value={urlVal}
                                                         onChange={(e) => {
-                                                            const val = e.target.value;
-                                                            setShopPrices(prev => ({
-                                                                ...prev,
-                                                                [shopId]: {
-                                                                    ...prev[shopId],
-                                                                    sku: val
-                                                                }
-                                                            }));
+                                                            setFormData(prev => ({ ...prev, [urlField]: e.target.value }));
                                                         }}
-                                                        placeholder="SKU"
-                                                        className="modern-input h-10 text-xs font-mono"
+                                                        placeholder={`https://${sName.replace(/[^a-z0-9]/g, '') || 'shop'}.is/product/...`}
+                                                        className="modern-input h-9 px-2.5 text-xs italic"
                                                     />
-                                                </div>
-                                                <div className="space-y-1">
-                                                    <label className="block text-[8px] font-black text-gray-400 uppercase tracking-widest">
-                                                        Price (ISK)
-                                                    </label>
-                                                    <input
-                                                        type="number"
-                                                        disabled={isSubmitting || !isSuperuser}
-                                                        value={priceVal}
-                                                        onChange={(e) => {
-                                                            const val = e.target.value;
-                                                            setShopPrices(prev => ({
-                                                                ...prev,
-                                                                [shopId]: {
-                                                                    ...prev[shopId],
-                                                                    price: val
-                                                                }
-                                                            }));
-                                                        }}
-                                                        placeholder="ISK"
-                                                        className="modern-input h-10 text-xs font-mono"
-                                                    />
-                                                </div>
+                                                ) : (
+                                                    <div className="h-9 flex items-center px-2 rounded-lg border border-gray-100 dark:border-gray-800 bg-gray-100/50 dark:bg-gray-950/30 text-xs text-gray-500 dark:text-gray-400 truncate">
+                                                        {urlVal || 'No link configured'}
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                     );

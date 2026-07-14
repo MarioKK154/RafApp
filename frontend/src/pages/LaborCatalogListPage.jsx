@@ -222,6 +222,18 @@ function LaborCatalogListPage() {
                 </div>
                 {(canImportAndCreate || canManageCatalog) && (
                     <div className="flex flex-wrap items-center gap-3">
+                        {canManageCatalog && (
+                            <button
+                                onClick={() => {
+                                    setSelectedItemIds(new Set());
+                                    setIsOfferModalOpen(true);
+                                }}
+                                className="inline-flex items-center gap-2 px-5 py-2.5 text-[10px] font-black uppercase tracking-widest rounded-xl bg-indigo-650 hover:bg-indigo-700 text-white transition shadow-sm"
+                            >
+                                <DocumentPlusIcon className="h-5 w-5" />
+                                Create new offer
+                            </button>
+                        )}
                         {canImportAndCreate && (
                             <>
                                 <label className="inline-flex items-center px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition cursor-pointer">

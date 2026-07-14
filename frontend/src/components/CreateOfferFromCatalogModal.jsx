@@ -30,7 +30,7 @@ const formatEining = (v) => {
  *  onClose: () => void
  *  onCreated: (offerId: number) => void
  */
-export default function CreateOfferFromCatalogModal({ selectedItems, onClose, onCreated }) {
+export default function CreateOfferFromCatalogModal({ selectedItems = [], onClose, onCreated }) {
     const { t } = useTranslation();
 
     const [projects, setProjects] = useState([]);
@@ -42,8 +42,10 @@ export default function CreateOfferFromCatalogModal({ selectedItems, onClose, on
     const [loading, setLoading] = useState(false);
     const [projectsLoading, setProjectsLoading] = useState(true);
 
+    const hasSelectedItems = selectedItems && selectedItems.length > 0;
+
     // Derived: total einingar + total ISK
-    const totalEining = selectedItems.reduce((s, i) => s + (i.reference_price || 0), 0);
+    const totalEining = hasSelectedItems ? selectedItems.reduce((s, i) => s + (i.reference_price || 0), 0) : 0;
     const verdlagNum = parseFloat(verdlag) || 0;
     const totalISK = totalEining * verdlagNum;
 
@@ -61,21 +63,34 @@ export default function CreateOfferFromCatalogModal({ selectedItems, onClose, on
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!projectId) { toast.error('Please select a project'); return; }
-        if (!verdlagNum || verdlagNum <= 0) { toast.error('Enter a valid ISK/eining rate'); return; }
+        if (hasSelectedItems && (!verdlagNum || verdlagNum <= 0)) { toast.error('Enter a valid ISK/eining rate'); return; }
 
         setLoading(true);
         try {
-            const payload = {
-                project_id: parseInt(projectId),
-                title,
-                client_name: clientName || null,
-                expiry_date: expiryDate || null,
-                verdlag_per_eining: verdlagNum,
-                catalog_item_ids: selectedItems.map(i => i.id),
-            };
-            const res = await axiosInstance.post('/api/offers/from-catalog', payload);
-            toast.success(`Offer ${res.data.offer_number} created!`);
-            onCreated(res.data.id);
+            if (hasSelectedItems) {
+                const payload = {
+                    project_id: parseInt(projectId),
+                    title,
+                    client_name: clientName || null,
+                    expiry_date: expiryDate || null,
+                    verdlag_per_eining: verdlagNum,
+                    catalog_item_ids: selectedItems.map(i => i.id),
+                };
+                const res = await axiosInstance.post('/api/offers/from-catalog', payload);
+                toast.success(`Offer ${res.data.offer_number} created!`);
+                onCreated(res.data.id);
+            } else {
+                const payload = {
+                    project_id: parseInt(projectId),
+                    title,
+                    client_name: clientName || null,
+                    expiry_date: expiryDate || null,
+                    verdlag_per_eining: null,
+                };
+                const res = await axiosInstance.post('/api/offers/', payload);
+                toast.success(`Offer ${res.data.offer_number} created!`);
+                onCreated(res.data.id);
+            }
         } catch (err) {
             toast.error(err.response?.data?.detail || 'Failed to create offer');
         } finally {
@@ -92,8 +107,12 @@ export default function CreateOfferFromCatalogModal({ selectedItems, onClose, on
                     <div className="flex items-center gap-3">
                         <CalculatorIcon className="h-7 w-7 text-white" />
                         <div>
-                            <h2 className="text-lg font-black text-white">Create Offer from Catalog</h2>
-                            <p className="text-indigo-200 text-xs">{selectedItems.length} items · {formatEining(totalEining)} total</p>
+                            <h2 className="text-lg font-black text-white text-left">
+                                {hasSelectedItems ? "Create Offer from Catalog" : "Create New Offer"}
+                            </h2>
+                            <p className="text-indigo-200 text-xs text-left">
+                                {hasSelectedItems ? `${selectedItems.length} items · ${formatEining(totalEining)} total` : "Create a blank proposal for a project"}
+                            </p>
                         </div>
                     </div>
                     <button onClick={onClose} className="p-2 text-indigo-200 hover:text-white hover:bg-white/10 rounded-xl transition">
@@ -102,85 +121,89 @@ export default function CreateOfferFromCatalogModal({ selectedItems, onClose, on
                 </div>
 
                 <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
-                    <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
+                    <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6 text-left">
 
                         {/* Selected items summary */}
-                        <div>
-                            <h3 className="text-xs font-black uppercase text-gray-400 tracking-widest mb-2">Selected Work Items</h3>
-                            <div className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
-                                <table className="w-full text-sm">
-                                    <thead className="bg-gray-50 dark:bg-gray-700/50 text-xs text-gray-500 uppercase">
-                                        <tr>
-                                            <th className="px-4 py-3 text-left">Service</th>
-                                            <th className="px-4 py-3 text-right">Eining</th>
-                                            <th className="px-4 py-3 text-right">ISK (est.)</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                                        {selectedItems.map(item => {
-                                            const eining = item.reference_price || 0;
-                                            const isk = eining * verdlagNum;
-                                            return (
-                                                <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/20">
-                                                    <td className="px-4 py-3">
-                                                        <div className="flex items-center gap-2">
-                                                            <TagIcon className="h-4 w-4 text-indigo-400 flex-shrink-0" />
-                                                            <span className="text-gray-800 dark:text-gray-200 text-xs leading-tight">
-                                                                {item.description}
-                                                            </span>
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-4 py-3 text-right font-mono text-indigo-600 dark:text-indigo-400 text-xs font-semibold">
-                                                        {formatEining(eining)}
-                                                    </td>
-                                                    <td className="px-4 py-3 text-right text-xs text-emerald-600 dark:text-emerald-400 font-medium">
-                                                        {verdlagNum > 0 ? formatISK(isk) : '—'}
-                                                    </td>
-                                                </tr>
-                                            );
-                                        })}
-                                    </tbody>
-                                    <tfoot className="bg-indigo-50 dark:bg-indigo-900/20 font-black">
-                                        <tr>
-                                            <td className="px-4 py-3 text-indigo-700 dark:text-indigo-300 text-xs">TOTAL</td>
-                                            <td className="px-4 py-3 text-right text-indigo-700 dark:text-indigo-300 font-mono text-xs">
-                                                {formatEining(totalEining)}
-                                            </td>
-                                            <td className="px-4 py-3 text-right text-indigo-700 dark:text-indigo-300 text-xs">
-                                                {verdlagNum > 0 ? formatISK(totalISK) : '—'}
-                                            </td>
-                                        </tr>
-                                    </tfoot>
-                                </table>
+                        {hasSelectedItems && (
+                            <div>
+                                <h3 className="text-xs font-black uppercase text-gray-400 tracking-widest mb-2">Selected Work Items</h3>
+                                <div className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
+                                    <table className="w-full text-sm">
+                                        <thead className="bg-gray-50 dark:bg-gray-700/50 text-xs text-gray-500 uppercase">
+                                            <tr>
+                                                <th className="px-4 py-3 text-left">Service</th>
+                                                <th className="px-4 py-3 text-right">Eining</th>
+                                                <th className="px-4 py-3 text-right">ISK (est.)</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                                            {selectedItems.map(item => {
+                                                const eining = item.reference_price || 0;
+                                                const isk = eining * verdlagNum;
+                                                return (
+                                                    <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/20">
+                                                        <td className="px-4 py-3">
+                                                            <div className="flex items-center gap-2">
+                                                                <TagIcon className="h-4 w-4 text-indigo-400 flex-shrink-0" />
+                                                                <span className="text-gray-800 dark:text-gray-200 text-xs leading-tight">
+                                                                    {item.description}
+                                                                </span>
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-4 py-3 text-right font-mono text-indigo-600 dark:text-indigo-400 text-xs font-semibold">
+                                                            {formatEining(eining)}
+                                                        </td>
+                                                        <td className="px-4 py-3 text-right text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+                                                            {verdlagNum > 0 ? formatISK(isk) : '—'}
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                        <tfoot className="bg-indigo-50 dark:bg-indigo-900/20 font-black">
+                                            <tr>
+                                                <td className="px-4 py-3 text-indigo-700 dark:text-indigo-300 text-xs">TOTAL</td>
+                                                <td className="px-4 py-3 text-right text-indigo-700 dark:text-indigo-300 font-mono text-xs">
+                                                    {formatEining(totalEining)}
+                                                </td>
+                                                <td className="px-4 py-3 text-right text-indigo-700 dark:text-indigo-300 text-xs">
+                                                    {verdlagNum > 0 ? formatISK(totalISK) : '—'}
+                                                </td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
                             </div>
-                        </div>
+                        )}
 
                         {/* Verðlag (ISK per eining) */}
-                        <div>
-                            <h3 className="text-xs font-black uppercase text-gray-400 tracking-widest mb-3">Verðlag (ISK/eining)</h3>
-                            <div className="relative">
-                                <BanknotesIcon className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-                                <input
-                                    type="number"
-                                    min="1"
-                                    step="100"
-                                    required
-                                    placeholder="e.g. 6500"
-                                    value={verdlag}
-                                    onChange={e => setVerdlag(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
-                                />
-                            </div>
-                            {verdlagNum > 0 && (
-                                <div className="mt-2 flex items-center gap-2 text-sm font-semibold text-emerald-600 dark:text-emerald-400">
-                                    <CheckCircleIcon className="h-4 w-4" />
-                                    Estimated total: <span className="text-lg font-black">{formatISK(totalISK)}</span>
+                        {hasSelectedItems && (
+                            <div>
+                                <h3 className="text-xs font-black uppercase text-gray-400 tracking-widest mb-3">Verðlag (ISK/eining)</h3>
+                                <div className="relative">
+                                    <BanknotesIcon className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        step="100"
+                                        required
+                                        placeholder="e.g. 6500"
+                                        value={verdlag}
+                                        onChange={e => setVerdlag(e.target.value)}
+                                        className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
+                                    />
                                 </div>
-                            )}
-                            <p className="mt-1 text-xs text-gray-500">
-                                Your company's ISK rate per Eining. Total = {formatEining(totalEining)} × rate.
-                            </p>
-                        </div>
+                                {verdlagNum > 0 && (
+                                    <div className="mt-2 flex items-center gap-2 text-sm font-semibold text-emerald-600 dark:text-emerald-400">
+                                        <CheckCircleIcon className="h-4 w-4" />
+                                        Estimated total: <span className="text-lg font-black">{formatISK(totalISK)}</span>
+                                    </div>
+                                )}
+                                <p className="mt-1 text-xs text-gray-500">
+                                    Your company's ISK rate per Eining. Total = {formatEining(totalEining)} × rate.
+                                </p>
+                            </div>
+                        )}
 
                         {/* Offer details */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -249,7 +272,7 @@ export default function CreateOfferFromCatalogModal({ selectedItems, onClose, on
                         </button>
                         <button
                             type="submit"
-                            disabled={loading || !projectId || !verdlagNum}
+                            disabled={loading || !projectId || (hasSelectedItems && !verdlagNum)}
                             className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-black rounded-xl hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                         >
                             {loading ? (
@@ -257,7 +280,7 @@ export default function CreateOfferFromCatalogModal({ selectedItems, onClose, on
                             ) : (
                                 <ArrowRightIcon className="h-4 w-4" />
                             )}
-                            Create Offer · {verdlagNum > 0 ? formatISK(totalISK) : '—'}
+                            {hasSelectedItems ? `Create Offer · ${verdlagNum > 0 ? formatISK(totalISK) : '—'}` : 'Create Offer'}
                         </button>
                     </div>
                 </form>

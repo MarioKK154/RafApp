@@ -559,6 +559,22 @@ function OfferPage() {
         }
     };
 
+    const handleKeyDown = (e, itemId) => {
+        if (e.key === 'Enter') {
+            handleSaveLineEdit(itemId);
+        } else if (e.key === 'Escape') {
+            setEditingLineId(null);
+        }
+    };
+
+    const handleBlur = (e, itemId) => {
+        const nextTarget = e.relatedTarget;
+        if (nextTarget && (nextTarget.tagName === 'INPUT' || nextTarget.tagName === 'BUTTON') && nextTarget.closest('tr')?.contains(nextTarget)) {
+            return;
+        }
+        handleSaveLineEdit(itemId);
+    };
+
     const confirmDeleteOffer = async () => {
         try {
             await axiosInstance.delete(`/offers/${offerId}`);
@@ -693,12 +709,18 @@ function OfferPage() {
                                                         {item.item_type}
                                                     </span>
                                                 </td>
-                                                <td className="py-5 px-4 text-right font-mono font-bold text-gray-600">
+                                                <td
+                                                    className="py-5 px-4 text-right font-mono font-bold text-gray-600 cursor-pointer"
+                                                    onDoubleClick={() => canEditOffer && handleStartEditLine(item)}
+                                                    title={canEditOffer ? "Double click to edit quantity" : ""}
+                                                >
                                                     {isEditing ? (
                                                         <input
                                                             type="number"
                                                             value={editingQty}
                                                             onChange={(e) => setEditingQty(e.target.value)}
+                                                            onKeyDown={(e) => handleKeyDown(e, item.id)}
+                                                            onBlur={(e) => handleBlur(e, item.id)}
                                                             disabled={isSavingLine}
                                                             className="modern-input text-right font-mono font-bold text-xs h-8 w-20 px-1 inline-block"
                                                             autoFocus
@@ -707,12 +729,18 @@ function OfferPage() {
                                                         item.quantity
                                                     )}
                                                 </td>
-                                                <td className="py-5 px-6 text-right text-gray-400 font-medium italic">
+                                                <td
+                                                    className="py-5 px-6 text-right text-gray-400 font-medium italic cursor-pointer"
+                                                    onDoubleClick={() => canEditOffer && handleStartEditLine(item)}
+                                                    title={canEditOffer ? "Double click to edit rate" : ""}
+                                                >
                                                     {isEditing ? (
                                                         <input
                                                             type="number"
                                                             value={editingRate}
                                                             onChange={(e) => setEditingRate(e.target.value)}
+                                                            onKeyDown={(e) => handleKeyDown(e, item.id)}
+                                                            onBlur={(e) => handleBlur(e, item.id)}
                                                             disabled={isSavingLine}
                                                             className="modern-input text-right font-mono font-bold text-xs h-8 w-28 px-1 inline-block"
                                                         />

@@ -310,6 +310,22 @@ def health_db(request: Request):
         "layout": database_layout(),
     }
 
+@app.on_event("startup")
+def _ensure_dynamic_shop_columns() -> None:
+    """Ensure dynamic shop_url_{id} columns exist on inventory_items for all global shops."""
+    from .database import SessionLocal
+    db = SessionLocal()
+    try:
+        from sqlalchemy import text
+        result = db.execute(text("SELECT id FROM global_shops")).fetchall()
+        for r in result:
+            models.add_dynamic_shop_column(db, r[0])
+    except Exception as e:
+        import logging
+        logging.warning(f"Failed to ensure dynamic shop columns on startup: {e}")
+    finally:
+        db.close()
+
 
 # 6. SPA Catch-All Route
 FRONTEND_BUILD_DIR = BASE_DIR.parent.parent / "frontend" / "dist"

@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, Field, HttpUrl, ConfigDict, field_validator
+from pydantic import BaseModel, EmailStr, Field, HttpUrl, ConfigDict, field_validator, model_validator
 from typing import Optional, List, Literal, Any, Union
 from datetime import datetime, date, timedelta
 from os import environ
@@ -575,6 +575,7 @@ class InventoryItemBase(BaseModel):
     reykjafell_sku: Optional[str] = None
     local_image_path: Optional[str] = None
     warehouse_quantity: float = Field(0.0, ge=0)
+    model_config = ConfigDict(extra='allow')
 
 class InventoryItemCreate(InventoryItemBase):
     pass
@@ -604,10 +605,37 @@ class InventoryItemUpdate(BaseModel):
     reykjafell_sku: Optional[str] = None
     local_image_path: Optional[str] = None
     warehouse_quantity: Optional[float] = Field(None, ge=0)
+    model_config = ConfigDict(extra='allow')
 
 class InventoryItemRead(InventoryItemBase):
     id: int
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True, extra='allow')
+
+    @model_validator(mode="before")
+    @classmethod
+    def load_dynamic_fields(cls, data: Any) -> Any:
+        if not isinstance(data, dict):
+            d = {}
+            for field_name in cls.model_fields:
+                if hasattr(data, field_name):
+                    d[field_name] = getattr(data, field_name)
+            
+            if hasattr(data, "__class__"):
+                try:
+                    from sqlalchemy.orm import class_mapper
+                    mapper = class_mapper(data.__class__)
+                    for prop in mapper.iterate_properties:
+                        if prop.key.startswith("shop_url_"):
+                            d[prop.key] = getattr(data, prop.key, None)
+                except Exception:
+                    if hasattr(data, "__dict__"):
+                        for k, v in data.__dict__.items():
+                            if k.startswith("shop_url_"):
+                                d[k] = v
+            if hasattr(data, "id"):
+                d["id"] = data.id
+            return d
+        return data
 
 
 class MaterialRequestBase(BaseModel):

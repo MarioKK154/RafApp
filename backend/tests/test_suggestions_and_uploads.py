@@ -107,6 +107,11 @@ def test_catalog_material_image_upload(client: TestClient, authenticated_user_to
     """
     Verifies that the catalog material image upload endpoint works.
     """
+    # ARRANGE: Upgrade user to superuser
+    user = authenticated_user_token["user"]
+    user.is_superuser = True
+    db.commit()
+
     token = authenticated_user_token["token"]
     headers = {"Authorization": f"Bearer {token}"}
 

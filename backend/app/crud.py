@@ -999,11 +999,20 @@ def get_inventory_catalog_filters(db: Session, lang: Optional[str] = None) -> Li
 
 def create_inventory_item(db: Session, item: schemas.InventoryItemCreate) -> models.InventoryItem:
     db_item = models.InventoryItem(**item.model_dump())
+    extra_data = item.model_extra or {}
+    for key, value in extra_data.items():
+        if key.startswith("shop_url_"):
+            setattr(db_item, key, value)
     db.add(db_item); db.commit(); db.refresh(db_item); return db_item
 
 def update_inventory_item(db: Session, db_item: models.InventoryItem, item_update: schemas.InventoryItemUpdate) -> models.InventoryItem:
     update_data = item_update.model_dump(exclude_unset=True)
-    for key, value in update_data.items(): setattr(db_item, key, value)
+    extra_data = item_update.model_extra or {}
+    for key, value in update_data.items():
+        setattr(db_item, key, value)
+    for key, value in extra_data.items():
+        if key.startswith("shop_url_"):
+            setattr(db_item, key, value)
     db.add(db_item); db.commit(); db.refresh(db_item); return db_item
 
 def delete_inventory_item(db: Session, db_item: models.InventoryItem) -> models.InventoryItem:
