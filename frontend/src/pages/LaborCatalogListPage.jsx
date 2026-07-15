@@ -228,7 +228,7 @@ function LaborCatalogListPage() {
                                     setSelectedItemIds(new Set());
                                     setIsOfferModalOpen(true);
                                 }}
-                                className="inline-flex items-center gap-2 px-5 py-2.5 text-[10px] font-black uppercase tracking-widest rounded-xl bg-indigo-650 hover:bg-indigo-700 text-white transition shadow-sm"
+                                className="inline-flex items-center gap-2 px-5 py-2.5 text-[10px] font-black uppercase tracking-widest rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white transition shadow-sm"
                             >
                                 <DocumentPlusIcon className="h-5 w-5" />
                                 Create new offer
