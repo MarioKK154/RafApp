@@ -271,6 +271,8 @@ class Project(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     work_load_ratio_codes = Column(Text, nullable=True)  # JSON array of codes e.g. ["3020","6013"]; applied to labor
+    is_certified = Column(Boolean, default=False)
+    certification_date = Column(DateTime(timezone=True), nullable=True)
 
     tenant = relationship("Tenant", back_populates="projects")
     creator = relationship("User", foreign_keys=[creator_id], back_populates="projects_created")
@@ -605,6 +607,8 @@ class TimeLog(Base):
     project_id = Column(Integer, ForeignKey("projects.id", ondelete="SET NULL"), nullable=True)
     task_id = Column(Integer, ForeignKey("tasks.id", ondelete="SET NULL"), nullable=True)
     travel_hours = Column(Float, default=0.0, nullable=False)
+    actual_hours = Column(Float, default=0.0, nullable=True)
+    base_hourly_wage_paid = Column(Float, default=0.0, nullable=True)
     user = relationship("User", back_populates="time_logs")
     project = relationship("Project")
     task = relationship("Task")
@@ -1000,6 +1004,39 @@ class Suggestion(Base):
 
     user = relationship("User")
     tenant = relationship("Tenant")
+
+class PieceworkRate(Base):
+    __tablename__ = "piecework_rates"
+    id = Column(Integer, primary_key=True, index=True)
+    effective_from = Column(DateTime(timezone=True), nullable=False)
+    effective_to = Column(DateTime(timezone=True), nullable=True)
+    base_wage_rate = Column(Float, nullable=False)      # Kaupliður
+    tool_allowance = Column(Float, nullable=False)     # Verkfærapeningar
+    holiday_pay = Column(Float, nullable=False)        # Aukahelgidagar
+    attendance_pay = Column(Float, nullable=False)     # Mætingarskylda
+    clothing_pay = Column(Float, nullable=False)       # Fatagjald
+    sick_pay = Column(Float, nullable=False)           # Aukinn veikindaréttur
+    reiknitala = Column(Float, nullable=False)         # Final multiplier
+
+class PieceworkTaskCatalog(Base):
+    __tablename__ = "piecework_task_catalog"
+    id = Column(String, primary_key=True, index=True)
+    category = Column(String, nullable=False)
+    description_is = Column(String, nullable=False)
+    base_standard_hours = Column(Float, nullable=False)
+
+class ProjectInstallationLog(Base):
+    __tablename__ = "project_installation_logs"
+    id = Column(Integer, primary_key=True, index=True)
+    project_id = Column(Integer, ForeignKey("projects.id", ondelete="CASCADE"), nullable=False)
+    catalog_task_id = Column(String, ForeignKey("piecework_task_catalog.id", ondelete="CASCADE"), nullable=False)
+    quantity = Column(Float, nullable=False)
+    has_height_surcharge = Column(Boolean, default=False)
+    has_concrete_surcharge = Column(Boolean, default=False)
+    is_occupied_space = Column(Boolean, default=False)
+
+    project = relationship("Project")
+    task = relationship("PieceworkTaskCatalog")
 
 def add_dynamic_shop_column(db, shop_id: int):
     col_name = f"shop_url_{shop_id}"

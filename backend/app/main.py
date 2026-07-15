@@ -28,6 +28,7 @@ from .routers import (
     chat,
     integrations,
     shop_catalog,
+    piecework,
 )
 
 # 2. Database schema
@@ -211,6 +212,7 @@ api_router.include_router(risk_assessments.router)
 api_router.include_router(chat.router)
 api_router.include_router(integrations.router)
 api_router.include_router(shop_catalog.router)
+api_router.include_router(piecework.router)
 
 app.include_router(api_router)
 

@@ -3381,3 +3381,116 @@ def delete_suggestion(db: Session, suggestion_id: int) -> bool:
     return False
 
 
+# --- Piecework Incentive (Ákvæðisvinna) Database Operations ---
+
+def get_piecework_rates(db: Session):
+    return db.query(models.PieceworkRate).order_by(models.PieceworkRate.effective_from.desc()).all()
+
+def create_piecework_rate(db: Session, rate: schemas.PieceworkRateCreate) -> models.PieceworkRate:
+    db_rate = models.PieceworkRate(**rate.model_dump())
+    db.add(db_rate)
+    db.commit()
+    db.refresh(db_rate)
+    return db_rate
+
+def get_piecework_task_catalog(db: Session):
+    return db.query(models.PieceworkTaskCatalog).order_by(models.PieceworkTaskCatalog.category, models.PieceworkTaskCatalog.id).all()
+
+def create_piecework_task(db: Session, task: schemas.PieceworkTaskCatalogCreate) -> models.PieceworkTaskCatalog:
+    db_task = models.PieceworkTaskCatalog(**task.model_dump())
+    db.add(db_task)
+    db.commit()
+    db.refresh(db_task)
+    return db_task
+
+def get_installation_logs_for_project(db: Session, project_id: int):
+    return db.query(models.ProjectInstallationLog).filter(models.ProjectInstallationLog.project_id == project_id).all()
+
+def create_installation_log(db: Session, log: schemas.ProjectInstallationLogCreate) -> models.ProjectInstallationLog:
+    db_log = models.ProjectInstallationLog(**log.model_dump())
+    db.add(db_log)
+    db.commit()
+    db.refresh(db_log)
+    return db_log
+
+def calculate_project_settlement(db: Session, project_id: int) -> Dict[str, Any]:
+    project = db.query(models.Project).filter(models.Project.id == project_id).first()
+    if not project:
+        raise ValueError(f"Project with ID {project_id} not found.")
+
+    ref_date = project.certification_date or datetime.now(timezone.utc)
+    current_active_rate = db.query(models.PieceworkRate).filter(
+        models.PieceworkRate.effective_from <= ref_date,
+        or_(
+            models.PieceworkRate.effective_to == None,
+            models.PieceworkRate.effective_to >= ref_date
+        )
+    ).order_by(models.PieceworkRate.effective_from.desc()).first()
+
+    if not current_active_rate:
+        current_active_rate = db.query(models.PieceworkRate).order_by(models.PieceworkRate.effective_from.desc()).first()
+
+    if not current_active_rate:
+        raise ValueError("No piecework rates defined in the database.")
+
+    installation_logs = db.query(models.ProjectInstallationLog).filter(
+        models.ProjectInstallationLog.project_id == project_id
+    ).all()
+
+    total_standard_hours = 0.0
+
+    for log in installation_logs:
+        task = db.query(models.PieceworkTaskCatalog).filter(
+            models.PieceworkTaskCatalog.id == log.catalog_task_id
+        ).first()
+        if not task:
+            continue
+        
+        task_multipliers = 1.0
+        if log.has_height_surcharge:
+            task_multipliers *= 1.15
+        if log.is_occupied_space:
+            task_multipliers *= 1.10
+        if log.has_concrete_surcharge:
+            task_multipliers *= 1.25
+
+        adjusted_task_hours = log.quantity * task.base_standard_hours * task_multipliers
+        total_standard_hours += adjusted_task_hours
+
+    piecework_valuation = total_standard_hours * current_active_rate.reiknitala
+
+    time_logs = db.query(models.TimeLog).filter(
+        models.TimeLog.project_id == project_id
+    ).all()
+
+    total_advance_wages_paid = 0.0
+    total_physical_hours_logged = 0.0
+
+    for log in time_logs:
+        hours = log.actual_hours
+        if hours is None or hours == 0.0:
+            if log.end_time and log.start_time:
+                hours = (log.end_time - log.start_time).total_seconds() / 3600.0
+            else:
+                hours = 0.0
+        
+        wage = log.base_hourly_wage_paid or 0.0
+        total_advance_wages_paid += (hours * wage)
+        total_physical_hours_logged += hours
+
+    bonus_pool = 0.0
+    if piecework_valuation > total_advance_wages_paid:
+        bonus_pool = piecework_valuation - total_advance_wages_paid
+
+    return {
+        "project_id": project_id,
+        "total_standard_hours": total_standard_hours,
+        "piecework_valuation": piecework_valuation,
+        "total_physical_hours_logged": total_physical_hours_logged,
+        "total_advance_wages_paid": total_advance_wages_paid,
+        "bonus_pool": bonus_pool,
+        "is_profitable_for_crew": bonus_pool > 0
+    }
+
+
+

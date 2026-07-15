@@ -2034,3 +2034,64 @@ class SuggestionRead(BaseModel):
     created_at: datetime
     model_config = ConfigDict(from_attributes=True)
 
+
+# --- Piecework Incentive (Ákvæðisvinna) Schemas ---
+
+class PieceworkRateBase(BaseModel):
+    effective_from: datetime
+    effective_to: Optional[datetime] = None
+    base_wage_rate: float
+    tool_allowance: float
+    holiday_pay: float
+    attendance_pay: float
+    clothing_pay: float
+    sick_pay: float
+    reiknitala: float
+
+class PieceworkRateCreate(PieceworkRateBase):
+    pass
+
+class PieceworkRateRead(PieceworkRateBase):
+    id: int
+    model_config = ConfigDict(from_attributes=True)
+
+
+class PieceworkTaskCatalogBase(BaseModel):
+    id: str
+    category: str
+    description_is: str
+    base_standard_hours: float
+
+class PieceworkTaskCatalogCreate(PieceworkTaskCatalogBase):
+    pass
+
+class PieceworkTaskCatalogRead(PieceworkTaskCatalogBase):
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ProjectInstallationLogBase(BaseModel):
+    project_id: int
+    catalog_task_id: str
+    quantity: float
+    has_height_surcharge: bool = False
+    has_concrete_surcharge: bool = False
+    is_occupied_space: bool = False
+
+class ProjectInstallationLogCreate(ProjectInstallationLogBase):
+    pass
+
+class ProjectInstallationLogRead(ProjectInstallationLogBase):
+    id: int
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ProjectSettlementRead(BaseModel):
+    project_id: int
+    total_standard_hours: float
+    piecework_valuation: float
+    total_physical_hours_logged: float
+    total_advance_wages_paid: float
+    bonus_pool: float
+    is_profitable_for_crew: bool
+
+
