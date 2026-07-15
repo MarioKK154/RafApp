@@ -256,15 +256,8 @@ function InventoryCatalogEditPage() {
     }, [itemId, navigate]);
 
     useEffect(() => {
-        if (!canManageCatalog) {
-            toast.error("Superadmin clearance level required.");
-            navigate('/inventory');
-        }
-    }, [canManageCatalog, navigate]);
-
-    useEffect(() => {
-        if (itemId && canManageCatalog) fetchItemData();
-    }, [itemId, fetchItemData, canManageCatalog]);
+        if (itemId) fetchItemData();
+    }, [itemId, fetchItemData]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -311,7 +304,7 @@ function InventoryCatalogEditPage() {
                         to="/inventory" 
                         className="flex items-center text-[10px] font-black text-gray-400 hover:text-indigo-600 transition mb-3 uppercase tracking-[0.2em]"
                     >
-                        <ChevronLeftIcon className="h-3 w-3 mr-1" /> Terminate Edit / Return to Registry
+                        <ChevronLeftIcon className="h-3 w-3 mr-1" /> {isSuperuser ? "Terminate Edit / Return to Registry" : "Return to Registry"}
                     </Link>
                     
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -321,7 +314,7 @@ function InventoryCatalogEditPage() {
                             </div>
                             <div>
                                 <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">
-                                    {t('modify_spec', { defaultValue: 'Modify Specification' })}
+                                    {isSuperuser ? t('modify_spec', { defaultValue: 'Modify Specification' }) : t('material_spec', { defaultValue: 'Material Specification' })}
                                 </h1>
                                 <div className="flex items-center gap-3 mt-2">
                                     <FingerPrintIcon className="h-3 w-3 text-indigo-500" />
@@ -339,6 +332,41 @@ function InventoryCatalogEditPage() {
                 {/* Primary Data Column */}
                 <div className="lg:col-span-8 space-y-8">
                     
+                    {/* Catalog Category Breadcrumbs and Image Preview */}
+                    <div className="bg-white dark:bg-gray-800 p-8 md:p-10 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-700">
+                        <div className="flex items-center gap-1.5 text-[10px] font-black text-indigo-500 uppercase tracking-[0.15em] mb-6">
+                            <span>{formData.master_category || 'Catalog'}</span>
+                            {formData.category_en && (
+                                <>
+                                    <span className="text-gray-300 dark:text-gray-600">/</span>
+                                    <span>{formData.category_en}</span>
+                                </>
+                            )}
+                            {formData.subcategory_en && (
+                                <>
+                                    <span className="text-gray-300 dark:text-gray-600">/</span>
+                                    <span>{formData.subcategory_en}</span>
+                                </>
+                            )}
+                        </div>
+
+                        {formData.local_image_path ? (
+                            <div className="rounded-3xl overflow-hidden border border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/50 flex justify-center items-center p-6 max-h-[360px]">
+                                <img 
+                                    src={formData.local_image_path} 
+                                    alt={formData.name} 
+                                    className="object-contain max-h-[300px] rounded-2xl shadow-sm"
+                                    onError={(e) => { e.target.style.display = 'none'; }}
+                                />
+                            </div>
+                        ) : (
+                            <div className="rounded-3xl border border-dashed border-gray-200 dark:border-gray-700 flex flex-col justify-center items-center p-12 text-gray-400 dark:text-gray-500 bg-gray-50/30 dark:bg-gray-900/10">
+                                <CubeIcon className="h-12 w-12 stroke-1 mb-2 text-gray-300 dark:text-gray-600" />
+                                <span className="text-[10px] font-black uppercase tracking-widest">No Material Image Available</span>
+                            </div>
+                        )}
+                    </div>
+
                     <section className="bg-white dark:bg-gray-800 p-8 md:p-10 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-700 space-y-8">
                         <div className="flex items-center gap-3">
                             <TagIcon className="h-5 w-5 text-indigo-500" />

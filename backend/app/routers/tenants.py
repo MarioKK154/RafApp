@@ -181,8 +181,8 @@ async def delete_existing_tenant(request: Request, tenant_id: int, db: DbDepende
 async def upload_tenant_logo(
     request: Request,
     tenant_id: int,
+    db: DbDependency,
     file: UploadFile = File(...),
-    db: DbDependency = None,
 ):
     """Upload a logo image for the tenant. Replaces any existing logo. Superuser only."""
     db_tenant = crud.get_tenant(db, tenant_id=tenant_id)
@@ -222,8 +222,8 @@ async def upload_tenant_logo(
 async def upload_tenant_background(
     request: Request,
     tenant_id: int,
+    db: DbDependency,
     file: UploadFile = File(...),
-    db: DbDependency = None,
 ):
     """Upload a background image for the tenant. Can be called multiple times for multiple backgrounds. Superuser only."""
     db_tenant = crud.get_tenant(db, tenant_id=tenant_id)

@@ -51,7 +51,7 @@ export default function CreateOfferFromCatalogModal({ selectedItems = [], onClos
 
     useEffect(() => {
         setProjectsLoading(true);
-        axiosInstance.get('/api/projects/')
+        axiosInstance.get('/projects/')
             .then(r => {
                 setProjects(r.data || []);
                 if (r.data?.length === 1) setProjectId(String(r.data[0].id));
@@ -76,7 +76,7 @@ export default function CreateOfferFromCatalogModal({ selectedItems = [], onClos
                     verdlag_per_eining: verdlagNum,
                     catalog_item_ids: selectedItems.map(i => i.id),
                 };
-                const res = await axiosInstance.post('/api/offers/from-catalog', payload);
+                const res = await axiosInstance.post('/offers/from-catalog', payload);
                 toast.success(`Offer ${res.data.offer_number} created!`);
                 onCreated(res.data.id);
             } else {
@@ -87,7 +87,7 @@ export default function CreateOfferFromCatalogModal({ selectedItems = [], onClos
                     expiry_date: expiryDate || null,
                     verdlag_per_eining: null,
                 };
-                const res = await axiosInstance.post('/api/offers/', payload);
+                const res = await axiosInstance.post('/offers/', payload);
                 toast.success(`Offer ${res.data.offer_number} created!`);
                 onCreated(res.data.id);
             }
