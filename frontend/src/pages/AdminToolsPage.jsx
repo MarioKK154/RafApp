@@ -38,6 +38,41 @@ function AdminToolsPage() {
     const [successMessage, setSuccessMessage] = useState('');
     const [resultSummary, setResultSummary] = useState(null);
 
+    // Interactive Excel Database Sync States
+    const [excelFile, setExcelFile] = useState(null);
+    const [replaceCatalog, setReplaceCatalog] = useState(false);
+    const [isSyncingExcel, setIsSyncingExcel] = useState(false);
+    const [excelSyncResult, setExcelSyncResult] = useState(null);
+
+    const handleExcelSyncSubmit = async (e) => {
+        e.preventDefault();
+        if (!excelFile) {
+            toast.warn("Please select an Excel file first.");
+            return;
+        }
+        setIsSyncingExcel(true);
+        setExcelSyncResult(null);
+        
+        const formData = new FormData();
+        formData.append("file", excelFile);
+        
+        try {
+            const res = await axiosInstance.post(
+                `/inventory/catalog/import-excel?replace=${replaceCatalog}`, 
+                formData, 
+                { headers: { "Content-Type": "multipart/form-data" } }
+            );
+            setExcelSyncResult(res.data);
+            toast.success("Materials database synchronized successfully!");
+            setExcelFile(null);
+        } catch (err) {
+            console.error("Excel sync failed:", err);
+            toast.error(err.response?.data?.detail || "Failed to sync Excel database.");
+        } finally {
+            setIsSyncingExcel(false);
+        }
+    };
+
     const [heatmap, setHeatmap] = useState(null);
     const [growth, setGrowth] = useState(null);
     const [systemLoad, setSystemLoad] = useState(null);
@@ -624,6 +659,70 @@ function AdminToolsPage() {
             </header>
 
             <div className="space-y-12">
+                {/* Excel Database Synchronization */}
+                <div className="space-y-4">
+                    <h2 className="text-sm font-black text-gray-400 uppercase tracking-widest border-b border-gray-100 dark:border-gray-800 pb-2">Database Synchronization</h2>
+                    <div className="bg-white dark:bg-gray-800 p-6 md:p-8 rounded-[2rem] border border-gray-100 dark:border-gray-700 shadow-sm space-y-6">
+                        <div className="flex items-center gap-3">
+                            <span className="text-2xl">📊</span>
+                            <div>
+                                <h3 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-tight">Interactive Materials Database Sync</h3>
+                                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-[0.2em] mt-0.5">Upload your multi-sheet product Excel sheet (e.g. Cables, Pipes, etc.) to merge updates into the SQL database.</p>
+                            </div>
+                        </div>
+
+                        <form onSubmit={handleExcelSyncSubmit} className="space-y-4">
+                            <div className="flex flex-col sm:flex-row gap-4 items-end">
+                                <div className="flex-1 w-full">
+                                    <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">Select Product Database Excel (.xlsx)</label>
+                                    <input 
+                                        type="file" 
+                                        accept=".xlsx, .xls"
+                                        onChange={(e) => setExcelFile(e.target.files[0])}
+                                        className="block w-full text-xs text-gray-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-[10px] file:font-black file:uppercase file:tracking-widest file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100 cursor-pointer"
+                                    />
+                                </div>
+                                <div className="flex items-center gap-2 h-12 ml-1 shrink-0">
+                                    <input
+                                        type="checkbox"
+                                        id="replaceCatalog"
+                                        checked={replaceCatalog}
+                                        onChange={(e) => setReplaceCatalog(e.target.checked)}
+                                        className="h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                    />
+                                    <label htmlFor="replaceCatalog" className="text-[10px] font-black text-gray-700 dark:text-gray-300 uppercase tracking-widest cursor-pointer">
+                                        Clean Slate (Replace all catalog records)
+                                    </label>
+                                </div>
+                                <button
+                                    type="submit"
+                                    disabled={isSyncingExcel || !excelFile}
+                                    className="h-12 px-6 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition-all shadow-md shadow-indigo-600/10 disabled:opacity-50 disabled:grayscale shrink-0"
+                                >
+                                    {isSyncingExcel ? "Syncing..." : "Sync Database"}
+                                </button>
+                            </div>
+                        </form>
+
+                        {excelSyncResult && (
+                            <div className="p-5 bg-green-50 dark:bg-green-950/20 border border-green-100 dark:border-green-800 rounded-2xl text-xs space-y-2 animate-in fade-in duration-300">
+                                <p className="font-bold text-green-800 dark:text-green-400">✅ Sync Complete!</p>
+                                <p className="text-gray-600 dark:text-gray-300">{excelSyncResult.message}</p>
+                                {excelSyncResult.sheets_processed && (
+                                    <div className="pt-2 border-t border-green-100 dark:border-green-900 space-y-1">
+                                        <p className="font-bold text-[10px] uppercase tracking-wider text-gray-400">Processed Sheets:</p>
+                                        {Object.entries(excelSyncResult.sheets_processed).map(([sheet, stats]) => (
+                                            <p key={sheet} className="font-mono text-[10px] text-gray-500">
+                                                - {sheet}: {stats.created} new, {stats.updated} updated, {stats.skipped} skipped
+                                            </p>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                </div>
+
                 {/* Critical Operations */}
                 <div className="space-y-4">
                     <h2 className="text-sm font-black text-gray-400 uppercase tracking-widest border-b border-gray-100 dark:border-gray-800 pb-2">Critical Operations</h2>

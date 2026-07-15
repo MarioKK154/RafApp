@@ -177,6 +177,193 @@ async def mirror_inventory_catalog_is_to_en(
     """Fill empty English catalog fields from Icelandic primaries (bulk). Superuser only."""
     return crud.mirror_inventory_catalog_is_to_en(db)
 
+
+@router.post("/catalog/import-excel", response_model=Dict[str, Any])
+@limiter.limit("5/minute")
+async def import_catalog_excel(
+    request: Request,
+    db: DbDependency,
+    current_user: SuperuserDependency,
+    file: UploadFile = File(...),
+    replace: bool = Query(False, description="Delete older inventory catalog records first")
+):
+    """
+    Import/Update inventory catalog from an uploaded Excel file.
+    Reads sheets: Cables, Cable trays and ladders, Pipes (or falls back to the first sheet).
+    Upserts items based on Name matching.
+    """
+    filename = (file.filename or "").lower()
+    if not filename.endswith((".xlsx", ".xls")):
+        raise HTTPException(status_code=400, detail="Excel file (.xlsx or .xls) required.")
+
+    import pandas as pd
+    from io import BytesIO
+
+    content = await file.read()
+    try:
+        xl = pd.ExcelFile(BytesIO(content))
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Failed to read Excel file: {str(e)}")
+
+    PRODUCT_SHEETS = ["Cables", "Cable trays and ladders", "Pipes"]
+    available_sheets = xl.sheet_names
+    sheets_to_import = [s for s in PRODUCT_SHEETS if s in available_sheets]
+
+    if not sheets_to_import:
+        # Fallback: import the first sheet if none of the standard ones are found
+        sheets_to_import = [available_sheets[0]]
+
+    # Helpers
+    def _clean(v: object) -> Optional[str]:
+        if v is None:
+            return None
+        s = str(v).strip()
+        if not s or s.lower() == "nan":
+            return None
+        return s
+
+    def _pick(row: dict, names: list[str]) -> Optional[str]:
+        lowered = {str(k).strip().lower(): v for k, v in row.items()}
+        for n in names:
+            if n.lower() in lowered:
+                return _clean(lowered[n.lower()])
+        return None
+
+    def _resolve_fields(row: dict) -> tuple:
+        master_cat    = _pick(row, ["Main category Icelandic", "Main category"])
+        master_cat_en = _pick(row, ["Main category English"])
+        category    = _pick(row, ["Subcategory Icelandic", "Subcategory"])
+        category_en = _pick(row, ["Subcategory English"])
+        subcategory    = _pick(row, ["Sub-subcategory Icelandic", "Sub subcategory Icelandic", "Sub-subcategory"])
+        subcategory_en = _pick(row, ["Sub-subcategory English", "Sub subcategory English"])
+        name    = _pick(row, ["Product Icelandic", "Product name/description", "Name"])
+        name_en = _pick(row, ["Product English", "Product name/description English"])
+        ronning    = _pick(row, ["Ronning"])
+        iskraft    = _pick(row, ["Iskraft"])
+        reykjafell = _pick(row, ["Reykjafell"])
+        image_path = _pick(row, ["Image path", "Local image path"])
+        return master_cat, master_cat_en, category, category_en, subcategory, subcategory_en, name, name_en, ronning, iskraft, reykjafell, image_path
+
+    created = 0
+    updated = 0
+    skipped = 0
+    sheet_logs = {}
+
+    try:
+        if replace:
+            db.query(models.ProjectInventoryItem).delete(synchronize_session=False)
+            db.query(models.BoQItem).delete(synchronize_session=False)
+            db.query(models.MaterialRequest).delete(synchronize_session=False)
+            db.query(models.OfferLineItem).delete(synchronize_session=False)
+            db.query(models.InventoryItem).delete(synchronize_session=False)
+            db.commit()
+
+        for sheet_name in sheets_to_import:
+            df = pd.read_excel(xl, sheet_name=sheet_name)
+            rows = df.to_dict(orient="records")
+            sheet_created = 0
+            sheet_updated = 0
+            sheet_skipped = 0
+
+            for row in rows:
+                (
+                    master_cat, master_cat_en,
+                    category, category_en,
+                    subcategory, subcategory_en,
+                    name, name_en,
+                    ronning, iskraft, reykjafell,
+                    image_path,
+                ) = _resolve_fields(row)
+
+                if not name and name_en:
+                    name = name_en
+                if not name_en and name:
+                    name_en = name
+                if not name:
+                    sheet_skipped += 1
+                    continue
+
+                if not master_cat and master_cat_en:
+                    master_cat = master_cat_en
+                if not master_cat_en and master_cat:
+                    master_cat_en = master_cat
+
+                if category_en and category:
+                    cat_key_val = category_en
+                    cat_label_val = category
+                elif category_en:
+                    cat_key_val = category_en
+                    cat_label_val = category_en
+                elif category:
+                    cat_key_val = category
+                    cat_label_val = category
+                else:
+                    cat_key_val = None
+                    cat_label_val = None
+
+                if subcategory_en and subcategory:
+                    sub_key_val = subcategory_en
+                    sub_label_val = subcategory
+                elif subcategory_en:
+                    sub_key_val = subcategory_en
+                    sub_label_val = subcategory_en
+                elif subcategory:
+                    sub_key_val = subcategory
+                    sub_label_val = subcategory
+                else:
+                    sub_key_val = None
+                    sub_label_val = None
+
+                existing_item = db.query(models.InventoryItem).filter(models.InventoryItem.name == name).first()
+                if existing_item:
+                    existing_item.name_en = name_en
+                    existing_item.master_category = master_cat
+                    existing_item.category = cat_key_val
+                    existing_item.category_en = cat_label_val
+                    existing_item.subcategory = sub_key_val
+                    existing_item.subcategory_en = sub_label_val
+                    existing_item.shop_url_1 = ronning
+                    existing_item.shop_url_2 = iskraft
+                    existing_item.shop_url_3 = reykjafell
+                    existing_item.local_image_path = image_path
+                    sheet_updated += 1
+                else:
+                    item_in = schemas.InventoryItemCreate(
+                        name=name,
+                        name_en=name_en,
+                        master_category=master_cat,
+                        category=cat_key_val,
+                        category_en=cat_label_val,
+                        subcategory=sub_key_val,
+                        subcategory_en=sub_label_val,
+                        description=None,
+                        unit=None,
+                        low_stock_threshold=None,
+                        shop_url_1=ronning,
+                        shop_url_2=iskraft,
+                        shop_url_3=reykjafell,
+                        local_image_path=image_path,
+                    )
+                    crud.create_inventory_item(db, item_in)
+                    sheet_created += 1
+
+            db.commit()
+            created += sheet_created
+            updated += sheet_updated
+            skipped += sheet_skipped
+            sheet_logs[sheet_name] = {"created": sheet_created, "updated": sheet_updated, "skipped": sheet_skipped}
+
+        total = db.query(models.InventoryItem).count()
+        return {
+            "status": "success",
+            "message": f"Excel import completed: {created} items created, {updated} items updated, {skipped} items skipped.",
+            "sheets_processed": sheet_logs,
+            "total_inventory_items": total
+        }
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Database synchronization error: {str(e)}")
+
 @router.get("/catalog/all-categories-distinct")
 @limiter.limit("60/minute")
 async def get_all_categories_distinct(request: Request, db: DbDependency):

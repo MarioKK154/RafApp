@@ -227,7 +227,7 @@ function AppShell() {
             <div className="flex flex-1 overflow-hidden relative">
                 <Sidebar />
 
-                <main className="flex-1 overflow-x-hidden overflow-y-auto flex flex-col relative" style={{ background: 'var(--bg-base)' }}>
+                <main className="flex-1 overflow-x-hidden overflow-y-auto flex flex-col relative pb-24 lg:pb-0" style={{ background: 'var(--bg-base)' }}>
                     {globalBanner && globalBanner.message && (
                         <div
                             className="flex-shrink-0 flex items-center justify-center gap-4 px-6 py-3 text-white text-sm font-medium text-center"
