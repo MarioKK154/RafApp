@@ -29,7 +29,7 @@ const formatEining = (value) => {
     if (value === null || value === undefined || value === '') return '—';
     const n = Number(value);
     if (isNaN(n)) return '—';
-    return `${n.toFixed(3)} ein.`;
+    return `${n.toFixed(2)} ein.`;
 };
 
 /** Format ISK/eining rate */

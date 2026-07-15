@@ -21,7 +21,7 @@ const formatISK = (v) =>
 
 const formatEining = (v) => {
     if (v == null) return '—';
-    return Number(v).toFixed(3) + ' ein.';
+    return Number(v).toFixed(2) + ' ein.';
 };
 
 /**
@@ -133,13 +133,11 @@ export default function CreateOfferFromCatalogModal({ selectedItems = [], onClos
                                             <tr>
                                                 <th className="px-4 py-3 text-left">Service</th>
                                                 <th className="px-4 py-3 text-right">Eining</th>
-                                                <th className="px-4 py-3 text-right">ISK (est.)</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                                             {selectedItems.map(item => {
                                                 const eining = item.reference_price || 0;
-                                                const isk = eining * verdlagNum;
                                                 return (
                                                     <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/20">
                                                         <td className="px-4 py-3">
@@ -153,9 +151,6 @@ export default function CreateOfferFromCatalogModal({ selectedItems = [], onClos
                                                         <td className="px-4 py-3 text-right font-mono text-indigo-600 dark:text-indigo-400 text-xs font-semibold">
                                                             {formatEining(eining)}
                                                         </td>
-                                                        <td className="px-4 py-3 text-right text-xs text-emerald-600 dark:text-emerald-400 font-medium">
-                                                            {verdlagNum > 0 ? formatISK(isk) : '—'}
-                                                        </td>
                                                     </tr>
                                                 );
                                             })}
@@ -165,9 +160,6 @@ export default function CreateOfferFromCatalogModal({ selectedItems = [], onClos
                                                 <td className="px-4 py-3 text-indigo-700 dark:text-indigo-300 text-xs">TOTAL</td>
                                                 <td className="px-4 py-3 text-right text-indigo-700 dark:text-indigo-300 font-mono text-xs">
                                                     {formatEining(totalEining)}
-                                                </td>
-                                                <td className="px-4 py-3 text-right text-indigo-700 dark:text-indigo-300 text-xs">
-                                                    {verdlagNum > 0 ? formatISK(totalISK) : '—'}
                                                 </td>
                                             </tr>
                                         </tfoot>
@@ -193,14 +185,8 @@ export default function CreateOfferFromCatalogModal({ selectedItems = [], onClos
                                         className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
                                     />
                                 </div>
-                                {verdlagNum > 0 && (
-                                    <div className="mt-2 flex items-center gap-2 text-sm font-semibold text-emerald-600 dark:text-emerald-400">
-                                        <CheckCircleIcon className="h-4 w-4" />
-                                        Estimated total: <span className="text-lg font-black">{formatISK(totalISK)}</span>
-                                    </div>
-                                )}
-                                <p className="mt-1 text-xs text-gray-500">
-                                    Your company's ISK rate per Eining. Total = {formatEining(totalEining)} × rate.
+                                <p className="mt-2 text-xs text-gray-500">
+                                    Your company's ISK rate per Eining.
                                 </p>
                             </div>
                         )}
@@ -280,7 +266,7 @@ export default function CreateOfferFromCatalogModal({ selectedItems = [], onClos
                             ) : (
                                 <ArrowRightIcon className="h-4 w-4" />
                             )}
-                            {hasSelectedItems ? `Create Offer · ${verdlagNum > 0 ? formatISK(totalISK) : '—'}` : 'Create Offer'}
+                            {hasSelectedItems ? `Create Offer · ${formatEining(totalEining)}` : 'Create Offer'}
                         </button>
                     </div>
                 </form>
