@@ -47,6 +47,13 @@ const formatCurrency = (value) => {
     }).format(value);
 };
 
+const formatEining = (value) => {
+    if (value === null || value === undefined || value === '') return '—';
+    const n = Number(value);
+    if (isNaN(n)) return '—';
+    return `${n.toFixed(2)} ein.`;
+};
+
 const formatDate = (dateString) => dateString ? new Date(dateString).toLocaleDateString() : 'N/A';
 
 const formatDateForInput = (dateString) => {
@@ -1192,9 +1199,8 @@ function OfferPage() {
                                                                     >
                                                                         <p className="font-bold text-gray-900 dark:text-white text-sm truncate">{item.description}</p>
                                                                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                                                            {formatCurrency(basePrice)} {item.unit ? `/ ${item.unit}` : '/ hr'}
+                                                                            {formatEining(item.reference_price)}
                                                                             {einingDurationLabel(item.units_per_hour) && <span className="ml-2 text-indigo-600 dark:text-indigo-400">({einingDurationLabel(item.units_per_hour)})</span>}
-                                                                            {ratioMultiplier !== 1 && <span className="ml-2">→ {formatCurrency(effectivePrice)} with conditions</span>}
                                                                         </p>
                                                                     </div>
                                                                 );

@@ -35,6 +35,7 @@ export default function CreateOfferFromCatalogModal({ selectedItems = [], onClos
 
     const [projects, setProjects] = useState([]);
     const [projectId, setProjectId] = useState('');
+    const [newProjectName, setNewProjectName] = useState('');
     const [verdlag, setVerdlag] = useState('');          // ISK per eining
     const [title, setTitle] = useState('Work Offer');
     const [clientName, setClientName] = useState('');
@@ -63,13 +64,25 @@ export default function CreateOfferFromCatalogModal({ selectedItems = [], onClos
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!projectId) { toast.error('Please select a project'); return; }
+        if (projectId === 'CREATE_NEW' && !newProjectName.trim()) {
+            toast.error('Please enter a name for the new project.');
+            return;
+        }
         if (hasSelectedItems && (!verdlagNum || verdlagNum <= 0)) { toast.error('Enter a valid ISK/eining rate'); return; }
 
         setLoading(true);
         try {
+            let activeProjectId;
+            if (projectId === 'CREATE_NEW') {
+                const projRes = await axiosInstance.post('/projects/', { name: newProjectName.trim() });
+                activeProjectId = projRes.data.id;
+            } else {
+                activeProjectId = parseInt(projectId);
+            }
+
             if (hasSelectedItems) {
                 const payload = {
-                    project_id: parseInt(projectId),
+                    project_id: activeProjectId,
                     title,
                     client_name: clientName || null,
                     expiry_date: expiryDate || null,
@@ -81,7 +94,7 @@ export default function CreateOfferFromCatalogModal({ selectedItems = [], onClos
                 onCreated(res.data.id);
             } else {
                 const payload = {
-                    project_id: parseInt(projectId),
+                    project_id: activeProjectId,
                     title,
                     client_name: clientName || null,
                     expiry_date: expiryDate || null,
@@ -198,19 +211,35 @@ export default function CreateOfferFromCatalogModal({ selectedItems = [], onClos
                                 {projectsLoading ? (
                                     <div className="h-11 rounded-xl bg-gray-100 dark:bg-gray-700 animate-pulse" />
                                 ) : (
-                                    <select
-                                        value={projectId}
-                                        onChange={e => setProjectId(e.target.value)}
-                                        required
-                                        className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 text-sm"
-                                    >
-                                        <option value="">— Select project —</option>
-                                        {projects.map(p => (
-                                            <option key={p.id} value={p.id}>
-                                                {p.project_number ? `[${p.project_number}] ` : ''}{p.name}
-                                            </option>
-                                        ))}
-                                    </select>
+                                    <>
+                                        <select
+                                            value={projectId}
+                                            onChange={e => setProjectId(e.target.value)}
+                                            required
+                                            className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 text-sm"
+                                        >
+                                            <option value="">— Select project —</option>
+                                            <option value="CREATE_NEW" className="text-indigo-600 font-bold dark:text-indigo-400">+ Create a New Project...</option>
+                                            {projects.map(p => (
+                                                <option key={p.id} value={p.id}>
+                                                    {p.project_number ? `[${p.project_number}] ` : ''}{p.name}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        {projectId === 'CREATE_NEW' && (
+                                            <div className="mt-3 space-y-1 animate-in fade-in duration-200">
+                                                <label className="block text-[9px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest ml-1">New Project Name *</label>
+                                                <input
+                                                    type="text"
+                                                    required
+                                                    placeholder="e.g. Renovation Project"
+                                                    value={newProjectName}
+                                                    onChange={e => setNewProjectName(e.target.value)}
+                                                    className="w-full px-3 py-2 rounded-xl border border-indigo-200 dark:border-indigo-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 text-sm font-semibold"
+                                                />
+                                            </div>
+                                        )}
+                                    </>
                                 )}
                             </div>
                             <div>
