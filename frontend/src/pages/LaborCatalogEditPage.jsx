@@ -17,11 +17,11 @@ import {
     TableCellsIcon,
 } from '@heroicons/react/24/outline';
 
-/** ar.is Eining: value = units per hour → time per unit (e.g. 0.26 → 3.8 hr per unit) */
+/** ar.is Eining: value = standard hours → time per unit (e.g. 0.40 → 24 min per unit) */
 function einingLabel(u, t) {
     if (u === 0) return t('hourly_rate');
     if (u == null || !Number.isFinite(u) || u < 0) return '';
-    const minPerUnit = 60 / u;
+    const minPerUnit = u * 60;
     if (minPerUnit >= 60) return `${(minPerUnit / 60).toFixed(2)} ${t('hr_per_unit')}`;
     return `${minPerUnit.toFixed(1)} ${t('min_per_unit')}`;
 }
@@ -303,7 +303,7 @@ function LaborCatalogEditPage() {
                 {/* ar.is Eining: display only */}
                 {formData.units_per_hour !== '' && formData.units_per_hour != null && (
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                        ar.is Eining: {Number(formData.units_per_hour)} units/hr → {einingLabel(Number(formData.units_per_hour), t)}
+                        ar.is Eining: {Number(formData.units_per_hour)} ein. ({einingLabel(Number(formData.units_per_hour), t)})
                     </p>
                 )}
 
@@ -311,20 +311,20 @@ function LaborCatalogEditPage() {
                     {isSuperuser && (
                         <div>
                             <label className="block text-[10px] font-black text-gray-400 uppercase mb-1 ml-1 tracking-widest">
-                                Units per hour (Eining)
+                                Eining (Standard Hours)
                             </label>
                             <input
                                 type="number"
                                 name="units_per_hour"
                                 min="0"
                                 step="0.01"
-                                placeholder={t('placeholder_units_per_hour')}
+                                placeholder="0.40, 1.00..."
                                 value={formData.units_per_hour === '' || formData.units_per_hour == null ? '' : formData.units_per_hour}
                                 onChange={handleChange}
                                 className="block w-full rounded-2xl border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-indigo-500"
                             />
                             <p className="mt-1 text-[10px] text-gray-400 dark:text-gray-500">
-                                0 = hourly rate; positive = units per hour (e.g. 0.26 → 3.8 hr per unit). For all condition-specific values, use &quot;Import condition variants&quot; below.
+                                0 = hourly rate; positive = standard hours per unit (e.g. 0.40 → 24 min per unit). For all condition-specific values, use &quot;Import condition variants&quot; below.
                             </p>
                         </div>
                     )}

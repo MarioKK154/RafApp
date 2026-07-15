@@ -71,13 +71,13 @@ const IskIcon = () => (
     <span className="text-[10px] font-black leading-none text-indigo-600 dark:text-indigo-400">kr.</span>
 );
 
-/** Catalog unit label: eining (units per hour) → e.g. "15 min", "Hourly rate" */
+/** Catalog unit label: eining (standard hours) → e.g. "15 min", "Hourly rate" */
 function einingDurationLabel(unitsPerHour) {
     if (unitsPerHour == null) return null;
     const u = Number(unitsPerHour);
     if (u === 0) return 'Hourly rate';
     if (u < 0) return null;
-    const minPerUnit = 60 / u;
+    const minPerUnit = u * 60;
     if (minPerUnit >= 60) {
         const hrs = minPerUnit / 60;
         return hrs >= 1 && Math.abs(hrs - Math.round(hrs)) < 0.01 ? `${Math.round(hrs)} hr` : `${hrs.toFixed(1)} hr`;

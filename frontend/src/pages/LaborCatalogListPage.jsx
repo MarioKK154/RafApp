@@ -42,13 +42,13 @@ const formatISKRate = (value) => {
     }).format(value) + '/ein.';
 };
 
-/** ar.is Eining: units per hour → time per unit. 0 = hourly rate; positive = 60/u min per unit */
+/** ar.is Eining: standard hours → time per unit. 0 = hourly rate; positive = u * 60 min per unit */
 function einingDurationLabel(unitsPerHour) {
     if (unitsPerHour == null) return null;
     const u = Number(unitsPerHour);
     if (u === 0) return 'Hourly rate';
     if (u < 0) return null;
-    const minPerUnit = 60 / u;
+    const minPerUnit = u * 60;
     if (minPerUnit >= 60) {
         const hrs = minPerUnit / 60;
         return hrs >= 1 && Math.abs(hrs - Math.round(hrs)) < 0.01 ? `${Math.round(hrs)} hr` : `${hrs.toFixed(1)} hr`;
@@ -61,14 +61,14 @@ function einingDurationLabel(unitsPerHour) {
     return '< 1 min';
 }
 
-/** Full label for list: "Eining X units/hr → Y per unit" so values match ar.is drill-down */
+/** Full label for list: "Eining: X ein. (Y)" so values match ar.is standard labels */
 function einingFullLabel(unitsPerHour) {
     if (unitsPerHour == null) return null;
     const u = Number(unitsPerHour);
     if (u === 0) return 'Eining: hourly rate';
     if (u < 0) return null;
     const timeLabel = einingDurationLabel(u);
-    return timeLabel ? `Eining: ${u} units/hr → ${timeLabel} per unit` : null;
+    return timeLabel ? `${u.toFixed(2)} ein. (${timeLabel})` : null;
 }
 
 function LaborCatalogListPage() {
