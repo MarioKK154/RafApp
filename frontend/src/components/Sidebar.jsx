@@ -61,9 +61,41 @@ function useBreakpoint() {
 
 function Sidebar() {
     const { t, i18n } = useTranslation();
-    const { isAuthenticated, user: currentUser, logout } = useAuth();
     const [unreadMessages, setUnreadMessages]       = useState(0);
     const [unreadNotifications, setUnreadNotifications] = useState(0);
+    const [weather, setWeather] = useState({ temp: 6, desc: 'Rigning', wind: 6 });
+
+    useEffect(() => {
+        if (!isAuthenticated) return;
+        const fetchWeather = async () => {
+            try {
+                const res = await fetch("https://api.open-meteo.com/v1/forecast?latitude=64.1466&longitude=-21.9426&current=temperature_2m,weather_code,wind_speed_10m");
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data && data.current) {
+                        const temp = Math.round(data.current.temperature_2m);
+                        const code = data.current.weather_code;
+                        const wind = Math.round(data.current.wind_speed_10m);
+                        
+                        let desc = 'Heiðskírt';
+                        if ([1, 2, 3].includes(code)) desc = 'Léttskýjað';
+                        else if ([45, 48].includes(code)) desc = 'Þoka';
+                        else if ([51, 53, 55].includes(code)) desc = 'Úði';
+                        else if ([61, 63, 65, 80, 81, 82].includes(code)) desc = 'Rigning';
+                        else if ([71, 73, 75, 85, 86].includes(code)) desc = 'Snjókoma';
+                        else if ([95, 96, 99].includes(code)) desc = 'Þrumuveður';
+                        
+                        setWeather({ temp, desc, wind });
+                    }
+                }
+            } catch (e) {
+                console.error("Weather load error", e);
+            }
+        };
+        fetchWeather();
+        const interval = setInterval(fetchWeather, 600000);
+        return () => clearInterval(interval);
+    }, [isAuthenticated]);
 
     const mode = useBreakpoint();
 
@@ -331,6 +363,58 @@ function Sidebar() {
                             <NavItem to="/tenants"     icon={<AdjustmentsHorizontalIcon />} label={t('tenant_registry')} collapsed={isCollapsed} color="orange" navProps={navItemClickProps} />
                             <NavItem to="/admin/tools" icon={<WrenchIcon />}                label={t('admin_tools')}     collapsed={isCollapsed} color="orange" navProps={navItemClickProps} />
                         </NavSection>
+                    )}
+                    {/* ── Weather Widget ── */}
+                    {!isCollapsed ? (
+                        <div className="mx-3 my-4 p-4 rounded-2xl relative overflow-hidden shadow-lg border border-teal-950/20 flex flex-col justify-end min-h-[100px]"
+                             style={{
+                                 background: 'linear-gradient(180deg, #0b1528 0%, #06211c 100%)',
+                                 boxShadow: '0 4px 20px rgba(6, 33, 28, 0.4)'
+                             }}
+                        >
+                            <div className="absolute top-2 right-2 text-indigo-400 opacity-60">
+                                {weather?.desc.includes('Rigning') || weather?.desc.includes('Úði') ? (
+                                    <svg className="h-8 w-8 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 20v2m4-2v2m-8-2v2" />
+                                    </svg>
+                                ) : weather?.desc.includes('Snjókoma') ? (
+                                    <svg className="h-8 w-8 text-blue-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 3v18m9-9H3m15-3l-6 6m0-6l6 6M9 9l6 6m-6 0l6-6" />
+                                    </svg>
+                                ) : (
+                                    <svg className="h-8 w-8 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m11.314 11.314l.707-.707M12 7a5 5 0 100 10 5 5 0 000-10z" />
+                                    </svg>
+                                )}
+                            </div>
+                            <div className="z-10">
+                                <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Reykjavík, Ísland</p>
+                                <h4 className="text-sm font-black text-white leading-none mt-1">
+                                    {weather.temp}°C <span className="text-[9px] font-bold text-gray-300 ml-1">{weather.desc}</span>
+                                </h4>
+                                <p className="text-[9px] text-teal-400 font-bold uppercase tracking-widest mt-1">
+                                    → {weather.wind} m/s
+                                </p>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="mx-2 my-4 flex items-center justify-center p-2 bg-indigo-950/80 rounded-xl border border-teal-950/20" title={`Reykjavík: ${weather.temp}°C, ${weather.desc}`}>
+                            {weather?.desc.includes('Rigning') || weather?.desc.includes('Úði') ? (
+                                <svg className="h-5 w-5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 20v2m4-2v2m-8-2v2" />
+                                </svg>
+                            ) : weather?.desc.includes('Snjókoma') ? (
+                                <svg className="h-5 w-5 text-blue-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 3v18m9-9H3m15-3l-6 6m0-6l6 6M9 9l6 6m-6 0l6-6" />
+                                </svg>
+                            ) : (
+                                <svg className="h-5 w-5 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m11.314 11.314l.707-.707M12 7a5 5 0 100 10 5 5 0 000-10z" />
+                                </svg>
+                            )}
+                        </div>
                     )}
                 </nav>
 
