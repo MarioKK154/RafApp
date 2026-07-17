@@ -22,6 +22,8 @@ load_dotenv(ROOT / ".env", override=True)
 
 def main() -> int:
     url = (os.getenv("DATABASE_URL") or "").strip()
+    if url.startswith("postgresql://"):
+        url = url.replace("postgresql://", "postgresql+psycopg2://", 1)
     if not url:
         print("DATABASE_URL is missing in backend/.env", file=sys.stderr)
         return 2

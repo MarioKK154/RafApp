@@ -27,6 +27,8 @@ target_metadata = Base.metadata
 def get_url() -> str:
     url = (os.getenv("DATABASE_URL") or "").strip()
     if url:
+        if url.startswith("postgresql://"):
+            url = url.replace("postgresql://", "postgresql+psycopg2://", 1)
         return url
     return "sqlite:///./sql_app.db"
 

@@ -49,6 +49,8 @@ def _split_csv(name: str, default: Optional[str] = None) -> List[str]:
 def _default_database_url() -> str:
     url = _env_str("DATABASE_URL")
     if url:
+        if url.startswith("postgresql://"):
+            url = url.replace("postgresql://", "postgresql+psycopg2://", 1)
         return url
     return "sqlite:///./sql_app.db"
 
@@ -89,6 +91,13 @@ def get_settings() -> AppSettings:
     registry = _env_str("DATABASE_URL_REGISTRY") or primary
     shop = _env_str("DATABASE_URL_SHOP") or primary
     reference = _env_str("DATABASE_URL_REFERENCE") or primary
+
+    if registry.startswith("postgresql://"):
+        registry = registry.replace("postgresql://", "postgresql+psycopg2://", 1)
+    if shop.startswith("postgresql://"):
+        shop = shop.replace("postgresql://", "postgresql+psycopg2://", 1)
+    if reference.startswith("postgresql://"):
+        reference = reference.replace("postgresql://", "postgresql+psycopg2://", 1)
 
     pool_size = _env_int("DB_POOL_SIZE", 20 if is_prod else 5)
     max_overflow = _env_int("DB_MAX_OVERFLOW", 40 if is_prod else 10)
