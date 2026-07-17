@@ -286,72 +286,517 @@ function AccountingPage() {
             </header>
 
             {activeTab === 'personal' ? (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    {/* Personal Payslips Registry */}
-                    <section className="bg-white dark:bg-gray-800 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
-                        <div className="p-8 border-b border-gray-50 dark:border-gray-700 flex items-center gap-3">
-                            <BanknotesIcon className="h-5 w-5 text-indigo-600" />
-                            <h2 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-widest">{t('payslips')}</h2>
-                        </div>
-                        <div className="divide-y divide-gray-50 dark:divide-gray-700">
-                            {payslips.length > 0 ? payslips.map(ps => (
-                                <div key={ps.id} className="p-6 flex justify-between items-center hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
-                                    <div>
-                                        <p className="font-bold text-gray-900 dark:text-white uppercase tracking-tight">
-                                            {new Date(ps.issue_date).toLocaleDateString(i18n.language.startsWith('is') ? 'is-IS' : 'en-GB', { month: 'long', year: 'numeric' })}
-                                        </p>
-                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">
-                                            {t('netto')}: <span className="text-indigo-600">{ps.amount_netto?.toLocaleString()} ISK</span>
-                                        </p>
-                                    </div>
-                                    <button onClick={() => handleDownloadPayslip(ps.id, ps.filename)} className="p-3 bg-gray-50 dark:bg-gray-700 text-gray-400 hover:text-indigo-600 rounded-xl transition-all">
-                                        <ArrowDownTrayIcon className="h-5 w-5" />
-                                    </button>
-                                </div>
-                            )) : (
-                                <div className="p-20 text-center text-gray-400 text-[10px] font-black uppercase tracking-widest italic">{t('no_data')}</div>
-                            )}
-                        </div>
-                    </section>
-
-                    {/* Personal Leave History: REINFORCED REJECTION VISIBILITY */}
-                    <section className="bg-white dark:bg-gray-800 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
-                        <div className="p-8 border-b border-gray-50 dark:border-gray-700 flex items-center gap-3">
-                            <CalendarIcon className="h-5 w-5 text-emerald-600" />
-                            <h2 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-widest">{t('leave_requests')}</h2>
-                        </div>
-                        <div className="divide-y divide-gray-50 dark:divide-gray-700">
-                            {leaveRequests.length > 0 ? leaveRequests.map(lr => (
-                                <div key={lr.id} className={`p-6 flex justify-between items-center transition-colors ${lr.status === 'Rejected' ? 'bg-red-50/30 dark:bg-red-900/10' : ''}`}>
-                                    <div>
-                                        <div className="flex items-center gap-2 mb-1">
-                                            {lr.status === 'Approved' && <CheckCircleIcon className="h-4 w-4 text-green-500" />}
-                                            {lr.status === 'Rejected' && <XCircleIcon className="h-4 w-4 text-red-500" />}
-                                            {lr.status === 'Pending' && <ExclamationCircleIcon className="h-4 w-4 text-orange-500" />}
-                                            <p className="font-bold text-gray-900 dark:text-white text-sm uppercase tracking-tighter">
-                                                {new Date(lr.start_date).toLocaleDateString()} — {new Date(lr.end_date).toLocaleDateString()}
+                <div className="space-y-8">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        {/* Personal Payslips Registry */}
+                        <section className="bg-white dark:bg-gray-800 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+                            <div className="p-8 border-b border-gray-50 dark:border-gray-700 flex items-center gap-3">
+                                <BanknotesIcon className="h-5 w-5 text-indigo-600" />
+                                <h2 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-widest">{t('payslips')}</h2>
+                            </div>
+                            <div className="divide-y divide-gray-50 dark:divide-gray-700">
+                                {payslips.length > 0 ? payslips.map(ps => (
+                                    <div key={ps.id} className="p-6 flex justify-between items-center hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
+                                        <div>
+                                            <p className="font-bold text-gray-900 dark:text-white uppercase tracking-tight">
+                                                {new Date(ps.issue_date).toLocaleDateString(i18n.language, { year: 'numeric', month: 'long' })}
+                                            </p>
+                                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">
+                                                {t('brutto')}: {ps.amount_brutto.toLocaleString()} ISK · {t('netto')}: {ps.amount_netto.toLocaleString()} ISK
                                             </p>
                                         </div>
-                                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] ml-6">{lr.leave_type}</p>
-                                        {lr.manager_comment && (
-                                            <p className="text-[9px] font-medium text-gray-500 dark:text-gray-400 mt-2 ml-6 italic">
-                                                “{lr.manager_comment}”
-                                            </p>
-                                        )}
+                                        <button 
+                                            onClick={() => handleDownloadPayslip(ps.id, ps.filename)}
+                                            className="p-3 bg-gray-50 dark:bg-gray-700 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 text-gray-400 hover:text-indigo-600 rounded-xl transition-colors border border-gray-100 dark:border-gray-700 shadow-sm"
+                                            title={t('download_pdf')}
+                                        >
+                                            <ArrowDownTrayIcon className="h-4 w-4" />
+                                        </button>
                                     </div>
-                                    <span className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border shadow-sm ${
-                                        lr.status === 'Approved' ? 'bg-green-100 text-green-700 border-green-200' : 
-                                        lr.status === 'Rejected' ? 'bg-red-100 text-red-700 border-red-200' : 
-                                        'bg-orange-100 text-orange-700 border-orange-200'
-                                    }`}>
-                                        {lr.status}
-                                    </span>
+                                )) : (
+                                    <div className="p-20 text-center text-gray-400 text-[10px] font-black uppercase tracking-widest italic">{t('no_data')}</div>
+                                )}
+                            </div>
+                        </section>
+
+                        {/* Personal Absence Registry */}
+                        <section className="bg-white dark:bg-gray-800 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+                            <div className="p-8 border-b border-gray-50 dark:border-gray-700 flex items-center gap-3">
+                                <CalendarIcon className="h-5 w-5 text-indigo-600" />
+                                <h2 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-widest">{t('absence_records')}</h2>
+                            </div>
+                            <div className="divide-y divide-gray-50 dark:divide-gray-700">
+                                {leaveRequests.length > 0 ? leaveRequests.map(lr => (
+                                    <div key={lr.id} className="p-6 flex justify-between items-center hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
+                                        <div>
+                                            <p className="font-bold text-gray-900 dark:text-white uppercase tracking-tight">{lr.leave_type}</p>
+                                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">
+                                                {new Date(lr.start_date).toLocaleDateString()} — {new Date(lr.end_date).toLocaleDateString()}
+                                            </p>
+                                            {lr.manager_comment && (
+                                                <p className="text-[10px] text-orange-500 font-medium italic mt-1">
+                                                    {t('comment')}: {lr.manager_comment}
+                                                </p>
+                                            )}
+                                        </div>
+                                        <span className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border shadow-sm ${
+                                            lr.status === 'Approved' ? 'bg-green-100 text-green-700 border-green-200' : 
+                                            lr.status === 'Rejected' ? 'bg-red-100 text-red-700 border-red-200' : 
+                                            'bg-orange-100 text-orange-700 border-orange-200'
+                                        }`}>
+                                            {lr.status}
+                                        </span>
+                                    </div>
+                                )) : (
+                                    <div className="p-20 text-center text-gray-400 text-[10px] font-black uppercase tracking-widest italic">{t('no_data')}</div>
+                                )}
+                            </div>
+                        </section>
+                    </div>
+
+                    {/* Salary Calculator section - Available to all authenticated users */}
+                    {(() => {
+                        const isIcelandic = !i18n.language.startsWith('en');
+                        return (
+                            <section className="bg-white dark:bg-gray-800 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-700 p-8 space-y-8">
+                                <div>
+                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-1">
+                                        {isIcelandic ? 'Reiknivél' : 'Calculator'}
+                                    </p>
+                                    <h2 className="text-lg font-black text-gray-900 dark:text-white tracking-tight">
+                                        {isIcelandic ? 'Launaáætlun' : 'Salary Estimator'}
+                                    </h2>
+                                    <p className="text-xs text-gray-500 mt-1 dark:text-gray-400">
+                                        {isIcelandic 
+                                            ? 'Reiknaðu út áætluð laun út frá skráðum tímum, samningsákvæðum og sköttum á Íslandi.' 
+                                            : 'Estimate your earnings based on logged hours, union agreements, and standard Icelandic taxes.'}
+                                    </p>
                                 </div>
-                            )) : (
-                                <div className="p-20 text-center text-gray-400 text-[10px] font-black uppercase tracking-widest italic">{t('no_data')}</div>
-                            )}
-                        </div>
-                    </section>
+
+                                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                                    {/* Left: Inputs - 7 columns */}
+                                    <div className="lg:col-span-7 space-y-6">
+                                        <div className="bg-gray-50 dark:bg-gray-900/50 p-6 rounded-3xl space-y-4">
+                                            <h3 className="text-xs font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">
+                                                {isIcelandic ? 'Forsendur' : 'Parameters'}
+                                            </h3>
+
+                                            {isManagement ? (
+                                                <div>
+                                                    <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">
+                                                        {isIcelandic ? 'Starfsmaður' : 'Employee'}
+                                                    </label>
+                                                    <select
+                                                        value={uploadUserId}
+                                                        onChange={(e) => {
+                                                            const userId = e.target.value;
+                                                            setUploadUserId(userId);
+                                                            const emp = employees.find(u => String(u.id) === String(userId));
+                                                            if (emp) {
+                                                                setCalcHourlyRate(String(emp.hourly_rate || ''));
+                                                            }
+                                                        }}
+                                                        className="modern-input h-9 text-[11px]"
+                                                    >
+                                                        <option value="">{isIcelandic ? 'Veldu starfsmann' : 'Select employee'}</option>
+                                                        {employees.map(u => (
+                                                            <option key={u.id} value={u.id}>
+                                                                {u.full_name || u.email}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                            ) : (
+                                                <div className="text-xs text-gray-600 dark:text-gray-300">
+                                                    <p className="font-bold">{isIcelandic ? 'Starfsmaður:' : 'Employee:'}</p>
+                                                    <p className="mt-1 text-gray-900 dark:text-white">{currentUser?.full_name || currentUser?.email}</p>
+                                                </div>
+                                            )}
+
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                <div>
+                                                    <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">
+                                                        {isIcelandic ? 'Tímabil frá' : 'Period From'}
+                                                    </label>
+                                                    <input
+                                                        type="date"
+                                                        value={calcFromDate}
+                                                        onChange={(e) => setCalcFromDate(e.target.value)}
+                                                        className="modern-input h-9 text-[11px]"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">
+                                                        {isIcelandic ? 'Tímabil til' : 'Period To'}
+                                                    </label>
+                                                    <input
+                                                        type="date"
+                                                        value={calcToDate}
+                                                        onChange={(e) => setCalcToDate(e.target.value)}
+                                                        className="modern-input h-9 text-[11px]"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                <button
+                                                    type="button"
+                                                    onClick={async () => {
+                                                        if (!uploadUserId) {
+                                                            toast.warn(isIcelandic ? 'Veldu starfsmann fyrst.' : 'Please select an employee first.');
+                                                            return;
+                                                        }
+                                                        if (!calcFromDate || !calcToDate) {
+                                                            toast.warn(isIcelandic ? 'Veldu tímabil.' : 'Please select a period first.');
+                                                            return;
+                                                        }
+                                                        try {
+                                                            const params = {
+                                                                user_id: parseInt(uploadUserId, 10),
+                                                                start_date: calcFromDate,
+                                                                end_date: calcToDate,
+                                                                limit: 1000,
+                                                            };
+                                                            const res = await axiosInstance.get('/timelogs/', { params });
+                                                            const logs = Array.isArray(res.data) ? res.data : [];
+                                                            if (logs.length === 0) {
+                                                                toast.info(isIcelandic ? 'Engar tímaskráningar fundust á þessu tímabili.' : 'No time logs found for this period.');
+                                                                return;
+                                                            }
+                                                            // Group hours by calendar day
+                                                            const perDay = {};
+                                                            logs.forEach(log => {
+                                                                if (!log.duration_hours) return;
+                                                                const day = log.start_time ? log.start_time.slice(0, 10) : calcFromDate;
+                                                                perDay[day] = (perDay[day] || 0) + log.duration_hours;
+                                                            });
+                                                            let regularH = 0;
+                                                            let otH = 0;
+                                                            Object.values(perDay).forEach(totalDayHours => {
+                                                                const reg = Math.min(8, totalDayHours);
+                                                                const extra = Math.max(0, totalDayHours - 8);
+                                                                regularH += reg;
+                                                                otH += extra;
+                                                            });
+                                                            setCalcHours(regularH.toFixed(2));
+                                                            setCalcOvertimeHours(otH.toFixed(2));
+                                                            toast.success(isIcelandic ? 'Tímar sóttir úr vinnuskráningu.' : 'Hours loaded from time logs.');
+                                                        } catch (error) {
+                                                            console.error('Load hours failed:', error);
+                                                            toast.error(isIcelandic ? 'Gæti ekki sótt tíma.' : 'Failed to load hours.');
+                                                        }
+                                                    }}
+                                                    className="inline-flex items-center px-4 py-2 rounded-xl bg-gray-900 dark:bg-gray-800 text-white text-[9px] font-black uppercase tracking-[0.2em] hover:bg-black dark:hover:bg-gray-700 transition"
+                                                >
+                                                    {isIcelandic ? 'Sækja úr vinnuskráningu' : 'Load hours'}
+                                                </button>
+                                            </div>
+
+                                            <div className="grid grid-cols-2 gap-4 text-xs">
+                                                <div>
+                                                    <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">
+                                                        {isIcelandic ? 'Dagvinna tímar' : 'Regular Hours'}
+                                                    </label>
+                                                    <input type="number" min="0" step="any" value={calcHours} onChange={(e) => setCalcHours(e.target.value)} className="modern-input h-9" />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">
+                                                        {isIcelandic ? 'Tímakaup (kr.)' : 'Hourly Rate (ISK)'}
+                                                    </label>
+                                                    <input type="number" min="0" step="any" value={calcHourlyRate} onChange={(e) => setCalcHourlyRate(e.target.value)} className="modern-input h-9" />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">
+                                                        {isIcelandic ? 'Eftirvinna tímar' : 'OT1 Hours'}
+                                                    </label>
+                                                    <input type="number" min="0" step="any" value={calcOvertimeHours} onChange={(e) => setCalcOvertimeHours(e.target.value)} className="modern-input h-9" />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">
+                                                        {isIcelandic ? 'Eftirvinnustuðull' : 'OT1 Multiplier'}
+                                                    </label>
+                                                    <input type="number" min="1" step="0.1" value={calcOvertimeMultiplier} onChange={(e) => setCalcOvertimeMultiplier(e.target.value)} className="modern-input h-9" />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">
+                                                        {isIcelandic ? 'Næturvinna tímar' : 'OT2 Hours'}
+                                                    </label>
+                                                    <input type="number" min="0" step="any" value={calcOvertime2Hours} onChange={(e) => setCalcOvertime2Hours(e.target.value)} className="modern-input h-9" />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">
+                                                        {isIcelandic ? 'Næturvinnustuðull' : 'OT2 Multiplier'}
+                                                    </label>
+                                                    <input type="number" min="1" step="0.1" value={calcOvertime2Multiplier} onChange={(e) => setCalcOvertime2Multiplier(e.target.value)} className="modern-input h-9" />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">
+                                                        {isIcelandic ? 'Séreignarsparnaður' : 'Private Pension'}
+                                                    </label>
+                                                    <select
+                                                        value={calcSereignarsparnadurPercent}
+                                                        onChange={(e) => setCalcSereignarsparnadurPercent(e.target.value)}
+                                                        className="modern-input h-9 text-[11px]"
+                                                    >
+                                                        <option value="0">0%</option>
+                                                        <option value="2">2%</option>
+                                                        <option value="4">4%</option>
+                                                    </select>
+                                                </div>
+                                                <div className="flex items-center space-x-2 pt-5">
+                                                    <input
+                                                        type="checkbox"
+                                                        id="applyTaxCredit"
+                                                        checked={calcApplyPersonalTaxCredit}
+                                                        onChange={(e) => setCalcApplyPersonalTaxCredit(e.target.checked)}
+                                                        className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                                    />
+                                                    <label htmlFor="applyTaxCredit" className="text-[10px] font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider cursor-pointer">
+                                                        {isIcelandic ? 'Nýta persónuafslátt' : 'Apply Personal Tax Credit'}
+                                                    </label>
+                                                </div>
+                                                <div>
+                                                    <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">
+                                                        {isIcelandic ? 'Bónusar (kr.)' : 'Bonuses (ISK)'}
+                                                    </label>
+                                                    <input type="number" min="0" step="any" value={calcBonuses} onChange={(e) => setCalcBonuses(e.target.value)} className="modern-input h-9" />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">
+                                                        {isIcelandic ? 'Lýsing bónusar' : 'Bonus Description'}
+                                                    </label>
+                                                    <input type="text" value={calcBonusDescription} onChange={(e) => setCalcBonusDescription(e.target.value)} className="modern-input h-9" placeholder={isIcelandic ? 't.d. bakvakt, bónus' : 'e.g. on-call, bonus'} />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">
+                                                        {isIcelandic ? 'Annar frádráttur (kr.)' : 'Other Deductions (ISK)'}
+                                                    </label>
+                                                    <input type="number" min="0" step="any" value={calcOtherDeductions} onChange={(e) => setCalcOtherDeductions(e.target.value)} className="modern-input h-9" />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">
+                                                        {isIcelandic ? 'Lýsing frádráttur' : 'Deductions Description'}
+                                                    </label>
+                                                    <input type="text" value={calcDeductionsDescription} onChange={(e) => setCalcDeductionsDescription(e.target.value)} className="modern-input h-9" placeholder={isIcelandic ? 't.d. mötuneyti, félagsgjald' : 'e.g. canteen, dues'} />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Right: Live Payslip Card - 5 columns */}
+                                    <div className="lg:col-span-5 space-y-6">
+                                        {(() => {
+                                            const h = parseFloat(calcHours || '0') || 0;
+                                            const r = parseFloat(calcHourlyRate || '0') || 0;
+                                            const oh = parseFloat(calcOvertimeHours || '0') || 0;
+                                            const om = parseFloat(calcOvertimeMultiplier || '1.8') || 1.8;
+                                            const oh2 = parseFloat(calcOvertime2Hours || '0') || 0;
+                                            const om2 = parseFloat(calcOvertime2Multiplier || '2.2') || 2.2;
+                                            const bonus = parseFloat(calcBonuses || '0') || 0;
+                                            const od = parseFloat(calcOtherDeductions || '0') || 0;
+                                            const regularPay = h * r;
+                                            const overtime1Pay = oh * r * om;
+                                            const overtime2Pay = oh2 * r * om2;
+                                            const brutto = regularPay + overtime1Pay + overtime2Pay + bonus;
+
+                                            const pensionDeduction = brutto * 0.04;
+                                            const sereignDeduction = brutto * (parseFloat(calcSereignarsparnadurPercent || '0') / 100);
+                                            const unionFee = brutto * 0.011;
+
+                                            const taxableIncome = Math.max(0, brutto - pensionDeduction - sereignDeduction);
+
+                                            // Tax brackets (2025/2026)
+                                            const TAX_BRACKETS = [
+                                                { limit: 472005, rate: 0.3149 },
+                                                { limit: 1325127, rate: 0.3799 },
+                                                { limit: Infinity, rate: 0.4629 },
+                                            ];
+                                            const PERSONAL_CREDIT = calcApplyPersonalTaxCredit ? 68691 : 0;
+
+                                            let remaining = taxableIncome;
+                                            let computedTax = 0;
+                                            let lastLimit = 0;
+                                            for (const b of TAX_BRACKETS) {
+                                                const upper = b.limit;
+                                                const span = upper === Infinity
+                                                    ? remaining
+                                                    : Math.max(0, Math.min(remaining, upper - lastLimit));
+                                                if (span <= 0) continue;
+                                                computedTax += span * b.rate;
+                                                remaining -= span;
+                                                lastLimit = upper;
+                                                if (remaining <= 0) break;
+                                            }
+
+                                            const netTax = Math.max(0, computedTax - PERSONAL_CREDIT);
+                                            const netSalary = Math.max(0, brutto - netTax - pensionDeduction - sereignDeduction - unionFee - od);
+                                            const employerPension = brutto * 0.115;
+
+                                            return (
+                                                <div className="bg-indigo-950 text-white rounded-[2rem] p-6 shadow-xl space-y-6">
+                                                    <div className="border-b border-indigo-900 pb-4">
+                                                        <h4 className="text-xs font-black uppercase tracking-[0.2em] text-indigo-300">
+                                                            {isIcelandic ? 'Áætlaður Launaseðill' : 'Estimated Earnings Slip'}
+                                                        </h4>
+                                                        <p className="text-[10px] text-indigo-200 mt-1">
+                                                            {isIcelandic ? 'Birt með fyrirvara um endanlegt uppgjör.' : 'Subject to final accounting validation.'}
+                                                        </p>
+                                                    </div>
+
+                                                    <div className="space-y-3 text-xs">
+                                                        <div className="flex justify-between">
+                                                            <span className="text-indigo-200">
+                                                                {isIcelandic ? `Dagvinna (${h.toFixed(1)} klst)` : `Regular pay (${h.toFixed(1)} hrs)`}
+                                                            </span>
+                                                            <span className="font-bold">{regularPay.toLocaleString('is-IS')} ISK</span>
+                                                        </div>
+                                                        {oh > 0 && (
+                                                            <div className="flex justify-between">
+                                                                <span className="text-indigo-200">
+                                                                    {isIcelandic ? `Eftirvinna (${oh.toFixed(1)} klst @ ${om}x)` : `Overtime 1 (${oh.toFixed(1)} hrs @ ${om}x)`}
+                                                                </span>
+                                                                <span className="font-bold">{overtime1Pay.toLocaleString('is-IS')} ISK</span>
+                                                            </div>
+                                                        )}
+                                                        {oh2 > 0 && (
+                                                            <div className="flex justify-between">
+                                                                <span className="text-indigo-200">
+                                                                    {isIcelandic ? `Næturvinna (${oh2.toFixed(1)} klst @ ${om2}x)` : `Overtime 2 (${oh2.toFixed(1)} hrs @ ${om2}x)`}
+                                                                </span>
+                                                                <span className="font-bold">{overtime2Pay.toLocaleString('is-IS')} ISK</span>
+                                                            </div>
+                                                        )}
+                                                        {bonus > 0 && (
+                                                            <div className="flex justify-between">
+                                                                <span className="text-indigo-200">
+                                                                    {isIcelandic ? 'Álag og bónusar' : 'Bonuses and allowances'}
+                                                                </span>
+                                                                <span className="font-bold">{bonus.toLocaleString('is-IS')} ISK</span>
+                                                            </div>
+                                                        )}
+                                                        <div className="flex justify-between border-t border-indigo-900 pt-2 font-black text-sm text-indigo-300">
+                                                            <span>{isIcelandic ? 'Brúttólaun' : 'Gross Salary'}</span>
+                                                            <span>{brutto.toLocaleString('is-IS')} ISK</span>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="space-y-2 text-xs border-t border-indigo-900 pt-4">
+                                                        <h5 className="text-[10px] font-black text-indigo-300 uppercase tracking-widest mb-1">
+                                                            {isIcelandic ? 'Frádrættir' : 'Deductions'}
+                                                        </h5>
+                                                        <div className="flex justify-between text-indigo-200">
+                                                            <span>{isIcelandic ? 'Lífeyrissjóður (4%)' : 'Pension Contribution (4%)'}</span>
+                                                            <span>-{pensionDeduction.toLocaleString('is-IS')} ISK</span>
+                                                        </div>
+                                                        {sereignDeduction > 0 && (
+                                                            <div className="flex justify-between text-indigo-200">
+                                                                <span>
+                                                                    {isIcelandic ? `Séreignarsparnaður (${calcSereignarsparnadurPercent}%)` : `Private Pension (${calcSereignarsparnadurPercent}%)`}
+                                                                </span>
+                                                                <span>-{sereignDeduction.toLocaleString('is-IS')} ISK</span>
+                                                            </div>
+                                                        )}
+                                                        <div className="flex justify-between text-indigo-200">
+                                                            <span>{isIcelandic ? 'Stéttarfélagsgjald RSÍ (1,1%)' : 'Union Fee RSÍ (1.1%)'}</span>
+                                                            <span>-{unionFee.toLocaleString('is-IS')} ISK</span>
+                                                        </div>
+                                                        {netTax > 0 && (
+                                                            <div className="flex justify-between text-indigo-200">
+                                                                <span>{isIcelandic ? 'Staðgreiðsla skatta' : 'Income Tax'}</span>
+                                                                <span>-{netTax.toLocaleString('is-IS')} ISK</span>
+                                                            </div>
+                                                        )}
+                                                        {od > 0 && (
+                                                            <div className="flex justify-between text-indigo-200">
+                                                                <span>{isIcelandic ? 'Annar frádráttur' : 'Other Deductions'}</span>
+                                                                <span>-{od.toLocaleString('is-IS')} ISK</span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    <div className="bg-indigo-900/60 p-4 rounded-2xl space-y-1">
+                                                        <span className="text-[10px] font-black uppercase tracking-widest text-indigo-300">
+                                                            {isIcelandic ? 'Áætluð útborguð laun (Nettólaun)' : 'Estimated Net Salary'}
+                                                        </span>
+                                                        <p className="text-2xl font-black text-green-400">{Math.round(netSalary).toLocaleString('is-IS')} ISK</p>
+                                                    </div>
+
+                                                    <div className="text-[10px] text-indigo-300 space-y-1">
+                                                        <p className="font-bold">{isIcelandic ? 'Mótframlag atvinnurekanda:' : 'Employer Contributions:'}</p>
+                                                        <p>{isIcelandic ? 'Mótframlag lífeyrissjóðs (11,5%):' : 'Employer Pension (11.5%):'} {Math.round(employerPension).toLocaleString('is-IS')} ISK</p>
+                                                    </div>
+
+                                                    <div className="flex flex-col gap-2 pt-2">
+                                                        <button
+                                                            type="button"
+                                                            onClick={async () => {
+                                                                if (!uploadUserId) {
+                                                                    toast.warn(isIcelandic ? 'Veldu starfsmann fyrst.' : 'Please select an employee first.');
+                                                                    return;
+                                                                }
+                                                                try {
+                                                                    const payload = {
+                                                                        user_id: parseInt(uploadUserId, 10),
+                                                                        period_from: calcFromDate || null,
+                                                                        period_to: calcToDate || null,
+                                                                        regular_hours: parseFloat(calcHours || '0') || 0,
+                                                                        hourly_rate: parseFloat(calcHourlyRate || '0') || 0,
+                                                                        overtime1_hours: parseFloat(calcOvertimeHours || '0') || 0,
+                                                                        overtime1_multiplier: parseFloat(calcOvertimeMultiplier || '1.8') || 1.8,
+                                                                        overtime2_hours: parseFloat(calcOvertime2Hours || '0') || 0,
+                                                                        overtime2_multiplier: parseFloat(calcOvertime2Multiplier || '2.2') || 2.2,
+                                                                        bonuses: parseFloat(calcBonuses || '0') || 0,
+                                                                        bonus_description: calcBonusDescription || null,
+                                                                        other_deductions: parseFloat(calcOtherDeductions || '0') || 0,
+                                                                        deductions_description: calcDeductionsDescription || null,
+                                                                        sereignarsparnadur_percent: parseFloat(calcSereignarsparnadurPercent || '0') || 0,
+                                                                        apply_personal_tax_credit: calcApplyPersonalTaxCredit
+                                                                    };
+
+                                                                    const res = await axiosInstance.post('/accounting/payslips/estimate', payload, {
+                                                                        responseType: 'blob'
+                                                                    });
+
+                                                                    const blob = new Blob([res.data], { type: 'application/pdf' });
+                                                                    const link = document.createElement('a');
+                                                                    link.href = window.URL.createObjectURL(blob);
+                                                                    link.download = `launaaaetlun_${uploadUserId}.pdf`;
+                                                                    document.body.appendChild(link);
+                                                                    link.click();
+                                                                    document.body.removeChild(link);
+                                                                    toast.success(isIcelandic ? 'Launaáætlun hlaðin niður sem PDF.' : 'Salary estimate downloaded as PDF.');
+                                                                } catch (error) {
+                                                                    console.error('Download estimate failed:', error);
+                                                                    toast.error(isIcelandic ? 'Ekki tókst að sækja launaáætlun.' : 'Failed to download salary estimate PDF.');
+                                                                }
+                                                            }}
+                                                            className="w-full inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-white text-indigo-950 text-[10px] font-black uppercase tracking-[0.2em] hover:bg-gray-100 transition shadow"
+                                                        >
+                                                            {isIcelandic ? 'Sækja Launaáætlun (PDF)' : 'Download PDF Estimate'}
+                                                        </button>
+
+                                                        {isManagement && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    setUploadBrutto(brutto.toFixed(0));
+                                                                    setUploadNetto(netSalary.toFixed(0));
+                                                                    toast.info(isIcelandic ? 'Gildi afrituð í uppgjörsform.' : 'Values copied to official upload form.');
+                                                                }}
+                                                                className="w-full inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-indigo-900 text-white text-[10px] font-black uppercase tracking-[0.2em] hover:bg-indigo-850 transition"
+                                                            >
+                                                                {isIcelandic ? 'Afrita í uppgjörsform' : 'Copy to Official Upload'}
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })()}
+                                    </div>
+                                </div>
+                            </section>
+                        );
+                    })()}
                 </div>
             ) : activeTab === 'management' ? (
                 /* Management Tab: Pending approvals + payroll tools */
@@ -410,407 +855,6 @@ function AccountingPage() {
                                     )}
                                 </tbody>
                             </table>
-                        </div>
-                    </section>
-
-                    {/* Salary Calculator section - Available to all authenticated users */}
-                    <section className="bg-white dark:bg-gray-800 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-700 p-8 space-y-8">
-                        <div>
-                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-1">
-                                Reiknivél / Calculator
-                            </p>
-                            <h2 className="text-lg font-black text-gray-900 dark:text-white tracking-tight">
-                                Launaáætlun / Salary Estimator
-                            </h2>
-                            <p className="text-xs text-gray-500 mt-1 dark:text-gray-400">
-                                Reiknaðu út áætluð laun út frá skráðum tímum, samningsákvæðum og sköttum á Íslandi.
-                            </p>
-                        </div>
-
-                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                            {/* Left: Inputs - 7 columns */}
-                            <div className="lg:col-span-7 space-y-6">
-                                <div className="bg-gray-50 dark:bg-gray-900/50 p-6 rounded-3xl space-y-4">
-                                    <h3 className="text-xs font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">
-                                        Forsendur / Parameters
-                                    </h3>
-
-                                    {isManagement ? (
-                                        <div>
-                                            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">
-                                                Starfsmaður / Employee
-                                            </label>
-                                            <select
-                                                value={uploadUserId}
-                                                onChange={(e) => {
-                                                    const userId = e.target.value;
-                                                    setUploadUserId(userId);
-                                                    const emp = employees.find(u => String(u.id) === String(userId));
-                                                    if (emp) {
-                                                        setCalcHourlyRate(String(emp.hourly_rate || ''));
-                                                    }
-                                                }}
-                                                className="modern-input h-9 text-[11px]"
-                                            >
-                                                <option value="">Veldu starfsmann / Select employee</option>
-                                                {employees.map(u => (
-                                                    <option key={u.id} value={u.id}>
-                                                        {u.full_name || u.email}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                    ) : (
-                                        <div className="text-xs text-gray-600 dark:text-gray-300">
-                                            <p className="font-bold">Starfsmaður / Employee:</p>
-                                            <p className="mt-1 text-gray-900 dark:text-white">{currentUser?.full_name || currentUser?.email}</p>
-                                        </div>
-                                    )}
-
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">
-                                                Tímabil Frá / Period From
-                                            </label>
-                                            <input
-                                                type="date"
-                                                value={calcFromDate}
-                                                onChange={(e) => setCalcFromDate(e.target.value)}
-                                                className="modern-input h-9 text-[11px]"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">
-                                                Tímabil Til / Period To
-                                            </label>
-                                            <input
-                                                type="date"
-                                                value={calcToDate}
-                                                onChange={(e) => setCalcToDate(e.target.value)}
-                                                className="modern-input h-9 text-[11px]"
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div>
-                                        <button
-                                            type="button"
-                                            onClick={async () => {
-                                                if (!uploadUserId) {
-                                                    toast.warn('Veldu starfsmann fyrst / Select employee first.');
-                                                    return;
-                                                }
-                                                if (!calcFromDate || !calcToDate) {
-                                                    toast.warn('Veldu tímabil / Select period first.');
-                                                    return;
-                                                }
-                                                try {
-                                                    const params = {
-                                                        user_id: parseInt(uploadUserId, 10),
-                                                        start_date: calcFromDate,
-                                                        end_date: calcToDate,
-                                                        limit: 1000,
-                                                    };
-                                                    const res = await axiosInstance.get('/timelogs/', { params });
-                                                    const logs = Array.isArray(res.data) ? res.data : [];
-                                                    if (logs.length === 0) {
-                                                        toast.info('Engar tímaskráningar fundust á þessu tímabili / No time logs found.');
-                                                        return;
-                                                    }
-                                                    // Group hours by calendar day
-                                                    const perDay = {};
-                                                    logs.forEach(log => {
-                                                        if (!log.duration_hours) return;
-                                                        const day = log.start_time ? log.start_time.slice(0, 10) : calcFromDate;
-                                                        perDay[day] = (perDay[day] || 0) + log.duration_hours;
-                                                    });
-                                                    let regularH = 0;
-                                                    let otH = 0;
-                                                    Object.values(perDay).forEach(totalDayHours => {
-                                                        const reg = Math.min(8, totalDayHours);
-                                                        const extra = Math.max(0, totalDayHours - 8);
-                                                        regularH += reg;
-                                                        otH += extra;
-                                                    });
-                                                    setCalcHours(regularH.toFixed(2));
-                                                    setCalcOvertimeHours(otH.toFixed(2));
-                                                    toast.success('Tímar sóttir úr vinnuskráningu / Hours loaded.');
-                                                } catch (error) {
-                                                    console.error('Load hours failed:', error);
-                                                    toast.error('Gæti ekki sótt tíma / Failed to load hours.');
-                                                }
-                                            }}
-                                            className="inline-flex items-center px-4 py-2 rounded-xl bg-gray-900 dark:bg-gray-800 text-white text-[9px] font-black uppercase tracking-[0.2em] hover:bg-black dark:hover:bg-gray-700 transition"
-                                        >
-                                            Sækja úr vinnuskráningu / Load hours
-                                        </button>
-                                    </div>
-
-                                    <div className="grid grid-cols-2 gap-4 text-xs">
-                                        <div>
-                                            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">Dagvinna / Regular Hours</label>
-                                            <input type="number" min="0" step="any" value={calcHours} onChange={(e) => setCalcHours(e.target.value)} className="modern-input h-9" />
-                                        </div>
-                                        <div>
-                                            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">Tímakaup / Hourly Rate (ISK)</label>
-                                            <input type="number" min="0" step="any" value={calcHourlyRate} onChange={(e) => setCalcHourlyRate(e.target.value)} className="modern-input h-9" />
-                                        </div>
-                                        <div>
-                                            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">Eftirvinna Tímar / OT1 Hours</label>
-                                            <input type="number" min="0" step="any" value={calcOvertimeHours} onChange={(e) => setCalcOvertimeHours(e.target.value)} className="modern-input h-9" />
-                                        </div>
-                                        <div>
-                                            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">Eftirvinnustuðull / OT1 Mult.</label>
-                                            <input type="number" min="1" step="0.1" value={calcOvertimeMultiplier} onChange={(e) => setCalcOvertimeMultiplier(e.target.value)} className="modern-input h-9" />
-                                        </div>
-                                        <div>
-                                            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">Næturvinna Tímar / OT2 Hours</label>
-                                            <input type="number" min="0" step="any" value={calcOvertime2Hours} onChange={(e) => setCalcOvertime2Hours(e.target.value)} className="modern-input h-9" />
-                                        </div>
-                                        <div>
-                                            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">Næturvinnustuðull / OT2 Mult.</label>
-                                            <input type="number" min="1" step="0.1" value={calcOvertime2Multiplier} onChange={(e) => setCalcOvertime2Multiplier(e.target.value)} className="modern-input h-9" />
-                                        </div>
-                                        <div>
-                                            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">Séreignarsparnaður / Private Pension</label>
-                                            <select
-                                                value={calcSereignarsparnadurPercent}
-                                                onChange={(e) => setCalcSereignarsparnadurPercent(e.target.value)}
-                                                className="modern-input h-9 text-[11px]"
-                                            >
-                                                <option value="0">0%</option>
-                                                <option value="2">2%</option>
-                                                <option value="4">4%</option>
-                                            </select>
-                                        </div>
-                                        <div className="flex items-center space-x-2 pt-5">
-                                            <input
-                                                type="checkbox"
-                                                id="applyTaxCredit"
-                                                checked={calcApplyPersonalTaxCredit}
-                                                onChange={(e) => setCalcApplyPersonalTaxCredit(e.target.checked)}
-                                                className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                                            />
-                                            <label htmlFor="applyTaxCredit" className="text-[10px] font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider cursor-pointer">
-                                                Nýta persónuafslátt / Tax Credit
-                                            </label>
-                                        </div>
-                                        <div>
-                                            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">Bónusar / Bonuses (ISK)</label>
-                                            <input type="number" min="0" step="any" value={calcBonuses} onChange={(e) => setCalcBonuses(e.target.value)} className="modern-input h-9" />
-                                        </div>
-                                        <div>
-                                            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">Lýsing bónusar / Bonus Desc</label>
-                                            <input type="text" value={calcBonusDescription} onChange={(e) => setCalcBonusDescription(e.target.value)} className="modern-input h-9" placeholder="t.d. bakvakt, bónus" />
-                                        </div>
-                                        <div>
-                                            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">Annar frádráttur / Deductions (ISK)</label>
-                                            <input type="number" min="0" step="any" value={calcOtherDeductions} onChange={(e) => setCalcOtherDeductions(e.target.value)} className="modern-input h-9" />
-                                        </div>
-                                        <div>
-                                            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">Lýsing frádráttar / Deductions Desc</label>
-                                            <input type="text" value={calcDeductionsDescription} onChange={(e) => setCalcDeductionsDescription(e.target.value)} className="modern-input h-9" placeholder="t.d. mötuneyti, félagsgjald" />
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Right: Live Payslip Card - 5 columns */}
-                            <div className="lg:col-span-5 space-y-6">
-                                {(() => {
-                                    const h = parseFloat(calcHours || '0') || 0;
-                                    const r = parseFloat(calcHourlyRate || '0') || 0;
-                                    const oh = parseFloat(calcOvertimeHours || '0') || 0;
-                                    const om = parseFloat(calcOvertimeMultiplier || '1.8') || 1.8;
-                                    const oh2 = parseFloat(calcOvertime2Hours || '0') || 0;
-                                    const om2 = parseFloat(calcOvertime2Multiplier || '2.2') || 2.2;
-                                    const bonus = parseFloat(calcBonuses || '0') || 0;
-                                    const od = parseFloat(calcOtherDeductions || '0') || 0;
-                                    const regularPay = h * r;
-                                    const overtime1Pay = oh * r * om;
-                                    const overtime2Pay = oh2 * r * om2;
-                                    const brutto = regularPay + overtime1Pay + overtime2Pay + bonus;
-
-                                    const pensionDeduction = brutto * 0.04;
-                                    const sereignDeduction = brutto * (parseFloat(calcSereignarsparnadurPercent || '0') / 100);
-                                    const unionFee = brutto * 0.011;
-
-                                    const taxableIncome = Math.max(0, brutto - pensionDeduction - sereignDeduction);
-
-                                    // Tax brackets (2025/2026)
-                                    const TAX_BRACKETS = [
-                                        { limit: 472005, rate: 0.3149 },
-                                        { limit: 1325127, rate: 0.3799 },
-                                        { limit: Infinity, rate: 0.4629 },
-                                    ];
-                                    const PERSONAL_CREDIT = calcApplyPersonalTaxCredit ? 68691 : 0;
-
-                                    let remaining = taxableIncome;
-                                    let computedTax = 0;
-                                    let lastLimit = 0;
-                                    for (const b of TAX_BRACKETS) {
-                                        const upper = b.limit;
-                                        const span = upper === Infinity
-                                            ? remaining
-                                            : Math.max(0, Math.min(remaining, upper - lastLimit));
-                                        if (span <= 0) continue;
-                                        computedTax += span * b.rate;
-                                        remaining -= span;
-                                        lastLimit = upper;
-                                        if (remaining <= 0) break;
-                                    }
-
-                                    const netTax = Math.max(0, computedTax - PERSONAL_CREDIT);
-                                    const netSalary = Math.max(0, brutto - netTax - pensionDeduction - sereignDeduction - unionFee - od);
-                                    const employerPension = brutto * 0.115;
-
-                                    return (
-                                        <div className="bg-indigo-950 text-white rounded-[2rem] p-6 shadow-xl space-y-6">
-                                            <div className="border-b border-indigo-900 pb-4">
-                                                <h4 className="text-xs font-black uppercase tracking-[0.2em] text-indigo-300">
-                                                    Áætlaður Launaseðill / Earnings Slip
-                                                </h4>
-                                                <p className="text-[10px] text-indigo-200 mt-1">
-                                                    Birt með fyrirvara um endanlegt uppgjör.
-                                                </p>
-                                            </div>
-
-                                            <div className="space-y-3 text-xs">
-                                                <div className="flex justify-between">
-                                                    <span className="text-indigo-200">Dagvinna / Regular pay ({h.toFixed(1)} klst)</span>
-                                                    <span className="font-bold">{regularPay.toLocaleString('is-IS')} ISK</span>
-                                                </div>
-                                                {oh > 0 && (
-                                                    <div className="flex justify-between">
-                                                        <span className="text-indigo-200">Eftirvinna / OT1 ({oh.toFixed(1)} klst @ {om}x)</span>
-                                                        <span className="font-bold">{overtime1Pay.toLocaleString('is-IS')} ISK</span>
-                                                    </div>
-                                                )}
-                                                {oh2 > 0 && (
-                                                    <div className="flex justify-between">
-                                                        <span className="text-indigo-200">Næturvinna / OT2 ({oh2.toFixed(1)} klst @ {om2}x)</span>
-                                                        <span className="font-bold">{overtime2Pay.toLocaleString('is-IS')} ISK</span>
-                                                    </div>
-                                                )}
-                                                {bonus > 0 && (
-                                                    <div className="flex justify-between">
-                                                        <span className="text-indigo-200">Álag og bónusar / Bonuses</span>
-                                                        <span className="font-bold">{bonus.toLocaleString('is-IS')} ISK</span>
-                                                    </div>
-                                                )}
-                                                <div className="flex justify-between border-t border-indigo-900 pt-2 font-black text-sm text-indigo-300">
-                                                    <span>Brúttólaun / Gross Salary</span>
-                                                    <span>{brutto.toLocaleString('is-IS')} ISK</span>
-                                                </div>
-                                            </div>
-
-                                            <div className="space-y-2 text-xs border-t border-indigo-900 pt-4">
-                                                <h5 className="text-[10px] font-black text-indigo-300 uppercase tracking-widest mb-1">Frádrættir / Deductions</h5>
-                                                <div className="flex justify-between text-indigo-200">
-                                                    <span>Lífeyrissjóður / Pension (4%)</span>
-                                                    <span>-{pensionDeduction.toLocaleString('is-IS')} ISK</span>
-                                                </div>
-                                                {sereignDeduction > 0 && (
-                                                    <div className="flex justify-between text-indigo-200">
-                                                        <span>Séreignarsparnaður ({calcSereignarsparnadurPercent}%)</span>
-                                                        <span>-{sereignDeduction.toLocaleString('is-IS')} ISK</span>
-                                                    </div>
-                                                )}
-                                                <div className="flex justify-between text-indigo-200">
-                                                    <span>Stéttarfélagsgjald RSÍ (1.1%)</span>
-                                                    <span>-{unionFee.toLocaleString('is-IS')} ISK</span>
-                                                </div>
-                                                {netTax > 0 && (
-                                                    <div className="flex justify-between text-indigo-200">
-                                                        <span>Staðgreiðsla / Income Tax</span>
-                                                        <span>-{netTax.toLocaleString('is-IS')} ISK</span>
-                                                    </div>
-                                                )}
-                                                {od > 0 && (
-                                                    <div className="flex justify-between text-indigo-200">
-                                                        <span>Annar frádráttur / Deductions</span>
-                                                        <span>-{od.toLocaleString('is-IS')} ISK</span>
-                                                    </div>
-                                                )}
-                                            </div>
-
-                                            <div className="bg-indigo-900/60 p-4 rounded-2xl space-y-1">
-                                                <span className="text-[10px] font-black uppercase tracking-widest text-indigo-300">Útborguð laun / Estimated Net</span>
-                                                <p className="text-2xl font-black text-green-400">{Math.round(netSalary).toLocaleString('is-IS')} ISK</p>
-                                            </div>
-
-                                            <div className="text-[10px] text-indigo-300 space-y-1">
-                                                <p className="font-bold">Framlag vinnuveitanda / Employer Contribution:</p>
-                                                <p>Lífeyrissjóður (11.5%): {Math.round(employerPension).toLocaleString('is-IS')} ISK</p>
-                                            </div>
-
-                                            <div className="flex flex-col gap-2 pt-2">
-                                                <button
-                                                    type="button"
-                                                    onClick={async () => {
-                                                        if (!uploadUserId) {
-                                                            toast.warn('Veldu starfsmann fyrst / Select employee first.');
-                                                            return;
-                                                        }
-                                                        try {
-                                                            const payload = {
-                                                                user_id: parseInt(uploadUserId, 10),
-                                                                period_from: calcFromDate || null,
-                                                                period_to: calcToDate || null,
-                                                                regular_hours: parseFloat(calcHours || '0') || 0,
-                                                                hourly_rate: parseFloat(calcHourlyRate || '0') || 0,
-                                                                overtime1_hours: parseFloat(calcOvertimeHours || '0') || 0,
-                                                                overtime1_multiplier: parseFloat(calcOvertimeMultiplier || '1.8') || 1.8,
-                                                                overtime2_hours: parseFloat(calcOvertime2Hours || '0') || 0,
-                                                                overtime2_multiplier: parseFloat(calcOvertime2Multiplier || '2.2') || 2.2,
-                                                                bonuses: parseFloat(calcBonuses || '0') || 0,
-                                                                bonus_description: calcBonusDescription || null,
-                                                                other_deductions: parseFloat(calcOtherDeductions || '0') || 0,
-                                                                deductions_description: calcDeductionsDescription || null,
-                                                                sereignarsparnadur_percent: parseFloat(calcSereignarsparnadurPercent || '0') || 0,
-                                                                apply_personal_tax_credit: calcApplyPersonalTaxCredit
-                                                            };
-
-                                                            const res = await axiosInstance.post('/accounting/payslips/estimate', payload, {
-                                                                responseType: 'blob'
-                                                            });
-
-                                                            const blob = new Blob([res.data], { type: 'application/pdf' });
-                                                            const link = document.createElement('a');
-                                                            link.href = window.URL.createObjectURL(blob);
-                                                            link.download = `launaaaetlun_${uploadUserId}.pdf`;
-                                                            document.body.appendChild(link);
-                                                            link.click();
-                                                            document.body.removeChild(link);
-                                                            toast.success('Launaáætlun PDF hlaðið niður / PDF downloaded.');
-                                                        } catch (error) {
-                                                            console.error('Download estimate failed:', error);
-                                                            toast.error('Gæti ekki hlaðið niður launaáætlun / PDF download failed.');
-                                                        }
-                                                    }}
-                                                    className="w-full inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-white text-indigo-950 text-[10px] font-black uppercase tracking-[0.2em] hover:bg-gray-100 transition shadow"
-                                                >
-                                                    Sækja Launaáætlun (PDF) / Download PDF
-                                                </button>
-
-                                                {isManagement && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => {
-                                                            setUploadBrutto(brutto.toFixed(0));
-                                                            setUploadNetto(netSalary.toFixed(0));
-                                                            toast.info('Gildi afrituð í uppgjörsform / Copied values to upload.');
-                                                        }}
-                                                        className="w-full inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-indigo-900 text-white text-[10px] font-black uppercase tracking-[0.2em] hover:bg-indigo-850 transition"
-                                                    >
-                                                        Flytja í uppgjör / Use in upload
-                                                    </button>
-                                                )}
-                                            </div>
-                                        </div>
-                                    );
-                                })()}
-                            </div>
                         </div>
                     </section>
 

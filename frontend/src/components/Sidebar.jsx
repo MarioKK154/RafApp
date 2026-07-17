@@ -61,6 +61,7 @@ function useBreakpoint() {
 
 function Sidebar() {
     const { t, i18n } = useTranslation();
+    const { isAuthenticated, user: currentUser, logout } = useAuth();
     const [unreadMessages, setUnreadMessages]       = useState(0);
     const [unreadNotifications, setUnreadNotifications] = useState(0);
     const [weather, setWeather] = useState({ temp: 6, desc: 'Rigning', wind: 6 });
