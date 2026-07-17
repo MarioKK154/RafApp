@@ -1355,6 +1355,23 @@ class PayslipGenerate(BaseModel):
     other_deductions: Optional[float] = None
     deductions_description: Optional[str] = None
 
+class PayslipEstimateGenerate(BaseModel):
+    user_id: int
+    period_from: Optional[date] = None
+    period_to: Optional[date] = None
+    regular_hours: float
+    hourly_rate: float
+    overtime1_hours: Optional[float] = 0.0
+    overtime1_multiplier: Optional[float] = 1.8
+    overtime2_hours: Optional[float] = 0.0
+    overtime2_multiplier: Optional[float] = 2.2
+    bonuses: Optional[float] = 0.0
+    bonus_description: Optional[str] = None
+    other_deductions: Optional[float] = 0.0
+    deductions_description: Optional[str] = None
+    sereignarsparnadur_percent: Optional[float] = 0.0
+    apply_personal_tax_credit: Optional[bool] = True
+
 class LeaveRequestCreate(BaseModel):
     start_date: date
     end_date: date

@@ -208,6 +208,218 @@ async def generate_and_store_payslip(
         filename=unique_filename,
     )
 
+
+@router.post("/payslips/estimate")
+@limiter.limit("20/minute")
+async def generate_salary_estimate_pdf(
+    request: Request,
+    payload: schemas.PayslipEstimateGenerate,
+    db: DbDependency,
+    current_user: CurrentUserDependency,
+):
+    target_user = crud.get_user(db, user_id=payload.user_id)
+    if not target_user:
+        raise HTTPException(status_code=404, detail="Target employee not found.")
+
+    if current_user.id != payload.user_id and current_user.role not in ["admin", "accountant"] and not current_user.is_superuser:
+        raise HTTPException(status_code=403, detail="Permission Denied: You can only generate salary estimates for yourself.")
+
+    if not current_user.is_superuser and target_user.tenant_id != current_user.tenant_id:
+        raise HTTPException(status_code=403, detail="Security Violation: Cross-tenant generation blocked.")
+
+    # Calculate values
+    base_wages = payload.regular_hours * payload.hourly_rate
+    ot1_wages = (payload.overtime1_hours or 0.0) * payload.hourly_rate * (payload.overtime1_multiplier or 1.8)
+    ot2_wages = (payload.overtime2_hours or 0.0) * payload.hourly_rate * (payload.overtime2_multiplier or 2.2)
+    gross = base_wages + ot1_wages + ot2_wages + (payload.bonuses or 0.0)
+
+    pension_deduction = gross * 0.04
+    sereign_deduction = gross * ((payload.sereignarsparnadur_percent or 0.0) / 100.0)
+    union_fee = gross * 0.011
+
+    taxable_income = max(0.0, gross - pension_deduction - sereign_deduction)
+
+    # Tax brackets (2025/2026)
+    TAX_BRACKETS = [
+        {"limit": 472005.0, "rate": 0.3149},
+        {"limit": 1325127.0, "rate": 0.3799},
+        {"limit": float('inf'), "rate": 0.4629},
+    ]
+    PERSONAL_CREDIT = 68691.0 if payload.apply_personal_tax_credit else 0.0
+
+    remaining = taxable_income
+    computed_tax = 0.0
+    last_limit = 0.0
+    for b in TAX_BRACKETS:
+        upper = b["limit"]
+        span = remaining if upper == float('inf') else max(0.0, min(remaining, upper - last_limit))
+        if span <= 0.0:
+            continue
+        computed_tax += span * b["rate"]
+        remaining -= span
+        last_limit = upper
+        if remaining <= 0.0:
+            break
+
+    net_tax = max(0.0, computed_tax - PERSONAL_CREDIT)
+    net_salary = max(0.0, gross - net_tax - pension_deduction - sereign_deduction - union_fee - (payload.other_deductions or 0.0))
+    employer_pension = gross * 0.115
+
+    # ReportLab pdf generation
+    buffer = BytesIO()
+    pdf = canvas.Canvas(buffer, pagesize=A4)
+    width, height = A4
+
+    # Helper function
+    def draw_text(text: str, x: float, y: float, font: str = "Helvetica", size: int = 10, align: str = "left"):
+        pdf.setFont(font, size)
+        if align == "right":
+            pdf.drawRightString(x, y, text)
+        elif align == "center":
+            pdf.drawCentredString(x, y, text)
+        else:
+            pdf.drawString(x, y, text)
+
+    # Draw nice title/header
+    pdf.setFillColorRGB(0.31, 0.27, 0.90)  # Indigo primary
+    pdf.rect(0, height - 80, width, 80, fill=True, stroke=False)
+    
+    pdf.setFillColorRGB(1.0, 1.0, 1.0)
+    draw_text("Launaáætlun / Salary Estimate", 40, height - 40, font="Helvetica-Bold", size=16)
+    draw_text(f"RafApp Industrial OS — Tenant ID: {target_user.tenant_id}", 40, height - 55, size=9)
+
+    pdf.setFillColorRGB(0.1, 0.1, 0.1)
+    
+    # Employee info section box
+    y = height - 120
+    draw_text("Starfsmaður / Employee Details:", 40, y, font="Helvetica-Bold", size=11)
+    y -= 18
+    draw_text(f"Nafn / Name: {target_user.full_name or target_user.email}", 50, y, size=10)
+    draw_text(f"Kennitala: {target_user.kennitala or 'N/A'}", 300, y, size=10)
+    y -= 14
+    draw_text(f"Tímakaup / Base Hourly Rate: {payload.hourly_rate:,.0f} ISK", 50, y, size=10)
+    if payload.period_from and payload.period_to:
+        draw_text(f"Tímabil / Period: {payload.period_from} to {payload.period_to}", 300, y, size=10)
+
+    # Earnings Table Header
+    y -= 30
+    pdf.setStrokeColorRGB(0.8, 0.8, 0.8)
+    pdf.setLineWidth(1)
+    pdf.line(40, y, width - 40, y)
+    y -= 15
+    draw_text("Liður / Earnings & Hours", 40, y, font="Helvetica-Bold", size=10)
+    draw_text("Gildi / Hours", 250, y, font="Helvetica-Bold", size=10, align="right")
+    draw_text("Mælir / Multiplier", 350, y, font="Helvetica-Bold", size=10, align="right")
+    draw_text("Upphæð / Amount (ISK)", width - 40, y, font="Helvetica-Bold", size=10, align="right")
+    y -= 8
+    pdf.line(40, y, width - 40, y)
+
+    # Earnings Details
+    y -= 18
+    draw_text("Almenn vinna / Regular hours", 40, y, size=10)
+    draw_text(f"{payload.regular_hours:,.2f}", 250, y, size=10, align="right")
+    draw_text("1.0", 350, y, size=10, align="right")
+    draw_text(f"{base_wages:,.0f} ISK", width - 40, y, size=10, align="right")
+
+    if payload.overtime1_hours and payload.overtime1_hours > 0:
+        y -= 14
+        draw_text("Eftirvinna / Overtime 1", 40, y, size=10)
+        draw_text(f"{payload.overtime1_hours:,.2f}", 250, y, size=10, align="right")
+        draw_text(f"{payload.overtime1_multiplier:.1f}", 350, y, size=10, align="right")
+        draw_text(f"{ot1_wages:,.0f} ISK", width - 40, y, size=10, align="right")
+
+    if payload.overtime2_hours and payload.overtime2_hours > 0:
+        y -= 14
+        draw_text("Næturvinna / Overtime 2", 40, y, size=10)
+        draw_text(f"{payload.overtime2_hours:,.2f}", 250, y, size=10, align="right")
+        draw_text(f"{payload.overtime2_multiplier:.1f}", 350, y, size=10, align="right")
+        draw_text(f"{ot2_wages:,.0f} ISK", width - 40, y, size=10, align="right")
+
+    if payload.bonuses and payload.bonuses > 0:
+        y -= 14
+        bonus_desc = payload.bonus_description or "Álag / Bonus"
+        draw_text(f"Bónusar ({bonus_desc})", 40, y, size=10)
+        draw_text(f"{payload.bonuses:,.0f} ISK", width - 40, y, size=10, align="right")
+
+    y -= 10
+    pdf.line(40, y, width - 40, y)
+    y -= 16
+    draw_text("Heildarlaun / Gross Earnings (Brúttó)", 40, y, font="Helvetica-Bold", size=10)
+    draw_text(f"{gross:,.0f} ISK", width - 40, y, font="Helvetica-Bold", size=10, align="right")
+    y -= 8
+    pdf.line(40, y, width - 40, y)
+
+    # Deductions Header
+    y -= 30
+    draw_text("Frádráttarliðir / Deductions", 40, y, font="Helvetica-Bold", size=11)
+    y -= 8
+    pdf.line(40, y, width - 40, y)
+
+    y -= 18
+    draw_text("Lífeyrissjóður / Pension (4%)", 40, y, size=10)
+    draw_text(f"-{pension_deduction:,.0f} ISK", width - 40, y, size=10, align="right")
+
+    if sereign_deduction > 0:
+        y -= 14
+        draw_text(f"Séreignarsparnaður / Private Pension ({payload.sereignarsparnadur_percent}%)", 40, y, size=10)
+        draw_text(f"-{sereign_deduction:,.0f} ISK", width - 40, y, size=10, align="right")
+
+    y -= 14
+    draw_text("Stéttarfélagsgjald / RSÍ Union Fee (1.1%)", 40, y, size=10)
+    draw_text(f"-{union_fee:,.0f} ISK", width - 40, y, size=10, align="right")
+
+    if net_tax > 0:
+        y -= 14
+        tax_desc = "Staðgreiðsla / Income Tax"
+        if payload.apply_personal_tax_credit:
+            tax_desc += " (Persónuafsláttur nýttur)"
+        draw_text(tax_desc, 40, y, size=10)
+        draw_text(f"-{net_tax:,.0f} ISK", width - 40, y, size=10, align="right")
+
+    if payload.other_deductions and payload.other_deductions > 0:
+        y -= 14
+        ded_desc = payload.deductions_description or "Annar frádráttur / Other deduction"
+        draw_text(ded_desc, 40, y, size=10)
+        draw_text(f"-{payload.other_deductions:,.0f} ISK", width - 40, y, size=10, align="right")
+
+    y -= 10
+    pdf.line(40, y, width - 40, y)
+    
+    # Net salary
+    y -= 20
+    pdf.setFillColorRGB(0.05, 0.5, 0.1) # dark green
+    draw_text("Útborguð laun / Estimated Net Salary (Nettó)", 40, y, font="Helvetica-Bold", size=12)
+    draw_text(f"{net_salary:,.0f} ISK", width - 40, y, font="Helvetica-Bold", size=12, align="right")
+    y -= 8
+    pdf.setFillColorRGB(0.1, 0.1, 0.1)
+    pdf.line(40, y, width - 40, y)
+
+    # Employer Contributions (Transparency section)
+    y -= 35
+    draw_text("Framlag vinnuveitanda / Employer Contributions (Costs in addition to gross):", 40, y, font="Helvetica-Bold", size=9)
+    y -= 14
+    draw_text(f"Lífeyrissjóður / Pension Fund Contribution (11.5%): {employer_pension:,.0f} ISK", 50, y, size=9)
+
+    # Notice
+    y -= 50
+    pdf.setFillColorRGB(0.4, 0.4, 0.4)
+    draw_text("Umsögn / Notice:", 40, y, font="Helvetica-Bold", size=8)
+    y -= 10
+    draw_text("Skjal þetta er launaáætlun reiknuð út frá gefnum vinnustundum og gildandi kjarasamningsákvæðum.", 40, y, size=8)
+    y -= 10
+    draw_text("Þetta telst ekki opinber launaseðill. / This document is a salary estimate and not an official payslip.", 40, y, size=8)
+
+    pdf.showPage()
+    pdf.save()
+    buffer.seek(0)
+    
+    return StreamingResponse(
+        buffer,
+        media_type="application/pdf",
+        headers={"Content-Disposition": "attachment; filename=launaaaetlun_estimate.pdf"}
+    )
+
+
 # --- Leave Request Registry ---
 
 @router.post("/leave-requests", response_model=schemas.LeaveRequestRead, status_code=status.HTTP_201_CREATED)

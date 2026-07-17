@@ -53,13 +53,15 @@ function AccountingPage() {
     const [calcHours, setCalcHours] = useState('');
     const [calcHourlyRate, setCalcHourlyRate] = useState('');
     const [calcOvertimeHours, setCalcOvertimeHours] = useState('');
-    const [calcOvertimeMultiplier, setCalcOvertimeMultiplier] = useState('1.5');
+    const [calcOvertimeMultiplier, setCalcOvertimeMultiplier] = useState('1.8');
     const [calcOvertime2Hours, setCalcOvertime2Hours] = useState('');
-    const [calcOvertime2Multiplier, setCalcOvertime2Multiplier] = useState('2.0');
+    const [calcOvertime2Multiplier, setCalcOvertime2Multiplier] = useState('2.2');
     const [calcBonuses, setCalcBonuses] = useState('');
     const [calcBonusDescription, setCalcBonusDescription] = useState('');
     const [calcOtherDeductions, setCalcOtherDeductions] = useState('0');
     const [calcDeductionsDescription, setCalcDeductionsDescription] = useState('');
+    const [calcSereignarsparnadurPercent, setCalcSereignarsparnadurPercent] = useState('0');
+    const [calcApplyPersonalTaxCredit, setCalcApplyPersonalTaxCredit] = useState(true);
 
     const [uploadUserId, setUploadUserId] = useState('');
     const [uploadIssueDate, setUploadIssueDate] = useState(() => new Date().toISOString().split('T')[0]);
@@ -128,6 +130,15 @@ function AccountingPage() {
             fetchAccountingData();
         }
     }, [fetchAccountingData, authLoading, currentUser]);
+
+    useEffect(() => {
+        if (currentUser) {
+            if (!isManagement) {
+                setUploadUserId(String(currentUser.id));
+                setCalcHourlyRate(String(currentUser.hourly_rate || ''));
+            }
+        }
+    }, [currentUser, isManagement]);
 
     const refreshOverview = async (yearOverride) => {
         if (!isManagement) return;
@@ -402,235 +413,434 @@ function AccountingPage() {
                         </div>
                     </section>
 
-                    {(currentUser?.role === 'accountant' || currentUser?.role === 'admin' || currentUser?.is_superuser) && (
-                        <section className="bg-white dark:bg-gray-800 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-700 p-8 space-y-8">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-1">
-                                        Payroll Tools
-                                    </p>
-                                    <h2 className="text-lg font-black text-gray-900 dark:text-white tracking-tight">
-                                        Payslip Calculator & Upload
-                                    </h2>
-                                </div>
-                            </div>
+                    {/* Salary Calculator section - Available to all authenticated users */}
+                    <section className="bg-white dark:bg-gray-800 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-700 p-8 space-y-8">
+                        <div>
+                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-1">
+                                Reiknivél / Calculator
+                            </p>
+                            <h2 className="text-lg font-black text-gray-900 dark:text-white tracking-tight">
+                                Launaáætlun / Salary Estimator
+                            </h2>
+                            <p className="text-xs text-gray-500 mt-1 dark:text-gray-400">
+                                Reiknaðu út áætluð laun út frá skráðum tímum, samningsákvæðum og sköttum á Íslandi.
+                            </p>
+                        </div>
 
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                                {/* Calculator */}
-                                <div className="space-y-4">
-                                    <h3 className="text-[11px] font-black text-gray-500 uppercase tracking-[0.25em]">
-                                        Calculator
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                            {/* Left: Inputs - 7 columns */}
+                            <div className="lg:col-span-7 space-y-6">
+                                <div className="bg-gray-50 dark:bg-gray-900/50 p-6 rounded-3xl space-y-4">
+                                    <h3 className="text-xs font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">
+                                        Forsendur / Parameters
                                     </h3>
-                                    <div className="grid grid-cols-2 gap-3 text-xs">
-                                        <div>
-                                            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">Hours</label>
-                                            <input type="number" min="0" step="any" value={calcHours} onChange={(e) => setCalcHours(e.target.value)} className="modern-input h-9" />
-                                        </div>
-                                        <div>
-                                            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">Hourly rate</label>
-                                            <input type="number" min="0" step="any" value={calcHourlyRate} onChange={(e) => setCalcHourlyRate(e.target.value)} className="modern-input h-9" />
-                                        </div>
-                                        <div>
-                                            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">Overtime 1 hours</label>
-                                            <input type="number" min="0" step="any" value={calcOvertimeHours} onChange={(e) => setCalcOvertimeHours(e.target.value)} className="modern-input h-9" />
-                                        </div>
-                                        <div>
-                                            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">OT1 multiplier</label>
-                                            <input type="number" min="1" step="0.1" value={calcOvertimeMultiplier} onChange={(e) => setCalcOvertimeMultiplier(e.target.value)} className="modern-input h-9" />
-                                        </div>
-                                        <div>
-                                            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">Overtime 2 hours</label>
-                                            <input type="number" min="0" step="any" value={calcOvertime2Hours} onChange={(e) => setCalcOvertime2Hours(e.target.value)} className="modern-input h-9" />
-                                        </div>
-                                        <div>
-                                            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">OT2 multiplier</label>
-                                            <input type="number" min="1" step="0.1" value={calcOvertime2Multiplier} onChange={(e) => setCalcOvertime2Multiplier(e.target.value)} className="modern-input h-9" />
-                                        </div>
-                                        <div>
-                                            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">Bonuses</label>
-                                            <input type="number" min="0" step="any" value={calcBonuses} onChange={(e) => setCalcBonuses(e.target.value)} className="modern-input h-9" />
-                                        </div>
-                                        <div>
-                                            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">Other deductions</label>
-                                            <input type="number" min="0" step="any" value={calcOtherDeductions} onChange={(e) => setCalcOtherDeductions(e.target.value)} className="modern-input h-9" />
-                                        </div>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-3 text-xs pt-1">
-                                        <div>
-                                            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">Bonus description</label>
-                                            <input
-                                                type="text"
-                                                value={calcBonusDescription}
-                                                onChange={(e) => setCalcBonusDescription(e.target.value)}
-                                                className="modern-input h-9"
-                                                placeholder="e.g. on-call allowance, bonus"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">Deductions description</label>
-                                            <input
-                                                type="text"
-                                                value={calcDeductionsDescription}
-                                                onChange={(e) => setCalcDeductionsDescription(e.target.value)}
-                                                className="modern-input h-9"
-                                                placeholder="e.g. union fee, lunch, misc."
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-3 text-xs pt-2 border-t border-gray-100 dark:border-gray-700">
+
+                                    {isManagement ? (
                                         <div>
                                             <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">
-                                                Period from
+                                                Starfsmaður / Employee
+                                            </label>
+                                            <select
+                                                value={uploadUserId}
+                                                onChange={(e) => {
+                                                    const userId = e.target.value;
+                                                    setUploadUserId(userId);
+                                                    const emp = employees.find(u => String(u.id) === String(userId));
+                                                    if (emp) {
+                                                        setCalcHourlyRate(String(emp.hourly_rate || ''));
+                                                    }
+                                                }}
+                                                className="modern-input h-9 text-[11px]"
+                                            >
+                                                <option value="">Veldu starfsmann / Select employee</option>
+                                                {employees.map(u => (
+                                                    <option key={u.id} value={u.id}>
+                                                        {u.full_name || u.email}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    ) : (
+                                        <div className="text-xs text-gray-600 dark:text-gray-300">
+                                            <p className="font-bold">Starfsmaður / Employee:</p>
+                                            <p className="mt-1 text-gray-900 dark:text-white">{currentUser?.full_name || currentUser?.email}</p>
+                                        </div>
+                                    )}
+
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">
+                                                Tímabil Frá / Period From
                                             </label>
                                             <input
                                                 type="date"
                                                 value={calcFromDate}
                                                 onChange={(e) => setCalcFromDate(e.target.value)}
-                                                className="modern-input h-9"
+                                                className="modern-input h-9 text-[11px]"
                                             />
                                         </div>
                                         <div>
                                             <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">
-                                                Period to
+                                                Tímabil Til / Period To
                                             </label>
                                             <input
                                                 type="date"
                                                 value={calcToDate}
                                                 onChange={(e) => setCalcToDate(e.target.value)}
-                                                className="modern-input h-9"
+                                                className="modern-input h-9 text-[11px]"
                                             />
                                         </div>
-                                        <div className="col-span-2">
-                                            <button
-                                                type="button"
-                                                onClick={async () => {
-                                                    if (!uploadUserId) {
-                                                        toast.warn('Select employee in upload form first.');
+                                    </div>
+
+                                    <div>
+                                        <button
+                                            type="button"
+                                            onClick={async () => {
+                                                if (!uploadUserId) {
+                                                    toast.warn('Veldu starfsmann fyrst / Select employee first.');
+                                                    return;
+                                                }
+                                                if (!calcFromDate || !calcToDate) {
+                                                    toast.warn('Veldu tímabil / Select period first.');
+                                                    return;
+                                                }
+                                                try {
+                                                    const params = {
+                                                        user_id: parseInt(uploadUserId, 10),
+                                                        start_date: calcFromDate,
+                                                        end_date: calcToDate,
+                                                        limit: 1000,
+                                                    };
+                                                    const res = await axiosInstance.get('/timelogs/', { params });
+                                                    const logs = Array.isArray(res.data) ? res.data : [];
+                                                    if (logs.length === 0) {
+                                                        toast.info('Engar tímaskráningar fundust á þessu tímabili / No time logs found.');
                                                         return;
                                                     }
-                                                    if (!calcFromDate || !calcToDate) {
-                                                        toast.warn('Select period for time tracking.');
-                                                        return;
-                                                    }
-                                                    try {
-                                                        const params = {
-                                                            user_id: parseInt(uploadUserId, 10),
-                                                            start_date: calcFromDate,
-                                                            end_date: calcToDate,
-                                                            limit: 1000,
-                                                        };
-                                                        const res = await axiosInstance.get('/timelogs/', { params });
-                                                        const logs = Array.isArray(res.data) ? res.data : [];
-                                                        if (logs.length === 0) {
-                                                            toast.info('No time logs found for this period.');
-                                                            return;
-                                                        }
-                                                        // Group hours by calendar day
-                                                        const perDay = {};
-                                                        logs.forEach(log => {
-                                                            if (!log.duration_hours) return;
-                                                            const day = log.start_time ? log.start_time.slice(0, 10) : calcFromDate;
-                                                            perDay[day] = (perDay[day] || 0) + log.duration_hours;
-                                                        });
-                                                        let regularH = 0;
-                                                        let otH = 0;
-                                                        Object.values(perDay).forEach(totalDayHours => {
-                                                            const reg = Math.min(8, totalDayHours);
-                                                            const extra = Math.max(0, totalDayHours - 8);
-                                                            regularH += reg;
-                                                            otH += extra;
-                                                        });
-                                                        setCalcHours(regularH.toFixed(2));
-                                                        setCalcOvertimeHours(otH.toFixed(2));
-                                                        toast.success('Loaded hours from time tracking (regular + OT1 suggestion).');
-                                                    } catch (error) {
-                                                        console.error('Load hours from timelogs failed:', error);
-                                                        const msg = error.response?.data?.detail || 'Failed to load hours from time tracking.';
-                                                        toast.error(msg);
-                                                    }
-                                                }}
-                                                className="inline-flex items-center px-3 py-2 rounded-xl bg-gray-900 text-white text-[10px] font-black uppercase tracking-[0.25em] hover:bg-black transition"
+                                                    // Group hours by calendar day
+                                                    const perDay = {};
+                                                    logs.forEach(log => {
+                                                        if (!log.duration_hours) return;
+                                                        const day = log.start_time ? log.start_time.slice(0, 10) : calcFromDate;
+                                                        perDay[day] = (perDay[day] || 0) + log.duration_hours;
+                                                    });
+                                                    let regularH = 0;
+                                                    let otH = 0;
+                                                    Object.values(perDay).forEach(totalDayHours => {
+                                                        const reg = Math.min(8, totalDayHours);
+                                                        const extra = Math.max(0, totalDayHours - 8);
+                                                        regularH += reg;
+                                                        otH += extra;
+                                                    });
+                                                    setCalcHours(regularH.toFixed(2));
+                                                    setCalcOvertimeHours(otH.toFixed(2));
+                                                    toast.success('Tímar sóttir úr vinnuskráningu / Hours loaded.');
+                                                } catch (error) {
+                                                    console.error('Load hours failed:', error);
+                                                    toast.error('Gæti ekki sótt tíma / Failed to load hours.');
+                                                }
+                                            }}
+                                            className="inline-flex items-center px-4 py-2 rounded-xl bg-gray-900 dark:bg-gray-800 text-white text-[9px] font-black uppercase tracking-[0.2em] hover:bg-black dark:hover:bg-gray-700 transition"
+                                        >
+                                            Sækja úr vinnuskráningu / Load hours
+                                        </button>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-4 text-xs">
+                                        <div>
+                                            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">Dagvinna / Regular Hours</label>
+                                            <input type="number" min="0" step="any" value={calcHours} onChange={(e) => setCalcHours(e.target.value)} className="modern-input h-9" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">Tímakaup / Hourly Rate (ISK)</label>
+                                            <input type="number" min="0" step="any" value={calcHourlyRate} onChange={(e) => setCalcHourlyRate(e.target.value)} className="modern-input h-9" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">Eftirvinna Tímar / OT1 Hours</label>
+                                            <input type="number" min="0" step="any" value={calcOvertimeHours} onChange={(e) => setCalcOvertimeHours(e.target.value)} className="modern-input h-9" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">Eftirvinnustuðull / OT1 Mult.</label>
+                                            <input type="number" min="1" step="0.1" value={calcOvertimeMultiplier} onChange={(e) => setCalcOvertimeMultiplier(e.target.value)} className="modern-input h-9" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">Næturvinna Tímar / OT2 Hours</label>
+                                            <input type="number" min="0" step="any" value={calcOvertime2Hours} onChange={(e) => setCalcOvertime2Hours(e.target.value)} className="modern-input h-9" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">Næturvinnustuðull / OT2 Mult.</label>
+                                            <input type="number" min="1" step="0.1" value={calcOvertime2Multiplier} onChange={(e) => setCalcOvertime2Multiplier(e.target.value)} className="modern-input h-9" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">Séreignarsparnaður / Private Pension</label>
+                                            <select
+                                                value={calcSereignarsparnadurPercent}
+                                                onChange={(e) => setCalcSereignarsparnadurPercent(e.target.value)}
+                                                className="modern-input h-9 text-[11px]"
                                             >
-                                                Load from time tracking
-                                            </button>
+                                                <option value="0">0%</option>
+                                                <option value="2">2%</option>
+                                                <option value="4">4%</option>
+                                            </select>
+                                        </div>
+                                        <div className="flex items-center space-x-2 pt-5">
+                                            <input
+                                                type="checkbox"
+                                                id="applyTaxCredit"
+                                                checked={calcApplyPersonalTaxCredit}
+                                                onChange={(e) => setCalcApplyPersonalTaxCredit(e.target.checked)}
+                                                className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                            />
+                                            <label htmlFor="applyTaxCredit" className="text-[10px] font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider cursor-pointer">
+                                                Nýta persónuafslátt / Tax Credit
+                                            </label>
+                                        </div>
+                                        <div>
+                                            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">Bónusar / Bonuses (ISK)</label>
+                                            <input type="number" min="0" step="any" value={calcBonuses} onChange={(e) => setCalcBonuses(e.target.value)} className="modern-input h-9" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">Lýsing bónusar / Bonus Desc</label>
+                                            <input type="text" value={calcBonusDescription} onChange={(e) => setCalcBonusDescription(e.target.value)} className="modern-input h-9" placeholder="t.d. bakvakt, bónus" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">Annar frádráttur / Deductions (ISK)</label>
+                                            <input type="number" min="0" step="any" value={calcOtherDeductions} onChange={(e) => setCalcOtherDeductions(e.target.value)} className="modern-input h-9" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">Lýsing frádráttar / Deductions Desc</label>
+                                            <input type="text" value={calcDeductionsDescription} onChange={(e) => setCalcDeductionsDescription(e.target.value)} className="modern-input h-9" placeholder="t.d. mötuneyti, félagsgjald" />
                                         </div>
                                     </div>
-                                    {(() => {
-                                        const h = parseFloat(calcHours || '0') || 0;
-                                        const r = parseFloat(calcHourlyRate || '0') || 0;
-                                        const oh = parseFloat(calcOvertimeHours || '0') || 0;
-                                        const om = parseFloat(calcOvertimeMultiplier || '0') || 0;
-                                        const oh2 = parseFloat(calcOvertime2Hours || '0') || 0;
-                                        const om2 = parseFloat(calcOvertime2Multiplier || '0') || 0;
-                                        const bonus = parseFloat(calcBonuses || '0') || 0;
-                                        const od = parseFloat(calcOtherDeductions || '0') || 0;
-                                        const regular = h * r;
-                                        const overtime1 = oh * r * om;
-                                        const overtime2 = oh2 * r * om2;
-                                        const brutto = regular + overtime1 + overtime2 + bonus;
+                                </div>
+                            </div>
 
-                                        // 2025 Iceland combined tax brackets (central + average municipal, monthly)
-                                        const TAX_BRACKETS = [
-                                            { limit: 472005, rate: 0.3149 },
-                                            { limit: 1325127, rate: 0.3799 },
-                                            { limit: Infinity, rate: 0.4629 },
-                                        ];
-                                        const PERSONAL_CREDIT = 68691;
+                            {/* Right: Live Payslip Card - 5 columns */}
+                            <div className="lg:col-span-5 space-y-6">
+                                {(() => {
+                                    const h = parseFloat(calcHours || '0') || 0;
+                                    const r = parseFloat(calcHourlyRate || '0') || 0;
+                                    const oh = parseFloat(calcOvertimeHours || '0') || 0;
+                                    const om = parseFloat(calcOvertimeMultiplier || '1.8') || 1.8;
+                                    const oh2 = parseFloat(calcOvertime2Hours || '0') || 0;
+                                    const om2 = parseFloat(calcOvertime2Multiplier || '2.2') || 2.2;
+                                    const bonus = parseFloat(calcBonuses || '0') || 0;
+                                    const od = parseFloat(calcOtherDeductions || '0') || 0;
+                                    const regularPay = h * r;
+                                    const overtime1Pay = oh * r * om;
+                                    const overtime2Pay = oh2 * r * om2;
+                                    const brutto = regularPay + overtime1Pay + overtime2Pay + bonus;
 
-                                        const calculateTax = (monthlyIncome) => {
-                                            if (!monthlyIncome || monthlyIncome <= 0) return 0;
-                                            let remaining = monthlyIncome;
-                                            let tax = 0;
-                                            let lastLimit = 0;
-                                            for (const b of TAX_BRACKETS) {
-                                                const upper = b.limit;
-                                                const span = upper === Infinity
-                                                    ? remaining
-                                                    : Math.max(0, Math.min(remaining, upper - lastLimit));
-                                                if (span <= 0) continue;
-                                                tax += span * b.rate;
-                                                remaining -= span;
-                                                lastLimit = upper;
-                                                if (remaining <= 0) break;
-                                            }
-                                            tax = Math.max(0, tax - PERSONAL_CREDIT);
-                                            return tax;
-                                        };
+                                    const pensionDeduction = brutto * 0.04;
+                                    const sereignDeduction = brutto * (parseFloat(calcSereignarsparnadurPercent || '0') / 100);
+                                    const unionFee = brutto * 0.011;
 
-                                        const tax = calculateTax(brutto);
-                                        const netto = Math.max(0, brutto - tax - od);
+                                    const taxableIncome = Math.max(0, brutto - pensionDeduction - sereignDeduction);
 
-                                        return (
-                                            <div className="space-y-1 text-xs text-gray-700 dark:text-gray-200">
-                                                <p>Brutto: <span className="font-bold">{brutto.toFixed(0)} ISK</span></p>
-                                                <p>Estimated Tax: <span className="font-bold">{tax.toFixed(0)} ISK</span></p>
-                                                <p>Estimated Net: <span className="font-bold">{netto.toFixed(0)} ISK</span></p>
+                                    // Tax brackets (2025/2026)
+                                    const TAX_BRACKETS = [
+                                        { limit: 472005, rate: 0.3149 },
+                                        { limit: 1325127, rate: 0.3799 },
+                                        { limit: Infinity, rate: 0.4629 },
+                                    ];
+                                    const PERSONAL_CREDIT = calcApplyPersonalTaxCredit ? 68691 : 0;
+
+                                    let remaining = taxableIncome;
+                                    let computedTax = 0;
+                                    let lastLimit = 0;
+                                    for (const b of TAX_BRACKETS) {
+                                        const upper = b.limit;
+                                        const span = upper === Infinity
+                                            ? remaining
+                                            : Math.max(0, Math.min(remaining, upper - lastLimit));
+                                        if (span <= 0) continue;
+                                        computedTax += span * b.rate;
+                                        remaining -= span;
+                                        lastLimit = upper;
+                                        if (remaining <= 0) break;
+                                    }
+
+                                    const netTax = Math.max(0, computedTax - PERSONAL_CREDIT);
+                                    const netSalary = Math.max(0, brutto - netTax - pensionDeduction - sereignDeduction - unionFee - od);
+                                    const employerPension = brutto * 0.115;
+
+                                    return (
+                                        <div className="bg-indigo-950 text-white rounded-[2rem] p-6 shadow-xl space-y-6">
+                                            <div className="border-b border-indigo-900 pb-4">
+                                                <h4 className="text-xs font-black uppercase tracking-[0.2em] text-indigo-300">
+                                                    Áætlaður Launaseðill / Earnings Slip
+                                                </h4>
+                                                <p className="text-[10px] text-indigo-200 mt-1">
+                                                    Birt með fyrirvara um endanlegt uppgjör.
+                                                </p>
+                                            </div>
+
+                                            <div className="space-y-3 text-xs">
+                                                <div className="flex justify-between">
+                                                    <span className="text-indigo-200">Dagvinna / Regular pay ({h.toFixed(1)} klst)</span>
+                                                    <span className="font-bold">{regularPay.toLocaleString('is-IS')} ISK</span>
+                                                </div>
+                                                {oh > 0 && (
+                                                    <div className="flex justify-between">
+                                                        <span className="text-indigo-200">Eftirvinna / OT1 ({oh.toFixed(1)} klst @ {om}x)</span>
+                                                        <span className="font-bold">{overtime1Pay.toLocaleString('is-IS')} ISK</span>
+                                                    </div>
+                                                )}
+                                                {oh2 > 0 && (
+                                                    <div className="flex justify-between">
+                                                        <span className="text-indigo-200">Næturvinna / OT2 ({oh2.toFixed(1)} klst @ {om2}x)</span>
+                                                        <span className="font-bold">{overtime2Pay.toLocaleString('is-IS')} ISK</span>
+                                                    </div>
+                                                )}
+                                                {bonus > 0 && (
+                                                    <div className="flex justify-between">
+                                                        <span className="text-indigo-200">Álag og bónusar / Bonuses</span>
+                                                        <span className="font-bold">{bonus.toLocaleString('is-IS')} ISK</span>
+                                                    </div>
+                                                )}
+                                                <div className="flex justify-between border-t border-indigo-900 pt-2 font-black text-sm text-indigo-300">
+                                                    <span>Brúttólaun / Gross Salary</span>
+                                                    <span>{brutto.toLocaleString('is-IS')} ISK</span>
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-2 text-xs border-t border-indigo-900 pt-4">
+                                                <h5 className="text-[10px] font-black text-indigo-300 uppercase tracking-widest mb-1">Frádrættir / Deductions</h5>
+                                                <div className="flex justify-between text-indigo-200">
+                                                    <span>Lífeyrissjóður / Pension (4%)</span>
+                                                    <span>-{pensionDeduction.toLocaleString('is-IS')} ISK</span>
+                                                </div>
+                                                {sereignDeduction > 0 && (
+                                                    <div className="flex justify-between text-indigo-200">
+                                                        <span>Séreignarsparnaður ({calcSereignarsparnadurPercent}%)</span>
+                                                        <span>-{sereignDeduction.toLocaleString('is-IS')} ISK</span>
+                                                    </div>
+                                                )}
+                                                <div className="flex justify-between text-indigo-200">
+                                                    <span>Stéttarfélagsgjald RSÍ (1.1%)</span>
+                                                    <span>-{unionFee.toLocaleString('is-IS')} ISK</span>
+                                                </div>
+                                                {netTax > 0 && (
+                                                    <div className="flex justify-between text-indigo-200">
+                                                        <span>Staðgreiðsla / Income Tax</span>
+                                                        <span>-{netTax.toLocaleString('is-IS')} ISK</span>
+                                                    </div>
+                                                )}
+                                                {od > 0 && (
+                                                    <div className="flex justify-between text-indigo-200">
+                                                        <span>Annar frádráttur / Deductions</span>
+                                                        <span>-{od.toLocaleString('is-IS')} ISK</span>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            <div className="bg-indigo-900/60 p-4 rounded-2xl space-y-1">
+                                                <span className="text-[10px] font-black uppercase tracking-widest text-indigo-300">Útborguð laun / Estimated Net</span>
+                                                <p className="text-2xl font-black text-green-400">{Math.round(netSalary).toLocaleString('is-IS')} ISK</p>
+                                            </div>
+
+                                            <div className="text-[10px] text-indigo-300 space-y-1">
+                                                <p className="font-bold">Framlag vinnuveitanda / Employer Contribution:</p>
+                                                <p>Lífeyrissjóður (11.5%): {Math.round(employerPension).toLocaleString('is-IS')} ISK</p>
+                                            </div>
+
+                                            <div className="flex flex-col gap-2 pt-2">
                                                 <button
                                                     type="button"
-                                                    onClick={() => {
-                                                        setUploadBrutto(brutto.toFixed(0));
-                                                        setUploadNetto(netto.toFixed(0));
-                                                        toast.info('Copied values into upload form.');
-                                                    }}
-                                                    className="mt-2 inline-flex items-center px-3 py-1 rounded-xl bg-gray-900 text-white text-[10px] font-black uppercase tracking-[0.25em] hover:bg-black transition"
-                                                >
-                                                    Use in upload
-                                                </button>
-                                            </div>
-                                        );
-                                    })()}
-                                </div>
+                                                    onClick={async () => {
+                                                        if (!uploadUserId) {
+                                                            toast.warn('Veldu starfsmann fyrst / Select employee first.');
+                                                            return;
+                                                        }
+                                                        try {
+                                                            const payload = {
+                                                                user_id: parseInt(uploadUserId, 10),
+                                                                period_from: calcFromDate || null,
+                                                                period_to: calcToDate || null,
+                                                                regular_hours: parseFloat(calcHours || '0') || 0,
+                                                                hourly_rate: parseFloat(calcHourlyRate || '0') || 0,
+                                                                overtime1_hours: parseFloat(calcOvertimeHours || '0') || 0,
+                                                                overtime1_multiplier: parseFloat(calcOvertimeMultiplier || '1.8') || 1.8,
+                                                                overtime2_hours: parseFloat(calcOvertime2Hours || '0') || 0,
+                                                                overtime2_multiplier: parseFloat(calcOvertime2Multiplier || '2.2') || 2.2,
+                                                                bonuses: parseFloat(calcBonuses || '0') || 0,
+                                                                bonus_description: calcBonusDescription || null,
+                                                                other_deductions: parseFloat(calcOtherDeductions || '0') || 0,
+                                                                deductions_description: calcDeductionsDescription || null,
+                                                                sereignarsparnadur_percent: parseFloat(calcSereignarsparnadurPercent || '0') || 0,
+                                                                apply_personal_tax_credit: calcApplyPersonalTaxCredit
+                                                            };
 
-                                {/* Upload */}
+                                                            const res = await axiosInstance.post('/accounting/payslips/estimate', payload, {
+                                                                responseType: 'blob'
+                                                            });
+
+                                                            const blob = new Blob([res.data], { type: 'application/pdf' });
+                                                            const link = document.createElement('a');
+                                                            link.href = window.URL.createObjectURL(blob);
+                                                            link.download = `launaaaetlun_${uploadUserId}.pdf`;
+                                                            document.body.appendChild(link);
+                                                            link.click();
+                                                            document.body.removeChild(link);
+                                                            toast.success('Launaáætlun PDF hlaðið niður / PDF downloaded.');
+                                                        } catch (error) {
+                                                            console.error('Download estimate failed:', error);
+                                                            toast.error('Gæti ekki hlaðið niður launaáætlun / PDF download failed.');
+                                                        }
+                                                    }}
+                                                    className="w-full inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-white text-indigo-950 text-[10px] font-black uppercase tracking-[0.2em] hover:bg-gray-100 transition shadow"
+                                                >
+                                                    Sækja Launaáætlun (PDF) / Download PDF
+                                                </button>
+
+                                                {isManagement && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setUploadBrutto(brutto.toFixed(0));
+                                                            setUploadNetto(netSalary.toFixed(0));
+                                                            toast.info('Gildi afrituð í uppgjörsform / Copied values to upload.');
+                                                        }}
+                                                        className="w-full inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-indigo-900 text-white text-[10px] font-black uppercase tracking-[0.2em] hover:bg-indigo-850 transition"
+                                                    >
+                                                        Flytja í uppgjör / Use in upload
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    );
+                                })()}
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* Official Payslip Upload & Generation Form - Only visible to accountant/admin */}
+                    {isManagement && (
+                        <section className="bg-white dark:bg-gray-800 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-700 p-8 space-y-8">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-1">
+                                        Bókhald / Official Payroll
+                                    </p>
+                                    <h2 className="text-lg font-black text-gray-900 dark:text-white tracking-tight">
+                                        Útbúa og Vista Opinbera Launaseðla / Payslip Registry
+                                    </h2>
+                                    <p className="text-xs text-gray-500 mt-1 dark:text-gray-400">
+                                        Vistaðu launaútreikninginn opinberlega sem staðfestan launaseðil í gagnagrunni starfsmannsins.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                                 <div className="space-y-4">
                                     <h3 className="text-[11px] font-black text-gray-500 uppercase tracking-[0.25em]">
-                                        Upload Payslip PDF
+                                        Skrá handvirkt / Upload Signed PDF
                                     </h3>
                                     <form
                                         onSubmit={async (e) => {
                                             e.preventDefault();
                                             if (!uploadUserId || !uploadIssueDate || !uploadBrutto || !uploadNetto || !uploadFile) {
-                                                toast.warn('Fill all fields and select a PDF file.');
+                                                toast.warn('Fylltu út alla reiti og veldu PDF skjal / Fill all fields and select a PDF.');
                                                 return;
                                             }
                                             setIsUploadingPayslip(true);
@@ -645,15 +855,14 @@ function AccountingPage() {
                                                 await axiosInstance.post('/accounting/payslips', formData, {
                                                     headers: { 'Content-Type': 'multipart/form-data' },
                                                 });
-                                                toast.success('Payslip uploaded.');
+                                                toast.success('Launaseðill vistaður / Payslip uploaded.');
                                                 setUploadBrutto('');
                                                 setUploadNetto('');
                                                 setUploadFile(null);
                                                 fetchAccountingData();
                                             } catch (error) {
                                                 console.error('Payslip upload failed:', error);
-                                                const msg = error.response?.data?.detail || 'Failed to upload payslip.';
-                                                toast.error(msg);
+                                                toast.error('Gæti ekki vistað launaseðil / Failed to upload.');
                                             } finally {
                                                 setIsUploadingPayslip(false);
                                             }
@@ -662,14 +871,21 @@ function AccountingPage() {
                                     >
                                         <div>
                                             <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">
-                                                Employee
+                                                Starfsmaður / Employee
                                             </label>
                                             <select
                                                 value={uploadUserId}
-                                                onChange={(e) => setUploadUserId(e.target.value)}
+                                                onChange={(e) => {
+                                                    const userId = e.target.value;
+                                                    setUploadUserId(userId);
+                                                    const emp = employees.find(u => String(u.id) === String(userId));
+                                                    if (emp) {
+                                                        setCalcHourlyRate(String(emp.hourly_rate || ''));
+                                                    }
+                                                }}
                                                 className="modern-input h-9 text-[11px]"
                                             >
-                                                <option value="">Select employee</option>
+                                                <option value="">Veldu starfsmann / Select employee</option>
                                                 {employees.map(u => (
                                                     <option key={u.id} value={u.id}>
                                                         {u.full_name || u.email}
@@ -680,7 +896,7 @@ function AccountingPage() {
                                         <div className="grid grid-cols-2 gap-3">
                                             <div>
                                                 <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">
-                                                    Issue date
+                                                    Útgáfudagur / Issue Date
                                                 </label>
                                                 <input
                                                     type="date"
@@ -691,7 +907,20 @@ function AccountingPage() {
                                             </div>
                                             <div>
                                                 <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">
-                                                    Brutto
+                                                    PDF Skrá / Signed PDF
+                                                </label>
+                                                <input
+                                                    type="file"
+                                                    accept="application/pdf"
+                                                    onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
+                                                    className="block w-full text-[11px] text-gray-600"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div>
+                                                <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">
+                                                    Brúttólaun (ISK)
                                                 </label>
                                                 <input
                                                     type="number"
@@ -704,7 +933,7 @@ function AccountingPage() {
                                             </div>
                                             <div>
                                                 <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">
-                                                    Netto
+                                                    Nettólaun (ISK)
                                                 </label>
                                                 <input
                                                     type="number"
@@ -715,64 +944,61 @@ function AccountingPage() {
                                                     className="modern-input h-9 text-[11px]"
                                                 />
                                             </div>
-                                            <div>
-                                                <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">
-                                                    PDF File
-                                                </label>
-                                                <input
-                                                    type="file"
-                                                    accept="application/pdf"
-                                                    onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
-                                                    className="block w-full text-[11px] text-gray-600"
-                                                />
-                                            </div>
                                         </div>
-                                        <div className="flex flex-col sm:flex-row gap-2 mt-1">
+                                        <div className="pt-2">
                                             <button
                                                 type="submit"
                                                 disabled={isUploadingPayslip}
                                                 className="inline-flex items-center px-6 py-2 rounded-2xl bg-indigo-600 text-white text-[10px] font-black uppercase tracking-[0.25em] hover:bg-indigo-700 transition disabled:opacity-50"
                                             >
-                                                {isUploadingPayslip ? 'Uploading...' : 'Upload PDF'}
-                                            </button>
-                                            <button
-                                                type="button"
-                                                disabled={isUploadingPayslip || !uploadUserId || !uploadIssueDate || !uploadBrutto || !uploadNetto}
-                                                onClick={async () => {
-                                                    setIsUploadingPayslip(true);
-                                                    try {
-                                                        const payload = {
-                                                            user_id: parseInt(uploadUserId, 10),
-                                                            issue_date: uploadIssueDate,
-                                                            amount_brutto: parseFloat(uploadBrutto),
-                                                            amount_netto: parseFloat(uploadNetto),
-                                                            period_from: calcFromDate || null,
-                                                            period_to: calcToDate || null,
-                                                            regular_hours: calcHours ? parseFloat(calcHours) : null,
-                                                            overtime1_hours: calcOvertimeHours ? parseFloat(calcOvertimeHours) : null,
-                                                            overtime2_hours: calcOvertime2Hours ? parseFloat(calcOvertime2Hours) : null,
-                                                            bonuses: calcBonuses ? parseFloat(calcBonuses) : null,
-                                                            bonus_description: calcBonusDescription || null,
-                                                            other_deductions: calcOtherDeductions ? parseFloat(calcOtherDeductions) : null,
-                                                            deductions_description: calcDeductionsDescription || null,
-                                                        };
-                                                        await axiosInstance.post('/accounting/payslips/auto', payload);
-                                                        toast.success('Payslip generated and stored.');
-                                                        fetchAccountingData();
-                                                    } catch (error) {
-                                                        console.error('Auto payslip generation failed:', error);
-                                                        const msg = error.response?.data?.detail || 'Failed to generate payslip.';
-                                                        toast.error(msg);
-                                                    } finally {
-                                                        setIsUploadingPayslip(false);
-                                                    }
-                                                }}
-                                                className="inline-flex items-center px-6 py-2 rounded-2xl bg-gray-900 text-white text-[10px] font-black uppercase tracking-[0.25em] hover:bg-black transition disabled:opacity-50"
-                                            >
-                                                Generate PDF & save
+                                                {isUploadingPayslip ? 'Sending...' : 'Skrá Launaseðil / Upload PDF'}
                                             </button>
                                         </div>
                                     </form>
+                                </div>
+
+                                <div className="space-y-4">
+                                    <h3 className="text-[11px] font-black text-gray-500 uppercase tracking-[0.25em]">
+                                        Útbúa og Vista sjálfvirkt / Autogenerate & Save
+                                    </h3>
+                                    <p className="text-xs text-gray-600 dark:text-gray-400">
+                                        Þessi hnappur býr til opinberan launaseðil á PDF formi út frá gildunum í reiknivélinni hér að ofan, vistar hann á skráarþjóni og tengir við launasögu starfsmannsins.
+                                    </p>
+                                    <button
+                                        type="button"
+                                        disabled={isUploadingPayslip || !uploadUserId || !uploadIssueDate || !uploadBrutto || !uploadNetto}
+                                        onClick={async () => {
+                                            setIsUploadingPayslip(true);
+                                            try {
+                                                const payload = {
+                                                    user_id: parseInt(uploadUserId, 10),
+                                                    issue_date: uploadIssueDate,
+                                                    amount_brutto: parseFloat(uploadBrutto),
+                                                    amount_netto: parseFloat(uploadNetto),
+                                                    period_from: calcFromDate || null,
+                                                    period_to: calcToDate || null,
+                                                    regular_hours: calcHours ? parseFloat(calcHours) : null,
+                                                    overtime1_hours: calcOvertimeHours ? parseFloat(calcOvertimeHours) : null,
+                                                    overtime2_hours: calcOvertime2Hours ? parseFloat(calcOvertime2Hours) : null,
+                                                    bonuses: calcBonuses ? parseFloat(calcBonuses) : null,
+                                                    bonus_description: calcBonusDescription || null,
+                                                    other_deductions: calcOtherDeductions ? parseFloat(calcOtherDeductions) : null,
+                                                    deductions_description: calcDeductionsDescription || null,
+                                                };
+                                                await axiosInstance.post('/accounting/payslips/auto', payload);
+                                                toast.success('Opinber launaseðill útbúinn og vistaður.');
+                                                fetchAccountingData();
+                                            } catch (error) {
+                                                console.error('Auto payslip generation failed:', error);
+                                                toast.error('Mistókst að útbúa launaseðil.');
+                                            } finally {
+                                                setIsUploadingPayslip(false);
+                                            }
+                                        }}
+                                        className="inline-flex items-center px-6 py-2.5 rounded-2xl bg-gray-900 text-white text-[10px] font-black uppercase tracking-[0.25em] hover:bg-black transition disabled:opacity-50"
+                                    >
+                                        Stofna & Vista Launaseðil / Auto-generate & Save
+                                    </button>
                                 </div>
                             </div>
                         </section>
