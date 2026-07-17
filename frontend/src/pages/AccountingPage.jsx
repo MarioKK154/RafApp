@@ -53,9 +53,9 @@ function AccountingPage() {
     const [calcHours, setCalcHours] = useState('');
     const [calcHourlyRate, setCalcHourlyRate] = useState('');
     const [calcOvertimeHours, setCalcOvertimeHours] = useState('');
-    const [calcOvertimeMultiplier, setCalcOvertimeMultiplier] = useState('1.8');
+    const [calcOvertimeMultiplier, setCalcOvertimeMultiplier] = useState('1.5');
     const [calcOvertime2Hours, setCalcOvertime2Hours] = useState('');
-    const [calcOvertime2Multiplier, setCalcOvertime2Multiplier] = useState('2.2');
+    const [calcOvertime2Multiplier, setCalcOvertime2Multiplier] = useState('1.8');
     const [calcBonuses, setCalcBonuses] = useState('');
     const [calcBonusDescription, setCalcBonusDescription] = useState('');
     const [calcOtherDeductions, setCalcOtherDeductions] = useState('0');
@@ -457,7 +457,8 @@ function AccountingPage() {
                                                                 end_date: calcToDate,
                                                                 limit: 1000,
                                                             };
-                                                            const res = await axiosInstance.get('/timelogs/', { params });
+                                                            const url = isManagement ? '/timelogs/' : '/timelogs/me';
+                                                            const res = await axiosInstance.get(url, { params });
                                                             const logs = Array.isArray(res.data) ? res.data : [];
                                                             if (logs.length === 0) {
                                                                 toast.info(isIcelandic ? 'Engar tímaskráningar fundust á þessu tímabili.' : 'No time logs found for this period.');
@@ -589,9 +590,9 @@ function AccountingPage() {
                                             const h = parseFloat(calcHours || '0') || 0;
                                             const r = parseFloat(calcHourlyRate || '0') || 0;
                                             const oh = parseFloat(calcOvertimeHours || '0') || 0;
-                                            const om = parseFloat(calcOvertimeMultiplier || '1.8') || 1.8;
+                                            const om = parseFloat(calcOvertimeMultiplier || '1.5') || 1.5;
                                             const oh2 = parseFloat(calcOvertime2Hours || '0') || 0;
-                                            const om2 = parseFloat(calcOvertime2Multiplier || '2.2') || 2.2;
+                                            const om2 = parseFloat(calcOvertime2Multiplier || '1.8') || 1.8;
                                             const bonus = parseFloat(calcBonuses || '0') || 0;
                                             const od = parseFloat(calcOtherDeductions || '0') || 0;
                                             const regularPay = h * r;
@@ -742,9 +743,9 @@ function AccountingPage() {
                                                                         regular_hours: parseFloat(calcHours || '0') || 0,
                                                                         hourly_rate: parseFloat(calcHourlyRate || '0') || 0,
                                                                         overtime1_hours: parseFloat(calcOvertimeHours || '0') || 0,
-                                                                        overtime1_multiplier: parseFloat(calcOvertimeMultiplier || '1.8') || 1.8,
+                                                                        overtime1_multiplier: parseFloat(calcOvertimeMultiplier || '1.5') || 1.5,
                                                                         overtime2_hours: parseFloat(calcOvertime2Hours || '0') || 0,
-                                                                        overtime2_multiplier: parseFloat(calcOvertime2Multiplier || '2.2') || 2.2,
+                                                                        overtime2_multiplier: parseFloat(calcOvertime2Multiplier || '1.8') || 1.8,
                                                                         bonuses: parseFloat(calcBonuses || '0') || 0,
                                                                         bonus_description: calcBonusDescription || null,
                                                                         other_deductions: parseFloat(calcOtherDeductions || '0') || 0,

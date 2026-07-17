@@ -116,7 +116,7 @@ def _create_users(db, tenant_id: int) -> dict[str, models.User]:
         "accountant": "accountant",
         "project manager": "project manager",
         "team leader": "team_lead",
-        "electrician": "regular_user",
+        "electrician": "electrician",
     }
     demo_users = [
         # admin

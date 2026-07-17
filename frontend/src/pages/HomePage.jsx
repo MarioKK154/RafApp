@@ -102,7 +102,7 @@ function HomePage() {
         { name_en: 'Scheduling Grid', name_is: 'Tímaplan / Grid', path: '/scheduling', icon: <CalendarIcon className="h-4 w-4" /> },
         { name_en: 'Chat Messages', name_is: 'Spjall / Skilaboð', path: '/chat', icon: <SignalIcon className="h-4 w-4" /> },
         { name_en: 'Customers CRM', name_is: 'Viðskiptavinir', path: '/customers', icon: <UserGroupIcon className="h-4 w-4" /> },
-        { name_en: 'Account Settings', name_is: 'Stillingar reiknings', path: '/settings', icon: <UserIcon className="h-4 w-4" /> }
+        { name_en: 'Account Settings', name_is: 'Stillingar reiknings', path: '/account-settings', icon: <UserIcon className="h-4 w-4" /> }
     ];
 
     const filteredDestinations = globalSearchQuery.trim()
@@ -699,7 +699,7 @@ function HomePage() {
                                     <p className="text-[8px] font-bold text-slate-400 truncate mt-0.5">{user?.email}</p>
                                 </div>
                                 <Link 
-                                    to="/settings" 
+                                    to="/account-settings" 
                                     onClick={() => setIsProfileOpen(false)}
                                     className="flex items-center gap-2 px-3 py-2 text-[10px] font-black uppercase tracking-wider text-gray-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-indigo-950/30 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-lg transition-colors"
                                 >

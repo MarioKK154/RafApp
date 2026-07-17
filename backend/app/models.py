@@ -14,7 +14,7 @@ class UserRole(enum.Enum):
     admin = "admin"
     project_manager = "project manager"
     team_lead = "team_lead"
-    regular_user = "regular_user"
+    electrician = "electrician"
     superuser = "superuser"
     accountant = "accountant"
 

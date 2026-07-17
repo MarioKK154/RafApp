@@ -176,25 +176,20 @@ def get_users(
     return query.order_by(models.User.id).offset(skip).limit(limit).all()
 
 
-def _normalize_role_value(role: Optional[str]) -> Optional[str]:
-    """
-    Normalize role aliases for DB/API compatibility.
-    Postgres enum/user checks in this app primarily use spaced labels.
-    """
-    if role is None:
-        return None
-    raw = str(role).strip().lower()
+def _normalize_role_value(raw: str) -> str:
+    if not raw:
+        return "electrician"
+    raw = raw.strip().lower()
     mapping = {
         "admin": "admin",
-        "superuser": "superuser",
         "accountant": "accountant",
         "project_manager": "project manager",
         "project manager": "project manager",
-        "team_lead": "team leader",
-        "teamlead": "team leader",
-        "team leader": "team leader",
-        "regular_user": "regular user",
-        "regular user": "regular user",
+        "team_lead": "team_lead",
+        "teamlead": "team_lead",
+        "team leader": "team_lead",
+        "regular_user": "electrician",
+        "regular user": "electrician",
         "electrician": "electrician",
         "subcontractor": "subcontractor",
     }

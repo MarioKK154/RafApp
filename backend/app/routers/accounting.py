@@ -229,8 +229,8 @@ async def generate_salary_estimate_pdf(
 
     # Calculate values
     base_wages = payload.regular_hours * payload.hourly_rate
-    ot1_wages = (payload.overtime1_hours or 0.0) * payload.hourly_rate * (payload.overtime1_multiplier or 1.8)
-    ot2_wages = (payload.overtime2_hours or 0.0) * payload.hourly_rate * (payload.overtime2_multiplier or 2.2)
+    ot1_wages = (payload.overtime1_hours or 0.0) * payload.hourly_rate * (payload.overtime1_multiplier or 1.5)
+    ot2_wages = (payload.overtime2_hours or 0.0) * payload.hourly_rate * (payload.overtime2_multiplier or 1.8)
     gross = base_wages + ot1_wages + ot2_wages + (payload.bonuses or 0.0)
 
     pension_deduction = gross * 0.04

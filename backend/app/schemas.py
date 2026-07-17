@@ -1362,9 +1362,9 @@ class PayslipEstimateGenerate(BaseModel):
     regular_hours: float
     hourly_rate: float
     overtime1_hours: Optional[float] = 0.0
-    overtime1_multiplier: Optional[float] = 1.8
+    overtime1_multiplier: Optional[float] = 1.5
     overtime2_hours: Optional[float] = 0.0
-    overtime2_multiplier: Optional[float] = 2.2
+    overtime2_multiplier: Optional[float] = 1.8
     bonuses: Optional[float] = 0.0
     bonus_description: Optional[str] = None
     other_deductions: Optional[float] = 0.0
