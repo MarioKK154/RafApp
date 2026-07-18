@@ -11,7 +11,14 @@ from .models import (UserRole, ProjectStatus, TaskStatus, ToolStatus,
                      OfferStatus, OfferLineItemType, DrawingStatus, LeaveStatus,
                      EventType, TutorialCategory)
 
-STATIC_BASE_URL = environ.get("STATIC_BASE_URL", "http://localhost:8000")
+_static_base = environ.get("STATIC_BASE_URL")
+if not _static_base:
+    if environ.get("RENDER") == "true" or environ.get("APP_ENV") == "production":
+        STATIC_BASE_URL = "https://rafapp-backend.onrender.com"
+    else:
+        STATIC_BASE_URL = "http://localhost:8000"
+else:
+    STATIC_BASE_URL = _static_base
 
 # --- Basic Read Schemas (For Nesting) ---
 
@@ -66,7 +73,10 @@ class UserReadBasic(BaseModel):
     @property
     def profile_picture_url(self) -> Optional[str]:
         if self.profile_picture_path:
-            return f"{STATIC_BASE_URL}/{self.profile_picture_path}"
+            if self.profile_picture_path.startswith(("http://", "https://")):
+                return self.profile_picture_path
+            path = self.profile_picture_path.lstrip("/")
+            return f"{STATIC_BASE_URL}/{path}"
         return None
     model_config = ConfigDict(from_attributes=True)
 
@@ -252,7 +262,10 @@ class UserRead(UserBase):
     @property
     def profile_picture_url(self) -> Optional[str]:
         if self.profile_picture_path:
-            return f"{STATIC_BASE_URL}/{self.profile_picture_path}"
+            if self.profile_picture_path.startswith(("http://", "https://")):
+                return self.profile_picture_path
+            path = self.profile_picture_path.lstrip("/")
+            return f"{STATIC_BASE_URL}/{path}"
         return None
     model_config = ConfigDict(from_attributes=True)
 

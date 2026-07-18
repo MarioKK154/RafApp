@@ -14,6 +14,7 @@ from datetime import date
 from .. import crud, models, schemas, security
 from ..database import get_db
 from ..limiter import limiter
+from ..storage import upload_file
 
 router = APIRouter(
     prefix="/users",
@@ -68,16 +69,18 @@ async def upload_profile_picture(request: Request, db: DbDependency, current_use
     
     file_extension = Path(file.filename).suffix
     unique_filename = f"{current_user.id}_{uuid.uuid4()}{file_extension}"
-    file_path_on_disk = PROFILE_PIC_UPLOAD_DIR / unique_filename
     
     try:
-        async with aiofiles.open(file_path_on_disk, 'wb') as out_file:
-            content = await file.read()
-            await out_file.write(content)
+        content = await file.read()
+        db_file_path = upload_file(
+            content=content,
+            filename=unique_filename,
+            folder="profile_pics",
+            content_type=file.content_type
+        )
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error uploading file: {e}")
     
-    db_file_path = f"static/profile_pics/{unique_filename}"
     updated_user = crud.update_user_profile_picture_path(db, user_id=current_user.id, path=db_file_path)
     
     if not updated_user:

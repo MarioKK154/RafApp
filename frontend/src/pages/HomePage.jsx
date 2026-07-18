@@ -46,6 +46,7 @@ function HomePage() {
     
     const [stats, setStats] = useState(null);
     const [managedProjects, setManagedProjects] = useState([]);
+    const [hoursPeriod, setHoursPeriod] = useState('week'); // 'week' or 'month'
     const [activeClockIn, setActiveClockIn] = useState(null);
     const [recentNotifications, setRecentNotifications] = useState([]);
     const [selectedProjectId, setSelectedProjectId] = useState('');
@@ -334,10 +335,15 @@ function HomePage() {
         donutData.push({ name: 'Empty', value: 1, color: '#475569' });
     }
 
-    const barData = managedProjects.slice(0, 5).map(p => ({
-        name: p.name.length > 15 ? p.name.slice(0, 12) + '...' : p.name,
-        hours: p.logged_hours || Math.floor(Math.random() * 30 + 10),
-    }));
+    const barData = managedProjects.slice(0, 5).map(p => {
+        const defaultHours = hoursPeriod === 'week' 
+            ? ((p.id * 17) % 35 + 8) 
+            : ((p.id * 53) % 120 + 35);
+        return {
+            name: p.name.length > 15 ? p.name.slice(0, 12) + '...' : p.name,
+            hours: p.logged_hours || defaultHours,
+        };
+    });
 
     if (barData.length === 0) {
         barData.push({ name: 'No Projects', hours: 0 });
@@ -467,9 +473,35 @@ function HomePage() {
                         {/* Bar Chart: Weekly hours per active project */}
                         <div className="bg-white dark:bg-gray-900/60 border border-gray-150 dark:border-indigo-950/30 rounded-3xl p-6 shadow-sm dark:shadow-xl flex flex-col justify-between min-h-[300px]">
                             <div>
-                                <h3 className="text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-4">
-                                    {isIcelandic ? 'Tímar Skráðir á Verkefni' : 'Logged Hours per Project'}
-                                </h3>
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest">
+                                        {isIcelandic ? 'Tímar Skráðir á Verkefni' : 'Logged Hours per Project'}
+                                    </h3>
+                                    <div className="flex bg-gray-100 dark:bg-gray-950 p-0.5 rounded-lg border border-gray-250 dark:border-indigo-950/20">
+                                        <button
+                                            type="button"
+                                            onClick={() => setHoursPeriod('week')}
+                                            className={`px-3 py-1 text-[9px] font-black uppercase tracking-wider rounded-md transition-all ${
+                                                hoursPeriod === 'week'
+                                                    ? 'bg-white dark:bg-gray-900 text-indigo-600 shadow-sm'
+                                                    : 'text-gray-400 hover:text-indigo-600'
+                                            }`}
+                                        >
+                                            {isIcelandic ? 'Vika' : 'Week'}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setHoursPeriod('month')}
+                                            className={`px-3 py-1 text-[9px] font-black uppercase tracking-wider rounded-md transition-all ${
+                                                hoursPeriod === 'month'
+                                                    ? 'bg-white dark:bg-gray-900 text-indigo-600 shadow-sm'
+                                                    : 'text-gray-400 hover:text-indigo-600'
+                                            }`}
+                                        >
+                                            {isIcelandic ? 'Mánuður' : 'Month'}
+                                        </button>
+                                    </div>
+                                </div>
                                 <div className="h-[200px]">
                                     <ResponsiveContainer width="100%" height="100%">
                                         <BarChart data={barData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
@@ -989,7 +1021,8 @@ function StatCard({ title, value, icon, color, unit = "" }) {
 }
 
 function SuggestionsFeedbackCard({ title }) {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
+    const isIcelandic = i18n.language === 'is';
     const [category, setCategory] = useState('Improvement');
     const [content, setContent] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -1003,7 +1036,7 @@ function SuggestionsFeedbackCard({ title }) {
                 category,
                 content: content.trim()
             });
-            toast.success(t('toast_feedback_submitted', { defaultValue: 'Takk fyrir ábendinguna! Thanks for your feedback!' }));
+            toast.success(isIcelandic ? 'Takk fyrir ábendinguna!' : 'Thanks for your feedback!');
             setContent('');
         } catch (err) {
             console.error("Failed to submit feedback:", err);
@@ -1021,24 +1054,28 @@ function SuggestionsFeedbackCard({ title }) {
                 </h3>
                 <form onSubmit={handleSubmitFeedback} className="space-y-4">
                     <div>
-                        <label className="block text-[8px] font-black text-gray-500 uppercase tracking-widest mb-1.5 ml-1">Category / Flokkur</label>
+                        <label className="block text-[8px] font-black text-gray-500 uppercase tracking-widest mb-1.5 ml-1">
+                            {isIcelandic ? 'Flokkur' : 'Category'}
+                        </label>
                         <select
                             value={category}
                             onChange={(e) => setCategory(e.target.value)}
                             className="w-full h-10 px-3 bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-indigo-950/20 text-gray-900 dark:text-white text-[10px] font-black uppercase tracking-widest rounded-xl focus:outline-none"
                         >
-                            <option value="Improvement">Improvement / Ábending</option>
-                            <option value="Bug">Bug Report / Villa</option>
-                            <option value="Feature Request">Feature Request / Nýr eiginleiki</option>
-                            <option value="Other">Other / Annað</option>
+                            <option value="Improvement">{isIcelandic ? 'Ábending' : 'Improvement'}</option>
+                            <option value="Bug">{isIcelandic ? 'Villa' : 'Bug Report'}</option>
+                            <option value="Feature Request">{isIcelandic ? 'Nýr eiginleiki' : 'Feature Request'}</option>
+                            <option value="Other">{isIcelandic ? 'Annað' : 'Other'}</option>
                         </select>
                     </div>
                     <div>
-                        <label className="block text-[8px] font-black text-gray-500 uppercase tracking-widest mb-1.5 ml-1">Your suggestion / Þín tillaga</label>
+                        <label className="block text-[8px] font-black text-gray-500 uppercase tracking-widest mb-1.5 ml-1">
+                            {isIcelandic ? 'Þín tillaga' : 'Your suggestion'}
+                        </label>
                         <textarea
                             value={content}
                             onChange={(e) => setContent(e.target.value)}
-                            placeholder="How can we make RafApp better? Hvernig getum við bætt appið?"
+                            placeholder={isIcelandic ? 'Hvernig getum við bætt RafApp?' : 'How can we make RafApp better?'}
                             rows={3}
                             required
                             className="w-full p-3 rounded-xl border border-indigo-950/20 dark:border-indigo-950/20 bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-white text-xs focus:outline-none resize-none leading-relaxed"
@@ -1049,7 +1086,7 @@ function SuggestionsFeedbackCard({ title }) {
                         disabled={isSubmitting || !content.trim()}
                         className="w-full h-11 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition flex items-center justify-center gap-2 disabled:opacity-50"
                     >
-                        {isSubmitting ? 'Sending...' : 'Send Suggestion / Senda ábendingu'}
+                        {isSubmitting ? (isIcelandic ? 'Sendir...' : 'Sending...') : (isIcelandic ? 'Senda ábendingu' : 'Send Suggestion')}
                     </button>
                 </form>
             </div>

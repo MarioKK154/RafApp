@@ -865,13 +865,13 @@ function AccountingPage() {
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-1">
-                                        Bókhald / Official Payroll
+                                        {isIcelandic ? 'Bókhald' : 'Official Payroll'}
                                     </p>
                                     <h2 className="text-lg font-black text-gray-900 dark:text-white tracking-tight">
-                                        Útbúa og Vista Opinbera Launaseðla / Payslip Registry
+                                        {isIcelandic ? 'Útbúa og Vista Opinbera Launaseðla' : 'Payslip Registry'}
                                     </h2>
                                     <p className="text-xs text-gray-500 mt-1 dark:text-gray-400">
-                                        Vistaðu launaútreikninginn opinberlega sem staðfestan launaseðil í gagnagrunni starfsmannsins.
+                                        {isIcelandic ? 'Vistaðu launaútreikninginn opinberlega sem staðfestan launaseðil í gagnagrunni starfsmannsins.' : 'Save the salary calculation officially as a certified payslip in the employee database.'}
                                     </p>
                                 </div>
                             </div>
@@ -879,13 +879,13 @@ function AccountingPage() {
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                                 <div className="space-y-4">
                                     <h3 className="text-[11px] font-black text-gray-500 uppercase tracking-[0.25em]">
-                                        Skrá handvirkt / Upload Signed PDF
+                                        {isIcelandic ? 'Skrá handvirkt' : 'Upload Signed PDF'}
                                     </h3>
                                     <form
                                         onSubmit={async (e) => {
                                             e.preventDefault();
                                             if (!uploadUserId || !uploadIssueDate || !uploadBrutto || !uploadNetto || !uploadFile) {
-                                                toast.warn('Fylltu út alla reiti og veldu PDF skjal / Fill all fields and select a PDF.');
+                                                toast.warn(isIcelandic ? 'Fylltu út alla reiti og veldu PDF skjal.' : 'Fill all fields and select a PDF.');
                                                 return;
                                             }
                                             setIsUploadingPayslip(true);
@@ -900,14 +900,14 @@ function AccountingPage() {
                                                 await axiosInstance.post('/accounting/payslips', formData, {
                                                     headers: { 'Content-Type': 'multipart/form-data' },
                                                 });
-                                                toast.success('Launaseðill vistaður / Payslip uploaded.');
+                                                toast.success(isIcelandic ? 'Launaseðill vistaður.' : 'Payslip uploaded.');
                                                 setUploadBrutto('');
                                                 setUploadNetto('');
                                                 setUploadFile(null);
                                                 fetchAccountingData();
                                             } catch (error) {
                                                 console.error('Payslip upload failed:', error);
-                                                toast.error('Gæti ekki vistað launaseðil / Failed to upload.');
+                                                toast.error(isIcelandic ? 'Gæti ekki vistað launaseðil.' : 'Failed to upload.');
                                             } finally {
                                                 setIsUploadingPayslip(false);
                                             }
@@ -916,7 +916,7 @@ function AccountingPage() {
                                     >
                                         <div>
                                             <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">
-                                                Starfsmaður / Employee
+                                                {isIcelandic ? 'Starfsmaður' : 'Employee'}
                                             </label>
                                             <select
                                                 value={uploadUserId}
@@ -930,7 +930,7 @@ function AccountingPage() {
                                                 }}
                                                 className="modern-input h-9 text-[11px]"
                                             >
-                                                <option value="">Veldu starfsmann / Select employee</option>
+                                                <option value="">{isIcelandic ? 'Veldu starfsmann' : 'Select employee'}</option>
                                                 {employees.map(u => (
                                                     <option key={u.id} value={u.id}>
                                                         {u.full_name || u.email}
@@ -941,7 +941,7 @@ function AccountingPage() {
                                         <div className="grid grid-cols-2 gap-3">
                                             <div>
                                                 <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">
-                                                    Útgáfudagur / Issue Date
+                                                    {isIcelandic ? 'Útgáfudagur' : 'Issue Date'}
                                                 </label>
                                                 <input
                                                     type="date"
@@ -952,7 +952,7 @@ function AccountingPage() {
                                             </div>
                                             <div>
                                                 <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">
-                                                    PDF Skrá / Signed PDF
+                                                    {isIcelandic ? 'PDF Skrá' : 'Signed PDF'}
                                                 </label>
                                                 <input
                                                     type="file"
@@ -996,7 +996,7 @@ function AccountingPage() {
                                                 disabled={isUploadingPayslip}
                                                 className="inline-flex items-center px-6 py-2 rounded-2xl bg-indigo-600 text-white text-[10px] font-black uppercase tracking-[0.25em] hover:bg-indigo-700 transition disabled:opacity-50"
                                             >
-                                                {isUploadingPayslip ? 'Sending...' : 'Skrá Launaseðil / Upload PDF'}
+                                                {isUploadingPayslip ? (isIcelandic ? 'Sendir...' : 'Sending...') : (isIcelandic ? 'Skrá Launaseðil' : 'Upload PDF')}
                                             </button>
                                         </div>
                                     </form>
@@ -1004,10 +1004,10 @@ function AccountingPage() {
 
                                 <div className="space-y-4">
                                     <h3 className="text-[11px] font-black text-gray-500 uppercase tracking-[0.25em]">
-                                        Útbúa og Vista sjálfvirkt / Autogenerate & Save
+                                        {isIcelandic ? 'Útbúa og Vista sjálfvirkt' : 'Autogenerate & Save'}
                                     </h3>
                                     <p className="text-xs text-gray-600 dark:text-gray-400">
-                                        Þessi hnappur býr til opinberan launaseðil á PDF formi út frá gildunum í reiknivélinni hér að ofan, vistar hann á skráarþjóni og tengir við launasögu starfsmannsins.
+                                        {isIcelandic ? 'Þessi hnappur býr til opinberan launaseðil á PDF formi út frá gildunum í reiknivélinni hér að ofan, vistar hann á skráarþjóni og tengir við launasögu starfsmannsins.' : 'This button generates an official payslip in PDF format based on the values in the calculator above, saves it on the server, and links it to the employee\'s salary history.'}
                                     </p>
                                     <button
                                         type="button"
@@ -1031,18 +1031,18 @@ function AccountingPage() {
                                                     deductions_description: calcDeductionsDescription || null,
                                                 };
                                                 await axiosInstance.post('/accounting/payslips/auto', payload);
-                                                toast.success('Opinber launaseðill útbúinn og vistaður.');
+                                                toast.success(isIcelandic ? 'Opinber launaseðill útbúinn og vistaður.' : 'Official payslip generated and saved.');
                                                 fetchAccountingData();
                                             } catch (error) {
                                                 console.error('Auto payslip generation failed:', error);
-                                                toast.error('Mistókst að útbúa launaseðil.');
+                                                toast.error(isIcelandic ? 'Mistókst að útbúa launaseðil.' : 'Failed to generate payslip.');
                                             } finally {
                                                 setIsUploadingPayslip(false);
                                             }
                                         }}
                                         className="inline-flex items-center px-6 py-2.5 rounded-2xl bg-gray-900 text-white text-[10px] font-black uppercase tracking-[0.25em] hover:bg-black transition disabled:opacity-50"
                                     >
-                                        Stofna & Vista Launaseðil / Auto-generate & Save
+                                        {isIcelandic ? 'Stofna & Vista Launaseðil' : 'Auto-generate & Save'}
                                     </button>
                                 </div>
                             </div>
