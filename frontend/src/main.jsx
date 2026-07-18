@@ -4,6 +4,8 @@ import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 import './index.css';
 import './i18n';
+import { SpeedInsights } from '@vercel/speed-insights/react';
+import { Analytics } from '@vercel/analytics/react';
 
 /**
  * RafApp Application Entry Point
@@ -25,6 +27,8 @@ ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter>
       <App />
+      <SpeedInsights />
+      <Analytics />
     </BrowserRouter>
   </React.StrictMode>
 );

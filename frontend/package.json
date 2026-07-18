@@ -17,6 +17,8 @@
     "@fullcalendar/timegrid": "^6.1.20",
     "@headlessui/react": "^2.2.7",
     "@heroicons/react": "^2.2.0",
+    "@vercel/analytics": "^2.0.1",
+    "@vercel/speed-insights": "^2.0.0",
     "axios": "^1.9.0",
     "date-fns": "^4.1.0",
     "framer-motion": "^12.40.0",
