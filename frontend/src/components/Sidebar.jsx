@@ -78,13 +78,13 @@ function Sidebar() {
                         const code = data.current.weather_code;
                         const wind = Math.round(data.current.wind_speed_10m);
                         
-                        let desc = 'Heiðskírt';
-                        if ([1, 2, 3].includes(code)) desc = 'Léttskýjað';
-                        else if ([45, 48].includes(code)) desc = 'Þoka';
-                        else if ([51, 53, 55].includes(code)) desc = 'Úði';
-                        else if ([61, 63, 65, 80, 81, 82].includes(code)) desc = 'Rigning';
-                        else if ([71, 73, 75, 85, 86].includes(code)) desc = 'Snjókoma';
-                        else if ([95, 96, 99].includes(code)) desc = 'Þrumuveður';
+                        let desc = 'weather_clear';
+                        if ([1, 2, 3].includes(code)) desc = 'weather_cloudy';
+                        else if ([45, 48].includes(code)) desc = 'weather_fog';
+                        else if ([51, 53, 55].includes(code)) desc = 'weather_drizzle';
+                        else if ([61, 63, 65, 80, 81, 82].includes(code)) desc = 'weather_rain';
+                        else if ([71, 73, 75, 85, 86].includes(code)) desc = 'weather_snow';
+                        else if ([95, 96, 99].includes(code)) desc = 'weather_thunderstorm';
                         
                         setWeather({ temp, desc, wind });
                     }
@@ -374,12 +374,12 @@ function Sidebar() {
                              }}
                         >
                             <div className="absolute top-2 right-2 text-indigo-400 opacity-60">
-                                {weather?.desc.includes('Rigning') || weather?.desc.includes('Úði') ? (
+                                {['weather_rain', 'weather_drizzle', 'Rigning', 'Úði'].some(w => weather?.desc?.includes(w)) ? (
                                     <svg className="h-8 w-8 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 20v2m4-2v2m-8-2v2" />
                                     </svg>
-                                ) : weather?.desc.includes('Snjókoma') ? (
+                                ) : ['weather_snow', 'Snjókoma'].some(w => weather?.desc?.includes(w)) ? (
                                     <svg className="h-8 w-8 text-blue-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 3v18m9-9H3m15-3l-6 6m0-6l6 6M9 9l6 6m-6 0l6-6" />
                                     </svg>
@@ -392,7 +392,7 @@ function Sidebar() {
                             <div className="z-10">
                                 <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Reykjavík, Ísland</p>
                                 <h4 className="text-sm font-black text-white leading-none mt-1">
-                                    {weather.temp}°C <span className="text-[9px] font-bold text-gray-300 ml-1">{weather.desc}</span>
+                                    {weather.temp}°C <span className="text-[9px] font-bold text-gray-300 ml-1">{t(weather.desc, { defaultValue: weather.desc })}</span>
                                 </h4>
                                 <p className="text-[9px] text-teal-400 font-bold uppercase tracking-widest mt-1">
                                     → {weather.wind} m/s
@@ -400,13 +400,13 @@ function Sidebar() {
                             </div>
                         </div>
                     ) : (
-                        <div className="mx-2 my-4 flex items-center justify-center p-2 bg-indigo-950/80 rounded-xl border border-teal-950/20" title={`Reykjavík: ${weather.temp}°C, ${weather.desc}`}>
-                            {weather?.desc.includes('Rigning') || weather?.desc.includes('Úði') ? (
+                        <div className="mx-2 my-4 flex items-center justify-center p-2 bg-indigo-950/80 rounded-xl border border-teal-950/20" title={`Reykjavík: ${weather.temp}°C, ${t(weather.desc, { defaultValue: weather.desc })}`}>
+                            {['weather_rain', 'weather_drizzle', 'Rigning', 'Úði'].some(w => weather?.desc?.includes(w)) ? (
                                 <svg className="h-5 w-5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 20v2m4-2v2m-8-2v2" />
                                 </svg>
-                            ) : weather?.desc.includes('Snjókoma') ? (
+                            ) : ['weather_snow', 'Snjókoma'].some(w => weather?.desc?.includes(w)) ? (
                                 <svg className="h-5 w-5 text-blue-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 3v18m9-9H3m15-3l-6 6m0-6l6 6M9 9l6 6m-6 0l6-6" />
                                 </svg>

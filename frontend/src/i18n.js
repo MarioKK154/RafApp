@@ -118,6 +118,7 @@ const resources = {
       "default_config_note": "Default Configuration: Ingested users default to \"electrician\" role with security pass \"testpassword123\".",
 
       // Leave Request Forms
+      "absence_records": "Absence Records",
       "start_date_after_end": "Start date must be before end date",
       "leave_submitted_success": "Leave request submitted successfully",
       "submit_request_failed": "Failed to submit request.",
@@ -577,6 +578,13 @@ const resources = {
       "refresh": "Refresh Registry",
 
       // Home Page & Clock-In
+      "weather_clear": "Clear",
+      "weather_cloudy": "Cloudy",
+      "weather_fog": "Foggy",
+      "weather_drizzle": "Drizzle",
+      "weather_rain": "Rain",
+      "weather_snow": "Snowing",
+      "weather_thunderstorm": "Thunderstorm",
       "good_morning": "Good Morning",
       "good_afternoon": "Good Day",
       "good_evening": "Good Evening",
@@ -1483,6 +1491,7 @@ const resources = {
       "default_config_note": "Sjálfgefnar stillingar: Nýir notendur fá hlutverkið \"electrician\" með lykilorðið \"testpassword123\".",
 
       // Leave Request Forms
+      "absence_records": "Fjarveruskráning",
       "start_date_after_end": "Upphafsdagsetning verður að vera á undan lokadagsetningu",
       "leave_submitted_success": "Leyfisbeiðni hefur verið send",
       "submit_request_failed": "Tókst ekki að senda beiðni.",
@@ -1942,6 +1951,13 @@ const resources = {
       "refresh": "Uppfæra skrá",
 
       // Home Page & Clock-In
+      "weather_clear": "Heiðskírt",
+      "weather_cloudy": "Léttskýjað",
+      "weather_fog": "Þoka",
+      "weather_drizzle": "Úði",
+      "weather_rain": "Rigning",
+      "weather_snow": "Snjókoma",
+      "weather_thunderstorm": "Þrumuveður",
       "good_morning": "Góðan daginn",
       "good_afternoon": "Góðan daginn",
       "good_evening": "Gott kvöld",

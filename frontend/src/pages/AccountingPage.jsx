@@ -20,6 +20,7 @@ import {
 
 function AccountingPage() {
     const { t, i18n } = useTranslation();
+    const isIcelandic = !i18n.language.startsWith('en');
     const { user: currentUser, isLoading: authLoading } = useAuth();
     
     // Registry Data States
@@ -329,7 +330,7 @@ function AccountingPage() {
                                 {leaveRequests.length > 0 ? leaveRequests.map(lr => (
                                     <div key={lr.id} className="p-6 flex justify-between items-center hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
                                         <div>
-                                            <p className="font-bold text-gray-900 dark:text-white uppercase tracking-tight">{lr.leave_type}</p>
+                                            <p className="font-bold text-gray-900 dark:text-white uppercase tracking-tight">{t(lr.leave_type, { defaultValue: lr.leave_type })}</p>
                                             <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">
                                                 {new Date(lr.start_date).toLocaleDateString()} — {new Date(lr.end_date).toLocaleDateString()}
                                             </p>
@@ -828,7 +829,7 @@ function AccountingPage() {
                                                     <span className="font-bold text-gray-900 dark:text-white uppercase tracking-tighter">{lr.user_name}</span>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest">{lr.leave_type}</td>
+                                            <td className="px-6 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest">{t(lr.leave_type, { defaultValue: lr.leave_type })}</td>
                                             <td className="px-6 py-6 text-xs font-bold text-gray-600 dark:text-gray-300">
                                                 {new Date(lr.start_date).toLocaleDateString()} — {new Date(lr.end_date).toLocaleDateString()}
                                             </td>

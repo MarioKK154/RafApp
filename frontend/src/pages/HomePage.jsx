@@ -139,13 +139,13 @@ function HomePage() {
                         const code = data.current.weather_code;
                         const wind = Math.round(data.current.wind_speed_10m);
                         
-                        let desc = 'Heiðskírt';
-                        if ([1, 2, 3].includes(code)) desc = 'Léttskýjað';
-                        else if ([45, 48].includes(code)) desc = 'Þoka';
-                        else if ([51, 53, 55].includes(code)) desc = 'Úði';
-                        else if ([61, 63, 65, 80, 81, 82].includes(code)) desc = 'Rigning';
-                        else if ([71, 73, 75, 85, 86].includes(code)) desc = 'Snjókoma';
-                        else if ([95, 96, 99].includes(code)) desc = 'Þrumuveður';
+                        let desc = 'weather_clear';
+                        if ([1, 2, 3].includes(code)) desc = 'weather_cloudy';
+                        else if ([45, 48].includes(code)) desc = 'weather_fog';
+                        else if ([51, 53, 55].includes(code)) desc = 'weather_drizzle';
+                        else if ([61, 63, 65, 80, 81, 82].includes(code)) desc = 'weather_rain';
+                        else if ([71, 73, 75, 85, 86].includes(code)) desc = 'weather_snow';
+                        else if ([95, 96, 99].includes(code)) desc = 'weather_thunderstorm';
                         
                         setWeather({ temp, desc, wind });
                     }
@@ -695,9 +695,9 @@ function HomePage() {
                 {/* Right side widgets (Weather, Notification, Profile) */}
                 <div className="flex items-center gap-4 w-full md:w-auto justify-end">
                     {/* Live Weather Widget */}
-                    <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 dark:bg-gray-950 rounded-xl border border-gray-200 dark:border-indigo-950/30 text-gray-800 dark:text-white" title={`Reykjavík: ${weather.temp}°C, ${weather.desc}`}>
+                    <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 dark:bg-gray-950 rounded-xl border border-gray-200 dark:border-indigo-950/30 text-gray-800 dark:text-white" title={`Reykjavík: ${weather.temp}°C, ${t(weather.desc, { defaultValue: weather.desc })}`}>
                         <div className="h-2 w-2 bg-teal-400 rounded-full animate-ping" />
-                        <span className="text-[10px] font-black uppercase tracking-wider">{weather.temp}°C · {weather.desc}</span>
+                        <span className="text-[10px] font-black uppercase tracking-wider">{weather.temp}°C · {t(weather.desc, { defaultValue: weather.desc })}</span>
                     </div>
 
                     {/* Notifications bell */}
