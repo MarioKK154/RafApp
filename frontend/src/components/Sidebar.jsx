@@ -11,6 +11,7 @@ import {
     ChatBubbleLeftRightIcon,
     ClipboardDocumentListIcon,
     CircleStackIcon,
+    DocumentDuplicateIcon,
     WrenchScrewdriverIcon,
     TruckIcon,
     BuildingStorefrontIcon,
@@ -61,6 +62,7 @@ function useBreakpoint() {
 
 function Sidebar() {
     const { t, i18n } = useTranslation();
+    const isIcelandic = i18n.language === 'is';
     const { isAuthenticated, user: currentUser, logout } = useAuth();
     const [unreadMessages, setUnreadMessages]       = useState(0);
     const [unreadNotifications, setUnreadNotifications] = useState(0);
@@ -313,7 +315,10 @@ function Sidebar() {
                             <NavItem to="/scheduling" icon={<Squares2X2Icon />}            label={t('schedule')}    collapsed={isCollapsed} navProps={navItemClickProps} />
                         )}
                         {!isSubcontractor && (
-                            <NavItem to="/projects" icon={<BriefcaseIcon />}               label={t('projects')}    collapsed={isCollapsed} navProps={navItemClickProps} />
+                            <>
+                                <NavItem to="/projects" icon={<BriefcaseIcon />}               label={t('projects')}    collapsed={isCollapsed} navProps={navItemClickProps} />
+                                <NavItem to="/drawings" icon={<DocumentDuplicateIcon />}       label={isIcelandic ? 'Teikningaskrá' : 'Drawings DB'} collapsed={isCollapsed} navProps={navItemClickProps} />
+                            </>
                         )}
                         <NavItem to="/tasks"        icon={<ClipboardDocumentListIcon />}   label={t('tasks')}       collapsed={isCollapsed} navProps={navItemClickProps} />
                         <NavItem to="/calendar"     icon={<CalendarDaysIcon />}            label={t('calendar')}    collapsed={isCollapsed} navProps={navItemClickProps} />

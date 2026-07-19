@@ -21,20 +21,30 @@ import {
     FolderPlusIcon,
     EyeIcon,
     ArrowPathIcon,
-    TagIcon
+    TagIcon,
+    ArrowLeftIcon,
+    CloudIcon,
+    DevicePhoneMobileIcon,
+    ArrowDownTrayIcon
 } from '@heroicons/react/24/outline';
+import { checkIfCached, getDrawingBlobUrl, cacheDrawing, purgeDrawingFromCache } from '../utils/drawingCache';
 
 const DRAWING_STATUSES = ["Draft", "For Approval", "Approved", "As-Built", "Archived"];
 const DISCIPLINES = ["General", "Electrical", "Lighting", "Fire Alarm", "Data/Network", "Security/CCTV", "HVAC Control"];
 
 const formatDate = (dateString) => dateString ? new Date(dateString).toLocaleDateString() : 'N/A';
 
-function ProjectDrawings({ projectId }) {
-    const { t } = useTranslation();
+function ProjectDrawings({ projectId, onBack }) {
+    const { t, i18n } = useTranslation();
+    const isIcelandic = i18n.language === 'is';
     const { user } = useAuth();
     const [isLoading, setIsLoading] = useState(true);
     const [drawings, setDrawings] = useState([]);
     const [folders, setFolders] = useState([]);
+
+    // --- CACHE STATE ---
+    const [cachedMap, setCachedMap] = useState({});
+    const [isBatchCaching, setIsBatchCaching] = useState(false);
 
     // --- NAVIGATION STATE ---
     const [currentFolderId, setCurrentFolderId] = useState(null);
@@ -61,7 +71,8 @@ function ProjectDrawings({ projectId }) {
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [drawingToDelete, setDrawingToDelete] = useState(null);
 
-    const canManage = user && (['admin', 'project manager', 'team leader'].includes(user.role) || user.is_superuser);
+    // Only Admin and PM can manage (upload/delete/edit)
+    const canManage = user && (['admin', 'project manager'].includes(user.role) || user.is_superuser);
 
     // Sync author automatically
     useEffect(() => {
@@ -82,25 +93,91 @@ function ProjectDrawings({ projectId }) {
             const rawDrawings = Array.isArray(drawingsRes.data) ? drawingsRes.data : [];
             const rawFolders = Array.isArray(foldersRes.data) ? foldersRes.data : [];
 
-            setDrawings(rawDrawings.filter(d => d.folder_id === currentFolderId));
+            const currentDrawings = rawDrawings.filter(d => d.folder_id === currentFolderId);
+            setDrawings(currentDrawings);
             setFolders(rawFolders.filter(f => f.parent_id === currentFolderId));
+
+            // Scan drawing cache statuses
+            const cacheStatus = {};
+            for (const d of currentDrawings) {
+                cacheStatus[d.id] = await checkIfCached(d.filepath);
+            }
+            setCachedMap(cacheStatus);
         } catch (error) {
             console.error('Drawings sync failed:', error);
-            toast.error('Failed to sync drawing registry.');
+            toast.error(isIcelandic ? 'Mistókst að samstilla teikningar.' : 'Failed to sync drawing registry.');
         } finally {
             setIsLoading(false);
         }
-    }, [projectId, currentFolderId]);
+    }, [projectId, currentFolderId, isIcelandic]);
 
     useEffect(() => { fetchContent(); }, [fetchContent]);
 
     // --- ACTION: In-Browser Viewer ---
-    const handleViewFile = (drawing) => {
+    const handleViewFile = async (drawing) => {
         if (!drawing.filepath) return toast.error("Storage path undefined.");
-        // Safely extract static URL from base
-        const base = axiosInstance.defaults.baseURL || "";
-        const cleanBase = base.includes('/api') ? base.split('/api')[0] : base;
-        window.open(`${cleanBase}/${drawing.filepath}`, '_blank');
+        try {
+            const isCached = await checkIfCached(drawing.filepath);
+            if (isCached) {
+                const blobUrl = await getDrawingBlobUrl(drawing.filepath);
+                if (blobUrl) {
+                    window.open(blobUrl, '_blank');
+                    return;
+                }
+            }
+            // Fallback to online redirect
+            const base = axiosInstance.defaults.baseURL || "";
+            const cleanBase = base.includes('/api') ? base.split('/api')[0] : base;
+            window.open(`${cleanBase}/${drawing.filepath}`, '_blank');
+        } catch (error) {
+            console.error('View file error:', error);
+            toast.error(isIcelandic ? 'Gat ekki opnað skrá.' : 'Could not open file.');
+        }
+    };
+
+    // --- ACTION: Download & Cache Locally ---
+    const handleToggleCache = async (drawing) => {
+        try {
+            const isCurrentlyCached = cachedMap[drawing.id];
+            if (isCurrentlyCached) {
+                await purgeDrawingFromCache(drawing.filepath);
+                setCachedMap(prev => ({ ...prev, [drawing.id]: false }));
+                toast.info(isIcelandic ? 'Skrá eytt úr skyndiminni tækis.' : 'File removed from local device cache.');
+            } else {
+                toast.info(isIcelandic ? 'Sækir teikningu og vistar í tæki...' : 'Downloading and saving drawing to device...');
+                await cacheDrawing(drawing.id, drawing.filepath, axiosInstance);
+                setCachedMap(prev => ({ ...prev, [drawing.id]: true }));
+                toast.success(isIcelandic ? 'Teikning vistuð í tæki og tilbúin fyrir án-nets notkun!' : 'Drawing saved locally and ready for offline use!');
+            }
+        } catch (error) {
+            console.error('Cache toggle failed:', error);
+            toast.error(isIcelandic ? 'Mistókst að vista teikningu í tæki.' : 'Failed to update local cache.');
+        }
+    };
+
+    // --- ACTION: Download All Drawings in Folder ---
+    const handleCacheAll = async () => {
+        if (drawings.length === 0) {
+            return toast.info(isIcelandic ? 'Engar teikningar í þessari möppu til að vista.' : 'No drawings in this directory to cache.');
+        }
+        setIsBatchCaching(true);
+        toast.info(isIcelandic ? 'Halar niður öllum teikningum í tæki...' : 'Downloading all drawings to device...');
+        try {
+            let count = 0;
+            for (const d of drawings) {
+                if (!cachedMap[d.id]) {
+                    await cacheDrawing(d.id, d.filepath, axiosInstance);
+                    setCachedMap(prev => ({ ...prev, [d.id]: true }));
+                    count++;
+                }
+            }
+            toast.success(isIcelandic ? `Tókst að vista ${count} teikningar í tæki!` : `Successfully cached ${count} drawings for offline use.`);
+        } catch (error) {
+            console.error('Batch cache failed:', error);
+            toast.error(isIcelandic ? 'Sumar teikningar gætu hafa mistekist að vista.' : 'Some drawings failed to cache.');
+        } finally {
+            setIsBatchCaching(false);
+        }
     };
 
     // --- ACTION: Trigger Update (Bumps Rev + Replace File) ---
@@ -118,13 +195,14 @@ function ProjectDrawings({ projectId }) {
         formData.append('file', file);
 
         try {
-            // Using the /replace endpoint we discussed for backend
             await axiosInstance.post(`/drawings/${activeDrawingForReplace.id}/replace`, formData);
-            toast.success(`Drawing promoted to next revision.`);
+            toast.success(isIcelandic ? 'Ný útgáfa teikningar hefur verið vistuð.' : 'Drawing promoted to next revision.');
+            // Purge old local cache since file changed
+            await purgeDrawingFromCache(activeDrawingForReplace.filepath);
             fetchContent();
         } catch (error) {
             console.error('Drawing version update failed:', error);
-            toast.error("Version update failed.");
+            toast.error(isIcelandic ? 'Uppfærsla teikningar mistókst.' : 'Version update failed.');
         } finally {
             setIsUploading(false);
             setActiveDrawingForReplace(null);
@@ -134,7 +212,7 @@ function ProjectDrawings({ projectId }) {
 
     const handleUpload = async (e) => {
         e.preventDefault();
-        if (!selectedFile) return toast.warn("Select a file first.");
+        if (!selectedFile) return toast.warn(isIcelandic ? 'Veldu fyrst skrá.' : 'Select a file first.');
         setIsUploading(true);
         const formData = new FormData();
         formData.append('file', selectedFile);
@@ -143,13 +221,13 @@ function ProjectDrawings({ projectId }) {
 
         try {
             await axiosInstance.post(`/drawings/upload/${projectId}`, formData);
-            toast.success('Drawing successfully indexed.');
+            toast.success(isIcelandic ? 'Teikning hefur verið skráð.' : 'Drawing successfully indexed.');
             setSelectedFile(null);
             setUploadData(prev => ({ ...prev, description: '' }));
             fetchContent();
         } catch (error) {
             console.error('Drawing upload failed:', error);
-            toast.error('Upload protocol failed.');
+            toast.error(isIcelandic ? 'Skráning mistókst.' : 'Upload protocol failed.');
         } finally {
             setIsUploading(false);
         }
@@ -181,13 +259,13 @@ function ProjectDrawings({ projectId }) {
                 parent_id: currentFolderId,
                 tenant_id: user.tenant_id
             });
-            toast.success(`Directory created.`);
+            toast.success(isIcelandic ? 'Mappa stofnuð.' : 'Directory created.');
             setNewFolderName('');
             setIsFolderModalOpen(false);
             fetchContent();
         } catch (error) {
             console.error('Folder creation failed:', error);
-            toast.error("Folder creation failed.");
+            toast.error(isIcelandic ? 'Mistókst að stofna möppu.' : 'Folder creation failed.');
         }
     };
 
@@ -198,18 +276,43 @@ function ProjectDrawings({ projectId }) {
             {/* Hidden Input for Updates */}
             <input type="file" ref={fileReplaceInputRef} onChange={handleUpdateUpload} className="hidden" accept=".pdf,.dwg,.jpg,.png" />
 
-            <header className="flex justify-between items-center mb-8 px-4">
+            <header className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-8 px-4">
                 <div className="flex items-center gap-3">
+                    {onBack && (
+                        <button 
+                            type="button" 
+                            onClick={onBack} 
+                            className="p-2 mr-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition text-gray-500 hover:text-indigo-600"
+                        >
+                            <ArrowLeftIcon className="h-5 w-5 stroke-[2.5px]" />
+                        </button>
+                    )}
                     <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
                         <DocumentTextIcon className="h-6 w-6 text-indigo-600" />
                     </div>
-                    <h2 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">{t('structural_database')}</h2>
+                    <h2 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">
+                        {isIcelandic ? 'Teikningagrunnur' : 'Drawings Database'}
+                    </h2>
                 </div>
-                {canManage && (
-                    <button onClick={() => setIsFolderModalOpen(true)} className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition transform active:scale-95">
-                        <FolderPlusIcon className="h-5 w-5" /> {t('new_directory')}
+                
+                <div className="flex gap-2">
+                    <button 
+                        type="button"
+                        onClick={handleCacheAll}
+                        disabled={isBatchCaching || drawings.length === 0}
+                        className="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition disabled:opacity-50"
+                    >
+                        <ArrowDownTrayIcon className="h-4 w-4" /> {isIcelandic ? 'Sækja allt í tæki' : 'Save all offline'}
                     </button>
-                )}
+                    {canManage && (
+                        <button 
+                            onClick={() => setIsFolderModalOpen(true)} 
+                            className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition transform active:scale-95"
+                        >
+                            <FolderPlusIcon className="h-5 w-5" /> {isIcelandic ? 'Ný mappa' : 'New directory'}
+                        </button>
+                    )}
+                </div>
             </header>
 
             {/* Breadcrumbs Navigation */}
@@ -230,15 +333,21 @@ function ProjectDrawings({ projectId }) {
             {/* Detailed Upload Console */}
             {canManage && (
                 <div className="mb-10 bg-white dark:bg-gray-800 p-8 rounded-[2.5rem] border border-gray-100 dark:border-gray-700 shadow-sm">
-                    <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-6 border-b pb-4">{t('new_asset_ingestion')}</h3>
+                    <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-6 border-b pb-4">
+                        {isIcelandic ? 'Skrá nýja teikningu' : 'New Asset Ingestion'}
+                    </h3>
                     <form onSubmit={handleUpload} className="space-y-6">
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                             <div className="space-y-1.5">
-                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">{t('document_title')}</label>
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">
+                                    {isIcelandic ? 'Lýsing teikningar' : 'Document Title'}
+                                </label>
                                 <input type="text" value={uploadData.description} onChange={e => setUploadData({...uploadData, description: e.target.value})} placeholder="e.g., Main Distribution Board Schematic" className="modern-input h-14 font-bold" required />
                             </div>
                             <div className="space-y-1.5">
-                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Binary Source (PDF/DWG)</label>
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">
+                                    {isIcelandic ? 'Hala inn skrá (PDF/DWG)' : 'Binary Source (PDF/DWG)'}
+                                </label>
                                 <input type="file" onChange={e => setSelectedFile(e.target.files[0])} className="modern-input h-14 pt-3.5 text-xs font-bold" required />
                             </div>
                         </div>
@@ -269,7 +378,7 @@ function ProjectDrawings({ projectId }) {
                             </div>
                         </div>
                         <button type="submit" disabled={isUploading} className="w-full h-14 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black uppercase tracking-[0.2em] transition flex items-center justify-center gap-3">
-                            <CloudArrowUpIcon className="h-5 w-5" /> {isUploading ? t('transferring_assets') : t('commit_to_site_database')}
+                            <CloudArrowUpIcon className="h-5 w-5" /> {isUploading ? (isIcelandic ? 'Flyt inn skrá...' : 'Transferring assets...') : (isIcelandic ? 'Skrá teikningu í kerfi' : 'Commit to site database')}
                         </button>
                     </form>
                 </div>
@@ -287,83 +396,116 @@ function ProjectDrawings({ projectId }) {
                 </div>
             )}
 
-                        {/* Registry Explorer Table */}
+            {/* Registry Explorer Table */}
             <div className="bg-white dark:bg-gray-800 rounded-[2.5rem] border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left">
                         <thead className="bg-gray-50/50 dark:bg-gray-700/30 border-b">
                             <tr>
                                 <th className="py-6 px-8 text-[10px] font-black text-gray-400 uppercase tracking-widest">Asset Node</th>
+                                <th className="py-6 px-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Storage Cache</th>
                                 <th className="py-6 px-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Rev</th>
                                 <th className="py-6 px-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Status</th>
-                                {/* NEW COLUMNS */}
                                 <th className="py-6 px-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Author</th>
                                 <th className="py-6 px-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Registry Date</th>
                                 <th className="py-6 px-8 text-center text-[10px] font-black text-gray-400 uppercase tracking-widest">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-50 dark:divide-gray-700">
-                            {drawings.length > 0 ? drawings.map(drawing => (
-                                <tr key={drawing.id} className="group hover:bg-gray-50/30 dark:hover:bg-gray-900/20 transition-colors">
-                                    <td className="py-6 px-8">
-                                        <div className="flex items-center gap-3">
-                                            <div className="p-2 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg text-indigo-600">
-                                                <DocumentTextIcon className="h-5 w-5" />
+                            {drawings.length > 0 ? drawings.map(drawing => {
+                                const isCached = cachedMap[drawing.id];
+                                return (
+                                    <tr key={drawing.id} className="group hover:bg-gray-50/30 dark:hover:bg-gray-900/20 transition-colors">
+                                        <td className="py-6 px-8">
+                                            <div className="flex items-center gap-3">
+                                                <div className="p-2 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg text-indigo-600">
+                                                    <DocumentTextIcon className="h-5 w-5" />
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <p className="font-black text-gray-900 dark:text-white uppercase text-xs truncate max-w-[200px]">{drawing.filename}</p>
+                                                    <p className="text-[9px] font-bold text-gray-400 uppercase mt-1 truncate max-w-[200px]">{drawing.description || 'No metadata'}</p>
+                                                </div>
                                             </div>
-                                            <div className="min-w-0">
-                                                <p className="font-black text-gray-900 dark:text-white uppercase text-xs truncate max-w-[200px]">{drawing.filename}</p>
-                                                <p className="text-[9px] font-bold text-gray-400 uppercase mt-1 truncate max-w-[200px]">{drawing.description || 'No metadata'}</p>
+                                        </td>
+                                        {/* CACHE STATUS */}
+                                        <td className="py-6 px-4">
+                                            <button 
+                                                type="button" 
+                                                onClick={() => handleToggleCache(drawing)}
+                                                className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-[9px] font-black rounded-lg uppercase tracking-widest border transition-all ${
+                                                    isCached 
+                                                        ? 'bg-green-50 dark:bg-green-950/20 text-green-600 border-green-200' 
+                                                        : 'bg-gray-50 dark:bg-gray-900/40 text-gray-400 border-gray-250'
+                                                }`}
+                                            >
+                                                {isCached ? (
+                                                    <>
+                                                        <DevicePhoneMobileIcon className="h-3 w-3" />
+                                                        <span>{isIcelandic ? 'Tæki' : 'Device'}</span>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <CloudIcon className="h-3 w-3" />
+                                                        <span>{isIcelandic ? 'Net' : 'Cloud'}</span>
+                                                    </>
+                                                )}
+                                            </button>
+                                        </td>
+                                        <td className="py-6 px-4">
+                                            <span className="px-3 py-1 bg-indigo-50 text-indigo-600 font-black font-mono text-[10px] rounded-lg border border-indigo-100">
+                                                v{drawing.revision || 'A'}
+                                            </span>
+                                        </td>
+                                        <td className="py-6 px-4">
+                                            <span className={`px-2.5 py-1 text-[9px] font-black rounded-lg uppercase tracking-widest border ${
+                                                drawing.status === 'Approved' ? 'bg-green-50 text-green-600 border-green-100' : 
+                                                drawing.status === 'As-Built' ? 'bg-indigo-50 text-indigo-600 border-indigo-100' :
+                                                'bg-orange-50 text-orange-600 border-orange-100'
+                                            }`}>
+                                                {drawing.status || 'Draft'}
+                                            </span>
+                                        </td>
+                                        <td className="py-6 px-4 whitespace-nowrap">
+                                            <div className="flex items-center gap-2">
+                                                <UserIcon className="h-3 w-3 text-gray-400" />
+                                                <span className="text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase tracking-tight">
+                                                    {drawing.author || 'System'}
+                                                </span>
                                             </div>
-                                        </div>
-                                    </td>
-                                    <td className="py-6 px-4">
-                                        <span className="px-3 py-1 bg-indigo-50 text-indigo-600 font-black font-mono text-[10px] rounded-lg border border-indigo-100">
-                                            v{drawing.revision || 'A'}
-                                        </span>
-                                    </td>
-                                    <td className="py-6 px-4">
-                                        <span className={`px-2.5 py-1 text-[9px] font-black rounded-lg uppercase tracking-widest border ${
-                                            drawing.status === 'Approved' ? 'bg-green-50 text-green-600 border-green-100' : 
-                                            drawing.status === 'As-Built' ? 'bg-indigo-50 text-indigo-600 border-indigo-100' :
-                                            'bg-orange-50 text-orange-600 border-orange-100'
-                                        }`}>
-                                            {drawing.status || 'Draft'}
-                                        </span>
-                                    </td>
-                                    {/* AUTHOR DATA */}
-                                    <td className="py-6 px-4 whitespace-nowrap">
-                                        <div className="flex items-center gap-2">
-                                            <UserIcon className="h-3 w-3 text-gray-400" />
-                                            <span className="text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase tracking-tight">
-                                                {drawing.author || 'System'}
-                                            </span>
-                                        </div>
-                                    </td>
-                                    {/* DATE DATA */}
-                                    <td className="py-6 px-4 whitespace-nowrap">
-                                        <div className="flex items-center gap-2">
-                                            <CalendarIcon className="h-3 w-3 text-gray-400" />
-                                            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-tight">
-                                                {formatDate(drawing.drawing_date)}
-                                            </span>
-                                        </div>
-                                    </td>
-                                    <td className="py-6 px-8 text-center">
-                                        <div className="flex justify-center items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <button onClick={() => handleViewFile(drawing)} className="p-2.5 bg-gray-50 dark:bg-gray-700 rounded-xl hover:bg-indigo-600 hover:text-white transition shadow-sm" title="View in Browser">
-                                                <EyeIcon className="h-5 w-5" />
-                                            </button>
-                                            <button onClick={() => triggerUpdateProtocol(drawing)} className="p-2.5 bg-gray-50 dark:bg-gray-700 rounded-xl hover:bg-amber-500 hover:text-white transition shadow-sm" title="Upload New Version (Bumps Rev)">
-                                                <ArrowPathIcon className="h-5 w-5" />
-                                            </button>
-                                            <button onClick={() => { setDrawingToDelete(drawing); setIsDeleteModalOpen(true); }} className="p-2.5 text-gray-400 hover:text-red-600 transition">
-                                                <TrashIcon className="h-5 w-5" />
-                                            </button>
-                                        </div>
+                                        </td>
+                                        <td className="py-6 px-4 whitespace-nowrap">
+                                            <div className="flex items-center gap-2">
+                                                <CalendarIcon className="h-3 w-3 text-gray-400" />
+                                                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-tight">
+                                                    {formatDate(drawing.drawing_date)}
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td className="py-6 px-8 text-center">
+                                            <div className="flex justify-center items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <button onClick={() => handleViewFile(drawing)} className="p-2.5 bg-gray-50 dark:bg-gray-700 rounded-xl hover:bg-indigo-600 hover:text-white transition shadow-sm" title={isIcelandic ? 'Skoða' : 'View in Browser'}>
+                                                    <EyeIcon className="h-5 w-5" />
+                                                </button>
+                                                {canManage && (
+                                                    <>
+                                                        <button onClick={() => triggerUpdateProtocol(drawing)} className="p-2.5 bg-gray-50 dark:bg-gray-700 rounded-xl hover:bg-amber-500 hover:text-white transition shadow-sm" title={isIcelandic ? 'Uppfæra (Ný Útgáfa)' : 'Upload New Version (Bumps Rev)'}>
+                                                            <ArrowPathIcon className="h-5 w-5" />
+                                                        </button>
+                                                        <button onClick={() => { setDrawingToDelete(drawing); setIsDeleteModalOpen(true); }} className="p-2.5 text-gray-400 hover:text-red-600 transition" title={isIcelandic ? 'Eyða' : 'Delete'}>
+                                                            <TrashIcon className="h-5 w-5" />
+                                                        </button>
+                                                    </>
+                                                )}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                );
+                            }) : (
+                                <tr>
+                                    <td colSpan="7" className="py-20 text-center text-[10px] font-black text-gray-400 uppercase tracking-[0.4em] italic">
+                                        {isIcelandic ? 'Engar teikningar fundust í þessari möppu.' : 'No drawings in this directory.'}
                                     </td>
                                 </tr>
-                            )) : (
-                                <tr><td colSpan="6" className="py-20 text-center text-[10px] font-black text-gray-400 uppercase tracking-[0.4em] italic">{t('no_assets_in_directory')}</td></tr>
                             )}
                         </tbody>
                     </table>
@@ -371,9 +513,11 @@ function ProjectDrawings({ projectId }) {
             </div>
 
             {/* Modals */}
-            <Modal isOpen={isFolderModalOpen} onClose={() => setIsFolderModalOpen(false)} onConfirm={handleCreateFolder} title="New Directory" confirmText="Create Folder">
+            <Modal isOpen={isFolderModalOpen} onClose={() => setIsFolderModalOpen(false)} onConfirm={handleCreateFolder} title={isIcelandic ? 'Ný mappa' : 'New Directory'} confirmText={isIcelandic ? 'Stofna möppu' : 'Create Folder'}>
                 <div className="py-4">
-                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">{t('directory_name')}</label>
+                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">
+                        {isIcelandic ? 'Nafn möppu' : 'Directory Name'}
+                    </label>
                     <input type="text" value={newFolderName} onChange={e => setNewFolderName(e.target.value)} placeholder="e.g., Electrical Ground Floor" className="modern-input h-14 font-black uppercase text-xs" />
                 </div>
             </Modal>
@@ -381,14 +525,14 @@ function ProjectDrawings({ projectId }) {
             <ConfirmationModal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} onConfirm={async () => {
                 try {
                     await axiosInstance.delete(`/drawings/${drawingToDelete.id}`);
-                    toast.success("Asset purged.");
+                    toast.success(isIcelandic ? 'Teikningu eytt.' : 'Asset purged.');
                     setIsDeleteModalOpen(false);
                     fetchContent();
                 } catch (error) {
                     console.error('Drawing delete failed:', error);
-                    toast.error("Purge failed.");
+                    toast.error(isIcelandic ? 'Eyðing mistókst.' : 'Purge failed.');
                 }
-            }} title="Purge Node" message={`CRITICAL: Permanently delete drawing "${drawingToDelete?.filename}"?`} confirmText="Delete Asset" type="danger" />
+            }} title={isIcelandic ? 'Eyða teikningu' : 'Purge Node'} message={isIcelandic ? `Ertu viss um að þú viljir eyða teikningu "${drawingToDelete?.filename}" varanlega?` : `CRITICAL: Permanently delete drawing "${drawingToDelete?.filename}"?`} confirmText={isIcelandic ? 'Já, eyða teikningu' : 'Delete Asset'} type="danger" />
         </div>
     );
 }

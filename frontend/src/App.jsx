@@ -67,6 +67,7 @@ import SchedulingGridPage from './pages/SchedulingGridPage';
 import axiosInstance from './api/axiosInstance';
 import RiskLibraryPage from './pages/RiskLibraryPage';
 import ChatPage from './pages/ChatPage';
+import DrawingsPage from './pages/DrawingsPage';
 
 const ProtectedRoute = ({ children }) => {
     const { isAuthenticated, isLoading } = useAuth();
@@ -269,6 +270,7 @@ function AppShell() {
                         <Route path="/projects/edit/:projectId" element={<ProtectedRoute><ProjectEditPage /></ProtectedRoute>} />
                         <Route path="/projects/:projectId" element={<ProtectedRoute><ProjectEditPage /></ProtectedRoute>} />
                         <Route path="/projects/:projectId/risk-assessment" element={<ProtectedRoute><ProjectRiskAssessmentPage /></ProtectedRoute>} />
+                        <Route path="/drawings" element={<ProtectedRoute><DrawingsPage /></ProtectedRoute>} />
 
                         {/* --- CRM --- */}
                         <Route path="/customers" element={<ProtectedRoute><CustomerListPage /></ProtectedRoute>} />

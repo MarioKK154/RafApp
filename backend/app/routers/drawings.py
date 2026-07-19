@@ -25,7 +25,7 @@ UPLOAD_DIRECTORY_DRAWINGS.mkdir(parents=True, exist_ok=True)
 
 DbDependency = Annotated[Session, Depends(get_db)]
 CurrentUserDependency = Annotated[models.User, Depends(security.get_current_active_user)]
-ProjectContentManagerDependency = Annotated[models.User, Depends(security.require_role(["admin", "project manager", "team leader"]))]
+ProjectContentManagerDependency = Annotated[models.User, Depends(security.require_role(["admin", "project manager"]))]
 
 # --- Helper functions ---
 
