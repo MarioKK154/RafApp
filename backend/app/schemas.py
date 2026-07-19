@@ -1384,6 +1384,8 @@ class PayslipEstimateGenerate(BaseModel):
     deductions_description: Optional[str] = None
     sereignarsparnadur_percent: Optional[float] = 0.0
     apply_personal_tax_credit: Optional[bool] = True
+    tax_year: Optional[str] = "2026"
+    orlof_percent: Optional[float] = 0.0
 
 class LeaveRequestCreate(BaseModel):
     start_date: date

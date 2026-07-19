@@ -228,29 +228,68 @@ async def generate_salary_estimate_pdf(
         raise HTTPException(status_code=403, detail="Security Violation: Cross-tenant generation blocked.")
 
     # Calculate values
+    YEAR_CONFIGS = {
+        "2023": {
+            "brackets": [
+                {"limit": 409986.0, "rate": 0.3145},
+                {"limit": 1151780.0, "rate": 0.3795},
+                {"limit": float('inf'), "rate": 0.4625}
+            ],
+            "personal_credit": 59665.0,
+            "union_rate": 0.010
+        },
+        "2024": {
+            "brackets": [
+                {"limit": 446137.0, "rate": 0.3148},
+                {"limit": 1252501.0, "rate": 0.3798},
+                {"limit": float('inf'), "rate": 0.4628}
+            ],
+            "personal_credit": 64926.0,
+            "union_rate": 0.010
+        },
+        "2025": {
+            "brackets": [
+                {"limit": 472005.0, "rate": 0.3149},
+                {"limit": 1325127.0, "rate": 0.3799},
+                {"limit": float('inf'), "rate": 0.4629}
+            ],
+            "personal_credit": 68691.0,
+            "union_rate": 0.010
+        },
+        "2026": {
+            "brackets": [
+                {"limit": 498123.0, "rate": 0.3149},
+                {"limit": 1398307.0, "rate": 0.3799},
+                {"limit": float('inf'), "rate": 0.4629}
+            ],
+            "personal_credit": 72492.0,
+            "union_rate": 0.010
+        }
+    }
+
+    year_key = payload.tax_year if payload.tax_year in YEAR_CONFIGS else "2026"
+    cfg = YEAR_CONFIGS[year_key]
+
     base_wages = payload.regular_hours * payload.hourly_rate
-    ot1_wages = (payload.overtime1_hours or 0.0) * payload.hourly_rate * (payload.overtime1_multiplier or 1.5)
-    ot2_wages = (payload.overtime2_hours or 0.0) * payload.hourly_rate * (payload.overtime2_multiplier or 1.8)
-    gross = base_wages + ot1_wages + ot2_wages + (payload.bonuses or 0.0)
+    ot1_wages = (payload.overtime1_hours or 0.0) * payload.hourly_rate * (payload.overtime1_multiplier or 1.56)
+    ot2_wages = (payload.overtime2_hours or 0.0) * payload.hourly_rate * (payload.overtime2_multiplier or 1.794)
+    base_subtotal = base_wages + ot1_wages + ot2_wages + (payload.bonuses or 0.0)
+
+    # Orlof calculation
+    orlof_percent = payload.orlof_percent or 0.0
+    orlof_amount = base_subtotal * (orlof_percent / 100.0)
+    gross = base_subtotal + orlof_amount
 
     pension_deduction = gross * 0.04
     sereign_deduction = gross * ((payload.sereignarsparnadur_percent or 0.0) / 100.0)
-    union_fee = gross * 0.011
+    union_fee = gross * cfg["union_rate"]
 
     taxable_income = max(0.0, gross - pension_deduction - sereign_deduction)
-
-    # Tax brackets (2025/2026)
-    TAX_BRACKETS = [
-        {"limit": 472005.0, "rate": 0.3149},
-        {"limit": 1325127.0, "rate": 0.3799},
-        {"limit": float('inf'), "rate": 0.4629},
-    ]
-    PERSONAL_CREDIT = 68691.0 if payload.apply_personal_tax_credit else 0.0
 
     remaining = taxable_income
     computed_tax = 0.0
     last_limit = 0.0
-    for b in TAX_BRACKETS:
+    for b in cfg["brackets"]:
         upper = b["limit"]
         span = remaining if upper == float('inf') else max(0.0, min(remaining, upper - last_limit))
         if span <= 0.0:
@@ -261,8 +300,9 @@ async def generate_salary_estimate_pdf(
         if remaining <= 0.0:
             break
 
+    PERSONAL_CREDIT = cfg["personal_credit"] if payload.apply_personal_tax_credit else 0.0
     net_tax = max(0.0, computed_tax - PERSONAL_CREDIT)
-    net_salary = max(0.0, gross - net_tax - pension_deduction - sereign_deduction - union_fee - (payload.other_deductions or 0.0))
+    net_salary = max(0.0, gross - net_tax - pension_deduction - sereign_deduction - union_fee - (payload.other_deductions or 0.0) - orlof_amount)
     employer_pension = gross * 0.115
 
     # ReportLab pdf generation
@@ -325,14 +365,14 @@ async def generate_salary_estimate_pdf(
         y -= 14
         draw_text("Eftirvinna / Overtime 1", 40, y, size=10)
         draw_text(f"{payload.overtime1_hours:,.2f}", 250, y, size=10, align="right")
-        draw_text(f"{payload.overtime1_multiplier:.1f}", 350, y, size=10, align="right")
+        draw_text(f"{payload.overtime1_multiplier or 1.560:.3f}", 350, y, size=10, align="right")
         draw_text(f"{ot1_wages:,.0f} ISK", width - 40, y, size=10, align="right")
 
     if payload.overtime2_hours and payload.overtime2_hours > 0:
         y -= 14
         draw_text("Næturvinna / Overtime 2", 40, y, size=10)
         draw_text(f"{payload.overtime2_hours:,.2f}", 250, y, size=10, align="right")
-        draw_text(f"{payload.overtime2_multiplier:.1f}", 350, y, size=10, align="right")
+        draw_text(f"{payload.overtime2_multiplier or 1.794:.3f}", 350, y, size=10, align="right")
         draw_text(f"{ot2_wages:,.0f} ISK", width - 40, y, size=10, align="right")
 
     if payload.bonuses and payload.bonuses > 0:
@@ -340,6 +380,11 @@ async def generate_salary_estimate_pdf(
         bonus_desc = payload.bonus_description or "Álag / Bonus"
         draw_text(f"Bónusar ({bonus_desc})", 40, y, size=10)
         draw_text(f"{payload.bonuses:,.0f} ISK", width - 40, y, size=10, align="right")
+
+    if orlof_amount > 0:
+        y -= 14
+        draw_text(f"Orlof / Accrued Holiday Pay ({orlof_percent}%)", 40, y, size=10)
+        draw_text(f"{orlof_amount:,.0f} ISK", width - 40, y, size=10, align="right")
 
     y -= 10
     pdf.line(40, y, width - 40, y)
@@ -365,16 +410,21 @@ async def generate_salary_estimate_pdf(
         draw_text(f"-{sereign_deduction:,.0f} ISK", width - 40, y, size=10, align="right")
 
     y -= 14
-    draw_text("Stéttarfélagsgjald / RSÍ Union Fee (1.1%)", 40, y, size=10)
+    draw_text(f"Stéttarfélagsgjald / RSÍ Union Fee ({cfg['union_rate']*100:.1f}%)", 40, y, size=10)
     draw_text(f"-{union_fee:,.0f} ISK", width - 40, y, size=10, align="right")
 
     if net_tax > 0:
         y -= 14
         tax_desc = "Staðgreiðsla / Income Tax"
         if payload.apply_personal_tax_credit:
-            tax_desc += " (Persónuafsláttur nýttur)"
+            tax_desc += f" (Persónuafsláttur nýttur: {PERSONAL_CREDIT:,.0f} ISK)"
         draw_text(tax_desc, 40, y, size=10)
         draw_text(f"-{net_tax:,.0f} ISK", width - 40, y, size=10, align="right")
+
+    if orlof_amount > 0:
+        y -= 14
+        draw_text("Orlof í banka / Holiday Pay to Bank", 40, y, size=10)
+        draw_text(f"-{orlof_amount:,.0f} ISK", width - 40, y, size=10, align="right")
 
     if payload.other_deductions and payload.other_deductions > 0:
         y -= 14

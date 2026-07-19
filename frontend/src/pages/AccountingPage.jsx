@@ -54,15 +54,17 @@ function AccountingPage() {
     const [calcHours, setCalcHours] = useState('');
     const [calcHourlyRate, setCalcHourlyRate] = useState('');
     const [calcOvertimeHours, setCalcOvertimeHours] = useState('');
-    const [calcOvertimeMultiplier, setCalcOvertimeMultiplier] = useState('1.5');
+    const [calcOvertimeMultiplier, setCalcOvertimeMultiplier] = useState('1.56');
     const [calcOvertime2Hours, setCalcOvertime2Hours] = useState('');
-    const [calcOvertime2Multiplier, setCalcOvertime2Multiplier] = useState('1.8');
+    const [calcOvertime2Multiplier, setCalcOvertime2Multiplier] = useState('1.794');
     const [calcBonuses, setCalcBonuses] = useState('');
     const [calcBonusDescription, setCalcBonusDescription] = useState('');
     const [calcOtherDeductions, setCalcOtherDeductions] = useState('0');
     const [calcDeductionsDescription, setCalcDeductionsDescription] = useState('');
     const [calcSereignarsparnadurPercent, setCalcSereignarsparnadurPercent] = useState('0');
     const [calcApplyPersonalTaxCredit, setCalcApplyPersonalTaxCredit] = useState(true);
+    const [calcTaxYear, setCalcTaxYear] = useState('2026');
+    const [calcOrlofPercent, setCalcOrlofPercent] = useState('0');
 
     const [uploadUserId, setUploadUserId] = useState('');
     const [uploadIssueDate, setUploadIssueDate] = useState(() => new Date().toISOString().split('T')[0]);
@@ -559,6 +561,36 @@ function AccountingPage() {
                                                 </div>
                                                 <div>
                                                     <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">
+                                                        {isIcelandic ? 'Skattár (Reikna út frá)' : 'Tax Year'}
+                                                    </label>
+                                                    <select
+                                                        value={calcTaxYear}
+                                                        onChange={(e) => setCalcTaxYear(e.target.value)}
+                                                        className="modern-input h-9 text-[11px] font-bold"
+                                                    >
+                                                        <option value="2026">2026</option>
+                                                        <option value="2025">2025</option>
+                                                        <option value="2024">2024</option>
+                                                        <option value="2023">2023</option>
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">
+                                                        {isIcelandic ? 'Orlofsprósenta' : 'Orlof %'}
+                                                    </label>
+                                                    <select
+                                                        value={calcOrlofPercent}
+                                                        onChange={(e) => setCalcOrlofPercent(e.target.value)}
+                                                        className="modern-input h-9 text-[11px] font-bold"
+                                                    >
+                                                        <option value="0">{isIcelandic ? 'Ekkert (0%)' : 'None (0%)'}</option>
+                                                        <option value="10.17">10.17% (24 dagar)</option>
+                                                        <option value="10.64">10.64% (25 dagar)</option>
+                                                        <option value="12.07">12.07% (30 dagar)</option>
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">
                                                         {isIcelandic ? 'Bónusar (kr.)' : 'Bonuses (ISK)'}
                                                     </label>
                                                     <input type="number" min="0" step="any" value={calcBonuses} onChange={(e) => setCalcBonuses(e.target.value)} className="modern-input h-9" />
@@ -591,34 +623,65 @@ function AccountingPage() {
                                             const h = parseFloat(calcHours || '0') || 0;
                                             const r = parseFloat(calcHourlyRate || '0') || 0;
                                             const oh = parseFloat(calcOvertimeHours || '0') || 0;
-                                            const om = parseFloat(calcOvertimeMultiplier || '1.5') || 1.5;
+                                            const om = parseFloat(calcOvertimeMultiplier || '1.56') || 1.56;
                                             const oh2 = parseFloat(calcOvertime2Hours || '0') || 0;
-                                            const om2 = parseFloat(calcOvertime2Multiplier || '1.8') || 1.8;
+                                            const om2 = parseFloat(calcOvertime2Multiplier || '1.794') || 1.794;
                                             const bonus = parseFloat(calcBonuses || '0') || 0;
                                             const od = parseFloat(calcOtherDeductions || '0') || 0;
                                             const regularPay = h * r;
                                             const overtime1Pay = oh * r * om;
                                             const overtime2Pay = oh2 * r * om2;
-                                            const brutto = regularPay + overtime1Pay + overtime2Pay + bonus;
+                                            const baseSubtotal = regularPay + overtime1Pay + overtime2Pay + bonus;
+
+                                            // Accrued Holiday Pay (Orlof)
+                                            const orlofPercent = parseFloat(calcOrlofPercent || '0') || 0;
+                                            const orlofAmount = baseSubtotal * (orlofPercent / 100);
+                                            const brutto = baseSubtotal + orlofAmount;
 
                                             const pensionDeduction = brutto * 0.04;
                                             const sereignDeduction = brutto * (parseFloat(calcSereignarsparnadurPercent || '0') / 100);
-                                            const unionFee = brutto * 0.011;
+                                            
+                                            // Union Fee (RSI) is 1.0% in all these payslips
+                                            const unionFee = brutto * 0.01;
 
                                             const taxableIncome = Math.max(0, brutto - pensionDeduction - sereignDeduction);
 
-                                            // Tax brackets (2025/2026)
-                                            const TAX_BRACKETS = [
-                                                { limit: 472005, rate: 0.3149 },
-                                                { limit: 1325127, rate: 0.3799 },
-                                                { limit: Infinity, rate: 0.4629 },
-                                            ];
-                                            const PERSONAL_CREDIT = calcApplyPersonalTaxCredit ? 68691 : 0;
+                                            // Tax brackets dynamically mapped by selected Year
+                                            const bracketsConfig = {
+                                                '2023': [
+                                                    { limit: 409986, rate: 0.3145 },
+                                                    { limit: 1151780, rate: 0.3795 },
+                                                    { limit: Infinity, rate: 0.4625 },
+                                                ],
+                                                '2024': [
+                                                    { limit: 446137, rate: 0.3148 },
+                                                    { limit: 1252501, rate: 0.3798 },
+                                                    { limit: Infinity, rate: 0.4628 },
+                                                ],
+                                                '2025': [
+                                                    { limit: 472005, rate: 0.3149 },
+                                                    { limit: 1325127, rate: 0.3799 },
+                                                    { limit: Infinity, rate: 0.4629 },
+                                                ],
+                                                '2026': [
+                                                    { limit: 498123, rate: 0.3149 },
+                                                    { limit: 1398307, rate: 0.3799 },
+                                                    { limit: Infinity, rate: 0.4629 },
+                                                ]
+                                            };
+                                            const brackets = bracketsConfig[calcTaxYear] || bracketsConfig['2026'];
+                                            const personalCreditLimit = {
+                                                '2023': 59665,
+                                                '2024': 64926,
+                                                '2025': 68691,
+                                                '2026': 72492
+                                            };
+                                            const personalCredit = calcApplyPersonalTaxCredit ? (personalCreditLimit[calcTaxYear] || 72492) : 0;
 
                                             let remaining = taxableIncome;
                                             let computedTax = 0;
                                             let lastLimit = 0;
-                                            for (const b of TAX_BRACKETS) {
+                                            for (const b of brackets) {
                                                 const upper = b.limit;
                                                 const span = upper === Infinity
                                                     ? remaining
@@ -630,8 +693,9 @@ function AccountingPage() {
                                                 if (remaining <= 0) break;
                                             }
 
-                                            const netTax = Math.max(0, computedTax - PERSONAL_CREDIT);
-                                            const netSalary = Math.max(0, brutto - netTax - pensionDeduction - sereignDeduction - unionFee - od);
+                                            const netTax = Math.max(0, computedTax - personalCredit);
+                                            // Subtract orlofAmount from cash payout since it's directly deposited to bank
+                                            const netSalary = Math.max(0, brutto - netTax - pensionDeduction - sereignDeduction - unionFee - od - orlofAmount);
                                             const employerPension = brutto * 0.115;
 
                                             return (
@@ -641,31 +705,31 @@ function AccountingPage() {
                                                             {isIcelandic ? 'Áætlaður Launaseðill' : 'Estimated Earnings Slip'}
                                                         </h4>
                                                         <p className="text-[10px] text-indigo-200 mt-1">
-                                                            {isIcelandic ? 'Birt með fyrirvara um endanlegt uppgjör.' : 'Subject to final accounting validation.'}
+                                                            {isIcelandic ? `Skattár / Tax Year: ${calcTaxYear}` : `Tax Year / Skattár: ${calcTaxYear}`}
                                                         </p>
                                                     </div>
 
                                                     <div className="space-y-3 text-xs">
                                                         <div className="flex justify-between">
                                                             <span className="text-indigo-200">
-                                                                {isIcelandic ? `Dagvinna (${h.toFixed(1)} klst)` : `Regular pay (${h.toFixed(1)} hrs)`}
+                                                                {isIcelandic ? `Dagvinna (${h.toFixed(2)} klst)` : `Regular pay (${h.toFixed(2)} hrs)`}
                                                             </span>
-                                                            <span className="font-bold">{regularPay.toLocaleString('is-IS')} ISK</span>
+                                                            <span className="font-bold">{Math.round(regularPay).toLocaleString('is-IS')} ISK</span>
                                                         </div>
                                                         {oh > 0 && (
                                                             <div className="flex justify-between">
                                                                 <span className="text-indigo-200">
-                                                                    {isIcelandic ? `Eftirvinna (${oh.toFixed(1)} klst @ ${om}x)` : `Overtime 1 (${oh.toFixed(1)} hrs @ ${om}x)`}
+                                                                    {isIcelandic ? `Eftirvinna (${oh.toFixed(2)} klst @ ${om}x)` : `Overtime 1 (${oh.toFixed(2)} hrs @ ${om}x)`}
                                                                 </span>
-                                                                <span className="font-bold">{overtime1Pay.toLocaleString('is-IS')} ISK</span>
+                                                                <span className="font-bold">{Math.round(overtime1Pay).toLocaleString('is-IS')} ISK</span>
                                                             </div>
                                                         )}
                                                         {oh2 > 0 && (
                                                             <div className="flex justify-between">
                                                                 <span className="text-indigo-200">
-                                                                    {isIcelandic ? `Næturvinna (${oh2.toFixed(1)} klst @ ${om2}x)` : `Overtime 2 (${oh2.toFixed(1)} hrs @ ${om2}x)`}
+                                                                    {isIcelandic ? `Næturvinna (${oh2.toFixed(2)} klst @ ${om2}x)` : `Overtime 2 (${oh2.toFixed(2)} hrs @ ${om2}x)`}
                                                                 </span>
-                                                                <span className="font-bold">{overtime2Pay.toLocaleString('is-IS')} ISK</span>
+                                                                <span className="font-bold">{Math.round(overtime2Pay).toLocaleString('is-IS')} ISK</span>
                                                             </div>
                                                         )}
                                                         {bonus > 0 && (
@@ -673,12 +737,18 @@ function AccountingPage() {
                                                                 <span className="text-indigo-200">
                                                                     {isIcelandic ? 'Álag og bónusar' : 'Bonuses and allowances'}
                                                                 </span>
-                                                                <span className="font-bold">{bonus.toLocaleString('is-IS')} ISK</span>
+                                                                <span className="font-bold">{Math.round(bonus).toLocaleString('is-IS')} ISK</span>
+                                                            </div>
+                                                        )}
+                                                        {orlofAmount > 0 && (
+                                                            <div className="flex justify-between text-indigo-300">
+                                                                <span>{isIcelandic ? `Áunnið orlof (${calcOrlofPercent}%)` : `Accrued Holiday Pay (${calcOrlofPercent}%)`}</span>
+                                                                <span className="font-bold">{Math.round(orlofAmount).toLocaleString('is-IS')} ISK</span>
                                                             </div>
                                                         )}
                                                         <div className="flex justify-between border-t border-indigo-900 pt-2 font-black text-sm text-indigo-300">
                                                             <span>{isIcelandic ? 'Brúttólaun' : 'Gross Salary'}</span>
-                                                            <span>{brutto.toLocaleString('is-IS')} ISK</span>
+                                                            <span>{Math.round(brutto).toLocaleString('is-IS')} ISK</span>
                                                         </div>
                                                     </div>
 
@@ -688,30 +758,36 @@ function AccountingPage() {
                                                         </h5>
                                                         <div className="flex justify-between text-indigo-200">
                                                             <span>{isIcelandic ? 'Lífeyrissjóður (4%)' : 'Pension Contribution (4%)'}</span>
-                                                            <span>-{pensionDeduction.toLocaleString('is-IS')} ISK</span>
+                                                            <span>-{Math.round(pensionDeduction).toLocaleString('is-IS')} ISK</span>
                                                         </div>
                                                         {sereignDeduction > 0 && (
                                                             <div className="flex justify-between text-indigo-200">
                                                                 <span>
                                                                     {isIcelandic ? `Séreignarsparnaður (${calcSereignarsparnadurPercent}%)` : `Private Pension (${calcSereignarsparnadurPercent}%)`}
                                                                 </span>
-                                                                <span>-{sereignDeduction.toLocaleString('is-IS')} ISK</span>
+                                                                <span>-{Math.round(sereignDeduction).toLocaleString('is-IS')} ISK</span>
                                                             </div>
                                                         )}
                                                         <div className="flex justify-between text-indigo-200">
-                                                            <span>{isIcelandic ? 'Stéttarfélagsgjald RSÍ (1,1%)' : 'Union Fee RSÍ (1.1%)'}</span>
-                                                            <span>-{unionFee.toLocaleString('is-IS')} ISK</span>
+                                                            <span>{isIcelandic ? 'Stéttarfélagsgjald RSÍ (1,0%)' : 'Union Fee RSÍ (1.0%)'}</span>
+                                                            <span>-{Math.round(unionFee).toLocaleString('is-IS')} ISK</span>
                                                         </div>
                                                         {netTax > 0 && (
                                                             <div className="flex justify-between text-indigo-200">
                                                                 <span>{isIcelandic ? 'Staðgreiðsla skatta' : 'Income Tax'}</span>
-                                                                <span>-{netTax.toLocaleString('is-IS')} ISK</span>
+                                                                <span>-{Math.round(netTax).toLocaleString('is-IS')} ISK</span>
+                                                            </div>
+                                                        )}
+                                                        {orlofAmount > 0 && (
+                                                            <div className="flex justify-between text-indigo-200">
+                                                                <span>{isIcelandic ? 'Orlof lagt í banka' : 'Orlof deposited to bank'}</span>
+                                                                <span>-{Math.round(orlofAmount).toLocaleString('is-IS')} ISK</span>
                                                             </div>
                                                         )}
                                                         {od > 0 && (
                                                             <div className="flex justify-between text-indigo-200">
                                                                 <span>{isIcelandic ? 'Annar frádráttur' : 'Other Deductions'}</span>
-                                                                <span>-{od.toLocaleString('is-IS')} ISK</span>
+                                                                <span>-{Math.round(od).toLocaleString('is-IS')} ISK</span>
                                                             </div>
                                                         )}
                                                     </div>
@@ -744,15 +820,17 @@ function AccountingPage() {
                                                                         regular_hours: parseFloat(calcHours || '0') || 0,
                                                                         hourly_rate: parseFloat(calcHourlyRate || '0') || 0,
                                                                         overtime1_hours: parseFloat(calcOvertimeHours || '0') || 0,
-                                                                        overtime1_multiplier: parseFloat(calcOvertimeMultiplier || '1.5') || 1.5,
+                                                                        overtime1_multiplier: parseFloat(calcOvertimeMultiplier || '1.56') || 1.56,
                                                                         overtime2_hours: parseFloat(calcOvertime2Hours || '0') || 0,
-                                                                        overtime2_multiplier: parseFloat(calcOvertime2Multiplier || '1.8') || 1.8,
+                                                                        overtime2_multiplier: parseFloat(calcOvertime2Multiplier || '1.794') || 1.794,
                                                                         bonuses: parseFloat(calcBonuses || '0') || 0,
                                                                         bonus_description: calcBonusDescription || null,
                                                                         other_deductions: parseFloat(calcOtherDeductions || '0') || 0,
                                                                         deductions_description: calcDeductionsDescription || null,
                                                                         sereignarsparnadur_percent: parseFloat(calcSereignarsparnadurPercent || '0') || 0,
-                                                                        apply_personal_tax_credit: calcApplyPersonalTaxCredit
+                                                                        apply_personal_tax_credit: calcApplyPersonalTaxCredit,
+                                                                        tax_year: calcTaxYear,
+                                                                        orlof_percent: parseFloat(calcOrlofPercent || '0') || 0
                                                                     };
 
                                                                     const res = await axiosInstance.post('/accounting/payslips/estimate', payload, {
