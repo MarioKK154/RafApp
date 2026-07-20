@@ -357,31 +357,29 @@ function HomePage() {
     const isPM = Boolean(user?.role === 'project manager');
     const canViewFinancialChart = isAdmin || isPM;
 
-    const financialPieData = useMemo(() => {
-        const safeProjects = Array.isArray(managedProjects) ? managedProjects : [];
-        const targetProjects = isAdmin
-            ? safeProjects
-            : safeProjects.filter(p => p && (p.project_manager_id === user?.id || (Array.isArray(p.assigned_user_ids) && p.assigned_user_ids.includes(user?.id))));
+    const safeProjects = Array.isArray(managedProjects) ? managedProjects : [];
+    const targetProjects = isAdmin
+        ? safeProjects
+        : safeProjects.filter(p => p && (p.project_manager_id === user?.id || (Array.isArray(p.assigned_user_ids) && p.assigned_user_ids.includes(user?.id))));
 
-        const baseProjects = targetProjects.length > 0 ? targetProjects : safeProjects;
-        const scale = financePeriod === 'week' ? 0.25 : 1.0;
-        
-        const totalBudget = Math.round(baseProjects.reduce((acc, p) => acc + ((p && (p.budget || p.estimated_budget)) || 3200000), 0) * scale);
-        const laborCost = Math.round(baseProjects.reduce((acc, p) => acc + (((p && p.logged_hours) || 40) * 5250), 0) * scale);
-        const materialCost = Math.round(totalBudget * 0.35);
-        const totalExpenses = laborCost + materialCost;
-        const remainingMargin = Math.max(0, totalBudget - totalExpenses);
+    const baseProjects = targetProjects.length > 0 ? targetProjects : safeProjects;
+    const scale = financePeriod === 'week' ? 0.25 : 1.0;
+    
+    const totalBudget = Math.round(baseProjects.reduce((acc, p) => acc + ((p && (p.budget || p.estimated_budget)) || 3200000), 0) * scale);
+    const laborCost = Math.round(baseProjects.reduce((acc, p) => acc + (((p && p.logged_hours) || 40) * 5250), 0) * scale);
+    const materialCost = Math.round(totalBudget * 0.35);
+    const totalExpenses = laborCost + materialCost;
+    const remainingMargin = Math.max(0, totalBudget - totalExpenses);
 
-        return {
-            items: [
-                { name: isIcelandic ? 'Vinnulaun (Laun)' : 'Labor Cost', value: laborCost, color: '#6366f1' },
-                { name: isIcelandic ? 'Efniskostnaður' : 'Materials & Freight', value: materialCost, color: '#10b981' },
-                { name: isIcelandic ? 'Eftirstöðvar Áætlunar' : 'Remaining Margin', value: remainingMargin, color: '#3b82f6' }
-            ],
-            totalBudget,
-            totalExpenses
-        };
-    }, [managedProjects, isAdmin, isPM, user, financePeriod, isIcelandic]);
+    const financialPieData = {
+        items: [
+            { name: isIcelandic ? 'Vinnulaun (Laun)' : 'Labor Cost', value: laborCost, color: '#6366f1' },
+            { name: isIcelandic ? 'Efniskostnaður' : 'Materials & Freight', value: materialCost, color: '#10b981' },
+            { name: isIcelandic ? 'Eftirstöðvar Áætlunar' : 'Remaining Margin', value: remainingMargin, color: '#3b82f6' }
+        ],
+        totalBudget,
+        totalExpenses
+    };
 
     const renderBlockContent = (item) => {
         const title = i18n.language.startsWith('en') ? item.title_en : item.title_is;
