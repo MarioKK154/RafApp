@@ -532,7 +532,7 @@ function HomePage() {
                                     <div key={idx} className="flex items-center gap-1.5">
                                         <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: entry.color }} />
                                         <span className="text-gray-800 dark:text-gray-300">
-                                            {entry.name}: {canViewFinancialChart ? `${entry.value.toLocaleString()} kr.` : entry.value}
+                                            {entry.name}: {canViewFinancialChart ? `${(Number(entry.value) || 0).toLocaleString()} kr.` : entry.value}
                                         </span>
                                     </div>
                                 ))}
@@ -903,7 +903,7 @@ function HomePage() {
                                                         -- {t('select_project')} --
                                                     </button>
                                                     {managedProjects
-                                                        .filter(p => p.name.toLowerCase().includes(projectSearchQuery.toLowerCase()))
+                                                        .filter(p => p && (p.name || '').toLowerCase().includes((projectSearchQuery || '').toLowerCase()))
                                                         .map(p => (
                                                             <button
                                                                 key={p.id}
@@ -1172,4 +1172,50 @@ function SuggestionsFeedbackCard({ title }) {
     );
 }
 
-export default HomePage;
+class DashboardErrorBoundary extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = { hasError: false, error: null };
+    }
+    static getDerivedStateFromError(error) {
+        return { hasError: true, error };
+    }
+    componentDidCatch(error, errorInfo) {
+        console.error("Dashboard error boundary caught exception:", error, errorInfo);
+    }
+    handleReset = () => {
+        localStorage.removeItem('rafapp_dashboard_layout');
+        this.setState({ hasError: false });
+        window.location.reload();
+    };
+    render() {
+        if (this.state.hasError) {
+            return (
+                <div className="container mx-auto p-8 max-w-xl text-center min-h-[60vh] flex flex-col items-center justify-center">
+                    <div className="bg-white dark:bg-gray-900 p-8 rounded-3xl border border-gray-200 dark:border-gray-800 shadow-xl space-y-4">
+                        <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center mx-auto text-xl font-bold">⚠️</div>
+                        <h2 className="text-lg font-black uppercase tracking-tight text-gray-900 dark:text-white">Dashboard Telemetry Recovered</h2>
+                        <p className="text-xs text-gray-400 font-bold leading-relaxed">
+                            An unexpected layout glitch occurred. Click below to reset your custom layout settings and restore the default operational view.
+                        </p>
+                        <button 
+                            onClick={this.handleReset} 
+                            className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs uppercase tracking-widest rounded-xl transition shadow-lg"
+                        >
+                            Reset Dashboard & Reload
+                        </button>
+                    </div>
+                </div>
+            );
+        }
+        return this.props.children;
+    }
+}
+
+export default function SafeHomePage() {
+    return (
+        <DashboardErrorBoundary>
+            <HomePage />
+        </DashboardErrorBoundary>
+    );
+}
