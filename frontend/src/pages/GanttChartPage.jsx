@@ -1,20 +1,19 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Chart } from 'react-google-charts';
 import { useAuth } from '../context/AuthContext';
 import axiosInstance from '../api/axiosInstance';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-toastify';
 import LoadingSpinner from '../components/LoadingSpinner';
+import CustomGanttChart from '../components/CustomGanttChart';
 import { 
-    ClockIcon, 
     ChartBarSquareIcon,
     BriefcaseIcon, 
     ArrowPathIcon,
     InformationCircleIcon,
     AdjustmentsHorizontalIcon,
     ShieldExclamationIcon,
-    BuildingOffice2Icon
+    MagnifyingGlassIcon,
 } from '@heroicons/react/24/outline';
 
 function GanttChartPage() {
@@ -26,77 +25,60 @@ function GanttChartPage() {
     const [tasks, setTasks] = useState([]);
     const [allProjects, setAllProjects] = useState([]);
     const [selectedProjectId, setSelectedProjectId] = useState('');
-    const selectedTenantId = 1; const setSelectedTenantId = () => {};
+    const [searchQuery, setSearchQuery] = useState('');
     
     const [isLoadingTasks, setIsLoadingTasks] = useState(true);
     const [isLoadingProjects, setIsLoadingProjects] = useState(true);
     const [error, setError] = useState('');
 
-    // Protocol: Role-Based Access Control (RBAC)
+    // Role-Based Access Control
     const isSuperuser = user?.is_superuser;
     const hasAccess = user && (user.role === 'admin' || user.role === 'project manager' || isSuperuser);
 
-    /**
-     * Protocol: Sync Project Registry for Filters
-     */
     const fetchAllProjects = useCallback(async () => {
         if (!authIsLoading && isAuthenticated && hasAccess) {
             setIsLoadingProjects(true);
             try {
-                const params = { limit: 1000 };
-                
-                const response = await axiosInstance.get('/projects/', { params });
+                const response = await axiosInstance.get('/projects/', { params: { limit: 1000 } });
                 setAllProjects(response.data);
-            } catch (error) {
-                console.error('Gantt project fetch error:', error);
-                toast.error(t('error_loading_projects', { defaultValue: "Failed to load project registry." }));
+            } catch (err) {
+                console.error('Gantt project fetch error:', err);
+                toast.error(t('error_loading_projects', { defaultValue: 'Failed to load project registry.' }));
             } finally {
                 setIsLoadingProjects(false);
             }
         }
-    }, [isAuthenticated, authIsLoading, hasAccess, t, isSuperuser]);
+    }, [isAuthenticated, authIsLoading, hasAccess, t]);
 
-    /**
-     * Protocol: Sync Task Timeline Telemetry
-     */
     const fetchTasksForGantt = useCallback(async () => {
         if (!authIsLoading && isAuthenticated && hasAccess) {
             setIsLoadingTasks(true);
             setError('');
-            
             const params = { limit: 1000 };
-            if (selectedProjectId) {
-                params.project_id = selectedProjectId;
-            }
-            
-
+            if (selectedProjectId) params.project_id = selectedProjectId;
             try {
                 const response = await axiosInstance.get('/tasks/', { params });
-                const activeTasks = response.data.filter(t => !['Commissioned', 'Done', 'Completed', 'Cancelled'].includes(t.status));
+                const activeTasks = response.data.filter(t =>
+                    !['Commissioned', 'Done', 'Completed', 'Cancelled'].includes(t.status)
+                );
                 setTasks(activeTasks);
-            } catch (error) {
-                console.error('Gantt tasks fetch error:', error);
+            } catch (err) {
+                console.error('Gantt tasks fetch error:', err);
                 setError(t('timeline_sync_failed', { defaultValue: 'Failed to synchronize task timeline.' }));
                 toast.error('Gantt data sync failed.');
             } finally {
                 setIsLoadingTasks(false);
             }
         }
-    }, [isAuthenticated, authIsLoading, selectedProjectId, hasAccess, t, isSuperuser]);
+    }, [isAuthenticated, authIsLoading, selectedProjectId, hasAccess, t]);
 
     useEffect(() => {
         if (!authIsLoading && isAuthenticated) {
-            if (hasAccess) {
-                fetchAllProjects();
-            }
+            if (hasAccess) fetchAllProjects();
         } else if (!authIsLoading && !isAuthenticated) {
             navigate('/login', { replace: true });
         }
     }, [fetchAllProjects, authIsLoading, isAuthenticated, navigate, hasAccess]);
-
-    useEffect(() => {
-        if (!isSuperuser) return;
-        }, [isSuperuser]);
 
     useEffect(() => {
         if (!isLoadingProjects && hasAccess) {
@@ -104,86 +86,35 @@ function GanttChartPage() {
         }
     }, [fetchTasksForGantt, isLoadingProjects, hasAccess]);
 
-    useEffect(() => {
-        setSelectedProjectId('');
-    }, [selectedTenantId]);
-
-    /** Only Active and Planning projects for Gantt (exclude Completed/Archived) */
-    const activeAndPlanningProjects = useMemo(() => 
+    const activeAndPlanningProjects = useMemo(() =>
         allProjects.filter(p => p.status === 'Active' || p.status === 'Planning'),
         [allProjects]
     );
-            const activeProjectIds = useMemo(() => new Set(activeAndPlanningProjects.map(p => p.id)), [activeAndPlanningProjects]);
-    const ganttTasks = useMemo(() => 
-        tasks.filter(t => activeProjectIds.has(t.project_id)),
-        [tasks, activeProjectIds]
+
+    const activeProjectIds = useMemo(() =>
+        new Set(activeAndPlanningProjects.map(p => p.id)),
+        [activeAndPlanningProjects]
     );
 
-    /**
-     * Protocol: Google Charts Selection Handler
-     * Logic: Extracts ID from 'task-123' format and navigates to Registry Detail
-     */
-    const handleChartSelection = ({ chartWrapper }) => {
-        const chart = chartWrapper.getChart();
-        const selection = chart.getSelection();
-        if (selection.length > 0) {
-            const row = selection[0].row;
-            // chartData structure: [columns, ...rows]
-            // Task ID is in the first column of the selected row
-            const internalId = chartData[row + 1][0]; 
-            const taskId = internalId.replace('task-', '');
-            
-            // Deployment: Navigate to Task Detail View
-            navigate(`/tasks?task_id=${taskId}`);
+    const ganttTasks = useMemo(() => {
+        let filtered = tasks.filter(t => activeProjectIds.has(t.project_id) && t.start_date && t.due_date);
+        if (searchQuery.trim()) {
+            const q = searchQuery.toLowerCase();
+            filtered = filtered.filter(t =>
+                (t.title || '').toLowerCase().includes(q) ||
+                (t.description || '').toLowerCase().includes(q)
+            );
         }
+        return filtered;
+    }, [tasks, activeProjectIds, searchQuery]);
+
+    const handleTaskClick = (task) => {
+        navigate(`/tasks?task_id=${task.id}`);
     };
 
-    /**
-     * Protocol: Format Telemetry for Google Gantt API
-     */
-    const chartData = useMemo(() => {
-        const columns = [
-            { type: 'string', label: 'Task ID' },
-            { type: 'string', label: 'Task Name' },
-            { type: 'string', label: 'Resource' },
-            { type: 'date', label: 'Start Date' },
-            { type: 'date', label: 'End Date' },
-            { type: 'number', label: 'Duration' },
-            { type: 'number', label: 'Percent Complete' },
-            { type: 'string', label: 'Dependencies' },
-        ];
-
-        const rows = ganttTasks
-            .filter(task => task.start_date && task.due_date) 
-            .map(task => {
-                let percentComplete = 0;
-                if (task.status === 'Done' || task.status === 'Commissioned') percentComplete = 100;
-                else if (task.status === 'In Progress') percentComplete = 50;
-
-                const projectForTask = activeAndPlanningProjects.find(p => p.id === task.project_id);
-                const projectLabel = projectForTask ? projectForTask.name : 'Unassigned';
-                const resourceBarLabel = `${task.title} · ${projectLabel}`;
-
-                const dependencies = (task.predecessor_ids && task.predecessor_ids.length > 0)
-                    ? task.predecessor_ids.map(id => `task-${id}`).join(',')
-                    : null;
-
-                return [
-                    `task-${task.id}`,
-                    task.title,
-                    projectLabel,
-                    new Date(task.start_date),
-                    new Date(task.due_date),
-                    null,
-                    percentComplete,
-                    dependencies,
-                ];
-            });
-
-        return [columns, ...rows];
-    }, [ganttTasks, activeAndPlanningProjects]);
-
-    const dynamicHeight = chartData.length > 1 ? (chartData.length - 1) * 48 + 110 : 400;
+    // Stats
+    const totalWithDates = tasks.filter(t => t.start_date && t.due_date).length;
+    const inProgress = tasks.filter(t => t.status === 'In Progress').length;
 
     // Security Gateway: Block unauthorized personnel
     if (!authIsLoading && isAuthenticated && !hasAccess) {
@@ -210,157 +141,121 @@ function GanttChartPage() {
     }
 
     return (
-        <div className="container mx-auto p-4 md:p-8 max-w-7xl animate-in fade-in duration-500">
-            {/* Header */}
-            <header className="mb-10">
-                <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5 flex justify-between items-center gap-6">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
-                            <ChartBarSquareIcon className="h-6 w-6 text-indigo-600" />
+        <div className="container mx-auto p-4 md:p-8 max-w-[1600px] animate-in fade-in duration-500">
+            {/* ── Header ── */}
+            <header className="mb-8">
+                <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#1e293b] via-[#1e3a5f] to-[#0f172a] px-8 py-8 shadow-2xl">
+                    {/* Decorative orbs */}
+                    <div className="pointer-events-none absolute -top-16 -right-16 h-64 w-64 rounded-full bg-indigo-500/10 blur-3xl" />
+                    <div className="pointer-events-none absolute -bottom-16 -left-8 h-48 w-48 rounded-full bg-blue-500/10 blur-3xl" />
+
+                    <div className="relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+                        <div className="flex items-center gap-4">
+                            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-blue-600 shadow-lg shadow-indigo-500/40">
+                                <ChartBarSquareIcon className="h-7 w-7 text-white" />
+                            </div>
+                            <div>
+                                <h1 className="text-3xl font-black text-white uppercase tracking-tighter italic">
+                                    {t('gantt_chart', { defaultValue: 'Gantt Chart' })}
+                                </h1>
+                                <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mt-0.5">
+                                    Project Timeline · Visual Schedule
+                                </p>
+                            </div>
                         </div>
-                        <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">{t('gantt_chart', { defaultValue: 'Gantt chart' })}</h1>
+
+                        {/* Mini stat pills */}
+                        <div className="flex items-center gap-3 flex-wrap">
+                            <div className="flex items-center gap-2 rounded-xl bg-white/10 px-4 py-2 backdrop-blur-sm border border-white/10">
+                                <AdjustmentsHorizontalIcon className="h-4 w-4 text-indigo-300" />
+                                <span className="text-[11px] font-black text-white/80 uppercase tracking-widest">{ganttTasks.length} Tasks</span>
+                            </div>
+                            <div className="flex items-center gap-2 rounded-xl bg-white/10 px-4 py-2 backdrop-blur-sm border border-white/10">
+                                <div className="h-2 w-2 rounded-full bg-green-400 animate-pulse" />
+                                <span className="text-[11px] font-black text-white/80 uppercase tracking-widest">{inProgress} Active</span>
+                            </div>
+                            <div className="flex items-center gap-2 rounded-xl bg-white/10 px-4 py-2 backdrop-blur-sm border border-white/10">
+                                <BriefcaseIcon className="h-4 w-4 text-blue-300" />
+                                <span className="text-[11px] font-black text-white/80 uppercase tracking-widest">{activeAndPlanningProjects.length} Projects</span>
+                            </div>
+                        </div>
                     </div>
-                                    </div>
+                </div>
             </header>
 
-            {/* Tactical Console */}
-            <div className="mb-8 grid grid-cols-1 lg:grid-cols-4 gap-4">
-                <div className={`${isSuperuser ? 'lg:col-span-2' : 'lg:col-span-3'} relative group`}>
+            {/* ── Filters & Search ── */}
+            <div className="mb-6 flex flex-col sm:flex-row gap-4">
+                {/* Project Filter */}
+                <div className="relative flex-1 group">
                     <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center pointer-events-none">
-                        <BriefcaseIcon className="h-5 w-5 text-gray-400 group-focus-within:text-indigo-500 transition-colors" />
+                        <BriefcaseIcon className="h-4 w-4 text-gray-400 group-focus-within:text-indigo-500 transition-colors" />
                     </div>
                     <select
                         id="projectGanttFilter"
                         value={selectedProjectId}
                         onChange={(e) => setSelectedProjectId(e.target.value)}
-                        className="block w-full pl-12 pr-4 h-14 rounded-2xl border border-gray-100 dark:bg-gray-800 dark:border-gray-700 text-xs font-black uppercase tracking-widest focus:ring-2 focus:ring-indigo-500 transition-all shadow-sm appearance-none cursor-pointer"
+                        className="block w-full pl-10 pr-4 h-12 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-xs font-black uppercase tracking-widest text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-indigo-500 transition-all shadow-sm appearance-none cursor-pointer"
                     >
-                        <option value="">Integrated Timeline / All Nodes</option>
+                        <option value="">All Projects</option>
                         {activeAndPlanningProjects.map(project => (
                             <option key={project.id} value={project.id}>
-                                {project.name} {isSuperuser ? `[NODE: ${project.tenant_id}]` : ''}
+                                {project.name}
                             </option>
                         ))}
                     </select>
                 </div>
 
-                <div className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl p-4 flex items-center justify-center gap-3 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 shadow-sm">
-                    <AdjustmentsHorizontalIcon className="h-4 w-4 text-indigo-500" /> 
-                    {ganttTasks.length} Interval Nodes
+                {/* Search */}
+                <div className="relative sm:w-72 group">
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none">
+                        <MagnifyingGlassIcon className="h-4 w-4 text-gray-400 group-focus-within:text-indigo-500 transition-colors" />
+                    </div>
+                    <input
+                        type="text"
+                        placeholder="Search tasks..."
+                        value={searchQuery}
+                        onChange={e => setSearchQuery(e.target.value)}
+                        className="block w-full pl-10 pr-4 h-12 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-xs font-bold text-gray-700 dark:text-gray-200 placeholder-gray-300 dark:placeholder-gray-600 focus:ring-2 focus:ring-indigo-500 transition-all shadow-sm"
+                    />
                 </div>
+
+                {/* Refresh */}
+                <button
+                    onClick={() => { fetchTasksForGantt(); fetchAllProjects(); }}
+                    disabled={isLoadingTasks}
+                    className="h-12 px-5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-widest flex items-center gap-2 transition shadow-sm disabled:opacity-50"
+                >
+                    <ArrowPathIcon className={`h-4 w-4 ${isLoadingTasks ? 'animate-spin' : ''}`} />
+                    Refresh
+                </button>
             </div>
 
             {error && (
-                <div className="mb-8 p-5 bg-red-50 text-red-700 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest flex items-center gap-3 border border-red-100">
-                    <InformationCircleIcon className="h-5 w-5" /> {error}
+                <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-3 border border-red-100 dark:border-red-800">
+                    <InformationCircleIcon className="h-5 w-5 shrink-0" /> {error}
                 </div>
             )}
 
-            {/* Main Deployment Area */}
-            <div className="bg-white dark:bg-gray-800 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-700 p-6 md:p-10 overflow-hidden">
-                {isLoadingTasks ? (
-                    <div className="py-32 flex justify-center"><LoadingSpinner text="Simulating timeline variables..." /></div>
-                ) : chartData.length > 1 ? (
-                    <div className="w-full overflow-x-auto custom-scrollbar">
-                        <div style={{ minWidth: '1000px' }}>
-                            <Chart
-                                chartType="Gantt"
-                                width="100%"
-                                height={`${dynamicHeight}px`}
-                                data={chartData}
-                                chartEvents={[
-                                    {
-                                        eventName: "select",
-                                        callback: handleChartSelection,
-                                    },
-                                ]}
-                                options={{
-                                    height: dynamicHeight,
-                                    gantt: {
-                                        trackHeight: 44,
-                                        barHeight: 32,
-                                        barCornerRadius: 6,
-                                        palette: [
-                                            { color: '#a5b4fc', dark: '#6366f1', light: '#e0e7ff' },
-                                            { color: '#6ee7b7', dark: '#10b981', light: '#d1fae5' },
-                                            { color: '#7dd3fc', dark: '#0284c7', light: '#e0f2fe' },
-                                            { color: '#fde047', dark: '#d97706', light: '#fef3c7' },
-                                            { color: '#fca5a5', dark: '#ef4444', light: '#fee2e2' }
-                                        ],
-                                        labelStyle: {
-                                            fontName: 'Inter, sans-serif',
-                                            fontSize: 12,
-                                            color: '#334155',
-                                            fontWeight: 'bold',
-                                        },
-                                        barLabelStyle: {
-                                            fontName: 'Inter, sans-serif',
-                                            fontSize: 11,
-                                            color: '#0f172a',
-                                            fontWeight: 'bold',
-                                        },
-                                        arrow: {
-                                            angle: 45,
-                                            width: 1.5,
-                                            color: '#6366f1',
-                                            radius: 10,
-                                        },
-                                        criticalPathEnabled: true,
-                                        criticalPathStyle: {
-                                            stroke: '#ef4444',
-                                            strokeWidth: 3,
-                                        },
-                                        innerGridHorizLine: {
-                                            stroke: '#f3f4f6',
-                                            strokeWidth: 1,
-                                        },
-                                        innerGridTrack: {
-                                            fill: '#ffffff',
-                                        },
-                                        innerGridDarkTrack: {
-                                            fill: '#f9fafb',
-                                        },
-                                    },
-                                }}
-                            />
-                        </div>
-                    </div>
-                ) : (
-                    <div className="py-32 text-center">
-                        <div className="flex flex-col items-center opacity-20 grayscale">
-                            <ArrowPathIcon className="h-16 w-16 text-gray-900 dark:text-white mb-4" />
-                            <h3 className="text-xl font-black uppercase tracking-tighter italic">Timeline Insufficient</h3>
-                        </div>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mt-4 max-w-xs mx-auto leading-relaxed">
-                            Task date data required to initialize visual schedule.
-                        </p>
-                    </div>
-                )}
-            </div>
+            {/* ── Main Gantt Area ── */}
+            {isLoadingTasks ? (
+                <div className="py-32 flex justify-center">
+                    <LoadingSpinner text="Synchronizing task timeline..." />
+                </div>
+            ) : (
+                <CustomGanttChart
+                    tasks={ganttTasks}
+                    projects={activeAndPlanningProjects}
+                    onTaskClick={handleTaskClick}
+                />
+            )}
 
-            {/* Metadata Legend */}
-            <div className="mt-10 grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="p-6 bg-indigo-50/50 dark:bg-indigo-900/10 rounded-[2rem] border border-indigo-100 dark:border-indigo-800/50 flex gap-4">
-                    <InformationCircleIcon className="h-6 w-6 text-indigo-600 shrink-0" />
-                    <div>
-                        <p className="text-[10px] text-indigo-700 dark:text-indigo-300 leading-relaxed font-black uppercase tracking-widest">
-                            Dependency arrows (indigo) indicate sequential logic. Red paths identify the **Critical Path** — delays here will shift completion dates globally.
-                        </p>
-                    </div>
-                </div>
-                <div className="p-6 bg-gray-50/50 dark:bg-gray-800 rounded-[2rem] border border-gray-100 dark:border-gray-700 flex items-center justify-center gap-10">
-                    <div className="flex items-center gap-3">
-                        <div className="w-4 h-4 bg-[#6366f1] rounded-lg shadow-sm"></div>
-                        <span className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Deployment</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                        <div className="w-4 h-4 bg-[#ef4444] rounded-lg shadow-sm"></div>
-                        <span className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Critical Path</span>
-                    </div>
-                    <div className="text-[9px] font-black text-gray-300 uppercase tracking-[0.2em] italic ml-auto">
-                        Click node to inspect
-                    </div>
-                </div>
+            {/* ── Legend Info ── */}
+            <div className="mt-8 p-5 rounded-2xl bg-indigo-50 dark:bg-indigo-900/10 border border-indigo-100 dark:border-indigo-800/30 flex items-start gap-4">
+                <InformationCircleIcon className="h-5 w-5 text-indigo-500 shrink-0 mt-0.5" />
+                <p className="text-[10px] text-indigo-700 dark:text-indigo-300 font-black uppercase tracking-widest leading-relaxed">
+                    Click any task bar or row to inspect task details. Bars show task progress. Color indicates status.
+                    Scroll horizontally to view the full timeline.
+                </p>
             </div>
         </div>
     );
