@@ -47,6 +47,7 @@ function HomePage() {
     const [stats, setStats] = useState(null);
     const [managedProjects, setManagedProjects] = useState([]);
     const [hoursPeriod, setHoursPeriod] = useState('week'); // 'week' or 'month'
+    const [financePeriod, setFinancePeriod] = useState('month'); // 'week' or 'month'
     const [activeClockIn, setActiveClockIn] = useState(null);
     const [recentNotifications, setRecentNotifications] = useState([]);
     const [selectedProjectId, setSelectedProjectId] = useState('');
@@ -350,7 +351,6 @@ function HomePage() {
     }
 
     // Financial Budget vs Expense Telemetry for Admin & PM
-    const [financePeriod, setFinancePeriod] = useState('month'); // 'week' | 'month'
     const isAdmin = user?.role === 'admin' || user?.is_superuser;
     const isPM = user?.role === 'project manager';
     const canViewFinancialChart = isAdmin || isPM;
