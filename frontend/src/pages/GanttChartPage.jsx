@@ -170,8 +170,8 @@ function GanttChartPage() {
 
                 return [
                     `task-${task.id}`,
-                    " ",
-                    resourceBarLabel,
+                    task.title,
+                    projectLabel,
                     new Date(task.start_date),
                     new Date(task.due_date),
                     null,
@@ -280,15 +280,23 @@ function GanttChartPage() {
                                         trackHeight: 44,
                                         barHeight: 32,
                                         barCornerRadius: 6,
+                                        palette: [
+                                            { color: '#a5b4fc', dark: '#6366f1', light: '#e0e7ff' },
+                                            { color: '#6ee7b7', dark: '#10b981', light: '#d1fae5' },
+                                            { color: '#7dd3fc', dark: '#0284c7', light: '#e0f2fe' },
+                                            { color: '#fde047', dark: '#d97706', light: '#fef3c7' },
+                                            { color: '#fca5a5', dark: '#ef4444', light: '#fee2e2' }
+                                        ],
                                         labelStyle: {
                                             fontName: 'Inter, sans-serif',
-                                            fontSize: 0,
-                                            color: 'transparent',
+                                            fontSize: 12,
+                                            color: '#334155',
+                                            fontWeight: 'bold',
                                         },
                                         barLabelStyle: {
                                             fontName: 'Inter, sans-serif',
                                             fontSize: 11,
-                                            color: '#ffffff',
+                                            color: '#0f172a',
                                             fontWeight: 'bold',
                                         },
                                         arrow: {
