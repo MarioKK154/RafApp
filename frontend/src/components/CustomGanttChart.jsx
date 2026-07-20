@@ -1,6 +1,5 @@
 import React, { useMemo, useRef, useEffect, useState } from 'react';
-import { format, differenceInDays, addDays, startOfDay, eachMonthOfInterval, startOfMonth, endOfMonth, eachWeekOfInterval, startOfWeek } from 'date-fns';
-import { useNavigate } from 'react-router-dom';
+import { format, differenceInDays, addDays, startOfDay, startOfMonth, endOfMonth } from 'date-fns';
 
 // Vibrant color palette matching the reference Gantt style
 const BAR_COLORS = [
@@ -16,7 +15,6 @@ const BAR_COLORS = [
 
 const ROW_HEIGHT = 52;
 const HEADER_HEIGHT = 64;
-const LEFT_WIDTH = 460;
 const CELL_MIN_WIDTH = 36;
 
 function getStatusColor(status, index) {
@@ -33,7 +31,6 @@ function getStatusColor(status, index) {
 }
 
 export default function CustomGanttChart({ tasks, projects, onTaskClick }) {
-    const navigate = useNavigate();
     const containerRef = useRef(null);
     const [containerWidth, setContainerWidth] = useState(1200);
 
@@ -56,18 +53,17 @@ export default function CustomGanttChart({ tasks, projects, onTaskClick }) {
         const ends = validTasks.map(t => new Date(t.due_date));
         const min = new Date(Math.min(...starts));
         const max = new Date(Math.max(...ends));
-        // Pad a little
         return {
             minDate: addDays(startOfDay(min), -2),
-            maxDate: addDays(startOfDay(max), 4)
+            maxDate: addDays(startOfDay(max), 4),
         };
     }, [validTasks]);
 
     const totalDays = differenceInDays(maxDate, minDate) + 1;
-    const chartWidth = Math.max(containerWidth - LEFT_WIDTH, totalDays * CELL_MIN_WIDTH);
+    const chartWidth = Math.max(containerWidth, totalDays * CELL_MIN_WIDTH);
     const dayWidth = chartWidth / totalDays;
 
-    // Build month/week groups for header
+    // Month groups for header
     const months = useMemo(() => {
         const result = [];
         let current = startOfMonth(minDate);
@@ -81,7 +77,7 @@ export default function CustomGanttChart({ tasks, projects, onTaskClick }) {
         return result;
     }, [minDate, maxDate]);
 
-    // Day columns for sub-header (show every 7 days)
+    // Week markers for sub-header
     const dayColumns = useMemo(() => {
         const result = [];
         let d = minDate;
@@ -91,10 +87,6 @@ export default function CustomGanttChart({ tasks, projects, onTaskClick }) {
         }
         return result;
     }, [minDate, maxDate]);
-
-    const getProject = (projectId) => projects.find(p => p.id === projectId);
-
-    const totalHeight = HEADER_HEIGHT + validTasks.length * ROW_HEIGHT + 32;
 
     if (validTasks.length === 0) {
         return (
@@ -110,195 +102,123 @@ export default function CustomGanttChart({ tasks, projects, onTaskClick }) {
     return (
         <div ref={containerRef} className="w-full overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-700 shadow-2xl bg-white dark:bg-gray-900">
             <div className="overflow-x-auto custom-scrollbar">
-                <div style={{ display: 'flex', minWidth: LEFT_WIDTH + chartWidth }}>
-                    {/* ─── LEFT TABLE ─── */}
-                    <div style={{ width: LEFT_WIDTH, flexShrink: 0, zIndex: 10, position: 'sticky', left: 0 }} className="bg-white dark:bg-gray-900 border-r-2 border-gray-200 dark:border-gray-700">
-                        {/* Left header */}
-                        <div
-                            style={{ height: HEADER_HEIGHT }}
-                            className="flex items-center bg-[#1e293b] dark:bg-gray-950 border-b-2 border-gray-700"
-                        >
-                            <div style={{ width: 40 }} className="flex items-center justify-center">
-                                <span className="text-[9px] font-black text-white uppercase tracking-widest opacity-70">ID</span>
-                            </div>
-                            <div style={{ flex: 1 }} className="px-3">
-                                <span className="text-[9px] font-black text-white uppercase tracking-widest opacity-70">Task Name</span>
-                            </div>
-                            <div style={{ width: 100 }} className="px-2">
-                                <span className="text-[9px] font-black text-white uppercase tracking-widest opacity-70">Start Date</span>
-                            </div>
-                            <div style={{ width: 80 }} className="px-2 text-center">
-                                <span className="text-[9px] font-black text-white uppercase tracking-widest opacity-70">Duration</span>
-                            </div>
-                        </div>
+                <div style={{ minWidth: chartWidth }}>
 
-                        {/* Left rows */}
-                        {validTasks.map((task, i) => {
-                            const project = getProject(task.project_id);
-                            const color = getStatusColor(task.status, i);
-                            const duration = differenceInDays(new Date(task.due_date), new Date(task.start_date)) + 1;
-                            return (
-                                <div
-                                    key={task.id}
-                                    style={{ height: ROW_HEIGHT }}
-                                    className={`flex items-center border-b cursor-pointer group ${
-                                        i % 2 === 0
-                                            ? 'bg-white dark:bg-gray-900 border-gray-100 dark:border-gray-800'
-                                            : 'bg-slate-50 dark:bg-gray-850 border-gray-100 dark:border-gray-800'
-                                    } hover:bg-indigo-50 dark:hover:bg-indigo-950/20 transition-colors`}
-                                    onClick={() => onTaskClick && onTaskClick(task)}
-                                >
-                                    <div style={{ width: 40 }} className="flex items-center justify-center shrink-0">
-                                        <span className="text-[10px] font-black text-gray-400">{i + 1}</span>
-                                    </div>
-                                    <div style={{ flex: 1, overflow: 'hidden' }} className="px-2">
-                                        <p className="text-[11px] font-black text-gray-800 dark:text-gray-100 truncate leading-tight group-hover:text-indigo-700 dark:group-hover:text-indigo-400 transition-colors">
-                                            {task.title}
-                                        </p>
-                                        {project && (
-                                            <p className="text-[9px] font-bold text-gray-400 truncate mt-0.5">
-                                                {project.name}
-                                            </p>
-                                        )}
-                                    </div>
-                                    <div style={{ width: 100 }} className="px-2 shrink-0">
-                                        <span className="text-[9px] font-bold text-gray-500">
-                                            {format(new Date(task.start_date), 'MMM d, yyyy')}
-                                        </span>
-                                    </div>
-                                    <div style={{ width: 80 }} className="px-2 text-center shrink-0">
-                                        <span
-                                            className="text-[10px] font-black px-2 py-0.5 rounded-full"
-                                            style={{ backgroundColor: color.bg + '22', color: color.bg }}
-                                        >
-                                            {duration}d
-                                        </span>
-                                    </div>
-                                </div>
-                            );
-                        })}
+                    {/* ─── HEADER ─── */}
+                    {/* Month row */}
+                    <div style={{ height: HEADER_HEIGHT / 2 }} className="flex bg-[#1e293b] border-b border-gray-700">
+                        {months.map((m, i) => (
+                            <div
+                                key={i}
+                                style={{ width: m.days * dayWidth, flexShrink: 0 }}
+                                className="flex items-center justify-center border-r border-gray-600"
+                            >
+                                <span className="text-[10px] font-black text-white uppercase tracking-widest">{m.label}</span>
+                            </div>
+                        ))}
                     </div>
 
-                    {/* ─── TIMELINE AREA ─── */}
-                    <div style={{ width: chartWidth, flexShrink: 0, position: 'relative' }}>
-                        {/* Month header */}
-                        <div style={{ height: HEADER_HEIGHT / 2 }} className="flex bg-[#1e293b] dark:bg-gray-950 border-b border-gray-700">
-                            {months.map((m, i) => (
+                    {/* Week sub-header */}
+                    <div style={{ height: HEADER_HEIGHT / 2, position: 'relative' }} className="bg-[#263548] border-b-2 border-gray-700">
+                        {dayColumns.map((d, i) => {
+                            const left = differenceInDays(d, minDate) * dayWidth;
+                            return (
                                 <div
                                     key={i}
-                                    style={{ width: m.days * dayWidth }}
-                                    className="flex items-center justify-center border-r border-gray-600 shrink-0"
+                                    style={{ position: 'absolute', left, width: 7 * dayWidth, top: 0, bottom: 0 }}
+                                    className="flex items-center justify-center border-r border-gray-600/40"
                                 >
-                                    <span className="text-[10px] font-black text-white uppercase tracking-widest">{m.label}</span>
-                                </div>
-                            ))}
-                        </div>
-                        {/* Week sub-header */}
-                        <div style={{ height: HEADER_HEIGHT / 2 }} className="flex bg-[#263548] dark:bg-gray-900 border-b-2 border-gray-700 relative">
-                            {dayColumns.map((d, i) => {
-                                const left = differenceInDays(d, minDate) * dayWidth;
-                                return (
-                                    <div
-                                        key={i}
-                                        style={{ position: 'absolute', left, width: 7 * dayWidth }}
-                                        className="flex items-center justify-center border-r border-gray-600/40 h-full"
-                                    >
-                                        <span className="text-[9px] font-bold text-gray-400">{format(d, 'MMM d')}</span>
-                                    </div>
-                                );
-                            })}
-                        </div>
-
-                        {/* Task rows */}
-                        {validTasks.map((task, i) => {
-                            const color = getStatusColor(task.status, i);
-                            const taskStart = new Date(task.start_date);
-                            const taskEnd = new Date(task.due_date);
-                            const left = differenceInDays(taskStart, minDate) * dayWidth;
-                            const width = Math.max((differenceInDays(taskEnd, taskStart) + 1) * dayWidth, 6);
-                            const pct = task.status === 'Done' || task.status === 'Commissioned' ? 100
-                                : task.status === 'In Progress' ? 50 : 0;
-
-                            return (
-                                <div
-                                    key={task.id}
-                                    style={{ height: ROW_HEIGHT }}
-                                    className={`relative border-b ${
-                                        i % 2 === 0
-                                            ? 'bg-white dark:bg-gray-900 border-gray-100 dark:border-gray-800'
-                                            : 'bg-slate-50 dark:bg-gray-850 border-gray-100 dark:border-gray-800'
-                                    }`}
-                                >
-                                    {/* Vertical grid lines every 7 days */}
-                                    {dayColumns.map((d, gi) => {
-                                        const gl = differenceInDays(d, minDate) * dayWidth;
-                                        return (
-                                            <div
-                                                key={gi}
-                                                style={{ position: 'absolute', left: gl, top: 0, bottom: 0, width: 1 }}
-                                                className="bg-gray-100 dark:bg-gray-800"
-                                            />
-                                        );
-                                    })}
-
-                                    {/* The Gantt bar */}
-                                    <div
-                                        style={{
-                                            position: 'absolute',
-                                            left: left + 2,
-                                            width: width - 4,
-                                            top: '50%',
-                                            transform: 'translateY(-50%)',
-                                            height: 34,
-                                            backgroundColor: color.bg,
-                                            borderRadius: 8,
-                                            boxShadow: `0 2px 8px ${color.bg}55`,
-                                            overflow: 'hidden',
-                                            cursor: 'pointer',
-                                        }}
-                                        onClick={() => onTaskClick && onTaskClick(task)}
-                                        className="group/bar transition-transform hover:scale-y-105 hover:shadow-lg"
-                                        title={`${task.title} (${format(taskStart, 'MMM d')} → ${format(taskEnd, 'MMM d')})`}
-                                    >
-                                        {/* Progress fill */}
-                                        {pct > 0 && (
-                                            <div
-                                                style={{
-                                                    position: 'absolute',
-                                                    left: 0, top: 0, bottom: 0,
-                                                    width: `${pct}%`,
-                                                    background: 'rgba(0,0,0,0.18)',
-                                                    borderRadius: 8,
-                                                }}
-                                            />
-                                        )}
-                                        {/* Bar text */}
-                                        <div className="absolute inset-0 flex items-center px-3">
-                                            <span
-                                                className="font-black text-white truncate select-none leading-none"
-                                                style={{ fontSize: Math.min(11, Math.max(8, width / 12)) }}
-                                            >
-                                                {task.title}
-                                                {task.description ? ` · ${task.description.slice(0, 40)}` : ''}
-                                            </span>
-                                        </div>
-                                    </div>
+                                    <span className="text-[9px] font-bold text-gray-400">{format(d, 'MMM d')}</span>
                                 </div>
                             );
                         })}
                     </div>
+
+                    {/* ─── TASK ROWS ─── */}
+                    {validTasks.map((task, i) => {
+                        const color = getStatusColor(task.status, i);
+                        const taskStart = new Date(task.start_date);
+                        const taskEnd = new Date(task.due_date);
+                        const left = differenceInDays(taskStart, minDate) * dayWidth;
+                        const width = Math.max((differenceInDays(taskEnd, taskStart) + 1) * dayWidth, 6);
+                        const pct = task.status === 'Done' || task.status === 'Commissioned' ? 100
+                            : task.status === 'In Progress' ? 50 : 0;
+
+                        return (
+                            <div
+                                key={task.id}
+                                style={{ height: ROW_HEIGHT, position: 'relative' }}
+                                className="border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 hover:bg-indigo-50/30 dark:hover:bg-indigo-950/10 transition-colors"
+                            >
+                                {/* Vertical week grid lines */}
+                                {dayColumns.map((d, gi) => {
+                                    const gl = differenceInDays(d, minDate) * dayWidth;
+                                    return (
+                                        <div
+                                            key={gi}
+                                            style={{ position: 'absolute', left: gl, top: 0, bottom: 0, width: 1 }}
+                                            className="bg-gray-100 dark:bg-gray-800"
+                                        />
+                                    );
+                                })}
+
+                                {/* Gantt bar */}
+                                <div
+                                    style={{
+                                        position: 'absolute',
+                                        left: left + 2,
+                                        width: width - 4,
+                                        top: '50%',
+                                        transform: 'translateY(-50%)',
+                                        height: 34,
+                                        backgroundColor: color.bg,
+                                        borderRadius: 8,
+                                        boxShadow: `0 2px 8px ${color.bg}55`,
+                                        overflow: 'hidden',
+                                        cursor: 'pointer',
+                                    }}
+                                    onClick={() => onTaskClick && onTaskClick(task)}
+                                    className="transition-transform hover:scale-y-105"
+                                    title={`${task.title} (${format(taskStart, 'MMM d')} → ${format(taskEnd, 'MMM d')})`}
+                                >
+                                    {/* Progress fill */}
+                                    {pct > 0 && (
+                                        <div
+                                            style={{
+                                                position: 'absolute',
+                                                left: 0, top: 0, bottom: 0,
+                                                width: `${pct}%`,
+                                                background: 'rgba(0,0,0,0.18)',
+                                                borderRadius: 8,
+                                            }}
+                                        />
+                                    )}
+                                    {/* Bar text */}
+                                    <div className="absolute inset-0 flex items-center px-3">
+                                        <span
+                                            className="font-black text-white truncate select-none leading-none"
+                                            style={{ fontSize: Math.min(11, Math.max(8, width / 12)) }}
+                                        >
+                                            {task.title}
+                                            {task.description ? ` · ${task.description.slice(0, 40)}` : ''}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })}
                 </div>
             </div>
 
             {/* ─── COLOR LEGEND ─── */}
-            <div className="px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 flex flex-wrap gap-4">
+            <div className="px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/80 flex flex-wrap gap-4">
                 {[...new Map(validTasks.map((t, i) => {
                     const c = getStatusColor(t.status, i);
                     return [t.status, { status: t.status, color: c.bg }];
                 })).values()].map(({ status, color }) => (
                     <div key={status} className="flex items-center gap-2">
                         <span className="h-3 w-6 rounded-full inline-block" style={{ backgroundColor: color }} />
-                        <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest">{status}</span>
+                        <span className="text-[9px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest">{status}</span>
                     </div>
                 ))}
             </div>
