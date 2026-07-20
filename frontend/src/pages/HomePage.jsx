@@ -462,7 +462,7 @@ function HomePage() {
                 ) : null;
 
             case 'charts-block':
-                const pieSource = canViewFinancialChart ? financialPieData.items : donutData;
+                const pieSource = (canViewFinancialChart && financialPieData?.items) ? financialPieData.items : donutData;
 
                 return (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
@@ -1198,6 +1198,11 @@ class DashboardErrorBoundary extends React.Component {
                         <p className="text-xs text-gray-400 font-bold leading-relaxed">
                             An unexpected layout glitch occurred. Click below to reset your custom layout settings and restore the default operational view.
                         </p>
+                        {this.state.error && (
+                            <div className="p-3 bg-red-950/40 border border-red-800/50 rounded-xl text-[10px] text-red-300 font-mono text-left overflow-x-auto max-h-32">
+                                {this.state.error.toString()}
+                            </div>
+                        )}
                         <button 
                             onClick={this.handleReset} 
                             className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs uppercase tracking-widest rounded-xl transition shadow-lg"
