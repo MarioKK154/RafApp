@@ -161,7 +161,8 @@ function GanttChartPage() {
                 else if (task.status === 'In Progress') percentComplete = 50;
 
                 const projectForTask = activeAndPlanningProjects.find(p => p.id === task.project_id);
-                const resourceName = projectForTask ? projectForTask.name : 'Unassigned';
+                const projectLabel = projectForTask ? projectForTask.name : 'Unassigned';
+                const resourceBarLabel = `${task.title} · ${projectLabel}`;
 
                 const dependencies = (task.predecessor_ids && task.predecessor_ids.length > 0)
                     ? task.predecessor_ids.map(id => `task-${id}`).join(',')
@@ -170,7 +171,7 @@ function GanttChartPage() {
                 return [
                     `task-${task.id}`,
                     task.title,
-                    resourceName,
+                    resourceBarLabel,
                     new Date(task.start_date),
                     new Date(task.due_date),
                     null,
@@ -182,7 +183,7 @@ function GanttChartPage() {
         return [columns, ...rows];
     }, [ganttTasks, activeAndPlanningProjects]);
 
-    const dynamicHeight = chartData.length > 1 ? (chartData.length - 1) * 45 + 100 : 400;
+    const dynamicHeight = chartData.length > 1 ? (chartData.length - 1) * 48 + 110 : 400;
 
     // Security Gateway: Block unauthorized personnel
     if (!authIsLoading && isAuthenticated && !hasAccess) {
@@ -276,12 +277,20 @@ function GanttChartPage() {
                                 options={{
                                     height: dynamicHeight,
                                     gantt: {
-                                        trackHeight: 40,
-                                        barHeight: 30,
+                                        trackHeight: 44,
+                                        barHeight: 32,
+                                        barCornerRadius: 6,
                                         labelStyle: {
                                             fontName: 'Inter, sans-serif',
                                             fontSize: 11,
-                                            color: '#111827',
+                                            color: '#334155',
+                                            fontWeight: 'bold',
+                                        },
+                                        barLabelStyle: {
+                                            fontName: 'Inter, sans-serif',
+                                            fontSize: 10,
+                                            color: '#ffffff',
+                                            fontWeight: 'bold',
                                         },
                                         arrow: {
                                             angle: 45,

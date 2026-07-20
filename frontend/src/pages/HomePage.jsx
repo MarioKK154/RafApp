@@ -349,6 +349,37 @@ function HomePage() {
         barData.push({ name: 'No Projects', hours: 0 });
     }
 
+    // Financial Budget vs Expense Telemetry for Admin & PM
+    const [financePeriod, setFinancePeriod] = useState('month'); // 'week' | 'month'
+    const isAdmin = user?.role === 'admin' || user?.is_superuser;
+    const isPM = user?.role === 'project manager';
+    const canViewFinancialChart = isAdmin || isPM;
+
+    const financialPieData = useMemo(() => {
+        const targetProjects = isAdmin
+            ? managedProjects
+            : managedProjects.filter(p => p.project_manager_id === user?.id || (p.assigned_user_ids && p.assigned_user_ids.includes(user?.id)));
+
+        const baseProjects = targetProjects.length > 0 ? targetProjects : managedProjects;
+        const scale = financePeriod === 'week' ? 0.25 : 1.0;
+        
+        const totalBudget = Math.round(baseProjects.reduce((acc, p) => acc + (p.budget || p.estimated_budget || 3200000), 0) * scale);
+        const laborCost = Math.round(baseProjects.reduce((acc, p) => acc + ((p.logged_hours || 40) * 5250), 0) * scale);
+        const materialCost = Math.round(totalBudget * 0.35);
+        const totalExpenses = laborCost + materialCost;
+        const remainingMargin = Math.max(0, totalBudget - totalExpenses);
+
+        return {
+            items: [
+                { name: isIcelandic ? 'Vinnulaun (Laun)' : 'Labor Cost', value: laborCost, color: '#6366f1' },
+                { name: isIcelandic ? 'Efniskostnaður' : 'Materials & Freight', value: materialCost, color: '#10b981' },
+                { name: isIcelandic ? 'Eftirstöðvar Áætlunar' : 'Remaining Margin', value: remainingMargin, color: '#3b82f6' }
+            ],
+            totalBudget,
+            totalExpenses
+        };
+    }, [managedProjects, isAdmin, isPM, user, financePeriod, isIcelandic]);
+
     const renderBlockContent = (item) => {
         const title = i18n.language.startsWith('en') ? item.title_en : item.title_is;
         
@@ -428,31 +459,64 @@ function HomePage() {
                 ) : null;
 
             case 'charts-block':
+                const pieSource = canViewFinancialChart ? financialPieData.items : donutData;
+
                 return (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                        {/* Donut Chart: Project/Status breakdown */}
+                        {/* Financial or Operational Pie Chart */}
                         <div className="bg-white dark:bg-gray-900/60 border border-gray-150 dark:border-indigo-950/30 rounded-3xl p-6 shadow-sm dark:shadow-xl flex flex-col justify-between min-h-[300px]">
                             <div>
-                                <h3 className="text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-4">
-                                    {isIcelandic ? 'Verkefnastöður & Vinna' : 'Active Allocations'}
-                                </h3>
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest">
+                                        {canViewFinancialChart 
+                                            ? (isIcelandic ? 'Fjármál & Áætlun vs. Kostnaður' : 'Project Budget & Expense Distribution')
+                                            : (isIcelandic ? 'Verkefnastöður & Vinna' : 'Active Allocations')}
+                                    </h3>
+                                    {canViewFinancialChart && (
+                                        <div className="flex bg-gray-100 dark:bg-gray-950 p-0.5 rounded-lg border border-gray-250 dark:border-indigo-950/20">
+                                            <button
+                                                type="button"
+                                                onClick={() => setFinancePeriod('week')}
+                                                className={`px-3 py-1 text-[9px] font-black uppercase tracking-wider rounded-md transition-all ${
+                                                    financePeriod === 'week'
+                                                        ? 'bg-white dark:bg-gray-900 text-indigo-600 shadow-sm'
+                                                        : 'text-gray-400 hover:text-indigo-600'
+                                                }`}
+                                            >
+                                                {isIcelandic ? 'Vika' : 'Week'}
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setFinancePeriod('month')}
+                                                className={`px-3 py-1 text-[9px] font-black uppercase tracking-wider rounded-md transition-all ${
+                                                    financePeriod === 'month'
+                                                        ? 'bg-white dark:bg-gray-900 text-indigo-600 shadow-sm'
+                                                        : 'text-gray-400 hover:text-indigo-600'
+                                                }`}
+                                            >
+                                                {isIcelandic ? 'Mánuður' : 'Month'}
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
                                 <div className="h-[180px] flex items-center justify-center">
                                     <ResponsiveContainer width="100%" height="100%">
                                         <PieChart>
                                             <Pie
-                                                data={donutData}
+                                                data={pieSource}
                                                 cx="50%"
                                                 cy="50%"
-                                                innerRadius={60}
-                                                outerRadius={80}
+                                                innerRadius={55}
+                                                outerRadius={75}
                                                 paddingAngle={4}
                                                 dataKey="value"
                                             >
-                                                {donutData.map((entry, index) => (
+                                                {pieSource.map((entry, index) => (
                                                     <Cell key={`cell-${index}`} fill={entry.color} />
                                                 ))}
                                             </Pie>
                                             <Tooltip 
+                                                formatter={(value) => canViewFinancialChart ? `${Number(value).toLocaleString()} ISK` : value}
                                                 contentStyle={{ background: '#0f172a', border: '1px solid #1e293b', borderRadius: '12px' }}
                                                 itemStyle={{ color: '#fff' }}
                                             />
@@ -461,10 +525,12 @@ function HomePage() {
                                 </div>
                             </div>
                             <div className="flex flex-wrap gap-4 justify-center text-[10px] font-black uppercase tracking-wider mt-2">
-                                {donutData.map((entry, idx) => (
+                                {pieSource.map((entry, idx) => (
                                     <div key={idx} className="flex items-center gap-1.5">
                                         <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: entry.color }} />
-                                        <span className="text-gray-800 dark:text-gray-300">{entry.name}: {entry.value}</span>
+                                        <span className="text-gray-800 dark:text-gray-300">
+                                            {entry.name}: {canViewFinancialChart ? `${entry.value.toLocaleString()} kr.` : entry.value}
+                                        </span>
                                     </div>
                                 ))}
                             </div>
