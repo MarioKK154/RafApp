@@ -58,7 +58,7 @@ async def delete_task_comment(
 
     # Permission logic
     is_author = db_comment.author_id == current_user.id
-    is_project_moderator = current_user.role in ["admin", "project manager", "team_lead"] # Fixed role string consistency
+    is_project_moderator = current_user.role in ["admin", "project manager", "team leader", "team_lead"]
     can_delete = is_author or is_project_moderator or current_user.is_superuser
 
     if not can_delete:

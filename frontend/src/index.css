@@ -511,11 +511,11 @@
 }
 
 /* ============================================================
-   ANIMATIONS
+   CONSISTENT UI ANIMATION & TRANSITION SYSTEM
    ============================================================ */
 
 @keyframes fadeUp {
-  from { opacity: 0; transform: translateY(10px); }
+  from { opacity: 0; transform: translateY(12px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
@@ -525,22 +525,94 @@
 }
 
 @keyframes slideIn {
-  from { opacity: 0; transform: translateX(-8px); }
+  from { opacity: 0; transform: translateX(-12px); }
   to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(12px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes scaleUp {
+  from { opacity: 0; transform: scale(0.97); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes modalPop {
+  0%   { opacity: 0; transform: scale(0.95) translateY(10px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
 }
 
 @keyframes pulseSoft {
   0%, 100% { opacity: 1; }
-  50%       { opacity: 0.4; }
+  50%       { opacity: 0.45; }
 }
 
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
 
-/* Legacy compat — keep .animate-in working */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Page entrance animations */
+.page-transition {
+  animation: fadeUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
 .animate-in {
-  animation: fadeUp 0.35s ease-out;
+  animation: fadeUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-scale-in {
+  animation: scaleUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Staggered entrance delays */
+.stagger-1 { animation-delay: 40ms; }
+.stagger-2 { animation-delay: 80ms; }
+.stagger-3 { animation-delay: 120ms; }
+.stagger-4 { animation-delay: 160ms; }
+.stagger-5 { animation-delay: 200ms; }
+
+/* Micro-interactions & Hover classes */
+.hover-lift {
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.hover-glow:hover {
+  box-shadow: var(--shadow-brand);
+}
+
+.button-press {
+  transition: transform 0.12s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.button-press:active {
+  transform: scale(0.96);
+}
+
+/* Glassmorphic cards */
+.glass-card {
+  background: var(--bg-overlay);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glass-card:hover {
+  border-color: var(--brand-border);
+  box-shadow: var(--shadow-md);
 }
 
 /* ============================================================
