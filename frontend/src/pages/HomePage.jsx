@@ -336,13 +336,15 @@ function HomePage() {
         donutData.push({ name: 'Empty', value: 1, color: '#475569' });
     }
 
-    const barData = managedProjects.slice(0, 5).map(p => {
+    const barData = (managedProjects || []).slice(0, 5).map(p => {
+        const projName = p && p.name ? String(p.name) : 'Project';
+        const pid = p && p.id ? Number(p.id) : 1;
         const defaultHours = hoursPeriod === 'week' 
-            ? ((p.id * 17) % 35 + 8) 
-            : ((p.id * 53) % 120 + 35);
+            ? ((pid * 17) % 35 + 8) 
+            : ((pid * 53) % 120 + 35);
         return {
-            name: p.name.length > 15 ? p.name.slice(0, 12) + '...' : p.name,
-            hours: p.logged_hours || defaultHours,
+            name: projName.length > 15 ? projName.slice(0, 12) + '...' : projName,
+            hours: (p && p.logged_hours) || defaultHours,
         };
     });
 
@@ -351,20 +353,21 @@ function HomePage() {
     }
 
     // Financial Budget vs Expense Telemetry for Admin & PM
-    const isAdmin = user?.role === 'admin' || user?.is_superuser;
-    const isPM = user?.role === 'project manager';
+    const isAdmin = Boolean(user?.role === 'admin' || user?.is_superuser);
+    const isPM = Boolean(user?.role === 'project manager');
     const canViewFinancialChart = isAdmin || isPM;
 
     const financialPieData = useMemo(() => {
+        const safeProjects = Array.isArray(managedProjects) ? managedProjects : [];
         const targetProjects = isAdmin
-            ? managedProjects
-            : managedProjects.filter(p => p.project_manager_id === user?.id || (p.assigned_user_ids && p.assigned_user_ids.includes(user?.id)));
+            ? safeProjects
+            : safeProjects.filter(p => p && (p.project_manager_id === user?.id || (Array.isArray(p.assigned_user_ids) && p.assigned_user_ids.includes(user?.id))));
 
-        const baseProjects = targetProjects.length > 0 ? targetProjects : managedProjects;
+        const baseProjects = targetProjects.length > 0 ? targetProjects : safeProjects;
         const scale = financePeriod === 'week' ? 0.25 : 1.0;
         
-        const totalBudget = Math.round(baseProjects.reduce((acc, p) => acc + (p.budget || p.estimated_budget || 3200000), 0) * scale);
-        const laborCost = Math.round(baseProjects.reduce((acc, p) => acc + ((p.logged_hours || 40) * 5250), 0) * scale);
+        const totalBudget = Math.round(baseProjects.reduce((acc, p) => acc + ((p && (p.budget || p.estimated_budget)) || 3200000), 0) * scale);
+        const laborCost = Math.round(baseProjects.reduce((acc, p) => acc + (((p && p.logged_hours) || 40) * 5250), 0) * scale);
         const materialCost = Math.round(totalBudget * 0.35);
         const totalExpenses = laborCost + materialCost;
         const remainingMargin = Math.max(0, totalBudget - totalExpenses);
