@@ -23,8 +23,9 @@ const SchedulingGridPage = () => {
     const [viewDate, setViewDate] = useState(new Date());
     const [users, setUsers] = useState([]);
     const [assignments, setAssignments] = useState([]);
+    const [pmProjectIds, setPmProjectIds] = useState(new Set()); // PM's own projects (date-independent)
     const [selectedCity, setSelectedCity] = useState('All');
-            const [isLoading, setIsLoading] = useState(true);
+    const [isLoading, setIsLoading] = useState(true);
     const [leaveBlocks, setLeaveBlocks] = useState([]);
     const [showLeaveOverlay, setShowLeaveOverlay] = useState(false);
 
@@ -44,16 +45,12 @@ const SchedulingGridPage = () => {
         try {
             const startStr = format(days[0], 'yyyy-MM-dd');
             const endStr = format(days[days.length - 1], 'yyyy-MM-dd');
-            const tenantScope = {};
-            
-            const leaveParams = {
-                start: startStr,
-                end: endStr,
-                
-            };
+
+            const leaveParams = { start: startStr, end: endStr };
+
             const [usersRes, assignRes, leaveRes] = await Promise.all([
-                axiosInstance.get('/users/', { params: { ...tenantScope } }),
-                axiosInstance.get('/assignments/', { params: { start: startStr, end: endStr, ...tenantScope } }),
+                axiosInstance.get('/users/'),
+                axiosInstance.get('/assignments/', { params: { start: startStr, end: endStr } }),
                 axiosInstance.get('/accounting/leave-requests/calendar', { params: leaveParams }),
             ]);
 
@@ -68,6 +65,21 @@ const SchedulingGridPage = () => {
         }
     }, [days]);
 
+    // Fetch PM's own projects once (date-independent) so co-worker visibility
+    // is not limited to the current 2-week window.
+    useEffect(() => {
+        const isPM = user?.role === 'project manager';
+        const isAdmin = user?.role === 'admin' || user?.is_superuser;
+        if (!isPM || isAdmin) return; // Only needed for PM role
+        axiosInstance.get('/projects/', { params: { limit: 1000 } })
+            .then(res => {
+                // Projects API already scopes to tenant; collect all IDs
+                const ids = new Set((res.data || []).map(p => p.id));
+                setPmProjectIds(ids);
+            })
+            .catch(err => console.error('Failed to fetch PM projects for schedule scope:', err));
+    }, [user]);
+
     useEffect(() => { fetchData(); }, [fetchData]);
 
     
@@ -77,27 +89,29 @@ const SchedulingGridPage = () => {
 
     // RBAC Personnel Roster Scope:
     // - Admin: All tenant users
-    // - PM: Personnel sharing assigned projects with PM
+    // - PM: All users assigned to any project the PM manages (date-independent)
     // - Electrician & Team Leader: Self only
     const visibleUsers = useMemo(() => {
         if (!users || users.length === 0) return [];
         if (isAdmin) return users;
         if (isPM) {
-            const pmProjectIds = new Set(
-                assignments
-                    .filter(a => a.user_id === user?.id)
-                    .map(a => a.project_id)
-            );
+            // Use PM's full project list (pmProjectIds, fetched on mount) so that
+            // co-workers are visible even if no assignment falls in the current window.
+            // Fall back to window-scoped assignments if pmProjectIds not yet loaded.
+            const effectiveProjectIds = pmProjectIds.size > 0
+                ? pmProjectIds
+                : new Set(assignments.filter(a => a.user_id === user?.id).map(a => a.project_id));
+
             const coWorkerUserIds = new Set(
                 assignments
-                    .filter(a => pmProjectIds.has(a.project_id))
+                    .filter(a => effectiveProjectIds.has(a.project_id))
                     .map(a => a.user_id)
             );
             coWorkerUserIds.add(user?.id);
             return users.filter(u => coWorkerUserIds.has(u.id));
         }
         return users.filter(u => u.id === user?.id);
-    }, [users, assignments, user, isAdmin, isPM]);
+    }, [users, assignments, pmProjectIds, user, isAdmin, isPM]);
 
     // Handle Deletion of an Assignment Node
     const handleDeleteAssignment = async (assignmentId, projectName, userName) => {
