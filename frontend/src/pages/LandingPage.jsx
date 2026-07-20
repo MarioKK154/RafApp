@@ -619,10 +619,12 @@ function LandingPage() {
                             className="hidden sm:flex items-center gap-2 px-3 py-1 bg-gray-800/90 hover:bg-gray-700/90 rounded-full border border-gray-700/80 text-[10px] font-black uppercase tracking-wider text-gray-200 transition shadow-sm hover:border-[#0096FF]/50 hover:scale-105"
                             title="Click to view live system operational status (status.rafapp.com)"
                         >
-                            <span className={`h-2.5 w-2.5 rounded-full ${
-                                serverStatus === 'online' ? 'bg-emerald-400 animate-pulse shadow-sm shadow-emerald-500/50' :
-                                serverStatus === 'offline' ? 'bg-red-400' : 'bg-amber-400 animate-ping'
-                            }`} />
+                            <span className="pulse-ring-container text-emerald-400 mr-0.5">
+                                <span className={`h-2.5 w-2.5 rounded-full ${
+                                    serverStatus === 'online' ? 'bg-emerald-400 shadow-sm shadow-emerald-500/50' :
+                                    serverStatus === 'offline' ? 'bg-red-400' : 'bg-amber-400'
+                                }`} />
+                            </span>
                             <span>{serverStatus === 'online' ? 'Systems Online' : serverStatus === 'offline' ? 'System Offline' : 'Checking Status...'}</span>
                             <span className="text-[9px] text-[#0096FF] font-bold">↗</span>
                         </button>

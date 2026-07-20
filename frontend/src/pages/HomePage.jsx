@@ -6,6 +6,7 @@ import axiosInstance from '../api/axiosInstance';
 import { toast } from 'react-toastify';
 import LoadingSpinner from '../components/LoadingSpinner';
 import Modal from '../components/Modal';
+import AnimatedCountUp from '../components/AnimatedCountUp';
 import { formatDistanceToNow, isPast, isToday, parseISO } from 'date-fns';
 import { 
     BriefcaseIcon, 
@@ -1084,13 +1085,14 @@ function StatCard({ title, value, icon, color, unit = "" }) {
         rose: 'bg-rose-50 dark:bg-rose-950/30 text-rose-650 dark:text-rose-400 border-rose-100 dark:border-rose-900/30',
     };
     return (
-        <div className="bg-white dark:bg-gray-900/60 p-6 rounded-[2.5rem] border border-gray-150 dark:border-indigo-950/30 shadow-sm dark:shadow-xl transition-transform hover:-translate-y-1">
+        <div className="ambient-glow-card bg-white dark:bg-gray-900/60 p-6 rounded-[2.5rem] border border-gray-150 dark:border-indigo-950/30 shadow-sm dark:shadow-xl transition-all duration-300">
             <div className={`p-3 rounded-xl w-fit mb-4 border ${colors[color] || colors.indigo}`}>
                 {React.cloneElement(icon, { className: "h-6 w-6" })}
             </div>
             <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">{title}</p>
             <p className="text-3xl font-black text-gray-900 dark:text-white tracking-tighter">
-                {value}<span className="text-sm ml-1 text-gray-400 dark:text-gray-500 uppercase">{unit}</span>
+                <AnimatedCountUp value={value} />
+                <span className="text-sm ml-1 text-gray-400 dark:text-gray-500 uppercase">{unit}</span>
             </p>
         </div>
     );
