@@ -48,7 +48,18 @@ def create_new_assignment(
     if current_user.role not in ['admin', 'project manager'] and not current_user.is_superuser:
         raise HTTPException(status_code=403, detail="Insufficient clearance for resource scheduling.")
         
-    return crud.create_assignment(db=db, assignment=assignment)
+    new_assignment = crud.create_assignment(db=db, assignment=assignment)
+    
+    # Dispatch in-app notification to assigned user
+    try:
+        project_obj = crud.get_project(db, project_id=assignment.project_id)
+        proj_name = project_obj.name if project_obj else f"Project #{assignment.project_id}"
+        msg = f"You have been assigned to project '{proj_name}' in the schedule ({assignment.start_date} to {assignment.end_date})."
+        crud.create_notification(db=db, user_id=assignment.user_id, message=msg, link="/scheduling")
+    except Exception as e:
+        print(f"Failed to dispatch schedule assignment notification: {e}")
+
+    return new_assignment
 
 @router.delete("/{assignment_id}")
 def purge_assignment(

@@ -71,8 +71,40 @@ const SchedulingGridPage = () => {
     useEffect(() => { fetchData(); }, [fetchData]);
 
     
+    const isAdmin = Boolean(user?.role === 'admin' || user?.is_superuser);
+    const isPM = Boolean(user?.role === 'project manager');
+    const canEdit = isAdmin; // Admins have full editing clearance
+
+    // RBAC Personnel Roster Scope:
+    // - Admin: All tenant users
+    // - PM: Personnel sharing assigned projects with PM
+    // - Electrician & Team Leader: Self only
+    const visibleUsers = useMemo(() => {
+        if (!users || users.length === 0) return [];
+        if (isAdmin) return users;
+        if (isPM) {
+            const pmProjectIds = new Set(
+                assignments
+                    .filter(a => a.user_id === user?.id)
+                    .map(a => a.project_id)
+            );
+            const coWorkerUserIds = new Set(
+                assignments
+                    .filter(a => pmProjectIds.has(a.project_id))
+                    .map(a => a.user_id)
+            );
+            coWorkerUserIds.add(user?.id);
+            return users.filter(u => coWorkerUserIds.has(u.id));
+        }
+        return users.filter(u => u.id === user?.id);
+    }, [users, assignments, user, isAdmin, isPM]);
+
     // Handle Deletion of an Assignment Node
     const handleDeleteAssignment = async (assignmentId, projectName, userName) => {
+        if (!canEdit) {
+            toast.info("Schedule modifications are restricted to Administrative personnel.");
+            return;
+        }
         if (window.confirm(`Are you sure you want to remove ${userName} from project ${projectName}?`)) {
             try {
                 await axiosInstance.delete(`/assignments/${assignmentId}`);
@@ -86,21 +118,22 @@ const SchedulingGridPage = () => {
     };
 
     const cities = useMemo(() => {
-        const uniqueCities = [...new Set(users.map(u => u.city).filter(Boolean))];
-        const hasUnassigned = users.some(u => !u.city);
+        const uniqueCities = [...new Set(visibleUsers.map(u => u.city).filter(Boolean))];
+        const hasUnassigned = visibleUsers.some(u => !u.city);
         const list = ['All', ...uniqueCities.sort()];
         if (hasUnassigned) list.push('Unassigned');
         return list;
-    }, [users]);
+    }, [visibleUsers]);
 
     const filteredUsers = useMemo(() => {
-        if (selectedCity === 'All') return users;
-        if (selectedCity === 'Unassigned') return users.filter(u => !u.city);
-        return users.filter(u => u.city === selectedCity);
-    }, [users, selectedCity]);
+        if (selectedCity === 'All') return visibleUsers;
+        if (selectedCity === 'Unassigned') return visibleUsers.filter(u => !u.city);
+        return visibleUsers.filter(u => u.city === selectedCity);
+    }, [visibleUsers, selectedCity]);
         
-    const openAssignmentModal = (user, day) => {
-        setModalConfig({ isOpen: true, user: user, date: day });
+    const openAssignmentModal = (targetUser, day) => {
+        if (!canEdit) return;
+        setModalConfig({ isOpen: true, user: targetUser, date: day });
     };
 
     const leaveOnDay = useCallback(

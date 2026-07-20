@@ -170,7 +170,7 @@ function GanttChartPage() {
 
                 return [
                     `task-${task.id}`,
-                    task.title,
+                    " ",
                     resourceBarLabel,
                     new Date(task.start_date),
                     new Date(task.due_date),
@@ -282,13 +282,12 @@ function GanttChartPage() {
                                         barCornerRadius: 6,
                                         labelStyle: {
                                             fontName: 'Inter, sans-serif',
-                                            fontSize: 11,
-                                            color: '#334155',
-                                            fontWeight: 'bold',
+                                            fontSize: 0,
+                                            color: 'transparent',
                                         },
                                         barLabelStyle: {
                                             fontName: 'Inter, sans-serif',
-                                            fontSize: 10,
+                                            fontSize: 11,
                                             color: '#ffffff',
                                             fontWeight: 'bold',
                                         },
