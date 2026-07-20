@@ -64,11 +64,20 @@ async def read_users_me(
 @router.post("/me/profile-picture", response_model=schemas.UserReadAdmin)
 @limiter.limit("10/minute")
 async def upload_profile_picture(request: Request, db: DbDependency, current_user: CurrentUserDependency, file: UploadFile = File(...)):
-    if file.content_type not in ["image/jpeg", "image/png", "image/gif"]:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid file type.")
+    allowed_mimes = {
+        "image/jpeg", "image/jpg", "image/png", "image/gif", 
+        "image/webp", "image/svg+xml", "image/pjpeg", "image/x-png"
+    }
+    allowed_exts = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg", ".jfif"}
+    file_extension = Path(file.filename or "").suffix.lower()
+
+    if file.content_type not in allowed_mimes and file_extension not in allowed_exts:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, 
+            detail=f"Invalid image file type ({file.content_type}). Allowed formats: JPG, PNG, GIF, WEBP, SVG."
+        )
     
-    file_extension = Path(file.filename).suffix
-    unique_filename = f"{current_user.id}_{uuid.uuid4()}{file_extension}"
+    unique_filename = f"{current_user.id}_{uuid.uuid4()}{file_extension or '.png'}"
     
     try:
         content = await file.read()

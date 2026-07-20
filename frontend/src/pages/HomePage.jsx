@@ -714,9 +714,18 @@ function HomePage() {
                             onClick={() => setIsProfileOpen(!isProfileOpen)}
                             className="flex items-center gap-2.5 p-1 pr-3 bg-gray-50 dark:bg-gray-950 rounded-xl border border-gray-200 dark:border-indigo-950/30 text-gray-800 dark:text-white hover:border-indigo-500/30 transition-all cursor-pointer"
                         >
-                            <div className="h-8 w-8 rounded-lg bg-indigo-650 flex items-center justify-center text-xs font-black uppercase text-white">
-                                {user?.full_name?.charAt(0) || 'U'}
-                            </div>
+                            {user?.profile_picture_url ? (
+                                <img 
+                                    src={user.profile_picture_url} 
+                                    alt={user.full_name || ''} 
+                                    className="h-8 w-8 rounded-lg object-cover border border-indigo-200 dark:border-indigo-900/50" 
+                                    onError={(e) => { e.target.style.display = 'none'; }}
+                                />
+                            ) : (
+                                <div className="h-8 w-8 rounded-lg bg-indigo-650 flex items-center justify-center text-xs font-black uppercase text-white">
+                                    {user?.full_name?.charAt(0) || 'U'}
+                                </div>
+                            )}
                             <div className="text-left hidden sm:block">
                                 <p className="text-[10px] font-black uppercase tracking-tight leading-none mb-0.5">{user?.full_name?.split(' ')[0]}</p>
                                 <p className="text-[8px] font-bold text-indigo-500 dark:text-indigo-400 uppercase tracking-widest leading-none">{user?.role}</p>
