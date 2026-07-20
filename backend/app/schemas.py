@@ -377,7 +377,24 @@ class ProjectRead(ProjectBase):
     project_manager: Optional[UserReadBasic] = None
     drawings: List["DrawingRead"] = []
     drawing_folders: List["DrawingFolderRead"] = []
+    member_ids: List[int] = []
     model_config = ConfigDict(from_attributes=True)
+
+    @field_validator('member_ids', mode='before')
+    @classmethod
+    def extract_member_ids(cls, v):
+        # v comes from the ORM relationship 'members' (list of User objects)
+        if v is None:
+            return []
+        if isinstance(v, list):
+            result = []
+            for item in v:
+                if isinstance(item, int):
+                    result.append(item)
+                elif hasattr(item, 'id'):
+                    result.append(item.id)
+            return result
+        return []
 
 class ProjectAssignMember(BaseModel):
     user_id: int

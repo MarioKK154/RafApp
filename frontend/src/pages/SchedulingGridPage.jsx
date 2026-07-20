@@ -23,7 +23,8 @@ const SchedulingGridPage = () => {
     const [viewDate, setViewDate] = useState(new Date());
     const [users, setUsers] = useState([]);
     const [assignments, setAssignments] = useState([]);
-    const [pmProjectIds, setPmProjectIds] = useState(new Set()); // PM's own projects (date-independent)
+    // PM-visible user IDs derived from project membership (date-independent)
+    const [pmVisibleUserIds, setPmVisibleUserIds] = useState(null); // null = not yet loaded
     const [selectedCity, setSelectedCity] = useState('All');
     const [isLoading, setIsLoading] = useState(true);
     const [leaveBlocks, setLeaveBlocks] = useState([]);
@@ -65,19 +66,32 @@ const SchedulingGridPage = () => {
         }
     }, [days]);
 
-    // Fetch PM's own projects once (date-independent) so co-worker visibility
-    // is not limited to the current 2-week window.
+    // For PM role: fetch managed projects (with member_ids) once on mount.
+    // This gives us the correct project team membership regardless of the
+    // currently-visible schedule window.
     useEffect(() => {
         const isPM = user?.role === 'project manager';
         const isAdmin = user?.role === 'admin' || user?.is_superuser;
-        if (!isPM || isAdmin) return; // Only needed for PM role
-        axiosInstance.get('/projects/', { params: { limit: 1000 } })
+        if (!isPM || isAdmin) return;
+        axiosInstance.get('/projects/managed')
             .then(res => {
-                // Projects API already scopes to tenant; collect all IDs
-                const ids = new Set((res.data || []).map(p => p.id));
-                setPmProjectIds(ids);
+                const projects = res.data || [];
+                // Collect all member_ids across all managed projects + PM themselves
+                const ids = new Set();
+                ids.add(user.id);
+                projects.forEach(p => {
+                    // member_ids is now returned by the backend
+                    (p.member_ids || []).forEach(uid => ids.add(uid));
+                    // Also include the project_manager explicitly
+                    if (p.project_manager?.id) ids.add(p.project_manager.id);
+                });
+                setPmVisibleUserIds(ids);
             })
-            .catch(err => console.error('Failed to fetch PM projects for schedule scope:', err));
+            .catch(err => {
+                console.error('Failed to fetch PM managed projects:', err);
+                // On error, fallback: show only the PM themselves
+                setPmVisibleUserIds(new Set([user?.id]));
+            });
     }, [user]);
 
     useEffect(() => { fetchData(); }, [fetchData]);
@@ -88,30 +102,23 @@ const SchedulingGridPage = () => {
     const canEdit = isAdmin; // Admins have full editing clearance
 
     // RBAC Personnel Roster Scope:
-    // - Admin: All tenant users
-    // - PM: All users assigned to any project the PM manages (date-independent)
+    // - Admin/Superuser: All tenant users
+    // - PM: All members of projects they manage (from project_members_table, date-independent)
+    //       Falls back to self-only while the project membership data is loading
     // - Electrician & Team Leader: Self only
     const visibleUsers = useMemo(() => {
         if (!users || users.length === 0) return [];
         if (isAdmin) return users;
         if (isPM) {
-            // Use PM's full project list (pmProjectIds, fetched on mount) so that
-            // co-workers are visible even if no assignment falls in the current window.
-            // Fall back to window-scoped assignments if pmProjectIds not yet loaded.
-            const effectiveProjectIds = pmProjectIds.size > 0
-                ? pmProjectIds
-                : new Set(assignments.filter(a => a.user_id === user?.id).map(a => a.project_id));
-
-            const coWorkerUserIds = new Set(
-                assignments
-                    .filter(a => effectiveProjectIds.has(a.project_id))
-                    .map(a => a.user_id)
-            );
-            coWorkerUserIds.add(user?.id);
-            return users.filter(u => coWorkerUserIds.has(u.id));
+            // pmVisibleUserIds is null while loading, Set once loaded
+            if (pmVisibleUserIds === null) {
+                // Still loading — show only self to avoid a flash of wrong data
+                return users.filter(u => u.id === user?.id);
+            }
+            return users.filter(u => pmVisibleUserIds.has(u.id));
         }
         return users.filter(u => u.id === user?.id);
-    }, [users, assignments, pmProjectIds, user, isAdmin, isPM]);
+    }, [users, pmVisibleUserIds, user, isAdmin, isPM]);
 
     // Handle Deletion of an Assignment Node
     const handleDeleteAssignment = async (assignmentId, projectName, userName) => {

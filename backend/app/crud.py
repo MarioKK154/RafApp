@@ -397,7 +397,8 @@ def get_projects(
 ) -> List[models.Project]:
     query = db.query(models.Project).options(
         joinedload(models.Project.project_manager),
-        joinedload(models.Project.tenant)
+        joinedload(models.Project.tenant),
+        joinedload(models.Project.members)
     )
     if tenant_id is not None:
         query = query.filter(models.Project.tenant_id == tenant_id)
