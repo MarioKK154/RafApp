@@ -68,7 +68,6 @@ import axiosInstance from './api/axiosInstance';
 import RiskLibraryPage from './pages/RiskLibraryPage';
 import ChatPage from './pages/ChatPage';
 import DrawingsPage from './pages/DrawingsPage';
-import ShowcasePage from './pages/ShowcasePage';
 
 const ProtectedRoute = ({ children }) => {
     const { isAuthenticated, isLoading } = useAuth();
@@ -258,7 +257,6 @@ function AppShell() {
                     <Routes>
                         <Route path="/login" element={<LoginPage />} />
                         <Route path="/" element={<LandingPage />} />
-                        <Route path="/showcase" element={<ShowcasePage />} />
 
                         {/* --- CORE OPERATIONAL HUB --- */}
                         <Route path="/dashboard" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
