@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import axiosInstance from '../api/axiosInstance';
 import { useAuth } from '../context/AuthContext';
 import { XMarkIcon, CalendarDaysIcon, BriefcaseIcon } from '@heroicons/react/24/outline';
@@ -6,7 +7,28 @@ import { format } from 'date-fns';
 import { toast } from 'react-toastify';
 
 const AssignmentModal = ({ isOpen, onClose, selectedUser, selectedDate, onAssignmentCreated, leaveBlocks = [] }) => {
+    const { t, i18n } = useTranslation();
     const { user: currentUser } = useAuth();
+
+    const translateLeaveType = useCallback((rawType) => {
+        if (!rawType) return '';
+        const key = rawType.toLowerCase().replace(/\s+/g, '_');
+        const isIcelandic = i18n.language.startsWith('is');
+        
+        const leaveMap = {
+            vacation: isIcelandic ? 'Orlof' : 'Vacation',
+            sick: isIcelandic ? 'Veikindi' : 'Sick Leave',
+            sick_leave: isIcelandic ? 'Veikindaleyfi' : 'Sick Leave',
+            unpaid: isIcelandic ? 'Launalaust leyfi' : 'Unpaid Leave',
+            unpaid_leave: isIcelandic ? 'Launalaust leyfi' : 'Unpaid Leave',
+            paternal_maternal: isIcelandic ? 'Fæðingarorlof' : 'Parental Leave',
+            parental: isIcelandic ? 'Fæðingarorlof' : 'Parental Leave',
+            other: isIcelandic ? 'Annað' : 'Other'
+        };
+
+        if (leaveMap[key]) return leaveMap[key];
+        return t(rawType, { defaultValue: rawType });
+    }, [i18n.language, t]);
 
     const isSuperuser = currentUser?.is_superuser;
     const isAdmin = currentUser?.role === 'admin' || isSuperuser;
@@ -104,7 +126,7 @@ const AssignmentModal = ({ isOpen, onClose, selectedUser, selectedDate, onAssign
                             }
                         } catch (err) {
                             console.error('Failed to load tasks for active project.', err);
-                            toast.error('Could not load active tasks for scheduling.');
+                            toast.error(t('toast_load_active_tasks_failed'));
                         }
 
                         return; // We have active project context; skip generic project list.
@@ -125,7 +147,7 @@ const AssignmentModal = ({ isOpen, onClose, selectedUser, selectedDate, onAssign
                 setProjects(res.data.filter((p) => p.status !== 'Completed'));
             } catch (error) {
                 console.error('Failed to load assignment options.', error);
-                toast.error('Failed to load scheduling metadata.');
+                toast.error(t('toast_load_scheduling_metadata_failed'));
             } finally {
                 setIsLoadingOptions(false);
             }
@@ -147,7 +169,7 @@ const AssignmentModal = ({ isOpen, onClose, selectedUser, selectedDate, onAssign
             }
 
             if (!resolvedProjectId || Number.isNaN(resolvedProjectId)) {
-                toast.error('Please select a target project/task for this deployment.');
+                toast.error(t('toast_select_target_project_task'));
                 setIsSubmitting(false);
                 return;
             }
@@ -172,11 +194,11 @@ const AssignmentModal = ({ isOpen, onClose, selectedUser, selectedDate, onAssign
                 project_id: resolvedProjectId
             };
             await axiosInstance.post('/assignments/', payload);
-            toast.success(`Personnel deployed: ${selectedUser.full_name}`);
+            toast.success(t('toast_personnel_deployed', { name: selectedUser.full_name }));
             onAssignmentCreated(); // Refresh the grid
             onClose();
         } catch (err) {
-            toast.error(err.response?.data?.detail || "Deployment protocol failed.");
+            toast.error(err.response?.data?.detail || t('toast_deployment_protocol_failed'));
         } finally {
             setIsSubmitting(false);
         }
@@ -189,8 +211,8 @@ const AssignmentModal = ({ isOpen, onClose, selectedUser, selectedDate, onAssign
             <div className="bg-white dark:bg-gray-800 w-full max-w-lg rounded-[2.5rem] shadow-2xl border border-gray-100 dark:border-gray-700 overflow-hidden">
                 <header className="px-8 py-6 bg-gray-50 dark:bg-gray-900/50 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
                     <div>
-                        <h3 className="text-xs font-black text-gray-900 dark:text-white uppercase tracking-[0.2em]">Assignment Protocol</h3>
-                        <p className="text-[9px] font-bold text-indigo-500 uppercase tracking-widest mt-1">Deploying: {selectedUser?.full_name}</p>
+                        <h3 className="text-xs font-black text-gray-900 dark:text-white uppercase tracking-[0.2em]">{t('assignment_protocol', { defaultValue: 'Assignment Protocol' })}</h3>
+                        <p className="text-[9px] font-bold text-indigo-500 uppercase tracking-widest mt-1">{t('deploying_user', { defaultValue: 'Deploying: {{name}}', name: selectedUser?.full_name })}</p>
                     </div>
                     <button onClick={onClose} className="p-2 hover:bg-white dark:hover:bg-gray-700 rounded-xl transition text-gray-400"><XMarkIcon className="h-5 w-5" /></button>
                 </header>
@@ -201,16 +223,16 @@ const AssignmentModal = ({ isOpen, onClose, selectedUser, selectedDate, onAssign
                             <CalendarDaysIcon className="h-6 w-6 flex-shrink-0 text-amber-600 dark:text-amber-400" />
                             <div>
                                 <p className="text-[10px] font-black uppercase tracking-widest text-amber-800 dark:text-amber-200">
-                                    Listed as unavailable (approved leave)
+                                    {t('leave_unavailable_alert', { defaultValue: 'Listed as unavailable (approved leave)' })}
                                 </p>
                                 <p className="text-xs font-bold mt-1">
-                                    {leaveConflict.leave_type}{' '}
+                                    {translateLeaveType(leaveConflict.leave_type)}{' '}
                                     <span className="font-mono opacity-90">
                                         ({String(leaveConflict.start_date)} → {String(leaveConflict.end_date)})
                                     </span>
                                 </p>
                                 <p className="text-[10px] font-semibold mt-2 opacity-80">
-                                    Assignment can still proceed—confirm with HR if needed.
+                                    {t('leave_conflict_proceed', { defaultValue: 'Assignment can still proceed—confirm with HR if needed.' })}
                                 </p>
                             </div>
                         </div>
@@ -221,7 +243,7 @@ const AssignmentModal = ({ isOpen, onClose, selectedUser, selectedDate, onAssign
                         <>
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">
-                                    Active Project Context
+                                    {t('active_project_context', { defaultValue: 'Active Project Context' })}
                                 </label>
                                 <div className="px-4 py-3.5 bg-gray-50 dark:bg-gray-900 border-none rounded-2xl text-xs font-bold text-gray-900 dark:text-white flex items-center gap-2">
                                     <BriefcaseIcon className="h-4 w-4 text-gray-400" />
@@ -233,7 +255,7 @@ const AssignmentModal = ({ isOpen, onClose, selectedUser, selectedDate, onAssign
                             </div>
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">
-                                    Target Task on This Project
+                                    {t('target_task_project', { defaultValue: 'Target Task on This Project' })}
                                 </label>
                                 <div className="relative">
                                     <CalendarDaysIcon className="absolute left-4 top-3.5 h-5 w-5 text-gray-400" />
@@ -243,7 +265,7 @@ const AssignmentModal = ({ isOpen, onClose, selectedUser, selectedDate, onAssign
                                         onChange={(e) => setFormData({ ...formData, task_id: e.target.value })}
                                         className="w-full pl-12 pr-4 py-3.5 bg-gray-50 dark:bg-gray-900 border-none rounded-2xl text-xs font-bold focus:ring-2 focus:ring-indigo-500 transition-all text-gray-900 dark:text-white"
                                     >
-                                        <option value="">-- Select Active Task --</option>
+                                        <option value="">{t('select_active_task', { defaultValue: '-- Select Active Task --' })}</option>
                                         {tasks.map((t) => (
                                             <option key={t.id} value={t.id}>
                                                 #{t.id} — {t.title}
@@ -255,7 +277,7 @@ const AssignmentModal = ({ isOpen, onClose, selectedUser, selectedDate, onAssign
                         </>
                     ) : (
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Target Project</label>
+                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">{t('target_project', { defaultValue: 'Target Project' })}</label>
                             <div className="relative">
                                 <BriefcaseIcon className="absolute left-4 top-3.5 h-5 w-5 text-gray-400" />
                                 <select
@@ -265,9 +287,7 @@ const AssignmentModal = ({ isOpen, onClose, selectedUser, selectedDate, onAssign
                                     className="w-full pl-12 pr-4 py-3.5 bg-gray-50 dark:bg-gray-900 border-none rounded-2xl text-xs font-bold focus:ring-2 focus:ring-indigo-500 transition-all text-gray-900 dark:text-white"
                                 >
                                     <option value="">
-                                        {isProjectManager
-                                            ? '-- Select Project (no active context) --'
-                                            : '-- Select Active Project --'}
+                                        {t('select_active_project', { defaultValue: '-- Select Active Project --' })}
                                     </option>
                                     {projects.map((p) => (
                                         <option key={p.id} value={p.id}>
@@ -282,7 +302,7 @@ const AssignmentModal = ({ isOpen, onClose, selectedUser, selectedDate, onAssign
                     {/* Date Range Selection */}
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Start Date</label>
+                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">{t('start_date', { defaultValue: 'Start Date' })}</label>
                             <input 
                                 type="date"
                                 required
@@ -292,7 +312,7 @@ const AssignmentModal = ({ isOpen, onClose, selectedUser, selectedDate, onAssign
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">End Date</label>
+                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">{t('end_date', { defaultValue: 'End Date' })}</label>
                             <input 
                                 type="date"
                                 required
@@ -305,12 +325,12 @@ const AssignmentModal = ({ isOpen, onClose, selectedUser, selectedDate, onAssign
 
                     {/* Notes */}
                     <div className="space-y-2">
-                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Operational Notes</label>
+                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">{t('operational_notes', { defaultValue: 'Operational Notes' })}</label>
                         <textarea 
                             rows="3"
                             value={formData.notes}
                             onChange={(e) => setFormData({...formData, notes: e.target.value})}
-                            placeholder="Specific instructions for this deployment..."
+                            placeholder={t('notes_placeholder', { defaultValue: 'Specific instructions for this deployment...' })}
                             className="w-full px-4 py-3.5 bg-gray-50 dark:bg-gray-900 border-none rounded-2xl text-xs font-bold focus:ring-2 focus:ring-indigo-500 transition-all text-gray-900 dark:text-white"
                         ></textarea>
                     </div>
@@ -320,7 +340,7 @@ const AssignmentModal = ({ isOpen, onClose, selectedUser, selectedDate, onAssign
                         disabled={isSubmitting}
                         className="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition transform active:scale-95 disabled:opacity-50"
                     >
-                        {isSubmitting ? 'Syncing...' : 'Confirm Deployment'}
+                        {isSubmitting ? t('syncing', { defaultValue: 'Syncing...' }) : t('confirm_deployment', { defaultValue: 'Confirm Deployment' })}
                     </button>
                 </form>
             </div>

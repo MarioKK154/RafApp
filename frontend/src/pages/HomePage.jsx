@@ -383,7 +383,7 @@ function HomePage() {
     };
 
     const renderBlockContent = (item) => {
-        const title = i18n.language.startsWith('en') ? item.title_en : item.title_is;
+        const title = (i18n.language.startsWith('en') ? item.title_en : item.title_is) || item.title_is || item.title_en;
         
         switch (item.id) {
             case 'stat-cards':

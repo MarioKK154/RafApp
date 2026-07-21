@@ -90,7 +90,7 @@ function TaskChecklists({ taskId, taskAssigneeId }) {
         }
     };
 
-    if (isLoading) return <div className="text-sm text-gray-500 animate-pulse p-4">Loading checklists...</div>;
+    if (isLoading) return <div className="text-sm text-gray-500 animate-pulse p-4">{t('loading_checklists')}</div>;
 
     return (
         <div className="space-y-6">
@@ -127,7 +127,7 @@ function TaskChecklists({ taskId, taskAssigneeId }) {
                             <div className="flex items-center gap-3 ml-4 flex-shrink-0">
                                 {item.is_private && (
                                     <span className="text-xs flex items-center gap-1 font-bold tracking-wider text-orange-500 bg-orange-50 dark:bg-orange-900/20 px-2 py-1 rounded-md uppercase">
-                                        <LockClosedIcon className="h-3 w-3" /> Private
+                                        <LockClosedIcon className="h-3 w-3" /> {t('private_badge')}
                                     </span>
                                 )}
                                 <button 
@@ -164,7 +164,7 @@ function TaskChecklists({ taskId, taskAssigneeId }) {
                                 }`}
                             >
                                 {newItemPrivate ? <LockClosedIcon className="h-4 w-4" /> : <LockOpenIcon className="h-4 w-4" />}
-                                {newItemPrivate ? 'Private (Assignee only)' : 'Public'}
+                                {newItemPrivate ? t('private_assignee_only') : t('public_badge')}
                             </button>
                             <button
                                 type="submit"

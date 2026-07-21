@@ -17,7 +17,7 @@ import { toast } from 'react-toastify';
 import AssignmentModal from '../components/AssignmentModal'; 
 
 const SchedulingGridPage = () => {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const { user } = useAuth();
     const isSuperuser = !!user?.is_superuser;
     const [viewDate, setViewDate] = useState(new Date());
@@ -60,7 +60,7 @@ const SchedulingGridPage = () => {
             setLeaveBlocks(Array.isArray(leaveRes.data) ? leaveRes.data : []);
         } catch (error) {
             console.error('Scheduling grid sync failed:', error);
-            toast.error("Failed to sync resource grid.");
+            toast.error(t('toast_sync_resource_grid_failed'));
         } finally {
             setIsLoading(false);
         }
@@ -123,17 +123,17 @@ const SchedulingGridPage = () => {
     // Handle Deletion of an Assignment Node
     const handleDeleteAssignment = async (assignmentId, projectName, userName) => {
         if (!canEdit) {
-            toast.info("Schedule modifications are restricted to Administrative personnel.");
+            toast.info(t('toast_schedule_modifications_restricted'));
             return;
         }
-        if (window.confirm(`Are you sure you want to remove ${userName} from project ${projectName}?`)) {
+        if (window.confirm(t('confirm_remove_assignment', { userName, projectName }))) {
             try {
                 await axiosInstance.delete(`/assignments/${assignmentId}`);
-                toast.success("Assignment purged from registry.");
+                toast.success(t('toast_assignment_purged'));
                 fetchData(); // Refresh grid
             } catch (error) {
                 console.error('Delete assignment failed:', error);
-                toast.error("Failed to delete assignment.");
+                toast.error(t('toast_delete_assignment_failed'));
             }
         }
     };
@@ -157,6 +157,26 @@ const SchedulingGridPage = () => {
         setModalConfig({ isOpen: true, user: targetUser, date: day });
     };
 
+    const translateLeaveType = useCallback((rawType) => {
+        if (!rawType) return '';
+        const key = rawType.toLowerCase().replace(/\s+/g, '_');
+        const isIcelandic = i18n.language.startsWith('is');
+        
+        const leaveMap = {
+            vacation: isIcelandic ? 'Orlof' : 'Vacation',
+            sick: isIcelandic ? 'Veikindi' : 'Sick Leave',
+            sick_leave: isIcelandic ? 'Veikindaleyfi' : 'Sick Leave',
+            unpaid: isIcelandic ? 'Launalaust leyfi' : 'Unpaid Leave',
+            unpaid_leave: isIcelandic ? 'Launalaust leyfi' : 'Unpaid Leave',
+            paternal_maternal: isIcelandic ? 'Fæðingarorlof' : 'Parental Leave',
+            parental: isIcelandic ? 'Fæðingarorlof' : 'Parental Leave',
+            other: isIcelandic ? 'Annað' : 'Other'
+        };
+
+        if (leaveMap[key]) return leaveMap[key];
+        return t(rawType, { defaultValue: rawType });
+    }, [i18n.language, t]);
+
     const leaveOnDay = useCallback(
         (userId, day) => {
             if (!showLeaveOverlay || !leaveBlocks.length) return null;
@@ -178,7 +198,7 @@ const SchedulingGridPage = () => {
             {isLoading && (
                 <div className="fixed inset-0 bg-black/20 flex items-center justify-center z-50">
                     <div className="bg-white dark:bg-gray-800 px-6 py-4 rounded-2xl shadow-xl text-sm font-bold text-gray-700 dark:text-gray-200">
-                        Syncing schedule...
+                        {t('syncing_schedule', { defaultValue: 'Syncing schedule...' })}
                     </div>
                 </div>
             )}
@@ -209,9 +229,10 @@ const SchedulingGridPage = () => {
                 
                 {cities.map(city => {
                     const count = city === 'All' ? users.length : city === 'Unassigned' ? users.filter(u => !u.city).length : users.filter(u => u.city === city).length;
+                    const displayCity = city === 'All' ? t('all', { defaultValue: 'All' }) : city === 'Unassigned' ? t('unassigned', { defaultValue: 'Unassigned' }) : city;
                     return (
                         <button key={city} onClick={() => setSelectedCity(city)} className={`px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-[0.15em] border transition-all duration-150 ease-out flex items-center gap-3 ${selectedCity === city ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-300 hover:shadow-indigo-400 hover:-translate-y-0.5' : 'bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700 text-gray-400 hover:text-indigo-600 hover:-translate-y-0.5 hover:shadow-md active:translate-y-0'}`}>
-                            {city} <span className={`px-2 py-0.5 rounded-lg text-[9px] ${selectedCity === city ? 'bg-indigo-500 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-500'}`}>{count}</span>
+                            {displayCity} <span className={`px-2 py-0.5 rounded-lg text-[9px] ${selectedCity === city ? 'bg-indigo-500 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-500'}`}>{count}</span>
                         </button>
                     );
                 })}
@@ -247,7 +268,7 @@ const SchedulingGridPage = () => {
                     <thead>
                         <tr className="bg-gray-50 dark:bg-gray-800/50">
                             <th className="p-6 text-left border-r border-gray-100 dark:border-gray-800 sticky left-0 bg-gray-50 dark:bg-gray-800 z-10 min-w-[280px]">
-                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Personnel Node</span>
+                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('personnel_node', { defaultValue: 'Personnel Node' })}</span>
                             </th>
                             {days.map(day => (
                                 <th key={day.toString()} className={`p-4 border-r border-gray-100 dark:border-gray-800 min-w-[110px] ${[0, 6].includes(day.getDay()) ? 'bg-gray-100/50 dark:bg-gray-900/50' : ''}`}>
@@ -267,7 +288,7 @@ const SchedulingGridPage = () => {
                                         </div>
                                         <div className="min-w-0">
                                             <p className="text-xs font-black text-gray-900 dark:text-white uppercase truncate leading-none mb-1.5">{user.full_name}</p>
-                                            <p className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.2em]">{user.city || 'Sector: NA'}</p>
+                                            <p className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.2em]">{user.city || t('sector_na', { defaultValue: 'Sector: NA' })}</p>
                                         </div>
                                     </div>
                                 </td>
@@ -288,12 +309,12 @@ const SchedulingGridPage = () => {
                                                         backgroundImage:
                                                             'repeating-linear-gradient(-45deg, transparent, transparent 4px, rgba(244,63,94,0.12) 4px, rgba(244,63,94,0.12) 8px)',
                                                     }}
-                                                    title={leaveHit.leave_type}
+                                                    title={translateLeaveType(leaveHit.leave_type)}
                                                 />
                                             )}
                                             {leaveHit && (
                                                 <span className="absolute bottom-1 left-1/2 -translate-x-1/2 z-[2] px-1.5 py-0.5 rounded-md text-[7px] font-black uppercase tracking-tighter text-rose-800 dark:text-rose-200 bg-rose-100/90 dark:bg-rose-900/80 max-w-[95%] truncate pointer-events-none">
-                                                    {leaveHit.leave_type}
+                                                    {translateLeaveType(leaveHit.leave_type)}
                                                 </span>
                                             )}
                                             {userAssign ? (
@@ -311,7 +332,7 @@ const SchedulingGridPage = () => {
                                                     </div>
                                                     <div className="hidden group-hover/assign:flex flex-col items-center justify-center text-white animate-in zoom-in duration-200">
                                                         <TrashIcon className="h-5 w-5 mb-1" />
-                                                        <span className="text-[8px] font-black uppercase">Remove</span>
+                                                        <span className="text-[8px] font-black uppercase">{t('remove', { defaultValue: 'Remove' })}</span>
                                                     </div>
                                                 </div>
                                             ) : (

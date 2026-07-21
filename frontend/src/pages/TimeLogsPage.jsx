@@ -37,15 +37,7 @@ const formatDuration = (totalHours) => {
 /**
  * Filter Constants
  */
-const SORT_OPTIONS = [
-    { value: 'start_time', label: 'Start Timestamp' },
-    { value: 'end_time', label: 'End Timestamp' },
-    { value: 'duration', label: 'Net Duration' },
-];
-const DIR_OPTIONS = [
-    { value: 'desc', label: 'Descending (Newest First)' },
-    { value: 'asc', label: 'Ascending (Oldest First)' },
-];
+// SORT_OPTIONS and DIR_OPTIONS are now functions that take t() to return translated options
 
 /**
  * Debounce Hook for Performant Search
@@ -75,10 +67,20 @@ function TimeLogsPage() {
     const [selectedUser, setSelectedUser] = useState(null);
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
-    const [sortBy, setSortBy] = useState(SORT_OPTIONS[0]);
-    const [sortDir, setSortDir] = useState(DIR_OPTIONS[0]);
+    const [sortBy, setSortBy] = useState(null);
+    const [sortDir, setSortDir] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     const debouncedSearch = useDebounce(searchTerm, 300);
+
+    const sortOptions = [
+        { value: 'start_time', label: t('start_timestamp') },
+        { value: 'end_time', label: t('end_timestamp') },
+        { value: 'duration', label: t('net_duration') },
+    ];
+    const dirOptions = [
+        { value: 'desc', label: t('descending_newest') },
+        { value: 'asc', label: t('ascending_oldest') },
+    ];
 
     const isSuperuser = currentUser?.is_superuser;
     const isAdminOrManager = currentUser && (['admin', 'project manager', 'accountant'].includes(currentUser.role) || isSuperuser);
@@ -89,6 +91,15 @@ function TimeLogsPage() {
     const [logToEdit, setLogToEdit] = useState(null);
     const [editFormData, setEditFormData] = useState({ project_id: '', start_datetime: '', end_datetime: '', notes: '', travel_hours: '0' });
     const [isSavingEdit, setIsSavingEdit] = useState(false);
+
+
+
+    // Set defaults once options are generated
+    useEffect(() => {
+        if (!sortBy) setSortBy(sortOptions[0]);
+        if (!sortDir) setSortDir(dirOptions[0]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [t]);
 
     /**
      * React-Select Custom Styling to match Industrial Theme
@@ -292,7 +303,7 @@ function TimeLogsPage() {
                     <div className="bg-white dark:bg-gray-800 px-6 py-3 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm flex items-center gap-4">
                     <div className="text-right border-r border-gray-100 dark:border-gray-700 pr-4">
                         <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none">{t('net_total')}</p>
-                        <p className="text-xl font-black text-indigo-600 dark:text-indigo-400">{totalDisplayedHours} <span className="text-xs font-bold text-gray-400">HRS</span></p>
+                        <p className="text-xl font-black text-indigo-600 dark:text-indigo-400">{totalDisplayedHours} <span className="text-xs font-bold text-gray-400">{t('hrs_abbr')}</span></p>
                     </div>
                     <div className="text-right">
                         <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none">{t('entries')}</p>
@@ -332,8 +343,8 @@ function TimeLogsPage() {
                     {/* Sorting & Technical Metadata */}
                     <div className="lg:col-span-4 bg-white dark:bg-gray-800 p-6 rounded-[2rem] border border-gray-100 dark:border-gray-700 shadow-sm space-y-4">
                         <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 flex items-center gap-1.5"><AdjustmentsHorizontalIcon className="h-4 w-4" /> {t('sorting_protocol')}</p>
-                        <Select options={SORT_OPTIONS} value={sortBy} onChange={setSortBy} styles={customSelectStyles} />
-                        <Select options={DIR_OPTIONS} value={sortDir} onChange={setSortDir} styles={customSelectStyles} />
+                        <Select options={sortOptions} value={sortBy} onChange={setSortBy} styles={customSelectStyles} />
+                        <Select options={dirOptions} value={sortDir} onChange={setSortDir} styles={customSelectStyles} />
                         <button onClick={fetchTimeLogs} className="w-full h-12 mt-2 inline-flex items-center justify-center gap-2 bg-gray-50 dark:bg-gray-700 hover:bg-indigo-50 text-[10px] font-black uppercase tracking-widest text-indigo-600 transition rounded-xl border border-indigo-100 dark:border-indigo-900">
                             <ArrowPathIcon className="h-4 w-4" /> {t('sync_registry')}
                         </button>
@@ -361,12 +372,12 @@ function TimeLogsPage() {
                     <div className="flex justify-between items-center mb-6">
                         <div>
                             <h3 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-widest">
-                                {!selectedProject && !selectedUser ? "Total Hours by Project" : ""}
-                                {selectedProject && !selectedUser ? `Hours by Employee (${selectedProject.label})` : ""}
-                                {selectedUser ? `Hours across Projects (${selectedUser.label})` : ""}
+                                {!selectedProject && !selectedUser ? t('total_hours_by_project') : ""}
+                                {selectedProject && !selectedUser ? `${t('hours_by_employee')} (${selectedProject.label})` : ""}
+                                {selectedUser ? `${t('hours_by_employee')} (${selectedUser.label})` : ""}
                             </h3>
                             <p className="text-[10px] text-gray-500 font-bold uppercase tracking-[0.2em] mt-1">
-                                Click on a slice or bar to drill down and apply filters automatically.
+                                {t('chart_drill_down_hint')}
                             </p>
                         </div>
                         <div className="bg-gray-100 dark:bg-gray-700 p-1 rounded-xl flex items-center gap-1">
@@ -374,13 +385,13 @@ function TimeLogsPage() {
                                 onClick={() => setChartType('pie')}
                                 className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-colors ${chartType === 'pie' ? 'bg-white dark:bg-gray-800 text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
                             >
-                                Pie Chart
+                                {t('pie_chart')}
                             </button>
                             <button 
                                 onClick={() => setChartType('bar')}
                                 className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-colors ${chartType === 'bar' ? 'bg-white dark:bg-gray-800 text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
                             >
-                                Bar Chart
+                                {t('bar_chart')}
                             </button>
                         </div>
                     </div>
@@ -481,24 +492,24 @@ function TimeLogsPage() {
                                     <p className="text-xs font-bold text-gray-700 dark:text-gray-300">
                                         {new Date(log.start_time).toLocaleDateString()} · {new Date(log.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                         <span className="mx-2 text-gray-300">→</span>
-                                        {log.end_time ? new Date(log.end_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : <span className="text-green-500 animate-pulse uppercase">Active Now</span>}
+                                        {log.end_time ? new Date(log.end_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : <span className="text-green-500 animate-pulse uppercase">{t('active_now')}</span>}
                                     </p>
                                 </div>
 
                                 {/* Duration Badge & Detailed Hours Breakdown */}
                                 <div className="lg:min-w-[220px] flex items-center gap-4 justify-end shrink-0">
                                     <div className="text-right">
-                                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none">Billable</p>
-                                        <p className="text-xs font-black text-gray-800 dark:text-gray-200 mt-1">{log.billable_hours ?? 0} <span className="text-[9px] text-gray-400">HRS</span></p>
+                                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none">{t('billable')}</p>
+                                        <p className="text-xs font-black text-gray-800 dark:text-gray-200 mt-1">{log.billable_hours ?? 0} <span className="text-[9px] text-gray-400">{t('hrs_abbr')}</span></p>
                                     </div>
                                     {log.travel_hours > 0 && (
                                         <div className="text-right border-l border-gray-100 dark:border-gray-700 pl-3">
-                                            <p className="text-[9px] font-black text-orange-500 uppercase tracking-widest leading-none">Travel</p>
-                                            <p className="text-xs font-black text-orange-600 dark:text-orange-400 mt-1">{log.travel_hours} <span className="text-[9px] text-gray-400">HRS</span></p>
+                                            <p className="text-[9px] font-black text-orange-500 uppercase tracking-widest leading-none">{t('travel')}</p>
+                                            <p className="text-xs font-black text-orange-600 dark:text-orange-400 mt-1">{log.travel_hours} <span className="text-[9px] text-gray-400">{t('hrs_abbr')}</span></p>
                                         </div>
                                     )}
                                     <div className="text-right border-l border-gray-100 dark:border-gray-700 pl-3">
-                                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none">Paid</p>
+                                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none">{t('paid')}</p>
                                         <div className={`mt-0.5 inline-flex items-center h-8 px-3 rounded-xl font-black text-[11px] ${
                                             log.end_time 
                                             ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-800' 
@@ -590,7 +601,7 @@ function TimeLogsPage() {
                             </div>
                         </div>
                         <div>
-                            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Travel Hours (Ferðatímar)</label>
+                            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">{t('travel_hours')}</label>
                             <input
                                 type="number"
                                 step="0.25"
@@ -602,7 +613,7 @@ function TimeLogsPage() {
                                 placeholder="0.0"
                             />
                             <p className="text-[9px] text-gray-400 dark:text-gray-500 mt-1 italic">
-                                Note: Travel hours are subtracted from the customer's billable total. The employee's total paid duration remains unchanged.
+                                {t('travel_hours_note')}
                             </p>
                         </div>
                         <div>

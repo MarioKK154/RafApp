@@ -95,14 +95,14 @@ function NotificationDropdown() {
                 <div className="absolute left-0 md:left-auto md:right-[-10rem] mt-4 w-80 md:w-96 bg-white dark:bg-gray-800 rounded-[2rem] shadow-2xl border border-gray-100 dark:border-gray-700 overflow-hidden z-[100] animate-in fade-in zoom-in-95 duration-200 origin-top-left">
                     <header className="px-6 py-5 bg-gray-50 dark:bg-gray-900/50 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
                         <div>
-                            <h3 className="text-xs font-black text-gray-900 dark:text-white uppercase tracking-[0.2em]">Deployment Alerts</h3>
-                            <p className="text-[9px] font-bold text-indigo-500 uppercase tracking-widest mt-0.5">Personnel Registry Sync</p>
+                            <h3 className="text-xs font-black text-gray-900 dark:text-white uppercase tracking-[0.2em]">{t('deployment_alerts')}</h3>
+                            <p className="text-[9px] font-bold text-indigo-500 uppercase tracking-widest mt-0.5">{t('personnel_registry_sync')}</p>
                         </div>
                         {unreadCount > 0 && (
                                 <button 
                                 onClick={markAllRead}
                                 className="p-2 rounded-lg text-indigo-600 transition-all duration-150 ease-out hover:bg-white dark:hover:bg-gray-700 hover:-translate-y-0.5 hover:shadow-sm active:translate-y-0"
-                                title="Clear All"
+                                title={t('clear_all_title')}
                             >
                                 <CheckCheckIcon className="h-5 w-5" />
                             </button>
@@ -127,14 +127,14 @@ function NotificationDropdown() {
                                                 <div className="flex items-center justify-between">
                                                     <div className="flex items-center gap-1.5 text-[9px] font-black text-gray-400 uppercase tracking-widest">
                                                         <ClockIcon className="h-3 w-3" />
-                                                        {formatDistanceToNow(new Date(note.created_at))} ago
+                                                        {formatDistanceToNow(new Date(note.created_at))} {t('time_ago')}
                                                     </div>
                                                     {note.link && (
                                                         <Link 
                                                             to={note.link}
                                                             className="flex items-center gap-1 text-[9px] font-black text-indigo-600 uppercase tracking-widest group-hover:translate-x-1 transition-transform"
                                                         >
-                                                            Navigate <ArrowRightIcon className="h-3 w-3" />
+                                                            {t('navigate_link')} <ArrowRightIcon className="h-3 w-3" />
                                                         </Link>
                                                     )}
                                                 </div>
@@ -146,7 +146,7 @@ function NotificationDropdown() {
                         ) : (
                             <div className="py-20 flex flex-col items-center justify-center text-center px-10">
                                 <InboxStackIcon className="h-12 w-12 text-gray-200 dark:text-gray-700 mb-4" />
-                                <h4 className="text-sm font-black text-gray-400 uppercase tracking-tighter italic">Sector Clear</h4>
+                                <h4 className="text-sm font-black text-gray-400 uppercase tracking-tighter italic">{t('sector_clear')}</h4>
                                 <p className="text-[10px] text-gray-300 font-bold uppercase tracking-widest mt-2">{t('no_active_alerts')}</p>
                             </div>
                         )}

@@ -155,7 +155,7 @@ function CalendarPage() {
                 })
                 .map(task => ({
                     id: `task-${task.id}`,
-                    title: `[TASK] ${task.title}`,
+                    title: `${t('prefix_task')} ${task.title}`,
                     start: task.due_date,
                     backgroundColor: '#4f46e5',
                     extendedProps: { type: 'task', realId: task.id }
@@ -168,7 +168,7 @@ function CalendarPage() {
                 })
                 .map(proj => ({
                     id: `proj-${proj.id}`,
-                    title: `[PROJ] ${proj.name}`,
+                    title: `${t('prefix_proj')} ${proj.name}`,
                     start: proj.start_date,
                     end: proj.end_date,
                     backgroundColor: '#10b981',
@@ -179,7 +179,7 @@ function CalendarPage() {
                 .filter((evt) => !(evt.title || '').startsWith('Leave –'))
                 .map((evt) => ({
                     id: evt.id.toString(),
-                    title: evt.event_type === 'meeting' ? `[MTG] ${evt.title}` : evt.title,
+                    title: evt.event_type === 'meeting' ? `${t('prefix_mtg')} ${evt.title}` : evt.title,
                     start: evt.start_time,
                     end: evt.end_time,
                     backgroundColor: evt.event_type === 'meeting' ? '#f59e0b' : '#6b7280',
@@ -561,7 +561,7 @@ function CalendarPage() {
                             )}
                             {formData.location && (
                                 <p className="text-[11px] text-gray-600 dark:text-gray-300">
-                                    <span className="font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400">Location:</span> {formData.location}
+                                    <span className="font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400">{t('location_label')}</span> {formData.location}
                                 </p>
                             )}
                             {formData.description && (

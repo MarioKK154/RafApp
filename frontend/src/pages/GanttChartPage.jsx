@@ -65,7 +65,7 @@ function GanttChartPage() {
             } catch (err) {
                 console.error('Gantt tasks fetch error:', err);
                 setError(t('timeline_sync_failed', { defaultValue: 'Failed to synchronize task timeline.' }));
-                toast.error('Gantt data sync failed.');
+                toast.error(t('gantt_data_sync_failed'));
             } finally {
                 setIsLoadingTasks(false);
             }
@@ -159,7 +159,7 @@ function GanttChartPage() {
                                     {t('gantt_chart', { defaultValue: 'Gantt Chart' })}
                                 </h1>
                                 <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mt-0.5">
-                                    Project Timeline · Visual Schedule
+                                    {t('project_timeline_visual')}
                                 </p>
                             </div>
                         </div>
@@ -168,15 +168,15 @@ function GanttChartPage() {
                         <div className="flex items-center gap-3 flex-wrap">
                             <div className="flex items-center gap-2 rounded-xl bg-white/10 px-4 py-2 backdrop-blur-sm border border-white/10">
                                 <AdjustmentsHorizontalIcon className="h-4 w-4 text-indigo-300" />
-                                <span className="text-[11px] font-black text-white/80 uppercase tracking-widest">{ganttTasks.length} Tasks</span>
+                                <span className="text-[11px] font-black text-white/80 uppercase tracking-widest">{ganttTasks.length} {t('tasks')}</span>
                             </div>
                             <div className="flex items-center gap-2 rounded-xl bg-white/10 px-4 py-2 backdrop-blur-sm border border-white/10">
                                 <div className="h-2 w-2 rounded-full bg-green-400 animate-pulse" />
-                                <span className="text-[11px] font-black text-white/80 uppercase tracking-widest">{inProgress} Active</span>
+                                <span className="text-[11px] font-black text-white/80 uppercase tracking-widest">{inProgress} {t('active')}</span>
                             </div>
                             <div className="flex items-center gap-2 rounded-xl bg-white/10 px-4 py-2 backdrop-blur-sm border border-white/10">
                                 <BriefcaseIcon className="h-4 w-4 text-blue-300" />
-                                <span className="text-[11px] font-black text-white/80 uppercase tracking-widest">{activeAndPlanningProjects.length} Projects</span>
+                                <span className="text-[11px] font-black text-white/80 uppercase tracking-widest">{activeAndPlanningProjects.length} {t('projects')}</span>
                             </div>
                         </div>
                     </div>
@@ -196,7 +196,7 @@ function GanttChartPage() {
                         onChange={(e) => setSelectedProjectId(e.target.value)}
                         className="block w-full pl-10 pr-4 h-12 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-xs font-black uppercase tracking-widest text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-indigo-500 transition-all shadow-sm appearance-none cursor-pointer"
                     >
-                        <option value="">All Projects</option>
+                        <option value="">{t('all_projects')}</option>
                         {activeAndPlanningProjects.map(project => (
                             <option key={project.id} value={project.id}>
                                 {project.name}
@@ -212,7 +212,7 @@ function GanttChartPage() {
                     </div>
                     <input
                         type="text"
-                        placeholder="Search tasks..."
+                        placeholder={t('search_tasks')}
                         value={searchQuery}
                         onChange={e => setSearchQuery(e.target.value)}
                         className="block w-full pl-10 pr-4 h-12 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-xs font-bold text-gray-700 dark:text-gray-200 placeholder-gray-300 dark:placeholder-gray-600 focus:ring-2 focus:ring-indigo-500 transition-all shadow-sm"
@@ -226,7 +226,7 @@ function GanttChartPage() {
                     className="h-12 px-5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-widest flex items-center gap-2 transition shadow-sm disabled:opacity-50"
                 >
                     <ArrowPathIcon className={`h-4 w-4 ${isLoadingTasks ? 'animate-spin' : ''}`} />
-                    Refresh
+                    {t('refresh')}
                 </button>
             </div>
 
@@ -239,7 +239,7 @@ function GanttChartPage() {
             {/* ── Main Gantt Area ── */}
             {isLoadingTasks ? (
                 <div className="py-32 flex justify-center">
-                    <LoadingSpinner text="Synchronizing task timeline..." />
+                    <LoadingSpinner text={t('synchronizing_task_timeline')} />
                 </div>
             ) : (
                 <CustomGanttChart
@@ -253,8 +253,7 @@ function GanttChartPage() {
             <div className="mt-8 p-5 rounded-2xl bg-indigo-50 dark:bg-indigo-900/10 border border-indigo-100 dark:border-indigo-800/30 flex items-start gap-4">
                 <InformationCircleIcon className="h-5 w-5 text-indigo-500 shrink-0 mt-0.5" />
                 <p className="text-[10px] text-indigo-700 dark:text-indigo-300 font-black uppercase tracking-widest leading-relaxed">
-                    Click any task bar or row to inspect task details. Bars show task progress. Color indicates status.
-                    Scroll horizontally to view the full timeline.
+                    {t('gantt_legend_description')}
                 </p>
             </div>
         </div>
