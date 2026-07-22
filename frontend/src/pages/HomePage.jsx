@@ -6,7 +6,6 @@ import axiosInstance from '../api/axiosInstance';
 import { toast } from 'react-toastify';
 import LoadingSpinner from '../components/LoadingSpinner';
 import Modal from '../components/Modal';
-import { HamburgerButton } from '../components/Sidebar';
 import AnimatedCountUp from '../components/AnimatedCountUp';
 import { formatDistanceToNow, isPast, isToday, parseISO } from 'date-fns';
 import { 
@@ -80,10 +79,7 @@ function HomePage() {
     const [layout, setLayout] = useState(() => {
         const saved = localStorage.getItem('rafapp_dashboard_layout');
         if (saved) {
-            try { 
-                const parsed = JSON.parse(saved); 
-                if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-            } catch (e) { console.error(e); }
+            try { return JSON.parse(saved); } catch (e) { console.error(e); }
         }
         return [
             { id: 'stat-cards', visible: true, title_en: 'Key Statistics', title_is: 'Mælaborð', color: 'indigo' },
@@ -256,12 +252,8 @@ function HomePage() {
                 weekly_hours: statsRes.data.weekly_hours || 0
             });
 
-            const rawNotes = Array.isArray(notesRes.data) 
-                ? notesRes.data 
-                : (Array.isArray(notesRes.data?.items) ? notesRes.data.items : []);
-
             setActiveClockIn(clockRes.data);
-            setRecentNotifications(rawNotes.slice(0, 5));
+            setRecentNotifications(notesRes.data.slice(0, 5));
         } catch (err) {
             console.error("Dashboard synchronization error", err);
             toast.error("Failed to synchronize operational telemetry.");

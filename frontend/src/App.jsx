@@ -169,7 +169,7 @@ function useIsMobile() {
 function AppShell() {
     const { i18n } = useTranslation();
     const { background } = useTenantBranding();
-    const { isAuthenticated, user: currentUser, isImpersonating, stopImpersonation, isLoading } = useAuth();
+    const { isAuthenticated, user: currentUser, isImpersonating, stopImpersonation } = useAuth();
     const [systemStatus, setSystemStatus] = useState(null);
     const [globalBanner, setGlobalBanner] = useState(null);
     const isMobile = useIsMobile();
@@ -251,99 +251,43 @@ function AppShell() {
 
     const showMaintenanceOverlay = systemStatus?.maintenance && !currentUser?.is_superuser;
 
-    // Loading State: Render Session Sync spinner while validating token
-    if (isLoading) {
-        return (
-            <div
-                className="flex flex-col justify-center items-center h-screen w-screen"
-                style={{ background: 'var(--bg-base)' }}
-            >
-                <div className="relative mb-5">
-                    <div
-                        className="h-14 w-14 rounded-full animate-spin"
-                        style={{
-                            border: '3px solid var(--border)',
-                            borderTopColor: 'var(--brand)',
-                        }}
-                    />
-                    <div className="absolute inset-0 flex items-center justify-center">
-                        <div
-                            className="h-2 w-2 rounded-full"
-                            style={{ background: 'var(--brand)' }}
-                        />
-                    </div>
-                </div>
-                <p
-                    className="text-[9px] font-black uppercase tracking-[0.35em]"
-                    style={{ color: 'var(--text-muted)', animation: 'pulseSoft 2s ease-in-out infinite' }}
-                >
-                    Synchronizing Session...
-                </p>
-            </div>
-        );
-    }
-
-    // Unauthenticated layout: Clean, full-page scrollable view for Landing and Login
-    if (!isAuthenticated) {
-        return (
-            <div
-                className="min-h-screen w-full font-sans overflow-y-auto"
-                style={{ background: 'var(--bg-base)', color: 'var(--text-primary)', ...style }}
-            >
-                <ErrorBoundary>
-                    <Routes>
-                        <Route path="/login" element={<LoginPage />} />
-                        <Route path="/" element={<LandingPage />} />
-                        <Route path="*" element={<Navigate to="/login" replace />} />
-                    </Routes>
-                </ErrorBoundary>
-            </div>
-        );
-    }
-
-    // Authenticated layout: Full operational app shell with Sidebar and TopBar
     return (
         <div
-            className="flex flex-col h-screen max-h-screen w-screen max-w-full overflow-hidden font-sans"
+            className="relative flex flex-col h-screen w-screen overflow-hidden font-sans"
             style={{ background: 'var(--bg-base)', color: 'var(--text-primary)', ...style }}
         >
             {/* Mobile Top Bar */}
-            {isMobile && (
+            {isMobile && isAuthenticated && (
                 <div 
                     style={{ borderBottom: '1px solid var(--border-subtle)', background: 'var(--bg-elevated)', height: '56px' }}
-                    className="shrink-0 z-[100] flex items-center justify-between px-4 py-2 shadow-md h-[56px] w-full"
+                    className="flex items-center justify-between px-4 py-2 shrink-0 z-50 shadow-sm"
                 >
                     <div className="flex items-center gap-3">
                         <HamburgerButton />
-                        <Link to="/dashboard" className="flex items-center gap-2">
-                            <span style={{ color: 'var(--text-primary)' }} className="font-black text-sm tracking-tight truncate leading-none uppercase italic">
-                                {currentUser?.tenant?.name || 'RafApp'}
-                            </span>
-                        </Link>
+                        <span style={{ color: 'var(--text-primary)' }} className="font-black text-sm tracking-tight truncate leading-none">
+                            {currentUser?.tenant?.name || 'RafApp'}
+                        </span>
                     </div>
                     
-                    <div className="flex items-center gap-2">
-                        <NotificationDropdown />
-                        <button
-                            onClick={() => {
-                                const newLang = i18n.language.startsWith('en') ? 'is' : 'en';
-                                i18n.changeLanguage(newLang);
-                                localStorage.setItem('i18nextLng', newLang);
-                            }}
-                            style={{ color: 'var(--brand)', minHeight: '44px' }}
-                            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-[0.15em] hover:opacity-75 transition-opacity"
-                        >
-                            <LanguageIcon className="h-4 w-4" />
-                            <span>{i18n.language.toUpperCase()}</span>
-                        </button>
-                    </div>
+                    <button
+                        onClick={() => {
+                            const newLang = i18n.language.startsWith('en') ? 'is' : 'en';
+                            i18n.changeLanguage(newLang);
+                            localStorage.setItem('i18nextLng', newLang);
+                        }}
+                        style={{ color: 'var(--brand)', minHeight: '44px' }}
+                        className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-[0.15em] hover:opacity-75 transition-opacity"
+                    >
+                        <LanguageIcon className="h-4 w-4" />
+                        <span>{i18n.language.toUpperCase()}</span>
+                    </button>
                 </div>
             )}
 
-            <div className="flex flex-1 h-full min-h-0 w-full overflow-hidden relative">
+            <div className="flex flex-1 overflow-hidden relative">
                 <Sidebar />
 
-                <main className="flex-1 h-full min-h-0 w-full overflow-x-hidden overflow-y-auto flex flex-col relative pb-24 lg:pb-0" style={{ background: 'var(--bg-base)' }}>
+                <main className="flex-1 overflow-x-hidden overflow-y-auto flex flex-col relative pb-24 lg:pb-0" style={{ background: 'var(--bg-base)' }}>
                     {globalBanner && globalBanner.message && (
                         <div
                             className="flex-shrink-0 flex items-center justify-center gap-4 px-6 py-3 text-white text-sm font-medium text-center"
@@ -371,8 +315,8 @@ function AppShell() {
                     )}
                     <ErrorBoundary>
                     <Routes>
-                        <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                        <Route path="/login" element={<Navigate to="/dashboard" replace />} />
+                        <Route path="/login" element={<LoginPage />} />
+                        <Route path="/" element={<LandingPage />} />
 
                         {/* --- CORE OPERATIONAL HUB --- */}
                         <Route path="/dashboard" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
