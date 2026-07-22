@@ -389,10 +389,10 @@ function HomePage() {
             case 'stat-cards':
                 return (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                        <StatCard title={t('active_projects')} value={stats?.active_projects || 0} icon={<BriefcaseIcon />} color="indigo" />
-                        <StatCard title={t('pending_work')} value={stats?.pending_tasks || 0} icon={<ClipboardDocumentListIcon />} color="emerald" />
-                        <StatCard title={t('weekly_hours')} value={stats?.weekly_hours || 0} icon={<ClockIcon />} color="amber" unit="h" />
-                        <StatCard title={t('active_personnel')} value={stats?.active_users || 0} icon={<UserGroupIcon />} color="rose" />
+                        <StatCard title={t('active_projects')} value={stats?.active_projects || 0} icon={<BriefcaseIcon />} color="indigo" to="/projects" />
+                        <StatCard title={t('pending_work')} value={stats?.pending_tasks || 0} icon={<ClipboardDocumentListIcon />} color="emerald" to="/tasks" />
+                        <StatCard title={t('weekly_hours')} value={stats?.weekly_hours || 0} icon={<ClockIcon />} color="amber" unit="h" to="/timelogs" />
+                        <StatCard title={t('active_personnel')} value={stats?.active_users || 0} icon={<UserGroupIcon />} color="rose" to="/users" />
                     </div>
                 );
                 
@@ -1083,17 +1083,25 @@ function HomePage() {
     );
 }
 
-function StatCard({ title, value, icon, color, unit = "" }) {
+function StatCard({ title, value, icon, color, unit = "", to }) {
     const colors = {
         indigo: 'bg-indigo-50 dark:bg-indigo-950/30 text-indigo-650 dark:text-indigo-400 border-indigo-100 dark:border-indigo-900/30',
         emerald: 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-650 dark:text-emerald-400 border-emerald-100 dark:border-emerald-900/30',
         amber: 'bg-amber-50 dark:bg-amber-950/30 text-amber-650 dark:text-amber-400 border-amber-100 dark:border-amber-900/30',
         rose: 'bg-rose-50 dark:bg-rose-950/30 text-rose-650 dark:text-rose-400 border-rose-100 dark:border-rose-900/30',
     };
-    return (
-        <div className="ambient-glow-card bg-white dark:bg-gray-900/60 p-6 rounded-[2.5rem] border border-gray-150 dark:border-indigo-950/30 shadow-sm dark:shadow-xl transition-all duration-300">
-            <div className={`p-3 rounded-xl w-fit mb-4 border ${colors[color] || colors.indigo}`}>
-                {React.cloneElement(icon, { className: "h-6 w-6" })}
+
+    const cardContent = (
+        <div className="ambient-glow-card bg-white dark:bg-gray-900/60 p-6 rounded-[2.5rem] border border-gray-150 dark:border-indigo-950/30 shadow-sm dark:shadow-xl transition-all duration-300 hover:scale-[1.02] hover:border-indigo-400 dark:hover:border-indigo-600 group cursor-pointer">
+            <div className="flex items-center justify-between mb-4">
+                <div className={`p-3 rounded-xl border ${colors[color] || colors.indigo}`}>
+                    {React.cloneElement(icon, { className: "h-6 w-6" })}
+                </div>
+                {to && (
+                    <span className="p-2 rounded-xl text-gray-400 group-hover:text-indigo-500 group-hover:translate-x-0.5 transition-all">
+                        <ArrowRightIcon className="h-4 w-4" />
+                    </span>
+                )}
             </div>
             <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">{title}</p>
             <p className="text-3xl font-black text-gray-900 dark:text-white tracking-tighter">
@@ -1102,6 +1110,11 @@ function StatCard({ title, value, icon, color, unit = "" }) {
             </p>
         </div>
     );
+
+    if (to) {
+        return <Link to={to} className="block">{cardContent}</Link>;
+    }
+    return cardContent;
 }
 
 function SuggestionsFeedbackCard({ title }) {

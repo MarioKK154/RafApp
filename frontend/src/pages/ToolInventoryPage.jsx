@@ -72,7 +72,7 @@ function ToolInventoryPage() {
         } finally {
             setIsLoading(false);
         }
-    }, [isSuperuser, selectedTenantId]);
+    }, [isSuperuser]);
 
     useEffect(() => { fetchTools(); }, [fetchTools]);
 
