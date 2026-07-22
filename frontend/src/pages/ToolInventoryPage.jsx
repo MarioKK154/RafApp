@@ -48,7 +48,7 @@ function ToolInventoryPage() {
     // Filter & UI States
     const [searchTerm, setSearchTerm] = useState('');
     const debouncedSearch = useDebounce(searchTerm, 300);
-    const selectedTenantId = 1; const setSelectedTenantId = () => {};
+    const [selectedTenantId, setSelectedTenantId] = useState(null);
     const [toolToDelete, setToolToDelete] = useState(null);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
@@ -86,7 +86,7 @@ function ToolInventoryPage() {
         if (!debouncedSearch) return tools;
         const query = debouncedSearch.toLowerCase();
         return tools.filter(tool =>
-            tool.name.toLowerCase().includes(query) ||
+            (tool.name ?? '').toLowerCase().includes(query) ||
             (tool.brand && tool.brand.toLowerCase().includes(query)) ||
             (tool.model && tool.model.toLowerCase().includes(query)) ||
             (tool.serial_number && tool.serial_number.toLowerCase().includes(query))
@@ -159,7 +159,10 @@ function ToolInventoryPage() {
                     </div>
                     <div className="flex items-center gap-4">
                         {isSuperuser && (
-                            null
+                            <SuperTenantSelector
+                                selectedTenantId={selectedTenantId}
+                                setSelectedTenantId={setSelectedTenantId}
+                            />
                         )}
                         {canManageTools && (
                             <button
@@ -227,7 +230,7 @@ function ToolInventoryPage() {
                                         src={tool.image_url || '/default-tool.png'} 
                                         alt="" 
                                         className="h-full w-full object-contain grayscale group-hover:grayscale-0 transition-all duration-500"
-                                        onError={(e) => { e.target.src = '/default-tool.png'; }}
+                                        onError={(e) => { if (!e.target.dataset.fallback) { e.target.dataset.fallback = '1'; e.target.src = '/default-tool.png'; } }}
                                     />
                                 </div>
                                 <div className="min-w-0">

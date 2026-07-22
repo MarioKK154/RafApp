@@ -5,6 +5,7 @@ from io import BytesIO
 from datetime import datetime
 
 from fastapi.responses import StreamingResponse
+from starlette.concurrency import run_in_threadpool
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 
@@ -96,7 +97,7 @@ async def read_all_projects_for_tenant(
 ):
     effective_tenant_id = current_user.tenant_id
     # Superadmins can scope by tenant_id if explicitly provided
-    if False:
+    if current_user.is_superuser and tenant_id is not None:
         effective_tenant_id = tenant_id
     return crud.get_projects(
         db=db, 
@@ -166,67 +167,70 @@ async def export_project_status_pdf(
     # Fetch related tasks for simple summary
     tasks = crud.get_tasks(db=db, project_id=project_id, skip=0, limit=1000)
 
-    buffer = BytesIO()
-    pdf = canvas.Canvas(buffer, pagesize=A4)
-    width, height = A4
+    def _generate_pdf():
+        buffer = BytesIO()
+        pdf = canvas.Canvas(buffer, pagesize=A4)
+        width, height = A4
 
-    def write_line(text: str, state: dict) -> None:
-        if state["y"] < 40:
-            pdf.showPage()
-            state["y"] = height - 40
-        pdf.drawString(40, state["y"], text)
-        state["y"] -= 14
+        def write_line(text: str, state: dict) -> None:
+            if state["y"] < 40:
+                pdf.showPage()
+                state["y"] = height - 40
+            pdf.drawString(40, state["y"], text)
+            state["y"] -= 14
 
-    y_state = {"y": height - 40}
+        y_state = {"y": height - 40}
 
-    title = "Project Status Report"
-    pdf.setFont("Helvetica-Bold", 16)
-    write_line(title, y_state)
+        title = "Project Status Report"
+        pdf.setFont("Helvetica-Bold", 16)
+        write_line(title, y_state)
 
-    pdf.setFont("Helvetica", 10)
-    now_str = datetime.utcnow().strftime("%Y-%m-%d %H:%M")
-    write_line(f"Generated for {current_user.full_name or current_user.email} on {now_str} UTC", y_state)
-    y_state["y"] -= 10
+        pdf.setFont("Helvetica", 10)
+        now_str = datetime.utcnow().strftime("%Y-%m-%d %H:%M")
+        write_line(f"Generated for {current_user.full_name or current_user.email} on {now_str} UTC", y_state)
+        y_state["y"] -= 10
 
-    pdf.setFont("Helvetica-Bold", 11)
-    write_line(f"Project: {db_project.name}", y_state)
-    pdf.setFont("Helvetica", 10)
-    write_line(f"Number: {db_project.project_number or db_project.id}", y_state)
-    write_line(f"Status: {db_project.status}", y_state)
-    if getattr(db_project, "client", None):
-        write_line(f"Client: {db_project.client}", y_state)
-    if db_project.address:
-        write_line(f"Address: {db_project.address}", y_state)
+        pdf.setFont("Helvetica-Bold", 11)
+        write_line(f"Project: {db_project.name}", y_state)
+        pdf.setFont("Helvetica", 10)
+        write_line(f"Number: {db_project.project_number or db_project.id}", y_state)
+        write_line(f"Status: {db_project.status}", y_state)
+        if getattr(db_project, "client", None):
+            write_line(f"Client: {db_project.client}", y_state)
+        if db_project.address:
+            write_line(f"Address: {db_project.address}", y_state)
 
-    if db_project.description:
+        if db_project.description:
+            y_state["y"] -= 6
+            pdf.setFont("Helvetica-Bold", 11)
+            write_line("Description", y_state)
+            pdf.setFont("Helvetica", 10)
+            for line in db_project.description.splitlines():
+                write_line(line, y_state)
+
         y_state["y"] -= 6
         pdf.setFont("Helvetica-Bold", 11)
-        write_line("Description", y_state)
-        pdf.setFont("Helvetica", 10)
-        for line in db_project.description.splitlines():
-            write_line(line, y_state)
+        write_line("Tasks Summary", y_state)
+        pdf.setFont("Helvetica", 9)
+        if tasks:
+            write_line("ID   Title                           Status        Assignee        Due", y_state)
+            for task in tasks[:100]:
+                assignee = ""
+                if task.assignee:
+                    assignee = task.assignee.full_name or task.assignee.email
+                due = task.due_date.strftime("%Y-%m-%d") if getattr(task, "due_date", None) else ""
+                title_short = (task.title[:28] + "...") if len(task.title) > 31 else task.title
+                line = f"{task.id:<4} {title_short:<30} {str(task.status or ''):<12} {assignee[:14]:<14} {due}"
+                write_line(line, y_state)
+        else:
+            write_line("No tasks registered for this project.", y_state)
 
-    y_state["y"] -= 6
-    pdf.setFont("Helvetica-Bold", 11)
-    write_line("Tasks Summary", y_state)
-    pdf.setFont("Helvetica", 9)
-    if tasks:
-        write_line("ID   Title                           Status        Assignee        Due", y_state)
-        for task in tasks[:100]:
-            assignee = ""
-            if task.assignee:
-                assignee = task.assignee.full_name or task.assignee.email
-            due = task.due_date.strftime("%Y-%m-%d") if getattr(task, "due_date", None) else ""
-            title_short = (task.title[:28] + "...") if len(task.title) > 31 else task.title
-            line = f"{task.id:<4} {title_short:<30} {str(task.status or ''):<12} {assignee[:14]:<14} {due}"
-            write_line(line, y_state)
-    else:
-        write_line("No tasks registered for this project.", y_state)
+        pdf.showPage()
+        pdf.save()
+        buffer.seek(0)
+        return buffer
 
-    pdf.showPage()
-    pdf.save()
-
-    buffer.seek(0)
+    buffer = await run_in_threadpool(_generate_pdf)
     crud.create_audit_log(
         db, action_type="data_export",
         actor_user_id=current_user.id, actor_email=current_user.email,

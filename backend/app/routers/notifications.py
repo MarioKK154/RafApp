@@ -36,10 +36,12 @@ def get_unread_count(
 @router.get("/", response_model=List[schemas.NotificationRead])
 def read_notifications(
     unread_only: bool = Query(False),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=200),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
-    return crud.get_notifications(db, user_id=current_user.id, unread_only=unread_only)
+    return crud.get_notifications(db, user_id=current_user.id, unread_only=unread_only, skip=skip, limit=limit)
 
 @router.put("/{notification_id}/read", response_model=schemas.NotificationRead)
 def mark_notification_as_read(
@@ -60,7 +62,7 @@ def mark_notification_as_read(
     db.refresh(db_note)
     return db_note
 
-@router.put("/read-all")
+@router.put("/read-all", response_model=List[schemas.NotificationRead])
 def mark_all_notifications_as_read(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
@@ -69,9 +71,9 @@ def mark_all_notifications_as_read(
         models.Notification.user_id == current_user.id,
         models.Notification.is_read == False
     ).update({"is_read": True}, synchronize_session=False)
-    
     db.commit()
-    return {"message": "All alerts cleared from registry."}
+    # Return the updated list so the frontend doesn't need a second request
+    return crud.get_notifications(db, user_id=current_user.id, unread_only=False, skip=0, limit=50)
 
 @router.post("/subscribe", status_code=201)
 def subscribe_to_push(

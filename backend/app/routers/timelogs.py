@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query, Request
 from sqlalchemy.orm import Session
 from typing import Annotated, List, Optional, Literal, Union
-from datetime import datetime, date
+from datetime import datetime, date, time, timezone
 
 from .. import crud, models, schemas, security
 from ..database import get_db
@@ -121,8 +121,8 @@ async def read_my_timelogs(
     limit: int = Query(100, ge=1, le=1000)
 ):
     """Retrieves the personal activity history for the user."""
-    start_dt = datetime.combine(start_date, datetime.min.time()) if start_date else None
-    end_dt = datetime.combine(end_date, datetime.max.time()) if end_date else None
+    start_dt = datetime.combine(start_date, time.min, tzinfo=timezone.utc) if start_date else None
+    end_dt = datetime.combine(end_date, time.max, tzinfo=timezone.utc) if end_date else None
 
     return crud.get_timelogs(
         db=db, 
@@ -172,8 +172,8 @@ async def read_all_timelogs(
     """Administrative oversight: View and filter activity across the entire tenant."""
     effective_tenant_id = current_user.tenant_id
     
-    start_dt = datetime.combine(start_date, datetime.min.time()) if start_date else None
-    end_dt = datetime.combine(end_date, datetime.max.time()) if end_date else None
+    start_dt = datetime.combine(start_date, time.min, tzinfo=timezone.utc) if start_date else None
+    end_dt = datetime.combine(end_date, time.max, tzinfo=timezone.utc) if end_date else None
 
     return crud.get_timelogs(
         db=db, 

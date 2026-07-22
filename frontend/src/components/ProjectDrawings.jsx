@@ -97,12 +97,11 @@ function ProjectDrawings({ projectId, onBack }) {
             setDrawings(currentDrawings);
             setFolders(rawFolders.filter(f => f.parent_id === currentFolderId));
 
-            // Scan drawing cache statuses
-            const cacheStatus = {};
-            for (const d of currentDrawings) {
-                cacheStatus[d.id] = await checkIfCached(d.filepath);
-            }
-            setCachedMap(cacheStatus);
+            // Scan drawing cache statuses (parallelized for performance)
+            const cacheEntries = await Promise.all(
+                currentDrawings.map(async (d) => [d.id, await checkIfCached(d.filepath)])
+            );
+            setCachedMap(Object.fromEntries(cacheEntries));
         } catch (error) {
             console.error('Drawings sync failed:', error);
             toast.error(isIcelandic ? 'Mistókst að samstilla teikningar.' : 'Failed to sync drawing registry.');
@@ -116,21 +115,24 @@ function ProjectDrawings({ projectId, onBack }) {
     // --- ACTION: In-Browser Viewer ---
     const handleViewFile = async (drawing) => {
         if (!drawing.filepath) return toast.error("Storage path undefined.");
+        // Open window synchronously (user-initiated) BEFORE any await, to avoid popup blockers
+        const newWin = window.open('', '_blank');
         try {
             const isCached = await checkIfCached(drawing.filepath);
             if (isCached) {
                 const blobUrl = await getDrawingBlobUrl(drawing.filepath);
-                if (blobUrl) {
-                    window.open(blobUrl, '_blank');
+                if (blobUrl && newWin) {
+                    newWin.location.href = blobUrl;
                     return;
                 }
             }
             // Fallback to online redirect
             const base = axiosInstance.defaults.baseURL || "";
             const cleanBase = base.includes('/api') ? base.split('/api')[0] : base;
-            window.open(`${cleanBase}/${drawing.filepath}`, '_blank');
+            if (newWin) newWin.location.href = `${cleanBase}/${drawing.filepath}`;
         } catch (error) {
             console.error('View file error:', error);
+            if (newWin) newWin.close();
             toast.error(isIcelandic ? 'Gat ekki opnað skrá.' : 'Could not open file.');
         }
     };

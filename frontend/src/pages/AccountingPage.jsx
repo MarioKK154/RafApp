@@ -568,10 +568,9 @@ function AccountingPage() {
                                                         onChange={(e) => setCalcTaxYear(e.target.value)}
                                                         className="modern-input h-9 text-[11px] font-bold"
                                                     >
-                                                        <option value="2026">2026</option>
-                                                        <option value="2025">2025</option>
-                                                        <option value="2024">2024</option>
-                                                        <option value="2023">2023</option>
+                                                        {Array.from({ length: 4 }, (_, i) => new Date().getFullYear() - i).map(yr => (
+                                                            <option key={yr} value={String(yr)}>{yr}</option>
+                                                        ))}
                                                     </select>
                                                 </div>
                                                 <div>

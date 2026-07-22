@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
+import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useTranslation } from 'react-i18next';
 import { LanguageIcon } from '@heroicons/react/24/outline';
@@ -69,8 +70,53 @@ import RiskLibraryPage from './pages/RiskLibraryPage';
 import ChatPage from './pages/ChatPage';
 import DrawingsPage from './pages/DrawingsPage';
 
+class ErrorBoundary extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = { hasError: false, error: null };
+    }
+    static getDerivedStateFromError(error) {
+        return { hasError: true, error };
+    }
+    componentDidCatch(error, info) {
+        console.error('ErrorBoundary caught:', error, info);
+    }
+    render() {
+        if (this.state.hasError) {
+            return (
+                <div
+                    style={{ background: 'var(--bg-base)', color: 'var(--text-primary)', minHeight: '100vh' }}
+                    className="flex flex-col items-center justify-center p-8 text-center"
+                >
+                    <div className="mb-6 text-5xl">⚠️</div>
+                    <h1 className="text-2xl font-black uppercase tracking-tighter mb-3" style={{ color: 'var(--text-primary)' }}>
+                        Something went wrong
+                    </h1>
+                    <p className="text-sm mb-6" style={{ color: 'var(--text-muted)' }}>
+                        An unexpected error occurred. Please refresh the page.
+                    </p>
+                    <button
+                        onClick={() => window.location.reload()}
+                        style={{ background: 'var(--brand)', color: '#fff' }}
+                        className="px-6 py-3 rounded-xl font-black uppercase tracking-wider text-sm"
+                    >
+                        Refresh Page
+                    </button>
+                    {process.env.NODE_ENV === 'development' && (
+                        <pre className="mt-6 text-left text-xs bg-gray-100 p-4 rounded-xl max-w-2xl overflow-auto">
+                            {this.state.error?.toString()}
+                        </pre>
+                    )}
+                </div>
+            );
+        }
+        return this.props.children;
+    }
+}
+
 const ProtectedRoute = ({ children }) => {
     const { isAuthenticated, isLoading } = useAuth();
+    const location = useLocation();
     
     if (isLoading) {
         return (
@@ -105,7 +151,8 @@ const ProtectedRoute = ({ children }) => {
         );
     }
     
-    return isAuthenticated ? children : <Navigate to="/login" replace />;
+    // Preserve the original URL so LoginPage can redirect back after login
+    return isAuthenticated ? children : <Navigate to="/login" state={{ from: location }} replace />;
 };
 
 function useIsMobile() {
@@ -166,7 +213,18 @@ function AppShell() {
                         await Promise.all(registrations.map(r => r.unregister()));
                     }
                     localStorage.setItem('app_build_time', latestBuildTime);
-                    window.location.reload(true);
+                    toast.info(
+                        <span>
+                            🚀 New version available.{' '}
+                            <button
+                                onClick={() => window.location.reload(true)}
+                                style={{ fontWeight: 900, textDecoration: 'underline', cursor: 'pointer' }}
+                            >
+                                Click to refresh
+                            </button>
+                        </span>,
+                        { autoClose: false, toastId: 'new-version' }
+                    );
                 } else if (!storedBuildTime) {
                     localStorage.setItem('app_build_time', latestBuildTime);
                 }
@@ -254,6 +312,7 @@ function AppShell() {
                             </button>
                         </div>
                     )}
+                    <ErrorBoundary>
                     <Routes>
                         <Route path="/login" element={<LoginPage />} />
                         <Route path="/" element={<LandingPage />} />
@@ -336,6 +395,7 @@ function AppShell() {
 
                         <Route path="*" element={<NotFoundPage />} />
                     </Routes>
+                    </ErrorBoundary>
                 </main>
             </div>
 

@@ -100,6 +100,7 @@ const LeaveRequestCreatePage = () => {
                                 type="date"
                                 name="end_date"
                                 required
+                                min={formData.start_date || undefined}
                                 value={formData.end_date}
                                 onChange={handleChange}
                                 className="w-full rounded-xl border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-indigo-500"

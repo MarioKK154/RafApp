@@ -33,16 +33,21 @@ axiosInstance.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+let isLoggingOut = false;
+
 axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response && error.response.status === 401) {
       const path = window.location.pathname || '';
       const onLogin = path === '/login' || path.startsWith('/login');
-      if (!onLogin) {
+      if (!onLogin && !isLoggingOut) {
+        isLoggingOut = true;
         localStorage.removeItem('accessToken');
         localStorage.removeItem('authRememberMe');
         window.dispatchEvent(new CustomEvent(AUTH_LOGOUT_EVENT, { detail: { reason: 'session' } }));
+        // Reset flag after a short delay so future logins work
+        setTimeout(() => { isLoggingOut = false; }, 3000);
       }
     }
     return Promise.reject(error);

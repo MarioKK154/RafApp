@@ -23,6 +23,7 @@ function ProjectBoQ({ projectId }) {
     const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState('');
+    const [deletingId, setDeletingId] = useState(null);
     const { user } = useAuth();
 
     // Registry Form State
@@ -105,7 +106,8 @@ function ProjectBoQ({ projectId }) {
      */
     const handleRemoveItem = async (boqItemId, itemName) => {
         if (!window.confirm(`PERMANENT ACTION: Purge "${itemName}" from project requirements?`)) return;
-        
+        if (deletingId) return; // Prevent double-click
+        setDeletingId(boqItemId);
         try {
             await axiosInstance.delete(`/boq/items/${boqItemId}`);
             toast.success(`"${itemName}" node purged.`);
@@ -113,6 +115,8 @@ function ProjectBoQ({ projectId }) {
         } catch (error) {
             console.error('Remove BoQ item failed:', error);
             toast.error('Registry Error: Could not remove node.');
+        } finally {
+            setDeletingId(null);
         }
     };
 
@@ -251,7 +255,8 @@ function ProjectBoQ({ projectId }) {
                                             <td className="py-5 px-8 text-center">
                                                 <button 
                                                     onClick={() => handleRemoveItem(item.id, inventoryDisplayName(item.inventory_item, i18n.language))} 
-                                                    className="p-2.5 text-gray-300 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all"
+                                                    disabled={deletingId === item.id}
+                                                    className="p-2.5 text-gray-300 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                                                 >
                                                     <TrashIcon className="h-5 w-5" />
                                                 </button>

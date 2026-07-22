@@ -171,7 +171,14 @@ export const AuthProvider = ({ children }) => {
 
     useEffect(() => {
         if (!token) return;
-        const mark = () => { lastActivityRef.current = Date.now(); };
+        let lastThrottle = 0;
+        const mark = () => {
+            const now = Date.now();
+            if (now - lastThrottle >= 2000) {
+                lastThrottle = now;
+                lastActivityRef.current = now;
+            }
+        };
         const opts = { passive: true };
         const evs = ['mousedown', 'keydown', 'touchstart', 'scroll', 'wheel', 'mousemove'];
         evs.forEach((ev) => window.addEventListener(ev, mark, opts));

@@ -166,6 +166,7 @@ function TaskEditPage() {
                 ...toRemove.map(id => axiosInstance.delete(`/tasks/${taskId}/dependencies/${id}`))
             ]);
 
+            // Only show success AFTER all operations (task + dependencies) complete
             toast.success(t('save_changes', { defaultValue: 'Work details synchronized.' }));
             fetchPageData();
         } catch (error) {
