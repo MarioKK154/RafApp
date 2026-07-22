@@ -357,7 +357,11 @@ function CalendarPage() {
                 ]}
                 actions={
                     <button
-                        onClick={handleOpenCreateModal}
+                        onClick={() => {
+                            setFormData({ title: '', event_type: 'custom', start: format(new Date(), "yyyy-MM-dd'T'HH:mm"), end: format(new Date(), "yyyy-MM-dd'T'HH:mm"), description: '', location: '', attendeeIds: [] });
+                            setModalMode('create');
+                            setIsModalOpen(true);
+                        }}
                         className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition shadow-lg shadow-indigo-500/30 transform active:scale-95 cursor-pointer"
                     >
                         {t('new_event', { defaultValue: '+ New Entry' })}

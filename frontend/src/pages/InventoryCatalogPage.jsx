@@ -9,6 +9,7 @@ import ConfirmationModal from '../components/ConfirmationModal';
 import InventoryCategoryModal from '../components/InventoryCategoryModal';
 import InventoryMergeModal from '../components/InventoryMergeModal';
 import InventoryCatalogShopFilters from '../components/InventoryCatalogShopFilters';
+import PageHeader from '../components/PageHeader';
 import { inventoryDisplayName, inventoryCategoryLine } from '../utils/inventoryI18n';
 import {
     CubeIcon,
@@ -338,41 +339,23 @@ function InventoryCatalogPage() {
     );
 
     return (
-        <div className="container mx-auto p-4 md:p-8 max-w-7xl animate-in fade-in duration-500">
-            {/* Header */}
-            <header className="mb-6">
-                <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5 flex justify-between items-center gap-6">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
-                            <CubeIcon className="h-6 w-6 text-indigo-600" />
-                        </div>
-                        <div>
-                            <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">{t('global_inventory')}</h1>
-                            {/* Breadcrumb trail */}
-                            <div className="flex items-center gap-1 mt-0.5 flex-wrap">
-                                {breadcrumbs.map((crumb, i) => (
-                                    <Fragment key={i}>
-                                        {i > 0 && <ChevronRightIcon className="h-3 w-3 text-gray-300 flex-shrink-0" />}
-                                        {crumb.path ? (
-                                            <button onClick={() => navigate(crumb.path)} className="text-[10px] font-bold text-gray-400 hover:text-indigo-600 transition-colors uppercase tracking-widest">
-                                                {crumb.label}
-                                            </button>
-                                        ) : (
-                                            <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest">{crumb.label}</span>
-                                        )}
-                                    </Fragment>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                    {canManageCatalog && (
+        <div className="container mx-auto p-4 md:p-8 max-w-[1600px] animate-in fade-in duration-500">
+            <PageHeader
+                icon={CubeIcon}
+                title={t('global_inventory', { defaultValue: 'Hardware & Material Catalog' })}
+                subtitle={t('global_inventory_subtitle', { defaultValue: 'SKUs, Electrical Supplies, Wholesale Pricing & Inventory Categories' })}
+                stats={[
+                    { label: `${filteredItems.length} ${t('items', { defaultValue: 'Items in view' })}`, dotColor: 'bg-green-400 animate-pulse' },
+                ]}
+                actions={
+                    canManageCatalog && (
                         <button onClick={() => navigate('/inventory/new')}
-                            className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition transform active:scale-95">
+                            className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition shadow-lg shadow-indigo-500/30 transform active:scale-95 cursor-pointer">
                             <PlusIcon className="h-5 w-5" /> {t('new_material')}
                         </button>
-                    )}
-                </div>
-            </header>
+                    )
+                }
+            />
 
             {/* Search + Shop filters */}
             <div className="mb-6 grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">

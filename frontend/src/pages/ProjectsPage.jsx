@@ -96,10 +96,19 @@ const ProjectsPage = () => {
      */
     const structuredProjects = useMemo(() => {
         const processed = projects.map(proj => {
-            const startDate = proj.start_date ? parseISO(proj.start_date) : null;
-            const isStarted = startDate && (isPast(startDate) || isToday(startDate));
+            let isStarted = false;
+            if (proj.start_date) {
+                try {
+                    const parsed = parseISO(proj.start_date);
+                    if (parsed && !isNaN(parsed.getTime())) {
+                        isStarted = isPast(parsed) || isToday(parsed);
+                    }
+                } catch (e) {
+                    console.error("Invalid project start_date:", proj.start_date);
+                }
+            }
             
-            let displayStatus = proj.status;
+            let displayStatus = proj.status || 'Planning';
             if (proj.status === 'Planning' && isStarted) {
                 displayStatus = 'Active';
             }
@@ -126,9 +135,16 @@ const ProjectsPage = () => {
     const statusCounts = useMemo(() => {
         const counts = { total: 0, active: 0, planning: 0, commissioned: 0, completed: 0 };
         const all = projects.map(proj => {
-            const startDate = proj.start_date ? parseISO(proj.start_date) : null;
-            const isStarted = startDate && (isPast(startDate) || isToday(startDate));
-            return proj.status === 'Planning' && isStarted ? 'Active' : proj.status;
+            let isStarted = false;
+            if (proj.start_date) {
+                try {
+                    const parsed = parseISO(proj.start_date);
+                    if (parsed && !isNaN(parsed.getTime())) {
+                        isStarted = isPast(parsed) || isToday(parsed);
+                    }
+                } catch (e) {}
+            }
+            return proj.status === 'Planning' && isStarted ? 'Active' : (proj.status || 'Planning');
         });
 
         for (const s of all) {

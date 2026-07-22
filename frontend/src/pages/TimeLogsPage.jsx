@@ -520,7 +520,7 @@ function TimeLogsPage() {
                                         <PushToGCButton entityType="timelog" entityId={log.id} buttonLabel="Push" />
                                         <button
                                             type="button"
-                                            onClick={() => openEditModal(log)}
+                                            onClick={() => handleOpenEditModal(log)}
                                             className="p-2 bg-indigo-600 text-white rounded-xl transition transform hover:scale-110 active:scale-95"
                                             title={t('edit', { defaultValue: 'Edit' })}
                                         >

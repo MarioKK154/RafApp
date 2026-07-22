@@ -4,6 +4,7 @@ import axiosInstance from '../api/axiosInstance';
 import { useAuth } from '../context/AuthContext';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ProjectDrawings from '../components/ProjectDrawings';
+import PageHeader from '../components/PageHeader';
 import { 
     BriefcaseIcon, 
     MapPinIcon, 
@@ -84,26 +85,19 @@ function DrawingsPage() {
         return <LoadingSpinner text={isIcelandic ? 'Hleður teikningaskrá...' : 'Loading drawings directory...'} size="lg" />;
     }
 
+    const totalDrawings = Object.values(drawingCounts).reduce((a, b) => a + b, 0);
+
     return (
-        <div className="container mx-auto p-4 md:p-8 max-w-7xl animate-in fade-in duration-500">
-            {/* Header section */}
-            <header className="mb-10 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                    <div className="flex items-center gap-5">
-                        <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
-                            <DocumentDuplicateIcon className="h-6 w-6 text-indigo-600" />
-                        </div>
-                        <div>
-                            <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">
-                                {isIcelandic ? 'Teikningamiðstöð' : 'Drawings Database'}
-                            </h1>
-                            <p className="text-xs text-gray-500 mt-1 dark:text-gray-400">
-                                {isIcelandic ? 'Ajour skrá yfir öll teikningasöfn og hönnunargögn.' : 'Ajour directory of all active project drawing catalogs.'}
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </header>
+        <div className="container mx-auto p-4 md:p-8 max-w-[1600px] animate-in fade-in duration-500">
+            <PageHeader
+                icon={DocumentDuplicateIcon}
+                title={isIcelandic ? 'Teikningaskrá & Ajour Plan' : 'Blueprints & Technical Drawings'}
+                subtitle={isIcelandic ? 'Aðaluppdráttur, lagnaleiðir og raflagnatæknilegar teikningar' : 'Master Blueprints, Schematics & Site Floorplans'}
+                stats={[
+                    { label: `${projects.length} ${isIcelandic ? 'Verk' : 'Active Projects'}`, dotColor: 'bg-green-400 animate-pulse' },
+                    { label: `${totalDrawings} ${isIcelandic ? 'Teikningar' : 'Blueprints'}`, icon: <DocumentDuplicateIcon className="h-4 w-4 text-indigo-300" /> },
+                ]}
+            />
 
             {/* Search and Filters */}
             <div className="mb-6 flex gap-4">

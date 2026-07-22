@@ -8,6 +8,7 @@ import PhaseBalancingCalculator from '../components/PhaseBalancingCalculator';
 import VoltageDropCalculator from '../components/VoltageDropCalculator';
 import ShortCircuitCalculator from '../components/ShortCircuitCalculator';
 import CreateTutorialModal from '../components/CreateTutorialModal';
+import PageHeader from '../components/PageHeader';
 import { 
     CalculatorIcon, 
     BookOpenIcon, 
@@ -134,31 +135,24 @@ function TutorialsPage() {
                 </div>
             )}
 
-            {/* Header Section */}
-            <header className="mb-12">
-                <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                    <div>
-                        <div className="flex items-center gap-3 mb-2">
-                            <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
-                                <ListBulletIcon className="h-6 w-6 text-indigo-600" />
-                            </div>
-                            <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">{t('utilities_knowledge_base', { defaultValue: 'Utilities & Knowledge Base' })}</h1>
-                        </div>
-                        <p className="text-gray-500 dark:text-gray-400 max-w-2xl text-sm leading-relaxed font-medium mt-2">
-                            {t('utilities_knowledge_base_desc', { defaultValue: 'Standardized technical schematics, regulatory protocols, and standard engineering calculators for field deployment.' })}
-                        </p>
-                    </div>
-
-                    {canCreate && (
+            <PageHeader
+                icon={BookOpenIcon}
+                title={t('utilities_knowledge_base', { defaultValue: 'Engineering Knowledge Base & Calculators' })}
+                subtitle={t('utilities_knowledge_base_desc', { defaultValue: 'Standardized Technical Schematics, Field Guides & Engineering Calculators' })}
+                stats={[
+                    { label: `${filteredTutorials.length} ${t('protocols', { defaultValue: 'Protocols' })}`, dotColor: 'bg-green-400 animate-pulse' },
+                ]}
+                actions={
+                    canCreate && (
                         <button
                             onClick={() => setIsCreateModalOpen(true)}
-                            className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition transform active:scale-95"
+                            className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition shadow-lg shadow-indigo-500/30 transform active:scale-95 cursor-pointer"
                         >
                             <PlusIcon className="h-5 w-5" /> {t('create_protocol', { defaultValue: 'Create Protocol' })}
                         </button>
-                    )}
-                </div>
-            </header>
+                    )
+                }
+            />
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                 

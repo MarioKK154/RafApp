@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import axiosInstance from '../api/axiosInstance';
 import { toast } from 'react-toastify';
 import LoadingSpinner from '../components/LoadingSpinner';
+import PageHeader from '../components/PageHeader';
 import { 
     ShieldExclamationIcon, 
     TrashIcon, 
@@ -644,19 +645,15 @@ function AdminToolsPage() {
     if (authIsLoading) return <LoadingSpinner text="Verifying system credentials..." size="lg" />;
 
     return (
-        <div className="container mx-auto p-4 md:p-8 max-w-5xl animate-in fade-in duration-500">
-            {/* Header */}
-            <header className="mb-8">
-                <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5 flex items-center gap-4">
-                    <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
-                        <ShieldExclamationIcon className="h-6 w-6 text-indigo-600" />
-                    </div>
-                    <div>
-                        <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">{t('admin_tools', { defaultValue: 'Administrator Tools' })}</h1>
-                        <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">{t('admin_tools_desc', { defaultValue: 'Elevated system maintenance and lifecycle management.' })}</p>
-                    </div>
-                </div>
-            </header>
+        <div className="container mx-auto p-4 md:p-8 max-w-[1600px] animate-in fade-in duration-500">
+            <PageHeader
+                icon={ShieldExclamationIcon}
+                title={t('admin_tools', { defaultValue: 'System Administration & Superuser Control Console' })}
+                subtitle={t('admin_tools_subtitle', { defaultValue: 'Global Telemetry, System Health, Audit Logs & Database Sync' })}
+                stats={[
+                    { label: `${tenantHealth.length} ${t('tenants', { defaultValue: 'Active Tenants' })}`, dotColor: 'bg-green-400 animate-pulse' },
+                ]}
+            />
 
             <div className="space-y-12">
                 {/* Excel Database Synchronization */}

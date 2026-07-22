@@ -10,6 +10,7 @@ import {
     ExclamationTriangleIcon,
     BuildingLibraryIcon
 } from '@heroicons/react/24/outline';
+import PageHeader from '../components/PageHeader';
 
 function LawsPage() {
     const { t } = useTranslation();
@@ -45,23 +46,15 @@ function LawsPage() {
     ];
 
     return (
-        <div className="container mx-auto p-4 md:p-8 max-w-7xl animate-in fade-in duration-500">
-            {/* Header Section */}
-            <header className="mb-10">
-                <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5">
-                    <div className="flex items-center gap-3 mb-2">
-                        <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
-                            <BookOpenIcon className="h-6 w-6 text-indigo-600" />
-                        </div>
-                        <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">
-                            {t('laws_standards', { defaultValue: 'Icelandic Electrical Laws & Standards' })} <span className="inline-block ml-2">🇮🇸</span>
-                        </h1>
-                    </div>
-                    <p className="text-gray-500 dark:text-gray-400 max-w-2xl text-sm leading-relaxed mt-2">
-                        {t('laws_standards_desc', { defaultValue: 'Access critical legal frameworks and technical regulations mandatory for all RafApp deployments. Ensure all site work complies with HMS (Húsnæðis- og mannvirkjastofnun) requirements.' })}
-                    </p>
-                </div>
-            </header>
+        <div className="container mx-auto p-4 md:p-8 max-w-[1600px] animate-in fade-in duration-500">
+            <PageHeader
+                icon={BookOpenIcon}
+                title={t('laws_standards', { defaultValue: 'Icelandic Electrical Laws & Standards 🇮🇸' })}
+                subtitle={t('laws_standards_desc', { defaultValue: 'Legal Frameworks, Technical Regulations & HMS Electrical Standards' })}
+                stats={[
+                    { label: `${legalCategories.length} ${t('frameworks', { defaultValue: 'Frameworks' })}`, dotColor: 'bg-green-400 animate-pulse' },
+                ]}
+            />
 
             {/* Warning Note */}
             <div className="mb-10 p-6 bg-orange-50 dark:bg-orange-900/20 border border-orange-100 dark:border-orange-800 rounded-[2rem] flex items-start gap-4">

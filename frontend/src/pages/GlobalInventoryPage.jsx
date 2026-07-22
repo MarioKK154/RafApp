@@ -6,6 +6,7 @@ import axiosInstance from '../api/axiosInstance';
 import { toast } from 'react-toastify';
 import LoadingSpinner from '../components/LoadingSpinner';
 import InventoryCatalogShopFilters from '../components/InventoryCatalogShopFilters';
+import PageHeader from '../components/PageHeader';
 import { inventoryDisplayName } from '../utils/inventoryI18n';
 import {
     CircleStackIcon,
@@ -103,36 +104,34 @@ function GlobalInventoryPage() {
         return <LoadingSpinner text={t('syncing')} />;
 
     return (
-        <div className="container mx-auto p-4 md:p-8 max-w-7xl animate-in fade-in duration-500">
-            <header className="mb-12">
-                <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5 flex justify-between items-center gap-6">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
-                            <CircleStackIcon className="h-6 w-6 text-indigo-600" />
-                        </div>
-                        <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">
-                            {t('inventory')}
-                        </h1>
-                    </div>
+        <div className="container mx-auto p-4 md:p-8 max-w-[1600px] animate-in fade-in duration-500">
+            <PageHeader
+                icon={CircleStackIcon}
+                title={t('inventory', { defaultValue: 'Master Materials & Hardware Database' })}
+                subtitle={t('inventory_subtitle', { defaultValue: 'Central Supply Catalog, Supplier Pricing & Search' })}
+                stats={[
+                    { label: `${filteredCount} ${t('skus', { defaultValue: 'SKUs' })}`, dotColor: 'bg-green-400 animate-pulse' },
+                ]}
+                actions={
                     <div className="flex items-center gap-3">
                         <Link
                             to="/shopping-list"
-                            className="inline-flex items-center gap-2 px-5 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-200 font-black text-[10px] uppercase tracking-widest rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition"
+                            className="inline-flex items-center gap-2 px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition border border-white/10 backdrop-blur-sm"
                         >
-                            <ShoppingCartIcon className="h-5 w-5" />{' '}
+                            <ShoppingCartIcon className="h-4 w-4" />{' '}
                             {t('shopping_list', { defaultValue: 'Procurement' })}
                         </Link>
                         {canManageInventory && (
                             <Link
                                 to="/inventory/new"
-                                className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition transform active:scale-95"
+                                className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition shadow-lg shadow-indigo-500/30 transform active:scale-95 cursor-pointer"
                             >
                                 <PlusIcon className="h-5 w-5" /> {t('create_new')}
                             </Link>
                         )}
                     </div>
-                </div>
-            </header>
+                }
+            />
 
             <div className="mb-10 grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
                 <div className="xl:col-span-8 relative group">

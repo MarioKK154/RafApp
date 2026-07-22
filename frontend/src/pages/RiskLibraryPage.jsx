@@ -4,6 +4,7 @@ import axiosInstance from '../api/axiosInstance';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
 import LoadingSpinner from '../components/LoadingSpinner';
+import PageHeader from '../components/PageHeader';
 import {
     ShieldExclamationIcon,
     PlusIcon,
@@ -141,25 +142,15 @@ function RiskLibraryPage() {
     );
 
     return (
-        <div className="container mx-auto p-4 md:p-8 max-w-6xl animate-in fade-in duration-500">
-            <header className="mb-8 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5">
-                <div className="flex items-center gap-4">
-                    <div className="p-3 bg-amber-600 rounded-2xl shadow-lg">
-                        <ShieldExclamationIcon className="h-6 w-6 text-white" />
-                    </div>
-                    <div>
-                        <p className="text-[10px] font-black text-amber-600 uppercase tracking-[0.3em] mb-1">
-                            {t('standard_risk_library')}
-                        </p>
-                        <h1 className="text-2xl md:text-3xl font-black text-gray-900 dark:text-white tracking-tight">
-                            {t('reusable_risk_templates')}
-                        </h1>
-                        <p className="text-xs text-gray-500 mt-1">
-                            {t('risk_library_desc')}
-                        </p>
-                    </div>
-                </div>
-            </header>
+        <div className="container mx-auto p-4 md:p-8 max-w-[1600px] animate-in fade-in duration-500">
+            <PageHeader
+                icon={ShieldExclamationIcon}
+                title={t('standard_risk_library', { defaultValue: 'Risk & Safety Library' })}
+                subtitle={t('reusable_risk_templates', { defaultValue: 'Reusable Risk Templates, Hazard Assessments & Mitigation Protocols' })}
+                stats={[
+                    { label: `${templates.length} ${t('templates', { defaultValue: 'Templates' })}`, dotColor: 'bg-green-400 animate-pulse' },
+                ]}
+            />
 
             <section className="mb-10 bg-white dark:bg-gray-800 rounded-[2rem] border border-gray-100 dark:border-gray-700 shadow-sm p-6 md:p-8">
                 <div className="flex items-center gap-2 mb-6">

@@ -7,6 +7,7 @@ import { toast } from 'react-toastify';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ConfirmationModal from '../components/ConfirmationModal';
 import CreateOfferFromCatalogModal from '../components/CreateOfferFromCatalogModal';
+import PageHeader from '../components/PageHeader';
 import {
     PlusIcon,
     PencilIcon,
@@ -212,67 +213,31 @@ function LaborCatalogListPage() {
     if (categoriesLoading) return <LoadingSpinner text={t('accessing_service_rates')} />;
 
     return (
-        <div className="container mx-auto p-4 md:p-8 max-w-7xl animate-in fade-in duration-500">
-            <header className="mb-6 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5 flex justify-between items-center gap-6">
-                <div className="flex items-center gap-3">
-                    <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
-                        <ListBulletIcon className="h-6 w-6 text-indigo-600" />
-                    </div>
-                    <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">{t('labor_catalog')}</h1>
-                </div>
-                {(canImportAndCreate || canManageCatalog) && (
-                    <div className="flex flex-wrap items-center gap-3">
-                        {canManageCatalog && (
-                            <button
-                                onClick={() => {
-                                    setSelectedItemIds(new Set());
-                                    setIsOfferModalOpen(true);
-                                }}
-                                className="inline-flex items-center gap-2 px-5 py-2.5 text-[10px] font-black uppercase tracking-widest rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white transition shadow-sm"
-                            >
-                                <DocumentPlusIcon className="h-5 w-5" />
-                                Create new offer
-                            </button>
-                        )}
-                        {canImportAndCreate && (
-                            <>
-                                <label className="inline-flex items-center px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition cursor-pointer">
-                                    <ArrowDownTrayIcon className="h-5 w-5 mr-1.5" />
-                                    {t('import_ar_is') || 'Import ar.is'}
-                                    <input
-                                        type="file"
-                                        accept=".csv,.xlsx"
-                                        className="sr-only"
-                                        disabled={importing}
-                                        onChange={async (e) => {
-                                            const f = e.target.files?.[0];
-                                            if (!f) return;
-                                            setImporting(true);
-                                            setImportResult(null);
-                                            try {
-                                                const form = new FormData();
-                                                form.append('file', f);
-                                                const res = await axiosInstance.post('/labor-catalog/import-ar-is', form, {
-                                                    params: { skip_duplicates: !importUpdateExisting },
-                                                    headers: { 'Content-Type': 'multipart/form-data' },
-                                                });
-                                                setImportResult(res.data);
-                                                const v = res.data.variants_added ?? 0;
-                                                toast.success(`Imported: ${res.data.created} created, ${res.data.updated ?? 0} updated, ${res.data.skipped} skipped${v ? `, ${v} variants` : ''}`);
-                                                fetchCategories();
-                                                if (selectedMain !== null && selectedSub !== null) {
-                                                    fetchItems(selectedMain, selectedSub);
-                                                }
-                                            } catch (err) {
-                                                toast.error(err.response?.data?.detail || 'Import failed.');
-                                                setImportResult(null);
-                                            } finally {
-                                                setImporting(false);
-                                                e.target.value = '';
-                                            }
-                                        }}
-                                    />
-                                </label>
+        <div className="container mx-auto p-4 md:p-8 max-w-[1600px] animate-in fade-in duration-500">
+            <PageHeader
+                icon={ListBulletIcon}
+                title={t('labor_catalog', { defaultValue: 'Work & Labor Unit Rate Catalog' })}
+                subtitle={t('labor_catalog_subtitle', { defaultValue: 'Official Eining Standard Labor Units & Work Operation Rates' })}
+                stats={[
+                    { label: `${categories.length} ${t('categories', { defaultValue: 'Categories' })}`, dotColor: 'bg-green-400 animate-pulse' },
+                ]}
+                actions={
+                    (canImportAndCreate || canManageCatalog) && (
+                        <div className="flex flex-wrap items-center gap-3">
+                            {canManageCatalog && (
+                                <button
+                                    onClick={() => {
+                                        setSelectedItemIds(new Set());
+                                        setIsOfferModalOpen(true);
+                                    }}
+                                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition shadow-lg shadow-indigo-500/30 transform active:scale-95 cursor-pointer"
+                                >
+                                    <DocumentPlusIcon className="h-5 w-5" />
+                                    Create new offer
+                                </button>
+                            )}
+                            {canImportAndCreate && (
+                                <>
                                 <label className="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
                                     <input
                                         type="checkbox"
@@ -369,8 +334,9 @@ function LaborCatalogListPage() {
                             </>
                         )}
                     </div>
-                )}
-            </header>
+                )
+            }
+        />
 
             {/* Tenant: apply one base price to all non-hourly items */}
             {canManageCatalog && (

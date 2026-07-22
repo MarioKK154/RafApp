@@ -6,6 +6,7 @@ import axiosInstance from '../api/axiosInstance';
 import { toast } from 'react-toastify';
 import LoadingSpinner from '../components/LoadingSpinner';
 import IntegrationsSettings from '../components/IntegrationsSettings';
+import PageHeader from '../components/PageHeader';
 import { 
     UserIcon, 
     KeyIcon, 
@@ -333,18 +334,16 @@ function AccountSettingsPage() {
 
     return (
         <>
-            <div className="container mx-auto p-4 md:p-8 max-w-7xl animate-in fade-in duration-500">
-            {/* Header: Identity Management */}
-            <header className="mb-10">
-                <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5">
-                    <h1 className="text-3xl font-black text-gray-900 dark:text-white tracking-tight leading-none mb-2">
-                        {t('account_settings')}
-                    </h1>
-                    <p className="text-gray-500 dark:text-gray-400 text-[10px] font-black uppercase tracking-[0.2em] italic">
-                        {t('profile_management', { defaultValue: 'Personal Identity & Security Protocols' })}
-                    </p>
-                </div>
-            </header>
+            <div className="container mx-auto p-4 md:p-8 max-w-[1600px] animate-in fade-in duration-500">
+            <PageHeader
+                icon={UserIcon}
+                title={t('account_settings', { defaultValue: 'Account & Security Settings' })}
+                subtitle={t('profile_management', { defaultValue: 'Personal Profile, Security Credentials & Company Subscriptions' })}
+                stats={[
+                    { label: user?.role ? user.role.toUpperCase() : 'USER', dotColor: 'bg-green-400 animate-pulse' },
+                    { label: user?.email || '', icon: <UserIcon className="h-4 w-4 text-indigo-300" /> },
+                ]}
+            />
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                 
