@@ -169,7 +169,7 @@ function useIsMobile() {
 function AppShell() {
     const { i18n } = useTranslation();
     const { background } = useTenantBranding();
-    const { isAuthenticated, user: currentUser, isImpersonating, stopImpersonation } = useAuth();
+    const { isAuthenticated, user: currentUser, isImpersonating, stopImpersonation, isLoading } = useAuth();
     const [systemStatus, setSystemStatus] = useState(null);
     const [globalBanner, setGlobalBanner] = useState(null);
     const isMobile = useIsMobile();
@@ -250,6 +250,38 @@ function AppShell() {
     }, [isAuthenticated]);
 
     const showMaintenanceOverlay = systemStatus?.maintenance && !currentUser?.is_superuser;
+
+    // Loading State: Render Session Sync spinner while validating token
+    if (isLoading) {
+        return (
+            <div
+                className="flex flex-col justify-center items-center h-screen w-screen"
+                style={{ background: 'var(--bg-base)' }}
+            >
+                <div className="relative mb-5">
+                    <div
+                        className="h-14 w-14 rounded-full animate-spin"
+                        style={{
+                            border: '3px solid var(--border)',
+                            borderTopColor: 'var(--brand)',
+                        }}
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                        <div
+                            className="h-2 w-2 rounded-full"
+                            style={{ background: 'var(--brand)' }}
+                        />
+                    </div>
+                </div>
+                <p
+                    className="text-[9px] font-black uppercase tracking-[0.35em]"
+                    style={{ color: 'var(--text-muted)', animation: 'pulseSoft 2s ease-in-out infinite' }}
+                >
+                    Synchronizing Session...
+                </p>
+            </div>
+        );
+    }
 
     // Unauthenticated layout: Clean, full-page scrollable view for Landing and Login
     if (!isAuthenticated) {
