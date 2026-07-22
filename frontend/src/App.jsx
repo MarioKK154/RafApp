@@ -253,7 +253,7 @@ function AppShell() {
 
     return (
         <div
-            className="relative flex flex-col h-screen w-screen overflow-hidden font-sans"
+            className="relative flex flex-col min-h-screen w-full font-sans"
             style={{ background: 'var(--bg-base)', color: 'var(--text-primary)', ...style }}
         >
             {/* Mobile Top Bar */}
@@ -264,7 +264,7 @@ function AppShell() {
                 >
                     <div className="flex items-center gap-3">
                         <HamburgerButton />
-                        <Link to="/" className="flex items-center gap-2">
+                        <Link to="/dashboard" className="flex items-center gap-2">
                             <span style={{ color: 'var(--text-primary)' }} className="font-black text-sm tracking-tight truncate leading-none uppercase italic">
                                 {currentUser?.tenant?.name || 'RafApp'}
                             </span>
@@ -289,7 +289,7 @@ function AppShell() {
                 </div>
             )}
 
-            <div className="flex flex-1 overflow-hidden relative">
+            <div className="flex flex-1 relative w-full min-h-0">
                 <Sidebar />
 
                 <main className="flex-1 overflow-x-hidden overflow-y-auto flex flex-col relative pb-24 lg:pb-0" style={{ background: 'var(--bg-base)' }}>
