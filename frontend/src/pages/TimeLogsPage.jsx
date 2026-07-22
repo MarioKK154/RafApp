@@ -289,11 +289,11 @@ function TimeLogsPage() {
         <div className="container mx-auto p-4 md:p-8 max-w-[1600px] animate-in fade-in duration-500">
             <PageHeader
                 icon={ClockIcon}
-                title={t('timesheets')}
+                title={t('timesheets', { defaultValue: 'Timesheets' })}
                 subtitle={t('timesheets_subtitle', { defaultValue: 'Work Logs, Hours & Site Telemetry' })}
                 stats={[
-                    { label: `${totalDisplayedHours} ${t('hrs_abbr')}`, icon: <ClockIcon className="h-4 w-4 text-indigo-300" /> },
-                    { label: `${timeLogs.length} ${t('entries')}`, icon: <BriefcaseIcon className="h-4 w-4 text-blue-300" /> },
+                    { label: `${totalDisplayedHours} ${t('hrs_abbr', { defaultValue: 'HRS' })}`, icon: <ClockIcon className="h-4 w-4 text-indigo-300" /> },
+                    { label: `${timeLogs.length} ${t('entries', { defaultValue: 'Entries' })}`, icon: <BriefcaseIcon className="h-4 w-4 text-blue-300" /> },
                 ]}
             />
 

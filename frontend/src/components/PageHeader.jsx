@@ -26,11 +26,11 @@ function PageHeader({ icon: Icon, title, subtitle, stats = [], actions }) {
                         )}
                         <div>
                             <h1 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tighter italic leading-tight">
-                                {title}
+                                {typeof title === 'object' && title !== null ? (title.title || JSON.stringify(title)) : String(title || '')}
                             </h1>
                             {subtitle && (
                                 <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mt-0.5">
-                                    {subtitle}
+                                    {typeof subtitle === 'object' && subtitle !== null ? (subtitle.subtitle || JSON.stringify(subtitle)) : String(subtitle)}
                                 </p>
                             )}
                         </div>
@@ -38,22 +38,26 @@ function PageHeader({ icon: Icon, title, subtitle, stats = [], actions }) {
 
                     {/* Right side: Stat pills and Actions */}
                     <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-start lg:justify-end">
-                        {Array.isArray(stats) && stats.map((stat, idx) => (
-                            <div 
-                                key={idx} 
-                                className="flex items-center gap-2 rounded-xl bg-white/10 px-4 py-2 backdrop-blur-sm border border-white/10"
-                            >
-                                {stat.dotColor && (
-                                    <div className={`h-2 w-2 rounded-full ${stat.dotColor}`} />
-                                )}
-                                {stat.icon && (
-                                    <span className="text-indigo-300">{stat.icon}</span>
-                                )}
-                                <span className="text-[11px] font-black text-white/80 uppercase tracking-widest">
-                                    {stat.label || stat}
-                                </span>
-                            </div>
-                        ))}
+                        {Array.isArray(stats) && stats.map((stat, idx) => {
+                            const rawLabel = stat?.label ?? stat;
+                            const displayLabel = typeof rawLabel === 'object' && rawLabel !== null ? JSON.stringify(rawLabel) : String(rawLabel ?? '');
+                            return (
+                                <div 
+                                    key={idx} 
+                                    className="flex items-center gap-2 rounded-xl bg-white/10 px-4 py-2 backdrop-blur-sm border border-white/10"
+                                >
+                                    {stat?.dotColor && (
+                                        <div className={`h-2 w-2 rounded-full ${stat.dotColor}`} />
+                                    )}
+                                    {stat?.icon && (
+                                        <span className="text-indigo-300">{stat.icon}</span>
+                                    )}
+                                    <span className="text-[11px] font-black text-white/80 uppercase tracking-widest">
+                                        {displayLabel}
+                                    </span>
+                                </div>
+                            );
+                        })}
 
                         {actions && (
                             <div className="flex items-center gap-3">

@@ -50,7 +50,6 @@ function ToolInventoryPage() {
     // Filter & UI States
     const [searchTerm, setSearchTerm] = useState('');
     const debouncedSearch = useDebounce(searchTerm, 300);
-    const [selectedTenantId, setSelectedTenantId] = useState(null);
     const [toolToDelete, setToolToDelete] = useState(null);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
@@ -66,10 +65,7 @@ function ToolInventoryPage() {
         try {
             const response = await axiosInstance.get('/tools/', { params: { limit: 1000 } });
             const allTools = Array.isArray(response.data) ? response.data : [];
-            const scoped = isSuperuser && selectedTenantId
-                ? allTools.filter(tl => tl.tenant_id === selectedTenantId)
-                : allTools;
-            setTools(scoped);
+            setTools(allTools);
         } catch (err) {
             console.error("Asset Registry Error:", err);
             setError('Hardware registry synchronization failed.');
@@ -172,22 +168,14 @@ function ToolInventoryPage() {
                     { label: `${toolStats.total} ${t('total', { defaultValue: 'Total Assets' })}`, icon: <WrenchScrewdriverIcon className="h-4 w-4 text-blue-300" /> },
                 ]}
                 actions={
-                    <>
-                        {isSuperuser && (
-                            <SuperTenantSelector
-                                selectedTenantId={selectedTenantId}
-                                setSelectedTenantId={setSelectedTenantId}
-                            />
-                        )}
-                        {canManageTools && (
-                            <button
-                                onClick={() => navigate('/tools/new')}
-                                className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition shadow-lg shadow-indigo-500/30 transform active:scale-95 cursor-pointer"
-                            >
-                                <PlusIcon className="h-5 w-5" /> {t('register_new_asset')}
-                            </button>
-                        )}
-                    </>
+                    canManageTools && (
+                        <button
+                            onClick={() => navigate('/tools/new')}
+                            className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition shadow-lg shadow-indigo-500/30 transform active:scale-95 cursor-pointer"
+                        >
+                            <PlusIcon className="h-5 w-5" /> {t('register_new_asset')}
+                        </button>
+                    )
                 }
             />
 
