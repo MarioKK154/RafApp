@@ -253,8 +253,12 @@ function HomePage() {
                 weekly_hours: statsRes.data.weekly_hours || 0
             });
 
+            const rawNotes = Array.isArray(notesRes.data) 
+                ? notesRes.data 
+                : (Array.isArray(notesRes.data?.items) ? notesRes.data.items : []);
+
             setActiveClockIn(clockRes.data);
-            setRecentNotifications(notesRes.data.slice(0, 5));
+            setRecentNotifications(rawNotes.slice(0, 5));
         } catch (err) {
             console.error("Dashboard synchronization error", err);
             toast.error("Failed to synchronize operational telemetry.");

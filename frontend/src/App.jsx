@@ -304,14 +304,14 @@ function AppShell() {
     // Authenticated layout: Full operational app shell with Sidebar and TopBar
     return (
         <div
-            className="relative flex flex-col h-screen w-screen overflow-hidden font-sans"
+            className="flex flex-col h-screen max-h-screen w-screen max-w-full overflow-hidden font-sans"
             style={{ background: 'var(--bg-base)', color: 'var(--text-primary)', ...style }}
         >
             {/* Mobile Top Bar */}
             {isMobile && (
                 <div 
                     style={{ borderBottom: '1px solid var(--border-subtle)', background: 'var(--bg-elevated)', height: '56px' }}
-                    className="sticky top-0 z-[100] flex items-center justify-between px-4 py-2 shrink-0 shadow-md"
+                    className="shrink-0 z-[100] flex items-center justify-between px-4 py-2 shadow-md h-[56px] w-full"
                 >
                     <div className="flex items-center gap-3">
                         <HamburgerButton />
@@ -340,10 +340,10 @@ function AppShell() {
                 </div>
             )}
 
-            <div className="flex flex-1 overflow-hidden relative">
+            <div className="flex flex-1 h-full min-h-0 w-full overflow-hidden relative">
                 <Sidebar />
 
-                <main className="flex-1 overflow-x-hidden overflow-y-auto flex flex-col relative pb-24 lg:pb-0" style={{ background: 'var(--bg-base)' }}>
+                <main className="flex-1 h-full min-h-0 w-full overflow-x-hidden overflow-y-auto flex flex-col relative pb-24 lg:pb-0" style={{ background: 'var(--bg-base)' }}>
                     {globalBanner && globalBanner.message && (
                         <div
                             className="flex-shrink-0 flex items-center justify-center gap-4 px-6 py-3 text-white text-sm font-medium text-center"
