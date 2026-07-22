@@ -98,14 +98,15 @@ class ErrorBoundary extends React.Component {
                     <button
                         onClick={() => window.location.reload()}
                         style={{ background: 'var(--brand)', color: '#fff' }}
-                        className="px-6 py-3 rounded-xl font-black uppercase tracking-wider text-sm"
+                        className="px-6 py-3 rounded-xl font-black uppercase tracking-wider text-sm mb-4 cursor-pointer"
                     >
                         Refresh Page
                     </button>
-                    {process.env.NODE_ENV === 'development' && (
-                        <pre className="mt-6 text-left text-xs bg-gray-100 p-4 rounded-xl max-w-2xl overflow-auto">
-                            {this.state.error?.toString()}
-                        </pre>
+                    {this.state.error && (
+                        <details className="mt-4 text-left text-xs bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 p-4 rounded-xl max-w-2xl overflow-auto border border-red-200 dark:border-red-800">
+                            <summary className="font-bold cursor-pointer mb-2 uppercase tracking-wider text-[10px]">Error Details (Click to expand)</summary>
+                            <pre className="whitespace-pre-wrap font-mono text-[11px] leading-relaxed">{this.state.error?.toString()}\n{this.state.error?.stack}</pre>
+                        </details>
                     )}
                 </div>
             );

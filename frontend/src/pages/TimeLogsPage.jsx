@@ -135,8 +135,10 @@ function TimeLogsPage() {
                 axiosInstance.get('/projects/', { params: { limit: 500 } }),
                 axiosInstance.get('/users/', { params: { limit: 500 } })
             ]);
-            setProjectOptions(projRes.data.map(p => ({ value: p.id, label: p.name })));
-            setUserOptions(userRes.data.map(u => ({ value: u.id, label: u.full_name || u.email })));
+            const pData = Array.isArray(projRes.data) ? projRes.data : [];
+            const uData = Array.isArray(userRes.data) ? userRes.data : [];
+            setProjectOptions(pData.map(p => ({ value: p.id, label: p.name })));
+            setUserOptions(uData.map(u => ({ value: u.id, label: u.full_name || u.email })));
         } catch (error) {
             console.error('Time logs metadata fetch failed:', error);
             toast.error("Telemetry sync failed: Metadata registry unreachable.");
@@ -165,7 +167,7 @@ function TimeLogsPage() {
 
         try {
             const response = await axiosInstance.get(endpoint, { params });
-            setTimeLogs(response.data);
+            setTimeLogs(Array.isArray(response.data) ? response.data : []);
         } catch (error) {
             console.error('Fetch time logs failed:', error);
             setError('Registry synchronization failure.');
