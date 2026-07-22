@@ -834,10 +834,12 @@ function HomePage() {
 
             {/* Welcome & Clock-in Header */}
             <header className="mb-12">
-                <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#1e293b] via-[#1e3a5f] to-[#0f172a] p-6 md:p-8 shadow-2xl flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+                <div className="relative rounded-3xl bg-gradient-to-br from-[#1e293b] via-[#1e3a5f] to-[#0f172a] p-6 md:p-8 shadow-2xl flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
                     {/* Decorative ambient blur orbs */}
-                    <div className="pointer-events-none absolute -top-16 -right-16 h-64 w-64 rounded-full bg-indigo-500/10 blur-3xl" />
-                    <div className="pointer-events-none absolute -bottom-16 -left-8 h-48 w-48 rounded-full bg-blue-500/10 blur-3xl" />
+                    <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-3xl">
+                        <div className="-top-16 -right-16 h-64 w-64 rounded-full bg-indigo-500/10 blur-3xl absolute" />
+                        <div className="-bottom-16 -left-8 h-48 w-48 rounded-full bg-blue-500/10 blur-3xl absolute" />
+                    </div>
 
                     <div className="relative z-10">
                         <div className="flex items-center gap-2 mb-2">
@@ -864,7 +866,7 @@ function HomePage() {
                     </div>
 
                     {/* Clock-In Panel */}
-                    <div className="w-full lg:w-auto">
+                    <div className="w-full lg:w-auto relative z-20">
                         <div className="flex flex-col sm:flex-row items-center gap-3 bg-gray-50 dark:bg-gray-950 p-2.5 rounded-[2rem] border border-gray-200 dark:border-indigo-950/20">
                             {!activeClockIn ? (
                                 <>
@@ -884,7 +886,7 @@ function HomePage() {
                                         </button>
 
                                         {isDropdownOpen && (
-                                            <div className="absolute left-0 mt-2 w-full max-h-60 bg-white dark:bg-gray-950 border border-gray-200 dark:border-indigo-950/30 rounded-2xl shadow-xl overflow-y-auto z-50 p-2 space-y-2">
+                                            <div className="absolute left-0 mt-2 min-w-[280px] w-full max-h-64 bg-white dark:bg-gray-950 border border-gray-200 dark:border-indigo-900 shadow-2xl rounded-2xl overflow-y-auto z-[100] p-2 space-y-2">
                                                 <input
                                                     type="text"
                                                     value={projectSearchQuery}

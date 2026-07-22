@@ -14,6 +14,7 @@ import ProjectOffers from '../components/ProjectOffers';
 import ProjectLiveClockIns from '../components/ProjectLiveClockIns';
 import ProjectTasks from '../components/ProjectTasks';
 import LoadingSpinner from '../components/LoadingSpinner';
+import PageHeader from '../components/PageHeader';
 
 // UTILS
 import { toast } from 'react-toastify';
@@ -174,40 +175,27 @@ function ProjectEditPage() {
                     {error}
                 </div>
             )}
-            <header className="mb-10 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5">
-                <Link to="/projects" className="flex items-center text-[10px] font-black text-gray-400 hover:text-indigo-600 transition mb-4 uppercase tracking-[0.2em]">
-                    <ChevronLeftIcon className="h-3 w-3 mr-1 stroke-[3px]" /> {t('back_to_registry')}
-                </Link>
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                    <div className="flex items-center gap-5">
-                        <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
-                            <BriefcaseIcon className="h-6 w-6 text-indigo-600" />
-                        </div>
-                        <div>
-                            <div className="flex items-center gap-3 mb-1">
-                                <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">
-                                    {initialProjectData?.name}
-                                </h1>
-                                <span
-                                    className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border ${headerStatusClasses}`}
-                                >
-                                    {displayStatus}
-                                </span>
-                            </div>
-                            <div className="flex items-center gap-3 mt-2">
-                                <HashtagIcon className="h-4 w-4 text-indigo-500" />
-                                <span className="text-indigo-600 dark:text-indigo-400 font-mono font-black tracking-widest text-sm">
-                                    NODE: {initialProjectData?.project_number || initialProjectData?.id}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-3">
+            <PageHeader
+                icon={BriefcaseIcon}
+                title={initialProjectData?.name || t('edit_project', { defaultValue: 'Edit Project Node' })}
+                subtitle={`NODE: ${initialProjectData?.project_number || initialProjectData?.id || 'N/A'}`}
+                stats={[
+                    { label: displayStatus, dotColor: 'bg-green-400 animate-pulse' },
+                ]}
+                actions={
+                    <div className="flex flex-wrap items-center gap-3">
+                        <Link
+                            to="/projects"
+                            className="inline-flex items-center gap-1.5 px-4 py-2 bg-white/10 hover:bg-white/20 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition"
+                        >
+                            <ChevronLeftIcon className="h-4 w-4" /> {t('back_to_registry', { defaultValue: 'Back' })}
+                        </Link>
                         <Link
                             to={`/projects/${projectId}/risk-assessment`}
-                            className="h-10 px-4 bg-amber-50 text-amber-700 border border-amber-100 text-[10px] font-black uppercase tracking-[0.2em] rounded-xl shadow-sm hover:bg-amber-100 transition flex items-center gap-2"
+                            className="inline-flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition"
                         >
-                            <ShieldCheckIcon className="h-4 w-4" /> {t('risk_assessment')} </Link>
+                            <ShieldCheckIcon className="h-4 w-4" /> {t('risk_assessment')}
+                        </Link>
                         <button
                             type="button"
                             onClick={async () => {
@@ -228,13 +216,13 @@ function ProjectEditPage() {
                                     toast.error(t('export_failed_project', { defaultValue: 'Failed to export project status.' }));
                                 }
                             }}
-                            className="h-10 px-5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-200 text-[10px] font-black uppercase tracking-[0.2em] rounded-xl shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition flex items-center gap-2"
+                            className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition cursor-pointer"
                         >
-                            <DocumentTextIcon className="h-4 w-4" /> {t('export_pdf')}
+                            <DocumentTextIcon className="h-4 w-4" /> {t('export_pdf', { defaultValue: 'Export PDF' })}
                         </button>
                     </div>
-                </div>
-            </header>
+                }
+            />
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-16">
                 <div className="lg:col-span-8">

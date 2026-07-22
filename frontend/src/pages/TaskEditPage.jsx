@@ -10,6 +10,7 @@ import { toast } from 'react-toastify';
 import LoadingSpinner from '../components/LoadingSpinner';
 import PushToGCButton from '../components/PushToGCButton';
 import Select from 'react-select';
+import PageHeader from '../components/PageHeader';
 import { 
     ClipboardDocumentCheckIcon, 
     ChevronLeftIcon,
@@ -214,75 +215,59 @@ function TaskEditPage() {
 
     return (
         <div className="container mx-auto p-4 md:p-8 max-w-7xl animate-in fade-in duration-500">
-            {/* Header Area */}
-            <div className="mb-10 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                <div>
-                    <Link to="/tasks" className="flex items-center text-[10px] font-black text-gray-400 hover:text-indigo-600 transition mb-4 uppercase tracking-[0.2em]">
-                        <ChevronLeftIcon className="h-3 w-3 mr-1 stroke-[3px]" /> {t('tasks')}
-                    </Link>
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
-                            <ClipboardDocumentCheckIcon className="h-6 w-6 text-indigo-600" />
-                        </div>
-                        <div>
-                            <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">
-                                {taskData?.title}
-                            </h1>
-                            <div className="flex items-center gap-3 mt-2">
-                                <span className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border ${
-                                    taskData?.status === 'Done' ? 'bg-green-50 text-green-700 border-green-100' : 'bg-orange-50 text-orange-700 border-orange-100'
-                                }`}>
-                                    {taskData?.status}
-                                </span>
-                                {isLocked && (
-                                    <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-teal-50 text-teal-700 border border-teal-100 text-[9px] font-black uppercase tracking-widest">
-                                        <CheckBadgeIcon className="h-3.5 w-3.5" /> {t('commissioned', { defaultValue: 'Commissioned' })}
-                                    </span>
-                                )}
-                            </div>
-                        </div>
+            <PageHeader
+                icon={ClipboardDocumentCheckIcon}
+                title={taskData?.title || t('edit_task', { defaultValue: 'Edit Task' })}
+                subtitle={`PROJECT: ${taskData?.project?.name || 'UNASSIGNED'}`}
+                stats={[
+                    { label: taskData?.status || 'Active', dotColor: 'bg-green-400 animate-pulse' },
+                ]}
+                actions={
+                    <div className="flex flex-wrap items-center gap-3">
+                        <Link
+                            to="/tasks"
+                            className="inline-flex items-center gap-1.5 px-4 py-2 bg-white/10 hover:bg-white/20 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition"
+                        >
+                            <ChevronLeftIcon className="h-4 w-4" /> {t('tasks', { defaultValue: 'Back to Tasks' })}
+                        </Link>
+                        <PushToGCButton entityType="task" entityId={taskId} />
+                        <button
+                            type="button"
+                            onClick={async () => {
+                                try {
+                                    const response = await axiosInstance.get(`/tasks/${taskId}/export/pdf`, {
+                                        responseType: 'blob',
+                                    });
+                                    const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+                                    const link = document.createElement('a');
+                                    link.href = url;
+                                    link.download = `task-${taskId}.pdf`;
+                                    document.body.appendChild(link);
+                                    link.click();
+                                    link.remove();
+                                    window.URL.revokeObjectURL(url);
+                                } catch (err) {
+                                    console.error('Task export failed:', err);
+                                    toast.error(t('export_failed_task', { defaultValue: 'Failed to export task.' }));
+                                }
+                            }}
+                            className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition cursor-pointer"
+                        >
+                            <DocumentTextIcon className="h-4 w-4" /> {t('export_pdf', { defaultValue: 'Export PDF' })}
+                        </button>
+                        {canCommissionTask && taskData?.status === "Done" && !isLocked && (
+                            <button
+                                onClick={handleCommissionTask}
+                                disabled={isCommissioning}
+                                className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition cursor-pointer disabled:opacity-50"
+                            >
+                                {isCommissioning ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <ShieldCheckIcon className="h-4 w-4" />}
+                                {t('commission_task', { defaultValue: 'Commission Task' })}
+                            </button>
+                        )}
                     </div>
-                </div>
-
-                <div className="flex items-center gap-3">
-                    <PushToGCButton entityType="task" entityId={taskId} />
-                    <button
-                        type="button"
-                        onClick={async () => {
-                            try {
-                                const response = await axiosInstance.get(`/tasks/${taskId}/export/pdf`, {
-                                    responseType: 'blob',
-                                });
-                                const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
-                                const link = document.createElement('a');
-                                link.href = url;
-                                link.download = `task-${taskId}.pdf`;
-                                document.body.appendChild(link);
-                                link.click();
-                                link.remove();
-                                window.URL.revokeObjectURL(url);
-                            } catch (err) {
-                                console.error('Task export failed:', err);
-                                toast.error(t('export_failed_task', { defaultValue: 'Failed to export task.' }));
-                            }
-                        }}
-                        className="inline-flex items-center gap-2 px-5 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-200 font-black text-[10px] uppercase tracking-widest rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition"
-                    >
-                        <DocumentTextIcon className="h-4 w-4 mr-1.5" /> {t('export_pdf')}
-                    </button>
-                </div>
-
-                {canCommissionTask && taskData?.status === "Done" && !isLocked && (
-                    <button
-                        onClick={handleCommissionTask}
-                        disabled={isCommissioning}
-                        className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition transform active:scale-95 disabled:opacity-50"
-                    >
-                        {isCommissioning ? <ArrowPathIcon className="h-5 w-5 animate-spin" /> : <ShieldCheckIcon className="h-5 w-5" />}
-                        {t('commission_task')}
-                    </button>
-                )}
-            </div>
+                }
+            />
 
             {/* Layout Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">

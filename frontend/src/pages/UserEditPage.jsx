@@ -7,6 +7,7 @@ import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
 import LoadingSpinner from '../components/LoadingSpinner';
 import UserLicenses from '../components/UserLicenses';
+import PageHeader from '../components/PageHeader';
 import {
     UserIcon,
     EnvelopeIcon,
@@ -284,29 +285,23 @@ function UserEditPage() {
 
     return (
         <div className="container mx-auto p-4 md:p-8 max-w-7xl animate-in fade-in duration-500">
-            <header className="mb-12 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5">
-                <Link to="/users" className="flex items-center text-[10px] font-black text-gray-400 hover:text-indigo-600 transition mb-3 uppercase tracking-[0.2em]">
-                    <ChevronLeftIcon className="h-3 w-3 mr-1 stroke-[3px]" /> {t('personnel_registry')}
-                </Link>
-                <div className="flex items-center gap-3">
-                    <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
-                        <UserIcon className="h-6 w-6 text-indigo-600" />
-                    </div>
-                    <div>
-                        <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">
-                            {initialUserData?.full_name || t('anonymous_node')}
-                        </h1>
-                        <div className="flex items-center gap-4 mt-3">
-                            <span className="text-[10px] font-mono font-black text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
-                                <FingerPrintIcon className="h-3.5 w-3.5 text-indigo-500" /> {t('reg_id')} {userId.toString().padStart(4, '0')}
-                            </span>
-                            <span className={`text-[9px] font-black uppercase px-3 py-1 rounded-full border shadow-sm ${initialUserData?.is_active ? 'bg-green-50 text-green-600 border-green-100' : 'bg-red-50 text-red-600 border-red-100'}`}>
-                                {initialUserData?.is_active ? t('operational') : t('suspended')}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            </header>
+            <PageHeader
+                icon={UserIcon}
+                title={initialUserData?.full_name || t('edit_user', { defaultValue: 'Edit User Profile' })}
+                subtitle={`UID: ${initialUserData?.id || 'N/A'} // ${initialUserData?.email || ''}`}
+                stats={[
+                    { label: (initialUserData?.role || 'USER').toUpperCase(), dotColor: 'bg-green-400 animate-pulse' },
+                    { label: initialUserData?.is_active ? t('operational', { defaultValue: 'OPERATIONAL' }) : t('suspended', { defaultValue: 'SUSPENDED' }) },
+                ]}
+                actions={
+                    <Link
+                        to="/users"
+                        className="inline-flex items-center gap-1.5 px-4 py-2 bg-white/10 hover:bg-white/20 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition"
+                    >
+                        <ChevronLeftIcon className="h-4 w-4" /> {t('personnel_registry', { defaultValue: 'Back to Personnel' })}
+                    </Link>
+                }
+            />
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
                 <div className="lg:col-span-8 space-y-10">

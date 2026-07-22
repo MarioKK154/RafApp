@@ -4,6 +4,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import axiosInstance from '../api/axiosInstance';
 import { toast } from 'react-toastify';
 import LoadingSpinner from '../components/LoadingSpinner';
+import PageHeader from '../components/PageHeader';
 import { useAuth } from '../context/AuthContext';
 import { 
     WrenchScrewdriverIcon, 
@@ -117,27 +118,22 @@ function ToolEditPage() {
 
     return (
         <div className="container mx-auto p-4 md:p-8 max-w-6xl animate-in fade-in duration-500">
-            {/* Navigation Header */}
-            <div className="mb-8">
-                <Link to="/tools" className="flex items-center text-xs font-black text-gray-400 hover:text-indigo-600 transition mb-2 uppercase tracking-widest">
-                    <ChevronLeftIcon className="h-3 w-3 mr-1" /> Hardware Registry
-                </Link>
-                <div className="flex items-center gap-3">
-                    <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
-                        <WrenchScrewdriverIcon className="h-6 w-6 text-indigo-600" />
-                    </div>
-                    <div>
-                        <h1 className="text-2xl font-black text-gray-900 dark:text-white leading-none tracking-tight">
-                            {t('modify_asset')} {formData.name}
-                        </h1>
-                        <div className="flex items-center gap-2 mt-2">
-                            <span className="text-[10px] font-bold text-gray-400 uppercase flex items-center gap-1">
-                                <FingerPrintIcon className="h-3 w-3" /> {t('registry_id')} {toolId}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <PageHeader
+                icon={WrenchScrewdriverIcon}
+                title={formData.name ? `${t('modify_asset', { defaultValue: 'Edit Hardware Asset' })}: ${formData.name}` : t('modify_asset', { defaultValue: 'Edit Hardware Asset' })}
+                subtitle={`ASSET ID: ${toolId} // ${formData.brand || ''} ${formData.model || ''}`}
+                stats={[
+                    { label: formData.serial_number ? `SN: ${formData.serial_number}` : 'ACTIVE ASSET', dotColor: 'bg-green-400 animate-pulse' },
+                ]}
+                actions={
+                    <Link
+                        to="/tools"
+                        className="inline-flex items-center gap-1.5 px-4 py-2 bg-white/10 hover:bg-white/20 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition"
+                    >
+                        <ChevronLeftIcon className="h-4 w-4" /> {t('back_to_registry', { defaultValue: 'Back to Hardware' })}
+                    </Link>
+                }
+            />
 
             <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                 {/* Left Column: Data Entry (8 cols) */}
