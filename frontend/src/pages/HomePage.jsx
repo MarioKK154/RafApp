@@ -6,6 +6,7 @@ import axiosInstance from '../api/axiosInstance';
 import { toast } from 'react-toastify';
 import LoadingSpinner from '../components/LoadingSpinner';
 import Modal from '../components/Modal';
+import { HamburgerButton } from '../components/Sidebar';
 import AnimatedCountUp from '../components/AnimatedCountUp';
 import { formatDistanceToNow, isPast, isToday, parseISO } from 'date-fns';
 import { 
@@ -721,8 +722,12 @@ function HomePage() {
         <div className="container mx-auto p-4 md:p-8 max-w-7xl animate-in fade-in duration-500">
             {/* Top Bar Navigation (Dashboard Top Row) */}
             <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-8 bg-white dark:bg-gray-900/60 border border-gray-150 dark:border-indigo-950/30 rounded-3xl p-4 shadow-sm dark:shadow-xl">
-                {/* Search Bar container with Command Dropdown */}
-                <div className="relative w-full md:w-80" ref={searchRef}>
+                <div className="flex items-center gap-3 w-full md:w-auto">
+                    <div className="lg:hidden shrink-0">
+                        <HamburgerButton />
+                    </div>
+                    {/* Search Bar container with Command Dropdown */}
+                    <div className="relative w-full md:w-80" ref={searchRef}>
                     <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-500">
                         <MagnifyingGlassIcon className="h-4 w-4" />
                     </span>
@@ -758,6 +763,7 @@ function HomePage() {
                             ))}
                         </div>
                     )}
+                </div>
                 </div>
 
                 {/* Right side widgets (Weather, Notification, Profile) */}

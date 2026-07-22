@@ -260,27 +260,32 @@ function AppShell() {
             {isMobile && isAuthenticated && (
                 <div 
                     style={{ borderBottom: '1px solid var(--border-subtle)', background: 'var(--bg-elevated)', height: '56px' }}
-                    className="flex items-center justify-between px-4 py-2 shrink-0 z-40"
+                    className="sticky top-0 z-[100] flex items-center justify-between px-4 py-2 shrink-0 shadow-md"
                 >
                     <div className="flex items-center gap-3">
                         <HamburgerButton />
-                        <span style={{ color: 'var(--text-primary)' }} className="font-black text-sm tracking-tight truncate leading-none">
-                            {currentUser?.tenant?.name || 'System'}
-                        </span>
+                        <Link to="/" className="flex items-center gap-2">
+                            <span style={{ color: 'var(--text-primary)' }} className="font-black text-sm tracking-tight truncate leading-none uppercase italic">
+                                {currentUser?.tenant?.name || 'RafApp'}
+                            </span>
+                        </Link>
                     </div>
                     
-                    <button
-                        onClick={() => {
-                            const newLang = i18n.language.startsWith('en') ? 'is' : 'en';
-                            i18n.changeLanguage(newLang);
-                            localStorage.setItem('i18nextLng', newLang);
-                        }}
-                        style={{ color: 'var(--brand)', minHeight: '44px' }}
-                        className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-[0.15em] hover:opacity-75 transition-opacity"
-                    >
-                        <LanguageIcon className="h-4 w-4" />
-                        <span>{i18n.language.toUpperCase()}</span>
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <NotificationDropdown />
+                        <button
+                            onClick={() => {
+                                const newLang = i18n.language.startsWith('en') ? 'is' : 'en';
+                                i18n.changeLanguage(newLang);
+                                localStorage.setItem('i18nextLng', newLang);
+                            }}
+                            style={{ color: 'var(--brand)', minHeight: '44px' }}
+                            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-[0.15em] hover:opacity-75 transition-opacity"
+                        >
+                            <LanguageIcon className="h-4 w-4" />
+                            <span>{i18n.language.toUpperCase()}</span>
+                        </button>
+                    </div>
                 </div>
             )}
 
