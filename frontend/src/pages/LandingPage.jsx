@@ -32,11 +32,21 @@ function LandingPage() {
     const location = useLocation();
     const navigate = useNavigate();
 
+    // Redirect logged in users immediately to /dashboard
+    useEffect(() => {
+        if (isAuthenticated) {
+            navigate('/dashboard', { replace: true });
+        }
+    }, [isAuthenticated, navigate]);
+
     // Subdomain redirect: if visiting [tenant].rafapp.is, go straight to /login
     useEffect(() => {
         const hostname = window.location.hostname;
+        const isIP = /^(\d{1,3}\.){3}\d{1,3}$/.test(hostname);
+        const isLocal = hostname === 'localhost' || hostname === '127.0.0.1' || hostname.includes('capacitor');
+        
         const parts = hostname.split('.');
-        if (parts.length > 2) {
+        if (!isIP && !isLocal && parts.length > 2) {
             const sub = parts[0].toLowerCase();
             if (sub !== 'www' && sub !== 'api') {
                 navigate('/login', { replace: true });

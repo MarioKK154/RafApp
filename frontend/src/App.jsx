@@ -251,13 +251,32 @@ function AppShell() {
 
     const showMaintenanceOverlay = systemStatus?.maintenance && !currentUser?.is_superuser;
 
+    // Unauthenticated layout: Clean, full-page scrollable view for Landing and Login
+    if (!isAuthenticated) {
+        return (
+            <div
+                className="min-h-screen w-full font-sans overflow-y-auto"
+                style={{ background: 'var(--bg-base)', color: 'var(--text-primary)', ...style }}
+            >
+                <ErrorBoundary>
+                    <Routes>
+                        <Route path="/login" element={<LoginPage />} />
+                        <Route path="/" element={<LandingPage />} />
+                        <Route path="*" element={<Navigate to="/login" replace />} />
+                    </Routes>
+                </ErrorBoundary>
+            </div>
+        );
+    }
+
+    // Authenticated layout: Full operational app shell with Sidebar and TopBar
     return (
         <div
-            className="relative flex flex-col min-h-screen w-full font-sans"
+            className="relative flex flex-col h-screen w-screen overflow-hidden font-sans"
             style={{ background: 'var(--bg-base)', color: 'var(--text-primary)', ...style }}
         >
             {/* Mobile Top Bar */}
-            {isMobile && isAuthenticated && (
+            {isMobile && (
                 <div 
                     style={{ borderBottom: '1px solid var(--border-subtle)', background: 'var(--bg-elevated)', height: '56px' }}
                     className="sticky top-0 z-[100] flex items-center justify-between px-4 py-2 shrink-0 shadow-md"
@@ -289,7 +308,7 @@ function AppShell() {
                 </div>
             )}
 
-            <div className="flex flex-1 relative w-full min-h-0">
+            <div className="flex flex-1 overflow-hidden relative">
                 <Sidebar />
 
                 <main className="flex-1 overflow-x-hidden overflow-y-auto flex flex-col relative pb-24 lg:pb-0" style={{ background: 'var(--bg-base)' }}>
@@ -320,8 +339,7 @@ function AppShell() {
                     )}
                     <ErrorBoundary>
                     <Routes>
-                        <Route path="/login" element={<LoginPage />} />
-                        <Route path="/" element={<LandingPage />} />
+                        <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
                         {/* --- CORE OPERATIONAL HUB --- */}
                         <Route path="/dashboard" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
