@@ -15,6 +15,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { toast } from 'react-toastify';
 import AssignmentModal from '../components/AssignmentModal'; 
+import PageHeader from '../components/PageHeader';
 
 const SchedulingGridPage = () => {
     const { t, i18n } = useTranslation();
@@ -202,28 +203,29 @@ const SchedulingGridPage = () => {
                     </div>
                 </div>
             )}
-            <header className="mb-10">
-                <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5 flex justify-between items-center gap-6">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
-                            <Squares2X2Icon className="h-6 w-6 text-indigo-600" />
-                        </div>
-                        <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">{t('schedule', { defaultValue: 'Schedule' })}</h1>
+
+            <PageHeader
+                icon={Squares2X2Icon}
+                title={t('schedule', { defaultValue: 'Work Scheduling & Assignments' })}
+                subtitle={t('scheduling_subtitle', { defaultValue: '14-Day Staff Allocation & Project Dispatching' })}
+                stats={[
+                    { label: `${filteredUsers.length} ${t('staff', { defaultValue: 'Personnel' })}`, dotColor: 'bg-green-400 animate-pulse' },
+                    { label: `${assignments.length} ${t('assignments', { defaultValue: 'Assignments' })}`, icon: <Squares2X2Icon className="h-4 w-4 text-indigo-300" /> },
+                ]}
+                actions={
+                    <div className="flex items-center gap-2 bg-white/10 p-1.5 rounded-xl border border-white/10 backdrop-blur-sm">
+                        <button onClick={() => setViewDate(addDays(viewDate, -7))} className="p-2 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition cursor-pointer">
+                            <ChevronLeftIcon className="h-4 w-4 stroke-[2.5px]" />
+                        </button>
+                        <span className="text-[10px] font-black uppercase tracking-widest px-3 text-white">
+                            {format(days[0], 'MMM dd')} — {format(days[13], 'MMM dd, yyyy')}
+                        </span>
+                        <button onClick={() => setViewDate(addDays(viewDate, 7))} className="p-2 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition cursor-pointer">
+                            <ChevronRightIcon className="h-4 w-4 stroke-[2.5px]" />
+                        </button>
                     </div>
-                    
-                    <div className="flex items-center gap-4 bg-white dark:bg-gray-800 p-2 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
-                    <button onClick={() => setViewDate(addDays(viewDate, -7))} className="p-2.5 rounded-xl transition-all duration-150 ease-out text-gray-400 hover:text-indigo-600 hover:bg-gray-50 dark:hover:bg-gray-700 active:scale-95">
-                        <ChevronLeftIcon className="h-5 w-5 stroke-[2.5px]" />
-                    </button>
-                    <span className="text-[10px] font-black uppercase tracking-widest px-4 text-gray-600 dark:text-gray-300">
-                        {format(days[0], 'MMM dd')} — {format(days[13], 'MMM dd, yyyy')}
-                    </span>
-                    <button onClick={() => setViewDate(addDays(viewDate, 7))} className="p-2.5 rounded-xl transition-all duration-150 ease-out text-gray-400 hover:text-indigo-600 hover:bg-gray-50 dark:hover:bg-gray-700 active:scale-95">
-                        <ChevronRightIcon className="h-5 w-5 stroke-[2.5px]" />
-                    </button>
-                </div>
-                </div>
-            </header>
+                }
+            />
 
             <div className="flex flex-wrap gap-3 mb-8">
                 

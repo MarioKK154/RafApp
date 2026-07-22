@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import { extractTenantList } from '../utils/tenantUtils';
 import { toast } from 'react-toastify';
 import LoadingSpinner from '../components/LoadingSpinner';
+import PageHeader from '../components/PageHeader';
 import { 
     PlusIcon, 
     PencilIcon, 
@@ -154,37 +155,45 @@ function UserListPage() {
         }
     };
 
+    const userStats = useMemo(() => {
+        let active = 0;
+        for (const u of users) {
+            if (u.is_active) active += 1;
+        }
+        return { active, total: users.length };
+    }, [users]);
+
     if (isLoading && users.length === 0) return <LoadingSpinner text={t('syncing_workforce')} />;
 
     return (
-        <div className="container mx-auto p-4 md:p-8 max-w-7xl animate-in fade-in duration-500">
-            {/* Header Protocol */}
-            <header className="mb-12">
-                <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5 flex justify-between items-center gap-6">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
-                            <UsersIcon className="h-6 w-6 text-indigo-600" />
-                        </div>
-                        <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">{t('users')}</h1>
-                    </div>
-                    {isAdmin && (
+        <div className="container mx-auto p-4 md:p-8 max-w-[1600px] animate-in fade-in duration-500">
+            <PageHeader
+                icon={UsersIcon}
+                title={t('users', { defaultValue: 'User Management' })}
+                subtitle={t('users_subtitle', { defaultValue: 'Personnel Accounts, Roles, Access & Permissions' })}
+                stats={[
+                    { label: `${userStats.active} ${t('active', { defaultValue: 'Active Personnel' })}`, dotColor: 'bg-green-400 animate-pulse' },
+                    { label: `${userStats.total} ${t('total', { defaultValue: 'Accounts' })}`, icon: <UsersIcon className="h-4 w-4 text-indigo-300" /> },
+                ]}
+                actions={
+                    isAdmin && (
                         <div className="flex items-center gap-3">
                             <button
                                 onClick={() => navigate('/users/import')}
-                                className="inline-flex items-center gap-2 px-5 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-200 font-black text-[10px] uppercase tracking-widest rounded-xl transition hover:bg-gray-50 dark:hover:bg-gray-700"
+                                className="inline-flex items-center gap-2 px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition border border-white/10 backdrop-blur-sm cursor-pointer"
                             >
-                                <ArrowDownTrayIcon className="h-5 w-5" /> {t('import')}
+                                <ArrowDownTrayIcon className="h-4 w-4" /> {t('import')}
                             </button>
                             <button
                                 onClick={() => navigate('/users/new')}
-                                className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition transform active:scale-95"
+                                className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition shadow-lg shadow-indigo-500/30 transform active:scale-95 cursor-pointer"
                             >
                                 <PlusIcon className="h-5 w-5" /> {t('add_user')}
                             </button>
                         </div>
-                    )}
-                </div>
-            </header>
+                    )
+                }
+            />
 
             {/* Tactical Filter Console */}
             <div className="mb-10 grid grid-cols-1 lg:grid-cols-12 gap-6">

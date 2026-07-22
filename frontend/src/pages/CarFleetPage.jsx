@@ -7,6 +7,7 @@ import { toast } from 'react-toastify';
 import LoadingSpinner from '../components/LoadingSpinner';
 import SuperTenantSelector from '../components/SuperTenantSelector';
 import ConfirmationModal from '../components/ConfirmationModal';
+import PageHeader from '../components/PageHeader';
 import { 
     PlusIcon, 
     TrashIcon, 
@@ -113,34 +114,44 @@ function CarFleetPage() {
         }
     };
 
+    const fleetStats = useMemo(() => {
+        let available = 0;
+        let checkedOut = 0;
+        let inService = 0;
+        for (const c of cars) {
+            if (c.status === 'Available') available += 1;
+            else if (c.status === 'Checked Out') checkedOut += 1;
+            else if (c.status === 'In Service' || c.status === 'Needs Service') inService += 1;
+        }
+        return { available, checkedOut, inService, total: cars.length };
+    }, [cars]);
+
     if (isLoading && cars.length === 0) return <LoadingSpinner text="Synchronizing Fleet Data..." />;
 
     return (
-        <div className="container mx-auto p-4 md:p-8 max-w-7xl animate-in fade-in duration-500">
-            {/* Fleet Header */}
-            <header className="mb-12">
-                <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5 flex justify-between items-center gap-6">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
-                            <TruckIcon className="h-6 w-6 text-indigo-600" />
-                        </div>
-                        <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">{t('cars')}</h1>
-                    </div>
-                    <div className="flex items-center gap-4">
-                        {isSuperuser && (
-                            null
-                        )}
+        <div className="container mx-auto p-4 md:p-8 max-w-[1600px] animate-in fade-in duration-500">
+            <PageHeader
+                icon={TruckIcon}
+                title={t('cars', { defaultValue: 'Car Fleet' })}
+                subtitle={t('cars_subtitle', { defaultValue: 'Vehicle Logistics, Dispatches & Status' })}
+                stats={[
+                    { label: `${fleetStats.available} ${t('available', { defaultValue: 'Available' })}`, dotColor: 'bg-green-400 animate-pulse' },
+                    { label: `${fleetStats.checkedOut} ${t('checked_out', { defaultValue: 'Checked Out' })}`, icon: <UserIcon className="h-4 w-4 text-indigo-300" /> },
+                    { label: `${fleetStats.total} ${t('total', { defaultValue: 'Vehicles' })}`, icon: <TruckIcon className="h-4 w-4 text-blue-300" /> },
+                ]}
+                actions={
+                    <>
                         {canManageFleet && (
                             <button
                                 onClick={() => navigate('/cars/new')}
-                                className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition transform active:scale-95"
+                                className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition shadow-lg shadow-indigo-500/30 transform active:scale-95 cursor-pointer"
                             >
                                 <PlusIcon className="h-5 w-5" /> {t('register_new_asset')}
                             </button>
                         )}
-                    </div>
-                </div>
-            </header>
+                    </>
+                }
+            />
 
             {/* Tactical Search Terminal */}
             <div className="mb-10 grid grid-cols-1 lg:grid-cols-4 gap-6">

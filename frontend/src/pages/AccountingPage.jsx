@@ -6,6 +6,7 @@ import axiosInstance from '../api/axiosInstance';
 import { toast } from 'react-toastify';
 import { PieChart, Pie, BarChart, Bar, Cell, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import LoadingSpinner from '../components/LoadingSpinner';
+import PageHeader from '../components/PageHeader';
 import { 
     BanknotesIcon, 
     CalendarIcon, 
@@ -243,50 +244,61 @@ function AccountingPage() {
 
     return (
         <div className="animate-in fade-in duration-500 pb-12">
-            <div className="container mx-auto p-4 md:p-8 max-w-7xl">
-            {/* Main Header */}
-            <header className="mb-10">
-                <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
-                            <BanknotesIcon className="h-6 w-6 text-indigo-600" />
-                        </div>
-                        <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">{t('hr_payroll')}</h1>
-                    </div>
-
-                    <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
-                        {isManagement && (
-                            <div className="flex bg-white dark:bg-gray-800 rounded-2xl p-1.5 shadow-sm border border-gray-100 dark:border-gray-700 w-full sm:w-auto">
-                                <button
-                                    onClick={() => setActiveTab('personal')}
-                                    className={`flex-1 sm:flex-none px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'personal' ? 'bg-indigo-600 text-white' : 'text-gray-400 hover:text-indigo-600'}`}
-                                >
-                                    {t('personal_records')}
-                                </button>
-                                <button
-                                    onClick={() => setActiveTab('management')}
-                                    className={`flex-1 sm:flex-none px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'management' ? 'bg-indigo-600 text-white' : 'text-gray-400 hover:text-indigo-600'}`}
-                                >
-                                    {t('management')}
-                                </button>
-                                <button
-                                    onClick={() => setActiveTab('financial')}
-                                    className={`flex-1 sm:flex-none px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'financial' ? 'bg-indigo-600 text-white' : 'text-gray-400 hover:text-indigo-600'}`}
-                                >
-                                    {t('analytics')}
-                                </button>
-                            </div>
-                        )}
-
+            <div className="container mx-auto p-4 md:p-8 max-w-[1600px]">
+                <PageHeader
+                    icon={BanknotesIcon}
+                    title={t('hr_payroll')}
+                    subtitle={t('accounting_subtitle', { defaultValue: 'Payroll, Payslips, Absence & Financial Control' })}
+                    stats={[
+                        { label: `${payslips.length} ${t('payslips')}`, icon: <BanknotesIcon className="h-4 w-4 text-indigo-300" /> },
+                        { label: `${leaveRequests.length} ${t('absence_records')}`, icon: <CalendarIcon className="h-4 w-4 text-blue-300" /> },
+                    ]}
+                    actions={
                         <Link
                             to="/accounting/leave/new"
-                            className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition transform active:scale-95"
+                            className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition shadow-lg shadow-indigo-500/30 transform active:scale-95 cursor-pointer"
                         >
                             <PlusIcon className="h-5 w-5" /> {t('new_request')}
                         </Link>
+                    }
+                />
+
+                {isManagement && (
+                    <div className="mb-8 flex justify-center sm:justify-start">
+                        <div className="flex bg-gray-100 dark:bg-gray-800/80 p-1.5 rounded-2xl border border-gray-200/50 dark:border-gray-700 shadow-inner">
+                            <button
+                                onClick={() => setActiveTab('personal')}
+                                className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                                    activeTab === 'personal'
+                                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20'
+                                        : 'text-gray-400 hover:text-indigo-600 dark:hover:text-white'
+                                }`}
+                            >
+                                {t('personal_records')}
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('management')}
+                                className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                                    activeTab === 'management'
+                                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20'
+                                        : 'text-gray-400 hover:text-indigo-600 dark:hover:text-white'
+                                }`}
+                            >
+                                {t('management')}
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('financial')}
+                                className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                                    activeTab === 'financial'
+                                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20'
+                                        : 'text-gray-400 hover:text-indigo-600 dark:hover:text-white'
+                                }`}
+                            >
+                                {t('analytics')}
+                            </button>
+                        </div>
                     </div>
-                </div>
-            </header>
+                )}
 
             {activeTab === 'personal' ? (
                 <div className="space-y-8">

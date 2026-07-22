@@ -100,14 +100,16 @@ const ProjectsPage = () => {
             const isStarted = startDate && (isPast(startDate) || isToday(startDate));
             
             let displayStatus = proj.status;
-            // Rule: Planning -> Active if date reached and not archived/commissioned
-            if (['Planning', 'Active'].includes(proj.status)) {
-                displayStatus = isStarted ? 'Active' : 'Planning';
+            if (proj.status === 'Planning' && isStarted) {
+                displayStatus = 'Active';
             }
-            return { ...proj, displayStatus };
+
+            return {
+                ...proj,
+                displayStatus
+            };
         });
 
-        // Apply Status Filter
         const filtered = statusFilter === 'All' 
             ? processed 
             : processed.filter(p => p.displayStatus === statusFilter);
@@ -121,17 +123,14 @@ const ProjectsPage = () => {
         }));
     }, [projects, statusFilter]);
 
-    const projectTelemetry = useMemo(() => {
+    const statusCounts = useMemo(() => {
         const counts = { total: 0, active: 0, planning: 0, commissioned: 0, completed: 0 };
         const all = projects.map(proj => {
             const startDate = proj.start_date ? parseISO(proj.start_date) : null;
             const isStarted = startDate && (isPast(startDate) || isToday(startDate));
-            let displayStatus = proj.status;
-            if (['Planning', 'Active'].includes(proj.status)) {
-                displayStatus = isStarted ? 'Active' : 'Planning';
-            }
-            return displayStatus;
+            return proj.status === 'Planning' && isStarted ? 'Active' : proj.status;
         });
+
         for (const s of all) {
             counts.total += 1;
             if (s === 'Active') counts.active += 1;
@@ -141,6 +140,7 @@ const ProjectsPage = () => {
         }
         return counts;
     }, [projects]);
+    const projectTelemetry = statusCounts;
 
     const handleArchive = async (projectId) => {
         try {
@@ -173,28 +173,25 @@ const ProjectsPage = () => {
     }
 
     return (
-        <div className="container mx-auto p-4 md:p-8 max-w-7xl animate-in fade-in duration-500">
-            <header className="mb-12">
-                <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5 flex justify-between items-center gap-6">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
-                            <BriefcaseIcon className="h-6 w-6 text-indigo-600" />
-                        </div>
-                        <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">{t('projects')}</h1>
-                    </div>
-                    <div className="flex items-center gap-4">
-                        {isSuperuser && (
-                            null
-                        )}
-                        <button
-                            onClick={() => navigate('/projects/new')}
-                            className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition transform active:scale-95"
-                        >
-                            <PlusIcon className="h-5 w-5" /> {t('new_project')}
-                        </button>
-                    </div>
-                </div>
-            </header>
+        <div className="container mx-auto p-4 md:p-8 max-w-[1600px] animate-in fade-in duration-500">
+            <PageHeader
+                icon={BriefcaseIcon}
+                title={t('projects')}
+                subtitle={t('operational_nodes_overview', { defaultValue: 'Project Portfolio & Node Management' })}
+                stats={[
+                    { label: `${statusCounts.active} ${t('active')}`, dotColor: 'bg-green-400 animate-pulse' },
+                    { label: `${statusCounts.planning} ${t('planning_phase')}`, icon: <ClockIcon className="h-4 w-4 text-indigo-300" /> },
+                    { label: `${statusCounts.total} ${t('total')}`, icon: <ArchiveBoxIcon className="h-4 w-4 text-blue-300" /> },
+                ]}
+                actions={
+                    <button
+                        onClick={() => navigate('/projects/new')}
+                        className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition shadow-lg shadow-indigo-500/30 transform active:scale-95 cursor-pointer"
+                    >
+                        <PlusIcon className="h-5 w-5" /> {t('new_project')}
+                    </button>
+                }
+            />
 
             {isSuperuser && !selectedTenantId && (
                 <div className="mb-8 bg-gray-50 dark:bg-gray-800 border border-dashed border-gray-200 dark:border-gray-700 rounded-2xl px-6 py-8 text-center text-xs text-gray-500">

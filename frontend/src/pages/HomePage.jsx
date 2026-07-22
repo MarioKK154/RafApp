@@ -834,26 +834,30 @@ function HomePage() {
 
             {/* Welcome & Clock-in Header */}
             <header className="mb-12">
-                <div className="bg-white dark:bg-gray-900/60 border border-gray-150 dark:border-indigo-950/30 rounded-3xl p-6 shadow-sm dark:shadow-xl flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
-                    <div>
+                <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#1e293b] via-[#1e3a5f] to-[#0f172a] p-6 md:p-8 shadow-2xl flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+                    {/* Decorative ambient blur orbs */}
+                    <div className="pointer-events-none absolute -top-16 -right-16 h-64 w-64 rounded-full bg-indigo-500/10 blur-3xl" />
+                    <div className="pointer-events-none absolute -bottom-16 -left-8 h-48 w-48 rounded-full bg-blue-500/10 blur-3xl" />
+
+                    <div className="relative z-10">
                         <div className="flex items-center gap-2 mb-2">
-                            <SignalIcon className="h-3 w-3 text-green-500 animate-pulse" />
-                            <p className="text-[10px] font-black text-indigo-650 dark:text-indigo-400 tracking-[0.3em] uppercase">
+                            <SignalIcon className="h-3 w-3 text-green-400 animate-pulse" />
+                            <p className="text-[10px] font-black text-indigo-300 tracking-[0.3em] uppercase">
                                 {t('system_status_online')}
                             </p>
                             {isManagement && (
                                 <button 
                                     type="button"
                                     onClick={() => setEditMode(!editMode)}
-                                    className="ml-3 bg-indigo-50 dark:bg-indigo-950 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/30 text-[8px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider transition transform active:scale-95"
+                                    className="ml-3 bg-white/10 hover:bg-white/20 text-white/90 border border-white/10 text-[8px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider transition backdrop-blur-sm cursor-pointer"
                                 >
                                     {editMode ? t('exit_edit_layout', { defaultValue: 'Exit Customize' }) : t('edit_layout', { defaultValue: 'Customize Dashboard' })}
                                 </button>
                             )}
                         </div>
-                        <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">
+                        <h1 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tighter italic leading-tight">
                             {getGreeting()},{" "}
-                            <span className="text-indigo-600 dark:text-indigo-400">
+                            <span className="text-indigo-400">
                                 {user?.full_name?.split(' ')[0] || t('user')}
                             </span>
                         </h1>

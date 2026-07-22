@@ -249,20 +249,14 @@ function TimeLogsPage() {
         }
     };
 
-    const totalDisplayedHours = useMemo(() => {
-        return timeLogs.reduce((acc, log) => acc + (log.duration_hours || 0), 0).toFixed(1);
-    }, [timeLogs]);
-
-    const openEditModal = (log) => {
+    const handleOpenEditModal = (log) => {
         setLogToEdit(log);
-        const start = log.start_time ? new Date(log.start_time) : null;
-        const end = log.end_time ? new Date(log.end_time) : null;
         setEditFormData({
-            project_id: log.project_id?.toString() ?? '',
-            start_datetime: start ? start.toISOString().slice(0, 16) : '',
-            end_datetime: end ? end.toISOString().slice(0, 16) : '',
-            notes: log.notes ?? '',
-            travel_hours: log.travel_hours?.toString() ?? '0',
+            project_id: log.project_id ? String(log.project_id) : '',
+            start_datetime: log.start_time ? new Date(log.start_time).toISOString().slice(0, 16) : '',
+            end_datetime: log.end_time ? new Date(log.end_time).toISOString().slice(0, 16) : '',
+            notes: log.notes || '',
+            travel_hours: log.travel_hours != null ? String(log.travel_hours) : '0',
         });
     };
 
@@ -290,28 +284,16 @@ function TimeLogsPage() {
     };
 
     return (
-        <div className="container mx-auto p-4 md:p-8 max-w-7xl animate-in fade-in duration-500">
-            {/* Header */}
-            <header className="mb-10">
-                <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5 flex justify-between items-center gap-6">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
-                            <ClockIcon className="h-6 w-6 text-indigo-600" />
-                        </div>
-                        <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">{t('timesheets')}</h1>
-                    </div>
-                    <div className="bg-white dark:bg-gray-800 px-6 py-3 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm flex items-center gap-4">
-                    <div className="text-right border-r border-gray-100 dark:border-gray-700 pr-4">
-                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none">{t('net_total')}</p>
-                        <p className="text-xl font-black text-indigo-600 dark:text-indigo-400">{totalDisplayedHours} <span className="text-xs font-bold text-gray-400">{t('hrs_abbr')}</span></p>
-                    </div>
-                    <div className="text-right">
-                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none">{t('entries')}</p>
-                        <p className="text-xl font-black text-gray-900 dark:text-white">{timeLogs.length}</p>
-                    </div>
-                </div>
-                </div>
-            </header>
+        <div className="container mx-auto p-4 md:p-8 max-w-[1600px] animate-in fade-in duration-500">
+            <PageHeader
+                icon={ClockIcon}
+                title={t('timesheets')}
+                subtitle={t('timesheets_subtitle', { defaultValue: 'Work Logs, Hours & Site Telemetry' })}
+                stats={[
+                    { label: `${totalDisplayedHours} ${t('hrs_abbr')}`, icon: <ClockIcon className="h-4 w-4 text-indigo-300" /> },
+                    { label: `${timeLogs.length} ${t('entries')}`, icon: <BriefcaseIcon className="h-4 w-4 text-blue-300" /> },
+                ]}
+            />
 
             {/* Filter Hub */}
             <section className="mb-10 space-y-6">

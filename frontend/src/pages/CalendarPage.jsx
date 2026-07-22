@@ -13,6 +13,7 @@ import { toast } from 'react-toastify';
 import Select from 'react-select';
 import LoadingSpinner from '../components/LoadingSpinner';
 import Modal from '../components/Modal';
+import PageHeader from '../components/PageHeader';
 import { useAuth } from '../context/AuthContext';
 
 import { 
@@ -345,17 +346,24 @@ function CalendarPage() {
         );
 
     return (
-        <div className="container mx-auto p-4 md:p-8 max-w-7xl">
-            <header className="mb-10">
-                <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5 flex justify-between items-center">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
-                            <CalendarDaysIcon className="h-6 w-6 text-indigo-600" />
-                        </div>
-                        <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">{t('calendar_title')}</h1>
-                    </div>
-                </div>
-            </header>
+        <div className="container mx-auto p-4 md:p-8 max-w-[1600px] animate-in fade-in duration-500">
+            <PageHeader
+                icon={CalendarDaysIcon}
+                title={t('calendar', { defaultValue: 'Calendar & Schedule' })}
+                subtitle={t('calendar_subtitle', { defaultValue: 'Interactive Operations Schedule, Tasks & Events' })}
+                stats={[
+                    { label: `${filteredEvents.length} ${t('events', { defaultValue: 'Active Events' })}`, dotColor: 'bg-green-400 animate-pulse' },
+                    { label: `${events.length} ${t('total', { defaultValue: 'Total Scheduled' })}`, icon: <CalendarDaysIcon className="h-4 w-4 text-indigo-300" /> },
+                ]}
+                actions={
+                    <button
+                        onClick={handleOpenCreateModal}
+                        className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition shadow-lg shadow-indigo-500/30 transform active:scale-95 cursor-pointer"
+                    >
+                        {t('new_event', { defaultValue: '+ New Entry' })}
+                    </button>
+                }
+            />
 
             <section className="bg-white dark:bg-gray-900 p-6 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden">
                 {/* Filter controls */}

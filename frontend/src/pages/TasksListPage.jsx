@@ -26,6 +26,8 @@ import {
     DocumentTextIcon,
 } from '@heroicons/react/24/outline';
 
+import PageHeader from '../components/PageHeader';
+
 /**
  * Technical Debounce Hook: Prevents telemetry flood during search
  */
@@ -142,41 +144,37 @@ function TasksListPage() {
                 setTasks(response.data);
             }
         })
-        .catch((error) => {
-            console.error('Task list fetch failed:', error);
-            setError(t('task_sync_failed', { defaultValue: 'Failed to retrieve task registry.' }));
+        .catch(err => {
+            console.error("Task Registry Load Error:", err);
+            setError(t('task_sync_failed', { defaultValue: 'Failed to synchronize task registry.' }));
+            toast.error(t('task_sync_failed'));
         })
         .finally(() => setIsLoading(false));
-    }, [selectedProject, selectedAssignee, selectedStatus, debouncedSearchTerm, sortBy, sortDir, activeLog, t, isSuperuser, selectedTenantId]);
+    }, [activeLog, selectedProject, selectedAssignee, selectedStatus, debouncedSearchTerm, sortBy, sortDir, isSuperuser, selectedTenantId, t]);
 
-    useEffect(() => { fetchFilters(); }, [fetchFilters]);
-    useEffect(() => { fetchTasks(); }, [fetchTasks]);
+    useEffect(() => {
+        fetchFilters();
+    }, [fetchFilters]);
 
-    /**
-     * Protocol: Task Lifecycle Management
-     */
-    const handleUpdateStatus = async (taskId, newStatus, taskTitle) => {
-        try {
-            await axiosInstance.put(`/tasks/${taskId}`, { status: newStatus });
-            const successMsg = newStatus === 'Commissioned' 
-                ? t('task_archived', { defaultValue: 'Task commissioned and archived.' })
-                : t('status_updated', { defaultValue: 'Work status updated.' });
-            
-            toast.success(`${taskTitle}: ${successMsg}`);
-            fetchTasks(); 
-        } catch (error) {
-            console.error('Status update failed:', error);
-            toast.error(t('update_failed'));
-        }
+    useEffect(() => {
+        fetchTasks();
+    }, [fetchTasks]);
+
+    const handleStatusUpdate = (taskId, newStatus) => {
+        axiosInstance.put(`/tasks/${taskId}`, { status: newStatus })
+            .then(() => {
+                toast.success(t('status_updated_msg', { status: newStatus }));
+                fetchTasks();
+            })
+            .catch(err => toast.error(err.response?.data?.detail || t('status_update_rejected')));
     };
 
-    // Styling Helpers
     const getStatusStyle = (status) => {
         switch (status) {
-            case 'Commissioned': return 'bg-gray-100 text-gray-400 border-gray-200';
-            case 'Done': 
-            case 'Awaiting Commissioning': return 'bg-green-50 text-green-700 border-green-100 shadow-sm shadow-green-100/50';
-            case 'In Progress': return 'bg-indigo-50 text-indigo-700 border-indigo-100 shadow-sm shadow-indigo-100/50';
+            case 'To Do': return 'bg-gray-100 text-gray-700 border-gray-200';
+            case 'In Progress': return 'bg-indigo-50 text-indigo-700 border-indigo-100';
+            case 'Awaiting Commissioning': return 'bg-amber-50 text-amber-700 border-amber-100';
+            case 'Commissioned': return 'bg-green-50 text-green-700 border-green-100';
             case 'Blocked': return 'bg-red-50 text-red-700 border-red-100';
             default: return 'bg-gray-50 text-gray-500 border-gray-100';
         }
@@ -238,28 +236,18 @@ function TasksListPage() {
     }, [tasks]);
 
     return (
-        <div className="container mx-auto p-4 md:p-8 max-w-7xl animate-in fade-in duration-500">
-            {/* Header Area */}
-            <header className="mb-10">
-                <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5 flex justify-between items-center gap-6">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
-                            <ClipboardDocumentListIcon className="h-6 w-6 text-indigo-600" />
-                        </div>
-                        <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">{t('tasks')}</h1>
-                    </div>
-                    <div className="flex items-center gap-3">
-                        {isSuperuser && (
-                            null
-                        )}
-                        {canCreateTasks && (
-                            <button
-                                onClick={() => navigate('/tasks/new')}
-                                className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition-all duration-150 ease-out transform hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-500"
-                            >
-                                <PlusIcon className="h-5 w-5" /> {t('new_task')}
-                            </button>
-                        )}
+        <div className="container mx-auto p-4 md:p-8 max-w-[1600px] animate-in fade-in duration-500">
+            <PageHeader
+                icon={ClipboardDocumentListIcon}
+                title={t('tasks')}
+                subtitle={t('tasks_registry_subtitle', { defaultValue: 'Operational Task Control & Telemetry' })}
+                stats={[
+                    { label: `${taskTelemetry.counts.inProgress} ${t('active')}`, dotColor: 'bg-green-400 animate-pulse' },
+                    { label: `${taskTelemetry.counts.total} ${t('total')}`, icon: <ClipboardDocumentListIcon className="h-4 w-4 text-indigo-300" /> },
+                    { label: `${taskTelemetry.completionPct}% ${t('completed', { defaultValue: 'Completed' })}`, icon: <CheckCircleIcon className="h-4 w-4 text-emerald-300" /> },
+                ]}
+                actions={
+                    <>
                         <button
                             onClick={async () => {
                                 try {
@@ -270,29 +258,39 @@ function TasksListPage() {
                                             assignee_id: selectedAssignee?.value || undefined,
                                             status: selectedStatus?.value || undefined,
                                             search: debouncedSearchTerm || undefined,
+                                            sort_by: sortBy?.value || 'id',
+                                            sort_dir: sortDir?.value || 'desc',
                                         },
                                         responseType: 'blob',
                                     });
                                     const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
                                     const link = document.createElement('a');
                                     link.href = url;
-                                    link.download = `tasks-export-${new Date().toISOString().slice(0, 10)}.pdf`;
+                                    link.download = `tasks_report_${new Date().toISOString().slice(0, 10)}.pdf`;
                                     document.body.appendChild(link);
                                     link.click();
                                     link.remove();
                                     window.URL.revokeObjectURL(url);
                                 } catch (err) {
                                     console.error('Task export failed:', err);
-                                    toast.error(t('export_failed_tasks', { defaultValue: 'Failed to export tasks.' }));
+                                    toast.error(t('export_failed_task', { defaultValue: 'Failed to export task report.' }));
                                 }
                             }}
-                            className="inline-flex items-center gap-2 px-5 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-200 font-black text-[10px] uppercase tracking-widest rounded-xl transition-all duration-150 ease-out hover:bg-gray-50 dark:hover:bg-gray-700 hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-500"
+                            className="inline-flex items-center gap-2 px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition border border-white/10 backdrop-blur-sm cursor-pointer"
                         >
-                            <DocumentTextIcon className="h-5 w-5" /> {t('export_pdf')}
+                            <DocumentTextIcon className="h-4 w-4" /> {t('export_pdf', { defaultValue: 'PDF Report' })}
                         </button>
-                    </div>
-                </div>
-            </header>
+                        {canCreateTasks && (
+                            <button
+                                onClick={() => navigate('/tasks/new')}
+                                className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition shadow-lg shadow-indigo-500/30 transform active:scale-95 cursor-pointer"
+                            >
+                                <PlusIcon className="h-5 w-5" /> {t('new_task')}
+                            </button>
+                        )}
+                    </>
+                }
+            />
 
             {error && (
                 <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 rounded-2xl border border-red-200 dark:border-red-800 text-sm font-bold">

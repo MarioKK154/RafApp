@@ -4,6 +4,7 @@ import axiosInstance from '../api/axiosInstance';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
 import LoadingSpinner from '../components/LoadingSpinner';
+import PageHeader from '../components/PageHeader';
 import { 
     DocumentChartBarIcon, 
     BanknotesIcon, 
@@ -81,18 +82,15 @@ function ReportsPage() {
     }
 
     return (
-        <div className="container mx-auto p-4 md:p-8 max-w-7xl animate-in fade-in duration-500">
-            {/* Header Section */}
-            <header className="mb-10">
-                <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5 flex justify-between items-center gap-6">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
-                            <DocumentChartBarIcon className="h-6 w-6 text-indigo-600" />
-                        </div>
-                        <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">{t('analytics', { defaultValue: 'Financial Analytics' })}</h1>
-                    </div>
-                </div>
-            </header>
+        <div className="container mx-auto p-4 md:p-8 max-w-[1600px] animate-in fade-in duration-500">
+            <PageHeader
+                icon={DocumentChartBarIcon}
+                title={t('analytics', { defaultValue: 'Financial & Operational Analytics' })}
+                subtitle={t('reports_subtitle', { defaultValue: 'Project Financial Telemetry, Labor vs Budget' })}
+                stats={[
+                    { label: `${projects.length} ${t('projects', { defaultValue: 'Projects' })}`, icon: <BriefcaseIcon className="h-4 w-4 text-indigo-300" /> },
+                ]}
+            />
 
             {/* Selection Interface */}
             <div className="max-w-xl mb-12">

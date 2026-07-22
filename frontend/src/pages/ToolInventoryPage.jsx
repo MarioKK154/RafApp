@@ -35,6 +35,8 @@ function useDebounce(value, delay) {
     return debouncedValue;
 }
 
+import PageHeader from '../components/PageHeader';
+
 function ToolInventoryPage() {
     const { t } = useTranslation();
     const { user } = useAuth();
@@ -93,6 +95,18 @@ function ToolInventoryPage() {
         );
     }, [tools, debouncedSearch]);
 
+    const toolStats = useMemo(() => {
+        let available = 0;
+        let inUse = 0;
+        let inRepair = 0;
+        for (const tl of tools) {
+            if (tl.status === 'Available') available += 1;
+            else if (tl.status === 'In Use') inUse += 1;
+            else if (tl.status === 'In Repair') inRepair += 1;
+        }
+        return { available, inUse, inRepair, total: tools.length };
+    }, [tools]);
+
     const handleCheckout = async (toolId) => {
         try {
             await axiosInstance.post(`/tools/${toolId}/checkout`);
@@ -147,17 +161,18 @@ function ToolInventoryPage() {
     }
 
     return (
-        <div className="container mx-auto p-4 md:p-8 max-w-7xl animate-in fade-in duration-500">
-            {/* Header */}
-            <header className="mb-10">
-                <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5 flex justify-between items-center gap-6">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
-                            <WrenchScrewdriverIcon className="h-6 w-6 text-indigo-600" />
-                        </div>
-                        <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">{t('tools', { defaultValue: 'Tools' })}</h1>
-                    </div>
-                    <div className="flex items-center gap-4">
+        <div className="container mx-auto p-4 md:p-8 max-w-[1600px] animate-in fade-in duration-500">
+            <PageHeader
+                icon={WrenchScrewdriverIcon}
+                title={t('tools', { defaultValue: 'Tools & Hardware' })}
+                subtitle={t('tools_inventory_subtitle', { defaultValue: 'Hardware Assets, Checkouts & Maintenance' })}
+                stats={[
+                    { label: `${toolStats.available} ${t('available', { defaultValue: 'Available' })}`, dotColor: 'bg-green-400 animate-pulse' },
+                    { label: `${toolStats.inUse} ${t('in_use', { defaultValue: 'In Use' })}`, icon: <UserIcon className="h-4 w-4 text-indigo-300" /> },
+                    { label: `${toolStats.total} ${t('total', { defaultValue: 'Total Assets' })}`, icon: <WrenchScrewdriverIcon className="h-4 w-4 text-blue-300" /> },
+                ]}
+                actions={
+                    <>
                         {isSuperuser && (
                             <SuperTenantSelector
                                 selectedTenantId={selectedTenantId}
@@ -167,14 +182,14 @@ function ToolInventoryPage() {
                         {canManageTools && (
                             <button
                                 onClick={() => navigate('/tools/new')}
-                                className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition transform active:scale-95"
+                                className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition shadow-lg shadow-indigo-500/30 transform active:scale-95 cursor-pointer"
                             >
                                 <PlusIcon className="h-5 w-5" /> {t('register_new_asset')}
                             </button>
                         )}
-                    </div>
-                </div>
-            </header>
+                    </>
+                }
+            />
 
             {/* Controls Hub */}
             <div className="mb-8 grid grid-cols-1 lg:grid-cols-4 gap-4">

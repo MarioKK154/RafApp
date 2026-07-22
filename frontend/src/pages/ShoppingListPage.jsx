@@ -7,6 +7,7 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import { Link } from 'react-router-dom';
 import { inventoryDisplayName } from '../utils/inventoryI18n';
 import PushToGCButton from '../components/PushToGCButton';
+import PageHeader from '../components/PageHeader';
 import { 
     ShoppingCartIcon, 
     BriefcaseIcon, 
@@ -120,26 +121,25 @@ function ShoppingListPage() {
     }
 
     return (
-        <div className="container mx-auto p-4 md:p-8 max-w-7xl animate-in fade-in duration-500">
-            {/* Header Section */}
-            <header className="mb-10">
-                <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5 flex justify-between items-center gap-6">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
-                            <ShoppingCartIcon className="h-6 w-6 text-indigo-600" />
-                        </div>
-                        <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">{t('shopping_list', { defaultValue: 'Procurement List' })}</h1>
-                    </div>
-                    {selectedProjectId && shoppingList.length > 0 && (
+        <div className="container mx-auto p-4 md:p-8 max-w-[1600px] animate-in fade-in duration-500">
+            <PageHeader
+                icon={ShoppingCartIcon}
+                title={t('shopping_list', { defaultValue: 'Procurement & Shopping List' })}
+                subtitle={t('shopping_list_subtitle', { defaultValue: 'Project Material Shortfall & Orders' })}
+                stats={[
+                    { label: `${shoppingList.length} ${t('items', { defaultValue: 'SKUs' })}`, icon: <CubeIcon className="h-4 w-4 text-indigo-300" /> },
+                ]}
+                actions={
+                    selectedProjectId && shoppingList.length > 0 && (
                         <button
                             onClick={() => window.print()}
-                            className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition"
+                            className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition shadow-lg shadow-indigo-500/30 transform active:scale-95 cursor-pointer"
                         >
                             <PrinterIcon className="h-5 w-5" /> {t('export_pdf')}
                         </button>
-                    )}
-                </div>
-            </header>
+                    )
+                }
+            />
 
             {/* Project Selection Card */}
             
