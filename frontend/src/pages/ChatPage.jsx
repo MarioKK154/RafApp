@@ -2,6 +2,8 @@ import { useTranslation } from 'react-i18next';
 import React, { useState, useEffect, useRef } from 'react';
 import axiosInstance from '../api/axiosInstance';
 import { useAuth } from '../context/AuthContext';
+import PageHeader from '../components/PageHeader';
+import { ChatBubbleLeftRightIcon, PlusIcon, PaperAirplaneIcon, UserGroupIcon, UserIcon } from '@heroicons/react/24/outline';
 
 function ChatPage() {
     const { t } = useTranslation();
@@ -27,10 +29,7 @@ function ChatPage() {
     useEffect(() => {
         if (!user || !user.id) return;
         
-        // Infer WS URL from current window location
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        // Assuming the backend is running on the same host/port in dev, or at /api
-        // Since axiosInstance usually targets an env var, we'll try to extract the base URL
         const baseURL = axiosInstance.defaults.baseURL || window.location.origin;
         const wsUrl = baseURL.replace(/^http/, 'ws') + '/chat/ws/';
         
@@ -42,13 +41,8 @@ function ChatPage() {
             try {
                 const data = JSON.parse(event.data);
                 if (data.event === 'new_message') {
-                    // Always update local messages if it belongs to the active thread
                     setMessages(prev => {
-                        // Avoid duplicates if we sent it ourselves and already appended it
                         if (prev.find(m => m.id === data.message_id)) return prev;
-                        // Only append if it's the active thread (need to use a ref or functional update to check active thread)
-                        // Better to just push it to a global state or append if it matches activeThread state
-                        // The state here inside the closure might be stale for activeThread unless we handle it carefully.
                         return [...prev, {
                             id: data.message_id,
                             thread_id: data.thread_id,
@@ -59,28 +53,27 @@ function ChatPage() {
                     });
                 }
             } catch (err) {
-                console.error("WS parse error", err);
+                console.error("Failed to parse WS message", err);
             }
         };
-
-        ws.current.onclose = () => console.log("WebSocket disconnected");
 
         return () => {
             if (ws.current) ws.current.close();
         };
     }, [user]);
 
-    // Scroll to bottom when messages change
+    // Scroll to bottom when messages update
     useEffect(() => {
-        if (messagesEndRef.current) {
-            messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-        }
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
 
     const fetchThreads = async () => {
         try {
             const res = await axiosInstance.get('/chat/threads');
             setThreads(res.data);
+            if (res.data.length > 0 && !activeThread) {
+                selectThread(res.data[0]);
+            }
         } catch (err) {
             console.error("Failed to fetch threads", err);
         }
@@ -88,41 +81,32 @@ function ChatPage() {
 
     const fetchUsers = async () => {
         try {
-            const res = await axiosInstance.get('/users/', { params: { limit: 1000 } });
+            const res = await axiosInstance.get('/users/');
             setUsers(res.data);
         } catch (err) {
             console.error("Failed to fetch users", err);
         }
     };
 
-    const fetchMessages = async (threadId) => {
+    const selectThread = async (thread) => {
+        setActiveThread(thread);
         try {
-            const res = await axiosInstance.get(`/chat/threads/${threadId}/messages`);
-            // Backend returns messages in desc order (newest first for pagination). We reverse it.
-            setMessages(res.data.reverse());
-            // Dispatch event to update sidebar badge immediately
-            window.dispatchEvent(new CustomEvent('refreshUnreadCounts'));
+            const res = await axiosInstance.get(`/chat/threads/${thread.id}/messages`);
+            setMessages(res.data);
         } catch (err) {
-            console.error("Failed to fetch messages", err);
+            console.error("Failed to fetch messages for thread", err);
         }
-    };
-
-    const selectThread = (thread) => {
-    setActiveThread(thread);
-        fetchMessages(thread.id);
     };
 
     const sendMessage = async (e) => {
         e.preventDefault();
         if (!newMessage.trim() || !activeThread) return;
-        
+
         try {
             const res = await axiosInstance.post('/chat/messages', {
                 thread_id: activeThread.id,
-                content: newMessage.trim()
+                content: newMessage
             });
-            // We append it locally. 
-            // The WS will also broadcast it back to us, but our WS handler prevents duplicates via ID check.
             setMessages(prev => [...prev, res.data]);
             setNewMessage('');
         } catch (err) {
@@ -130,121 +114,146 @@ function ChatPage() {
         }
     };
 
-    const startNewThread = async (participantId) => {
+    const startNewThread = async (targetUserId) => {
         try {
             const res = await axiosInstance.post('/chat/threads', {
-                participant_user_ids: [participantId],
+                participant_ids: [targetUserId],
                 is_group: false
             });
-            setThreads([...threads, res.data]);
-            selectThread(res.data);
             setShowNewThreadModal(false);
+            await fetchThreads();
+            selectThread(res.data);
         } catch (err) {
-            console.error("Failed to create thread", err);
+            console.error("Failed to start new thread", err);
         }
     };
 
     const getThreadName = (thread) => {
-    if (thread.is_group && thread.name) return thread.name;
-        // For DMs, find the participant who is not the current user
+        if (thread.is_group && thread.name) return thread.name;
         const otherParticipant = thread.participants?.find(p => p.user_id !== user.id);
         if (otherParticipant && otherParticipant.user) {
             return otherParticipant.user.full_name || otherParticipant.user.email;
         }
-        return "Unknown Chat";
+        return "Direct Message";
     };
 
     return (
-        <div className="flex h-full w-full">
-            {/* Left Sidebar: Threads */}
-            <div className="w-1/3 max-w-sm border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex flex-col">
-                <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-                    <h2 className="text-lg font-bold">Messages</h2>
+        <div className="container mx-auto p-4 md:p-8 max-w-[1600px] h-[calc(100vh-5rem)] flex flex-col animate-in fade-in duration-500">
+            <PageHeader
+                icon={ChatBubbleLeftRightIcon}
+                title={t('messages', { defaultValue: 'Team Communication & Live Chat' })}
+                subtitle={t('chat_subtitle', { defaultValue: 'Real-time Project Dispatch, Direct Messaging & Field Channels' })}
+                stats={[
+                    { label: `${threads.length} ${t('channels', { defaultValue: 'Channels' })}`, dotColor: 'bg-green-400 animate-pulse' },
+                ]}
+                actions={
                     <button 
                         onClick={() => setShowNewThreadModal(true)}
-                        className="p-2 rounded-lg bg-indigo-600 text-white hover:opacity-90"
+                        className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition shadow-lg shadow-indigo-500/30 transform active:scale-95 cursor-pointer"
                     >
-                        + New
+                        <PlusIcon className="h-5 w-5" /> {t('new_chat', { defaultValue: 'Start New Chat' })}
                     </button>
-                </div>
-                <div className="flex-1 overflow-y-auto">
-                    {threads.map(thread => (
-                        <div 
-                            key={thread.id} 
-                            onClick={() => selectThread(thread)}
-                            className={`p-4 cursor-pointer border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:bg-gray-900 transition-colors ${activeThread?.id === thread.id ? 'bg-gray-50 dark:bg-gray-900' : ''}`}
-                        >
-                            <h3 className="font-semibold text-sm">{getThreadName(thread)}</h3>
-                            {/* Optionally preview last message here */}
-                        </div>
-                    ))}
-                </div>
-            </div>
+                }
+            />
 
-            {/* Right Chat Window */}
-            <div className="flex-1 flex flex-col bg-gray-50 dark:bg-gray-900 relative">
-                {activeThread ? (
-                    <>
-                        <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm">
-                            <h2 className="text-lg font-bold">{getThreadName(activeThread)}</h2>
-                        </div>
-                        <div className="flex-1 overflow-y-auto p-4 space-y-4 flex flex-col">
-                            {messages.map(msg => {
-                                const isMe = msg.author_id === user.id;
-                                return (
-                                    <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
-                                        <div className={`max-w-[70%] p-3 rounded-2xl ${isMe ? 'bg-indigo-600 text-white' : 'bg-gray-50 dark:bg-gray-900 text-gray-800'}`}>
-                                            {!isMe && msg.author && (
-                                                <div className="text-xs opacity-70 mb-1">{msg.author.full_name || msg.author.email}</div>
-                                            )}
-                                            <div className="text-sm">{msg.content}</div>
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                            <div ref={messagesEndRef} />
-                        </div>
-                        <div className="p-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
-                            <form onSubmit={sendMessage} className="flex gap-2">
-                                <input 
-                                    type="text" 
-                                    value={newMessage}
-                                    onChange={(e) => setNewMessage(e.target.value)}
-                                    placeholder="Type a message..."
-                                    className="flex-1 p-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 focus:outline-none focus:border-indigo-600"
-                                />
-                                <button type="submit" className="px-6 py-3 rounded-xl bg-indigo-600 text-white font-semibold hover:opacity-90">
-                                    Send
-                                </button>
-                            </form>
-                        </div>
-                    </>
-                ) : (
-                    <div className="flex-1 flex items-center justify-center opacity-50">
-                        Select a conversation to start messaging
+            <div className="flex-1 flex overflow-hidden rounded-3xl border border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl shadow-2xl">
+                {/* Left Sidebar: Threads */}
+                <div className="w-1/3 max-w-sm border-r border-gray-100 dark:border-gray-800 bg-white/50 dark:bg-gray-900/50 flex flex-col">
+                    <div className="p-4 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-gray-50/50 dark:bg-gray-800/50">
+                        <span className="text-xs font-black text-gray-900 dark:text-white uppercase tracking-wider">Conversations</span>
                     </div>
-                )}
+                    <div className="flex-1 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-800/50">
+                        {threads.map(thread => (
+                            <div 
+                                key={thread.id} 
+                                onClick={() => selectThread(thread)}
+                                className={`p-4 cursor-pointer transition-all ${activeThread?.id === thread.id ? 'bg-indigo-50/80 dark:bg-indigo-950/40 border-l-4 border-indigo-600 dark:border-indigo-400' : 'hover:bg-gray-50/80 dark:hover:bg-gray-800/40'}`}
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className="h-9 w-9 rounded-xl bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold shrink-0">
+                                        {thread.is_group ? <UserGroupIcon className="h-5 w-5" /> : <UserIcon className="h-5 w-5" />}
+                                    </div>
+                                    <div className="overflow-hidden">
+                                        <h3 className="font-bold text-xs text-gray-900 dark:text-white truncate">{getThreadName(thread)}</h3>
+                                        <p className="text-[10px] text-gray-400 dark:text-gray-500 uppercase tracking-widest mt-0.5">Active Channel</p>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Right Chat Window */}
+                <div className="flex-1 flex flex-col bg-gray-50/30 dark:bg-gray-950/30 relative">
+                    {activeThread ? (
+                        <>
+                            <div className="p-4 border-b border-gray-100 dark:border-gray-800 bg-white/60 dark:bg-gray-900/60 backdrop-blur-md flex items-center gap-3">
+                                <div className="h-8 w-8 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-500 font-bold text-xs">
+                                    #
+                                </div>
+                                <h2 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-tight">{getThreadName(activeThread)}</h2>
+                            </div>
+                            <div className="flex-1 overflow-y-auto p-6 space-y-4 flex flex-col">
+                                {messages.map(msg => {
+                                    const isMe = msg.author_id === user.id;
+                                    return (
+                                        <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
+                                            <div className={`max-w-[70%] p-4 rounded-2xl shadow-sm ${isMe ? 'bg-gradient-to-r from-indigo-600 to-blue-600 text-white rounded-br-none' : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 border border-gray-100 dark:border-gray-700 rounded-bl-none'}`}>
+                                                {!isMe && msg.author && (
+                                                    <div className="text-[10px] font-bold opacity-70 mb-1 uppercase tracking-wider">{msg.author.full_name || msg.author.email}</div>
+                                                )}
+                                                <div className="text-xs leading-relaxed">{msg.content}</div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                                <div ref={messagesEndRef} />
+                            </div>
+                            <div className="p-4 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-t border-gray-100 dark:border-gray-800">
+                                <form onSubmit={sendMessage} className="flex gap-3">
+                                    <input 
+                                        type="text" 
+                                        value={newMessage}
+                                        onChange={(e) => setNewMessage(e.target.value)}
+                                        placeholder="Type your message..."
+                                        className="flex-1 px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 text-xs text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+                                    />
+                                    <button type="submit" className="px-5 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-blue-600 text-white font-black text-xs uppercase tracking-wider hover:from-indigo-600 hover:to-blue-700 transition shadow-lg shadow-indigo-500/20 flex items-center gap-2 cursor-pointer">
+                                        <span>Send</span>
+                                        <PaperAirplaneIcon className="h-4 w-4" />
+                                    </button>
+                                </form>
+                            </div>
+                        </>
+                    ) : (
+                        <div className="flex-1 flex flex-col items-center justify-center text-gray-400 dark:text-gray-600">
+                            <ChatBubbleLeftRightIcon className="h-12 w-12 mb-3 opacity-30" />
+                            <p className="text-xs font-black uppercase tracking-widest">Select a conversation to start messaging</p>
+                        </div>
+                    )}
+                </div>
             </div>
 
-            {/* Simple Modal for New DM */}
+            {/* Modal for New DM */}
             {showNewThreadModal && (
-                <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/50">
-                    <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-xl w-[400px] border border-gray-200 dark:border-gray-700">
-                        <h2 className="text-xl font-bold mb-4">Start Conversation</h2>
-                        <div className="max-h-64 overflow-y-auto space-y-2 mb-4">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-white dark:bg-gray-900 p-6 rounded-3xl shadow-2xl w-[420px] border border-gray-100 dark:border-gray-800">
+                        <h2 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-wider mb-4">Start New Conversation</h2>
+                        <div className="max-h-64 overflow-y-auto space-y-2 mb-6 pr-1 custom-scrollbar">
                             {users.filter(u => u.id !== user.id).map(u => (
                                 <button 
                                     key={u.id}
                                     onClick={() => startNewThread(u.id)}
-                                    className="w-full text-left p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:bg-gray-900"
+                                    className="w-full text-left p-3 rounded-xl border border-gray-100 dark:border-gray-800 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:border-indigo-200 dark:hover:border-indigo-800 transition flex items-center justify-between group"
                                 >
-                                    {u.full_name || u.email}
+                                    <span className="text-xs font-bold text-gray-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400">{u.full_name || u.email}</span>
+                                    <span className="text-[9px] font-black text-indigo-500 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition">Message &rarr;</span>
                                 </button>
                             ))}
                         </div>
                         <button 
                             onClick={() => setShowNewThreadModal(false)}
-                            className="w-full p-2 text-center text-sm opacity-70 hover:opacity-100"
+                            className="w-full py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-xs font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition cursor-pointer"
                         >
                             Cancel
                         </button>

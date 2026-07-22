@@ -345,7 +345,7 @@ function InventoryCatalogPage() {
                 title={t('global_inventory', { defaultValue: 'Hardware & Material Catalog' })}
                 subtitle={t('global_inventory_subtitle', { defaultValue: 'SKUs, Electrical Supplies, Wholesale Pricing & Inventory Categories' })}
                 stats={[
-                    { label: `${filteredItems.length} ${t('items', { defaultValue: 'Items in view' })}`, dotColor: 'bg-green-400 animate-pulse' },
+                    { label: `${items.length} ${t('items', { defaultValue: 'Items in view' })}`, dotColor: 'bg-green-400 animate-pulse' },
                 ]}
                 actions={
                     canManageCatalog && (

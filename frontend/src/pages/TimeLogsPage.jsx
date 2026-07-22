@@ -183,7 +183,9 @@ function TimeLogsPage() {
     }, [fetchTimeLogs]);
 
     // Calculate sum of displayed hours
-    
+    const totalDisplayedHours = useMemo(() => {
+        return (timeLogs || []).reduce((acc, log) => acc + (log.duration_hours || 0), 0).toFixed(1);
+    }, [timeLogs]);
     const chartData = useMemo(() => {
         if (!timeLogs || timeLogs.length === 0) return [];
         

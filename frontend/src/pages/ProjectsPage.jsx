@@ -192,12 +192,12 @@ const ProjectsPage = () => {
         <div className="container mx-auto p-4 md:p-8 max-w-[1600px] animate-in fade-in duration-500">
             <PageHeader
                 icon={BriefcaseIcon}
-                title={t('projects')}
+                title={t('projects', { defaultValue: 'Projects' })}
                 subtitle={t('operational_nodes_overview', { defaultValue: 'Project Portfolio & Node Management' })}
                 stats={[
-                    { label: `${statusCounts.active} ${t('active')}`, dotColor: 'bg-green-400 animate-pulse' },
-                    { label: `${statusCounts.planning} ${t('planning_phase')}`, icon: <ClockIcon className="h-4 w-4 text-indigo-300" /> },
-                    { label: `${statusCounts.total} ${t('total')}`, icon: <ArchiveBoxIcon className="h-4 w-4 text-blue-300" /> },
+                    { label: `${statusCounts.active} ${t('active', { defaultValue: 'Active' })}`, dotColor: 'bg-green-400 animate-pulse' },
+                    { label: `${statusCounts.planning} ${t('planning_phase', { defaultValue: 'Planning' })}`, icon: <ClockIcon className="h-4 w-4 text-indigo-300" /> },
+                    { label: `${statusCounts.total} ${t('total', { defaultValue: 'Total' })}`, icon: <ArchiveBoxIcon className="h-4 w-4 text-blue-300" /> },
                 ]}
                 actions={
                     <button
