@@ -260,7 +260,7 @@ function AppShell() {
             {isMobile && isAuthenticated && (
                 <div 
                     style={{ borderBottom: '1px solid var(--border-subtle)', background: 'var(--bg-elevated)', height: '56px' }}
-                    className="flex items-center justify-between px-4 py-2 shrink-0 z-50 shadow-sm"
+                    className="sticky top-0 left-0 right-0 z-[100] flex items-center justify-between px-4 py-2 shrink-0 shadow-md"
                 >
                     <div className="flex items-center gap-3">
                         <HamburgerButton />
