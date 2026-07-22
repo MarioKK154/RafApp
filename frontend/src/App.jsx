@@ -372,6 +372,7 @@ function AppShell() {
                     <ErrorBoundary>
                     <Routes>
                         <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                        <Route path="/login" element={<Navigate to="/dashboard" replace />} />
 
                         {/* --- CORE OPERATIONAL HUB --- */}
                         <Route path="/dashboard" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />

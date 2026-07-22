@@ -80,7 +80,10 @@ function HomePage() {
     const [layout, setLayout] = useState(() => {
         const saved = localStorage.getItem('rafapp_dashboard_layout');
         if (saved) {
-            try { return JSON.parse(saved); } catch (e) { console.error(e); }
+            try { 
+                const parsed = JSON.parse(saved); 
+                if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+            } catch (e) { console.error(e); }
         }
         return [
             { id: 'stat-cards', visible: true, title_en: 'Key Statistics', title_is: 'Mælaborð', color: 'indigo' },

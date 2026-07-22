@@ -115,7 +115,8 @@ function LoginPage() {
     const finalizeLogin = async (accessToken) => {
         await login(accessToken, { rememberMe: keepSignedIn });
         toast.success(t('auth_success', { defaultValue: 'Identity Verified. Accessing Registry...' }));
-        navigate(from === '/' ? '/dashboard' : from, { replace: true });
+        const targetPath = (!from || from === '/' || from === '/login') ? '/dashboard' : from;
+        navigate(targetPath, { replace: true });
     };
 
     const handleCredentialsSubmit = async (e) => {
