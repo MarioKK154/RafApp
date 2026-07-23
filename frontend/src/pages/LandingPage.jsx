@@ -7,7 +7,8 @@ import {
     EnvelopeIcon,
     PhoneIcon,
     CheckCircleIcon,
-    LanguageIcon
+    LanguageIcon,
+    ArrowTopRightOnSquareIcon
 } from '@heroicons/react/24/outline';
 import axiosInstance from '../api/axiosInstance';
 import defaultLogo from '../assets/logo.png';
@@ -929,26 +930,34 @@ function LandingPage() {
                     <div className="relative flex overflow-x-hidden">
                         <div className="animate-marquee flex items-center gap-6 whitespace-nowrap py-2">
                             {[
-                                { name: 'Reykjafell', desc: 'Heildverslun' },
-                                { name: 'Ísafold', desc: 'Raflausnir' },
-                                { name: 'Smith & Norland', desc: 'S. Norland' },
-                                { name: 'Johan Rönning', desc: 'Rafefni' },
-                                { name: 'HMS', desc: 'Öryggisstaðlar' },
-                                { name: 'SART', desc: 'Rafverktakar' },
-                                { name: 'Eining Standard', desc: 'Kjarasamningar' },
-                                { name: 'Reykjafell', desc: 'Heildverslun' },
-                                { name: 'Ísafold', desc: 'Raflausnir' },
-                                { name: 'Smith & Norland', desc: 'S. Norland' },
-                                { name: 'Johan Rönning', desc: 'Rafefni' },
-                                { name: 'HMS', desc: 'Öryggisstaðlar' },
-                                { name: 'SART', desc: 'Rafverktakar' },
-                                { name: 'Eining Standard', desc: 'Kjarasamningar' }
+                                { name: 'Reykjafell', desc: 'Heildverslun', url: 'https://www.reykjafell.is' },
+                                { name: 'Ísafold', desc: 'Raflausnir', url: 'https://isafold.is' },
+                                { name: 'Smith & Norland', desc: 'S. Norland', url: 'https://www.snorland.is' },
+                                { name: 'Johan Rönning', desc: 'Rafefni', url: 'https://www.ronning.is' },
+                                { name: 'HMS', desc: 'Öryggisstaðlar', url: 'https://www.hms.is' },
+                                { name: 'SART', desc: 'Rafverktakar', url: 'https://www.sart.is' },
+                                { name: 'Eining Standard', desc: 'Kjarasamningar', url: 'https://www.rafis.is' },
+                                { name: 'Reykjafell', desc: 'Heildverslun', url: 'https://www.reykjafell.is' },
+                                { name: 'Ísafold', desc: 'Raflausnir', url: 'https://isafold.is' },
+                                { name: 'Smith & Norland', desc: 'S. Norland', url: 'https://www.snorland.is' },
+                                { name: 'Johan Rönning', desc: 'Rafefni', url: 'https://www.ronning.is' },
+                                { name: 'HMS', desc: 'Öryggisstaðlar', url: 'https://www.hms.is' },
+                                { name: 'SART', desc: 'Rafverktakar', url: 'https://www.sart.is' },
+                                { name: 'Eining Standard', desc: 'Kjarasamningar', url: 'https://www.rafis.is' }
                             ].map((partner, idx) => (
-                                <div key={idx} className="flex items-center gap-3 px-6 py-2.5 rounded-2xl bg-gray-900/60 border border-gray-800 text-gray-300 hover:border-[#0096FF]/50 hover:text-white transition-all cursor-pointer shadow-sm shrink-0">
-                                    <div className="h-2 w-2 rounded-full bg-[#0096FF]" />
+                                <a 
+                                    key={idx}
+                                    href={partner.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="group flex items-center gap-3 px-6 py-2.5 rounded-2xl bg-gray-900/60 border border-gray-800 text-gray-300 hover:border-[#0096FF]/60 hover:bg-gray-900 hover:text-white transition-all cursor-pointer shadow-sm shrink-0 hover:scale-[1.03]"
+                                    title={`Visit official website: ${partner.name}`}
+                                >
+                                    <div className="h-2 w-2 rounded-full bg-[#0096FF] group-hover:scale-125 transition-transform" />
                                     <span className="text-xs font-black uppercase tracking-wider">{partner.name}</span>
-                                    <span className="text-[9px] font-bold uppercase text-slate-500 tracking-widest">({partner.desc})</span>
-                                </div>
+                                    <span className="text-[9px] font-bold uppercase text-slate-500 tracking-widest group-hover:text-slate-400">({partner.desc})</span>
+                                    <ArrowTopRightOnSquareIcon className="h-3 w-3 text-slate-500 group-hover:text-[#0096FF] transition-colors ml-0.5" />
+                                </a>
                             ))}
                         </div>
                     </div>
