@@ -931,19 +931,17 @@ function LandingPage() {
                         <div className="animate-marquee flex items-center gap-6 whitespace-nowrap py-2">
                             {[
                                 { name: 'Reykjafell', desc: 'Heildverslun', url: 'https://www.reykjafell.is' },
-                                { name: 'Ísafold', desc: 'Raflausnir', url: 'https://isafold.is' },
-                                { name: 'Smith & Norland', desc: 'S. Norland', url: 'https://www.snorland.is' },
                                 { name: 'Johan Rönning', desc: 'Rafefni', url: 'https://www.ronning.is' },
                                 { name: 'HMS', desc: 'Öryggisstaðlar', url: 'https://www.hms.is' },
                                 { name: 'SART', desc: 'Rafverktakar', url: 'https://www.sart.is' },
-                                { name: 'Eining Standard', desc: 'Kjarasamningar', url: 'https://www.rafis.is' },
+                                { name: 'RAFÍS', desc: 'Stéttarfélag', url: 'https://www.rafis.is' },
+                                { name: 'Rafment', desc: 'Fræðslusetur', url: 'https://www.rafment.is' },
                                 { name: 'Reykjafell', desc: 'Heildverslun', url: 'https://www.reykjafell.is' },
-                                { name: 'Ísafold', desc: 'Raflausnir', url: 'https://isafold.is' },
-                                { name: 'Smith & Norland', desc: 'S. Norland', url: 'https://www.snorland.is' },
                                 { name: 'Johan Rönning', desc: 'Rafefni', url: 'https://www.ronning.is' },
                                 { name: 'HMS', desc: 'Öryggisstaðlar', url: 'https://www.hms.is' },
                                 { name: 'SART', desc: 'Rafverktakar', url: 'https://www.sart.is' },
-                                { name: 'Eining Standard', desc: 'Kjarasamningar', url: 'https://www.rafis.is' }
+                                { name: 'RAFÍS', desc: 'Stéttarfélag', url: 'https://www.rafis.is' },
+                                { name: 'Rafment', desc: 'Fræðslusetur', url: 'https://www.rafment.is' }
                             ].map((partner, idx) => (
                                 <a 
                                     key={idx}
