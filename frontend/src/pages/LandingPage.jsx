@@ -679,8 +679,8 @@ function LandingPage() {
                         <button onClick={() => scrollToSection('contact')} className="text-gray-300 hover:text-[#0096FF] transition">{i18n.language.startsWith('en') ? (feed.nav_contact_en || 'Contact') : (feed.nav_contact_is || 'Hafa samband')}</button>
                         
                         <button onClick={toggleLanguage} className="flex items-center gap-1.5 text-gray-300 hover:text-white transition bg-gray-800/50 px-3 py-1 rounded-full border border-gray-700 font-bold text-xs">
-                            <FlagIcon lang={i18n.language} className="w-4 h-3 rounded-[2px] shadow-sm shrink-0" />
-                            <span>{i18n.language.startsWith('en') ? 'IS' : 'EN'}</span>
+                            <FlagIcon lang={i18n.language?.toLowerCase().startsWith('en') ? 'en' : 'is'} className="w-4 h-3 rounded-[2px] shadow-sm shrink-0" />
+                            <span>{i18n.language?.toLowerCase().startsWith('en') ? 'EN' : 'IS'}</span>
                         </button>
 
                         {isSuperadmin && (

@@ -187,8 +187,8 @@ function LoginPage() {
 
             <div className="absolute top-6 right-6 z-50">
                 <button onClick={toggleLanguage} className="flex items-center gap-2 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition px-3.5 py-2 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm font-bold text-xs uppercase tracking-widest">
-                    <FlagIcon lang={i18n.language} className="w-4 h-3 rounded-[2px] shadow-sm shrink-0" />
-                    <span>{i18n.language?.startsWith('en') ? 'IS' : 'EN'}</span>
+                    <FlagIcon lang={i18n.language?.toLowerCase().startsWith('en') ? 'en' : 'is'} className="w-4 h-3 rounded-[2px] shadow-sm shrink-0" />
+                    <span>{i18n.language?.toLowerCase().startsWith('en') ? 'EN' : 'IS'}</span>
                 </button>
             </div>
 

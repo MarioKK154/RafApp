@@ -437,16 +437,16 @@ function Sidebar() {
                             style={{ color: 'var(--brand)', minHeight: '44px' }}
                             className="flex items-center w-full px-3 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-[0.15em] hover:opacity-75 transition-opacity gap-2"
                         >
-                            <FlagIcon lang={i18n.language.startsWith('en') ? 'is' : 'en'} className="w-4 h-3 rounded-[2px] shadow-sm shrink-0" />
+                            <FlagIcon lang={i18n.language?.toLowerCase().startsWith('en') ? 'en' : 'is'} className="w-4 h-3 rounded-[2px] shadow-sm shrink-0" />
                             {!isCollapsed && (
                                 <div className="flex items-center justify-between flex-1 ml-1">
-                                    <span>{i18n.language.startsWith('en') ? 'Íslenska' : 'English'}</span>
+                                    <span>{i18n.language?.toLowerCase().startsWith('en') ? 'English' : 'Íslenska'}</span>
                                     <span
                                         style={{ background: 'var(--brand-pale)', color: 'var(--brand)', border: '1px solid var(--brand-border)' }}
                                         className="text-[8px] px-2 py-0.5 rounded-md font-black flex items-center gap-1"
                                     >
-                                        <FlagIcon lang={i18n.language.startsWith('en') ? 'is' : 'en'} className="w-3 h-2 rounded-[1px] shadow-2xs" />
-                                        {i18n.language.startsWith('en') ? 'IS' : 'EN'}
+                                        <FlagIcon lang={i18n.language?.toLowerCase().startsWith('en') ? 'en' : 'is'} className="w-3 h-2 rounded-[1px] shadow-2xs" />
+                                        {i18n.language?.toLowerCase().startsWith('en') ? 'EN' : 'IS'}
                                     </span>
                                 </div>
                             )}
