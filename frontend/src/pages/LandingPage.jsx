@@ -61,6 +61,43 @@ function LandingPage() {
     const [draggedIndex, setDraggedIndex] = useState(null);
     const [billingCycle, setBillingCycle] = useState('monthly'); // 'monthly' or 'yearly'
 
+    // Phase 1 Animation States
+    const [tiltStyle, setTiltStyle] = useState({ transform: 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1,1,1)' });
+    const [glareStyle, setGlareStyle] = useState({ opacity: 0, x: 50, y: 50 });
+    const [activeFeatureTab, setActiveFeatureTab] = useState('gantt');
+    const [isSimulatedClockedIn, setIsSimulatedClockedIn] = useState(true);
+    const [simulatedHours, setSimulatedHours] = useState(38.5);
+
+    const handleMouseMoveHero = (e) => {
+        const card = e.currentTarget;
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
+        
+        const rotateX = ((y - centerY) / centerY) * -10;
+        const rotateY = ((x - centerX) / centerX) * 10;
+
+        setTiltStyle({
+            transform: `perspective(1000px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) scale3d(1.03, 1.03, 1.03)`,
+            transition: 'transform 0.08s ease-out'
+        });
+        setGlareStyle({
+            opacity: 0.35,
+            x: (x / rect.width) * 100,
+            y: (y / rect.height) * 100
+        });
+    };
+
+    const handleMouseLeaveHero = () => {
+        setTiltStyle({
+            transform: 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1,1,1)',
+            transition: 'transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)'
+        });
+        setGlareStyle({ opacity: 0, x: 50, y: 50 });
+    };
+
     const toggleLanguage = () => {
         const newLang = i18n.language.startsWith('en') ? 'is' : 'en';
         i18n.changeLanguage(newLang);
@@ -842,24 +879,167 @@ function LandingPage() {
                                 </button>
                             </div>
                         </div>
-                        <div className="relative z-0 hidden lg:block">
-                            {/* Organic Shape Blob */}
-                            <div className="absolute inset-0 bg-[#0096FF] blur-[120px] opacity-20 rounded-full w-[120%] h-[120%] -top-[10%] -left-[10%]"></div>
+                        {/* Hero Right Column: Interactive 3D Tilt Glass Dashboard Preview */}
+                        <div className="relative z-10 hidden lg:block">
+                            {/* Ambient Glowing Orbs */}
+                            <div className="absolute -top-12 -left-12 w-80 h-80 bg-[#0096FF]/25 rounded-full blur-3xl pointer-events-none animate-glow-pulse" />
+                            <div className="absolute -bottom-12 -right-12 w-80 h-80 bg-indigo-500/25 rounded-full blur-3xl pointer-events-none animate-float-slow" />
+
+                            {/* 3D Tilt Card Wrapper */}
                             <div 
-                                className="w-[120%] aspect-square relative -right-[20%] transition-transform duration-700 hover:scale-[1.02]"
-                                style={{
-                                    borderRadius: '40% 60% 70% 30% / 40% 50% 60% 50%',
-                                    overflow: 'hidden',
-                                    border: '1px solid rgba(255,255,255,0.1)',
-                                    boxShadow: '0 25px 50px -12px rgba(0, 150, 255, 0.25)'
-                                }}
+                                onMouseMove={handleMouseMoveHero}
+                                onMouseLeave={handleMouseLeaveHero}
+                                style={tiltStyle}
+                                className="relative rounded-[2.5rem] p-6 bg-gradient-to-b from-gray-900/95 via-slate-900/95 to-black/95 border border-indigo-500/30 shadow-[0_25px_60px_-15px_rgba(0,150,255,0.35)] backdrop-blur-xl overflow-hidden cursor-pointer select-none group"
                             >
-                                <img 
-                                    src={heroImageUrl} 
-                                    alt="Hero" 
-                                    className="w-full h-full object-cover"
+                                {/* Dynamic Mouse Glare */}
+                                <div 
+                                    className="pointer-events-none absolute inset-0 transition-opacity duration-300"
+                                    style={{
+                                        opacity: glareStyle.opacity,
+                                        background: `radial-gradient(600px circle at ${glareStyle.x}% ${glareStyle.y}%, rgba(255,255,255,0.18), transparent 40%)`
+                                    }}
                                 />
+
+                                {/* Glass Card Header */}
+                                <div className="flex items-center justify-between pb-4 border-b border-gray-800/80 mb-5">
+                                    <div className="flex items-center gap-3">
+                                        <div className="h-3 w-3 rounded-full bg-emerald-500 animate-ping" />
+                                        <span className="text-[10px] font-black uppercase tracking-[0.25em] text-emerald-400">
+                                            {i18n.language.startsWith('en') ? 'Live Operational Telemetry' : 'Rauntíma Vettvangsvinnulausn'}
+                                        </span>
+                                    </div>
+                                    <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 bg-slate-800/80 px-2.5 py-1 rounded-full border border-slate-700">
+                                        v2.4 Production
+                                    </span>
+                                </div>
+
+                                {/* Main Visual Preview Overlay */}
+                                <div className="relative rounded-2xl overflow-hidden mb-5 border border-slate-800 shadow-inner group-hover:border-[#0096FF]/40 transition-colors">
+                                    <img 
+                                        src={heroImageUrl} 
+                                        alt="Hero Preview" 
+                                        className="w-full h-56 object-cover transform group-hover:scale-105 transition-transform duration-700"
+                                    />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-950/40 to-transparent" />
+                                    
+                                    {/* Floating Live Badge inside image */}
+                                    <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between p-3 rounded-xl bg-gray-900/85 backdrop-blur-md border border-white/10">
+                                        <div>
+                                            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">
+                                                {i18n.language.startsWith('en') ? 'Active Project Node' : 'Virk verkefnaeining'}
+                                            </p>
+                                            <p className="text-xs font-black text-white uppercase tracking-tight">
+                                                #PRJ-2026-REYKJAVIK // Smáralind 2F
+                                            </p>
+                                        </div>
+                                        <span className="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 text-[9px] font-black uppercase tracking-wider border border-emerald-500/30">
+                                            Active 98%
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {/* Live Shift Simulator Section */}
+                                <div className="p-4 rounded-2xl bg-gray-950/70 border border-gray-800/80 space-y-3">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <div className={`h-2.5 w-2.5 rounded-full ${isSimulatedClockedIn ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
+                                            <span className="text-xs font-black text-white uppercase tracking-widest">
+                                                {isSimulatedClockedIn 
+                                                    ? (i18n.language.startsWith('en') ? 'Electrician Clocked In' : 'Rafvirki skráður inn')
+                                                    : (i18n.language.startsWith('en') ? 'Off Duty / Clocked Out' : 'Utan vinnutíma')
+                                                }
+                                            </span>
+                                        </div>
+
+                                        <button
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setIsSimulatedClockedIn(!isSimulatedClockedIn);
+                                                setSimulatedHours(prev => isSimulatedClockedIn ? prev : prev + 0.5);
+                                            }}
+                                            className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${
+                                                isSimulatedClockedIn
+                                                    ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30 hover:bg-rose-500/30'
+                                                    : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/30'
+                                            }`}
+                                        >
+                                            {isSimulatedClockedIn 
+                                                ? (i18n.language.startsWith('en') ? 'Simulate Clock Out' : 'Prófa að útskrá')
+                                                : (i18n.language.startsWith('en') ? 'Simulate Clock In' : 'Prófa að innskrá')
+                                            }
+                                        </button>
+                                    </div>
+
+                                    {/* Stat Indicators */}
+                                    <div className="grid grid-cols-3 gap-2 pt-2 border-t border-gray-800/60 text-center">
+                                        <div className="p-2 rounded-xl bg-gray-900/60 border border-gray-800">
+                                            <p className="text-[8px] font-black uppercase text-slate-400 tracking-wider">
+                                                {i18n.language.startsWith('en') ? 'Weekly Hours' : 'Viku stundir'}
+                                            </p>
+                                            <p className="text-sm font-black text-white tracking-tight">
+                                                <AnimatedCountUp value={simulatedHours} />h
+                                            </p>
+                                        </div>
+                                        <div className="p-2 rounded-xl bg-gray-900/60 border border-gray-800">
+                                            <p className="text-[8px] font-black uppercase text-slate-400 tracking-wider">
+                                                {i18n.language.startsWith('en') ? 'SKUs Indexed' : 'Efnisliðir'}
+                                            </p>
+                                            <p className="text-sm font-black text-indigo-400 tracking-tight">
+                                                <AnimatedCountUp value={642} />
+                                            </p>
+                                        </div>
+                                        <div className="p-2 rounded-xl bg-gray-900/60 border border-gray-800">
+                                            <p className="text-[8px] font-black uppercase text-slate-400 tracking-wider">
+                                                {i18n.language.startsWith('en') ? 'Safety Rating' : 'Öryggiseinkunn'}
+                                            </p>
+                                            <p className="text-sm font-black text-emerald-400 tracking-tight">
+                                                100% HMS
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
+                        </div>
+                    </div>
+                </section>
+
+                {/* Infinite Supplier & Industry Partner Logo Marquee */}
+                <section className="py-8 bg-gray-950 border-y border-gray-800/80 overflow-hidden relative">
+                    <div className="max-w-7xl mx-auto px-6 mb-4 text-center">
+                        <span className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-500">
+                            {i18n.language.startsWith('en') 
+                                ? 'Integrates with Icelandic Wholesale Catalogs & Statutory Frameworks'
+                                : 'Tengist rafefnasölum, birgjum og staðlakröfum á Íslandi'
+                            }
+                        </span>
+                    </div>
+
+                    <div className="relative flex overflow-x-hidden">
+                        <div className="animate-marquee flex items-center gap-6 whitespace-nowrap py-2">
+                            {[
+                                { name: 'Reykjafell', desc: 'Heildverslun' },
+                                { name: 'Ísafold', desc: 'Raflausnir' },
+                                { name: 'Smith & Norland', desc: 'S. Norland' },
+                                { name: 'Johan Rönning', desc: 'Rafefni' },
+                                { name: 'HMS', desc: 'Öryggisstaðlar' },
+                                { name: 'SART', desc: 'Rafverktakar' },
+                                { name: 'Eining Standard', desc: 'Kjarasamningar' },
+                                { name: 'Reykjafell', desc: 'Heildverslun' },
+                                { name: 'Ísafold', desc: 'Raflausnir' },
+                                { name: 'Smith & Norland', desc: 'S. Norland' },
+                                { name: 'Johan Rönning', desc: 'Rafefni' },
+                                { name: 'HMS', desc: 'Öryggisstaðlar' },
+                                { name: 'SART', desc: 'Rafverktakar' },
+                                { name: 'Eining Standard', desc: 'Kjarasamningar' }
+                            ].map((partner, idx) => (
+                                <div key={idx} className="flex items-center gap-3 px-6 py-2.5 rounded-2xl bg-gray-900/60 border border-gray-800 text-gray-300 hover:border-[#0096FF]/50 hover:text-white transition-all cursor-pointer shadow-sm shrink-0">
+                                    <div className="h-2 w-2 rounded-full bg-[#0096FF]" />
+                                    <span className="text-xs font-black uppercase tracking-wider">{partner.name}</span>
+                                    <span className="text-[9px] font-bold uppercase text-slate-500 tracking-widest">({partner.desc})</span>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 </section>

@@ -437,7 +437,7 @@ function Sidebar() {
                             style={{ color: 'var(--brand)', minHeight: '44px' }}
                             className="flex items-center w-full px-3 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-[0.15em] hover:opacity-75 transition-opacity gap-2"
                         >
-                            <FlagIcon lang={i18n.language} className="w-4 h-3 rounded-[2px] shadow-sm shrink-0" />
+                            <FlagIcon lang={i18n.language.startsWith('en') ? 'is' : 'en'} className="w-4 h-3 rounded-[2px] shadow-sm shrink-0" />
                             {!isCollapsed && (
                                 <div className="flex items-center justify-between flex-1 ml-1">
                                     <span>{i18n.language.startsWith('en') ? 'Íslenska' : 'English'}</span>

@@ -279,8 +279,8 @@ function AppShell() {
                         style={{ color: 'var(--brand)', minHeight: '44px' }}
                         className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-[0.15em] hover:opacity-75 transition-opacity"
                     >
-                        <FlagIcon lang={i18n.language} className="w-4 h-3 rounded-[2px] shadow-sm shrink-0" />
-                        <span>{i18n.language.toUpperCase()}</span>
+                        <FlagIcon lang={i18n.language.startsWith('en') ? 'is' : 'en'} className="w-4 h-3 rounded-[2px] shadow-sm shrink-0" />
+                        <span>{i18n.language.startsWith('en') ? 'IS' : 'EN'}</span>
                     </button>
                 </div>
             )}
