@@ -9,6 +9,7 @@ import { LanguageIcon } from '@heroicons/react/24/outline';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { PushNotificationProvider } from './context/PushNotificationContext';
 import Sidebar, { HamburgerButton } from './components/Sidebar';
+import FlagIcon from './components/FlagIcon';
 import { useTenantBranding } from './hooks/useTenantBranding';
 
 // --- FEATURE PAGE IMPORTS ---
@@ -278,7 +279,7 @@ function AppShell() {
                         style={{ color: 'var(--brand)', minHeight: '44px' }}
                         className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-[0.15em] hover:opacity-75 transition-opacity"
                     >
-                        <LanguageIcon className="h-4 w-4" />
+                        <FlagIcon lang={i18n.language} className="w-4 h-3 rounded-[2px] shadow-sm shrink-0" />
                         <span>{i18n.language.toUpperCase()}</span>
                     </button>
                 </div>

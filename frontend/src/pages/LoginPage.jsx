@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import axiosInstance from '../api/axiosInstance';
 import { toast } from 'react-toastify';
 import defaultLogo from '../assets/logo.png';
+import FlagIcon from '../components/FlagIcon';
 import { 
     LockClosedIcon,
     EnvelopeIcon,
@@ -185,8 +186,8 @@ function LoginPage() {
             </div>
 
             <div className="absolute top-6 right-6 z-50">
-                <button onClick={toggleLanguage} className="flex items-center gap-2 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm font-bold text-xs uppercase tracking-widest">
-                    <LanguageIcon className="h-4 w-4" />
+                <button onClick={toggleLanguage} className="flex items-center gap-2 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition px-3.5 py-2 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm font-bold text-xs uppercase tracking-widest">
+                    <FlagIcon lang={i18n.language} className="w-4 h-3 rounded-[2px] shadow-sm shrink-0" />
                     <span>{i18n.language?.startsWith('en') ? 'IS' : 'EN'}</span>
                 </button>
             </div>

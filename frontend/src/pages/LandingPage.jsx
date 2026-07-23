@@ -13,6 +13,7 @@ import axiosInstance from '../api/axiosInstance';
 import defaultLogo from '../assets/logo.png';
 import { useAuth } from '../context/AuthContext';
 import Modal from '../components/Modal';
+import FlagIcon from '../components/FlagIcon';
 import { toast } from 'react-toastify';
 
 function resolveMediaUrl(url) {
@@ -638,9 +639,9 @@ function LandingPage() {
                         <button onClick={() => scrollToSection('about')} className="text-gray-300 hover:text-[#0096FF] transition">{i18n.language.startsWith('en') ? (feed.nav_about_en || 'About Us') : (feed.nav_about_is || 'Um okkur')}</button>
                         <button onClick={() => scrollToSection('contact')} className="text-gray-300 hover:text-[#0096FF] transition">{i18n.language.startsWith('en') ? (feed.nav_contact_en || 'Contact') : (feed.nav_contact_is || 'Hafa samband')}</button>
                         
-                        <button onClick={toggleLanguage} className="flex items-center gap-1 text-gray-300 hover:text-white transition bg-gray-800/50 px-3 py-1 rounded-full border border-gray-700">
-                            <LanguageIcon className="h-4 w-4" />
-                            <span className="text-xs">{i18n.language.startsWith('en') ? 'IS' : 'EN'}</span>
+                        <button onClick={toggleLanguage} className="flex items-center gap-1.5 text-gray-300 hover:text-white transition bg-gray-800/50 px-3 py-1 rounded-full border border-gray-700 font-bold text-xs">
+                            <FlagIcon lang={i18n.language} className="w-4 h-3 rounded-[2px] shadow-sm shrink-0" />
+                            <span>{i18n.language.startsWith('en') ? 'IS' : 'EN'}</span>
                         </button>
 
                         {isSuperadmin && (
@@ -677,8 +678,8 @@ function LandingPage() {
                         <button onClick={() => scrollToSection('about')} className="py-2 text-gray-300">{i18n.language.startsWith('en') ? (feed.nav_about_en || 'About Us') : (feed.nav_about_is || 'Um okkur')}</button>
                         <button onClick={() => scrollToSection('contact')} className="py-2 text-gray-300">{i18n.language.startsWith('en') ? (feed.nav_contact_en || 'Contact') : (feed.nav_contact_is || 'Hafa samband')}</button>
                         
-                        <button onClick={toggleLanguage} className="flex items-center justify-center gap-2 py-2 text-gray-300">
-                            <LanguageIcon className="h-5 w-5" />
+                        <button onClick={toggleLanguage} className="flex items-center justify-center gap-2 py-2 text-gray-300 font-bold">
+                            <FlagIcon lang={i18n.language.startsWith('en') ? 'is' : 'en'} className="w-5 h-3.5 rounded-[2px] shadow-sm shrink-0" />
                             <span>{i18n.language.startsWith('en') ? 'Skipta yfir í íslensku' : 'Switch to English'}</span>
                         </button>
 
