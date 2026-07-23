@@ -14,6 +14,7 @@ import defaultLogo from '../assets/logo.png';
 import { useAuth } from '../context/AuthContext';
 import Modal from '../components/Modal';
 import FlagIcon from '../components/FlagIcon';
+import AnimatedCountUp from '../components/AnimatedCountUp';
 import { toast } from 'react-toastify';
 
 function resolveMediaUrl(url) {
