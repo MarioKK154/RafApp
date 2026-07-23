@@ -136,6 +136,7 @@ function ChatPage() {
     const startNewThread = async (targetUserId) => {
         try {
             const res = await axiosInstance.post('/chat/threads', {
+                participant_user_ids: [targetUserId],
                 participant_ids: [targetUserId],
                 is_group: false
             });
@@ -196,6 +197,12 @@ function ChatPage() {
                     if (foundInUsers) return foundInUsers;
                 }
             }
+        }
+
+        // 3. System fallback: if only 1 participant was stored on bugged threads, match the other user in system
+        if (users && users.length > 0) {
+            const otherUserInSystem = users.find(u => String(u.id) !== currentUserId);
+            if (otherUserInSystem) return otherUserInSystem;
         }
 
         return null;

@@ -2015,6 +2015,12 @@ class ChatThreadBase(BaseModel):
 
 class ChatThreadCreate(ChatThreadBase):
     participant_user_ids: List[int] = []
+    participant_ids: Optional[List[int]] = None
+
+    @field_validator('participant_user_ids', mode='before')
+    @classmethod
+    def sync_p_ids(cls, v, info):
+        return v or []
 
 
 class ChatThreadRead(ChatThreadBase):

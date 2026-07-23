@@ -27,8 +27,10 @@ def create_thread(
     current_user: models.User = Depends(get_current_active_user),
     tenant_id: int = Depends(get_current_user_tenant_id)
 ):
-    if current_user.id not in thread_in.participant_user_ids:
-        thread_in.participant_user_ids.append(current_user.id)
+    ids = list(set(thread_in.participant_user_ids or thread_in.participant_ids or []))
+    if current_user.id not in ids:
+        ids.append(current_user.id)
+    thread_in.participant_user_ids = ids
     return crud_chat.create_thread(db=db, thread_in=thread_in, tenant_id=tenant_id)
 
 
