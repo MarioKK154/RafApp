@@ -880,7 +880,7 @@ function LandingPage() {
                                 </button>
                             </div>
                         </div>
-                        {/* Hero Right Column: Interactive 3D Tilt Glass Dashboard Preview */}
+                        {/* Hero Right Column: Clean 3D Interactive Picture Card */}
                         <div className="relative z-10 hidden lg:block">
                             {/* Ambient Glowing Orbs */}
                             <div className="absolute -top-12 -left-12 w-80 h-80 bg-[#0096FF]/25 rounded-full blur-3xl pointer-events-none animate-glow-pulse" />
@@ -891,115 +891,24 @@ function LandingPage() {
                                 onMouseMove={handleMouseMoveHero}
                                 onMouseLeave={handleMouseLeaveHero}
                                 style={tiltStyle}
-                                className="relative rounded-[2.5rem] p-6 bg-gradient-to-b from-gray-900/95 via-slate-900/95 to-black/95 border border-indigo-500/30 shadow-[0_25px_60px_-15px_rgba(0,150,255,0.35)] backdrop-blur-xl overflow-hidden cursor-pointer select-none group"
+                                className="relative rounded-[2.5rem] p-3 bg-gradient-to-b from-gray-900/95 via-slate-900/95 to-black/95 border border-indigo-500/30 shadow-[0_25px_60px_-15px_rgba(0,150,255,0.35)] backdrop-blur-xl overflow-hidden cursor-pointer select-none group"
                             >
                                 {/* Dynamic Mouse Glare */}
                                 <div 
-                                    className="pointer-events-none absolute inset-0 transition-opacity duration-300"
+                                    className="pointer-events-none absolute inset-0 z-20 transition-opacity duration-300"
                                     style={{
                                         opacity: glareStyle.opacity,
-                                        background: `radial-gradient(600px circle at ${glareStyle.x}% ${glareStyle.y}%, rgba(255,255,255,0.18), transparent 40%)`
+                                        background: `radial-gradient(600px circle at ${glareStyle.x}% ${glareStyle.y}%, rgba(255,255,255,0.22), transparent 40%)`
                                     }}
                                 />
 
-                                {/* Glass Card Header */}
-                                <div className="flex items-center justify-between pb-4 border-b border-gray-800/80 mb-5">
-                                    <div className="flex items-center gap-3">
-                                        <div className="h-3 w-3 rounded-full bg-emerald-500 animate-ping" />
-                                        <span className="text-[10px] font-black uppercase tracking-[0.25em] text-emerald-400">
-                                            {i18n.language.startsWith('en') ? 'Live Operational Telemetry' : 'Rauntíma Vettvangsvinnulausn'}
-                                        </span>
-                                    </div>
-                                    <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 bg-slate-800/80 px-2.5 py-1 rounded-full border border-slate-700">
-                                        v2.4 Production
-                                    </span>
-                                </div>
-
-                                {/* Main Visual Preview Overlay */}
-                                <div className="relative rounded-2xl overflow-hidden mb-5 border border-slate-800 shadow-inner group-hover:border-[#0096FF]/40 transition-colors">
+                                {/* Clean Hero Picture */}
+                                <div className="relative rounded-[2rem] overflow-hidden border border-slate-800/80 shadow-2xl group-hover:border-[#0096FF]/40 transition-colors h-[460px]">
                                     <img 
                                         src={heroImageUrl} 
-                                        alt="Hero Preview" 
-                                        className="w-full h-56 object-cover transform group-hover:scale-105 transition-transform duration-700"
+                                        alt="Hero" 
+                                        className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
                                     />
-                                    <div className="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-950/40 to-transparent" />
-                                    
-                                    {/* Floating Live Badge inside image */}
-                                    <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between p-3 rounded-xl bg-gray-900/85 backdrop-blur-md border border-white/10">
-                                        <div>
-                                            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">
-                                                {i18n.language.startsWith('en') ? 'Active Project Node' : 'Virk verkefnaeining'}
-                                            </p>
-                                            <p className="text-xs font-black text-white uppercase tracking-tight">
-                                                #PRJ-2026-REYKJAVIK // Smáralind 2F
-                                            </p>
-                                        </div>
-                                        <span className="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 text-[9px] font-black uppercase tracking-wider border border-emerald-500/30">
-                                            Active 98%
-                                        </span>
-                                    </div>
-                                </div>
-
-                                {/* Live Shift Simulator Section */}
-                                <div className="p-4 rounded-2xl bg-gray-950/70 border border-gray-800/80 space-y-3">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-2">
-                                            <div className={`h-2.5 w-2.5 rounded-full ${isSimulatedClockedIn ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
-                                            <span className="text-xs font-black text-white uppercase tracking-widest">
-                                                {isSimulatedClockedIn 
-                                                    ? (i18n.language.startsWith('en') ? 'Electrician Clocked In' : 'Rafvirki skráður inn')
-                                                    : (i18n.language.startsWith('en') ? 'Off Duty / Clocked Out' : 'Utan vinnutíma')
-                                                }
-                                            </span>
-                                        </div>
-
-                                        <button
-                                            type="button"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                setIsSimulatedClockedIn(!isSimulatedClockedIn);
-                                                setSimulatedHours(prev => isSimulatedClockedIn ? prev : prev + 0.5);
-                                            }}
-                                            className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${
-                                                isSimulatedClockedIn
-                                                    ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30 hover:bg-rose-500/30'
-                                                    : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/30'
-                                            }`}
-                                        >
-                                            {isSimulatedClockedIn 
-                                                ? (i18n.language.startsWith('en') ? 'Simulate Clock Out' : 'Prófa að útskrá')
-                                                : (i18n.language.startsWith('en') ? 'Simulate Clock In' : 'Prófa að innskrá')
-                                            }
-                                        </button>
-                                    </div>
-
-                                    {/* Stat Indicators */}
-                                    <div className="grid grid-cols-3 gap-2 pt-2 border-t border-gray-800/60 text-center">
-                                        <div className="p-2 rounded-xl bg-gray-900/60 border border-gray-800">
-                                            <p className="text-[8px] font-black uppercase text-slate-400 tracking-wider">
-                                                {i18n.language.startsWith('en') ? 'Weekly Hours' : 'Viku stundir'}
-                                            </p>
-                                            <p className="text-sm font-black text-white tracking-tight">
-                                                <AnimatedCountUp value={simulatedHours} />h
-                                            </p>
-                                        </div>
-                                        <div className="p-2 rounded-xl bg-gray-900/60 border border-gray-800">
-                                            <p className="text-[8px] font-black uppercase text-slate-400 tracking-wider">
-                                                {i18n.language.startsWith('en') ? 'SKUs Indexed' : 'Efnisliðir'}
-                                            </p>
-                                            <p className="text-sm font-black text-indigo-400 tracking-tight">
-                                                <AnimatedCountUp value={642} />
-                                            </p>
-                                        </div>
-                                        <div className="p-2 rounded-xl bg-gray-900/60 border border-gray-800">
-                                            <p className="text-[8px] font-black uppercase text-slate-400 tracking-wider">
-                                                {i18n.language.startsWith('en') ? 'Safety Rating' : 'Öryggiseinkunn'}
-                                            </p>
-                                            <p className="text-sm font-black text-emerald-400 tracking-tight">
-                                                100% HMS
-                                            </p>
-                                        </div>
-                                    </div>
                                 </div>
                             </div>
                         </div>
