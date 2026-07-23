@@ -4,6 +4,21 @@ from app import models, schemas
 from sqlalchemy import or_
 
 def create_thread(db: Session, thread_in: schemas.ChatThreadCreate, tenant_id: int) -> models.ChatThread:
+    p_ids = list(set(thread_in.participant_user_ids))
+
+    # For 1-on-1 DMs, check if a non-group thread already exists between these exact 2 users
+    if not thread_in.is_group and len(p_ids) == 2:
+        existing_threads = db.query(models.ChatThread).options(
+            joinedload(models.ChatThread.participants).joinedload(models.ThreadParticipant.user)
+        ).filter(
+            models.ChatThread.tenant_id == tenant_id,
+            models.ChatThread.is_group == False
+        ).all()
+        for thread in existing_threads:
+            t_p_ids = set(p.user_id for p in thread.participants)
+            if t_p_ids == set(p_ids):
+                return thread
+
     db_thread = models.ChatThread(
         tenant_id=tenant_id,
         project_id=thread_in.project_id,
@@ -14,7 +29,7 @@ def create_thread(db: Session, thread_in: schemas.ChatThreadCreate, tenant_id: i
     db.commit()
     db.refresh(db_thread)
 
-    for uid in thread_in.participant_user_ids:
+    for uid in p_ids:
         db_participant = models.ThreadParticipant(
             thread_id=db_thread.id,
             user_id=uid
@@ -23,6 +38,17 @@ def create_thread(db: Session, thread_in: schemas.ChatThreadCreate, tenant_id: i
     db.commit()
     db.refresh(db_thread)
     return db_thread
+
+def delete_thread(db: Session, thread_id: int, tenant_id: int) -> bool:
+    thread = db.query(models.ChatThread).filter(
+        models.ChatThread.id == thread_id,
+        models.ChatThread.tenant_id == tenant_id
+    ).first()
+    if not thread:
+        return False
+    db.delete(thread)
+    db.commit()
+    return True
 
 from sqlalchemy.orm import Session, joinedload
 

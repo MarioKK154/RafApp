@@ -119,6 +119,29 @@ async def create_message(
     return new_msg
 
 
+@router.delete("/threads/{thread_id}")
+def delete_thread(
+    thread_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_active_user),
+    tenant_id: int = Depends(get_current_user_tenant_id)
+):
+    thread = crud_chat.get_thread(db=db, thread_id=thread_id)
+    if not thread:
+        raise HTTPException(status_code=404, detail="Thread not found")
+    
+    # Check if user is participant or admin/superuser
+    participant = next((p for p in thread.participants if p.user_id == current_user.id), None)
+    is_admin = getattr(current_user.role, 'value', str(current_user.role)) in ["admin", "superuser"] or getattr(current_user, 'is_superuser', False)
+    if not participant and not is_admin:
+        raise HTTPException(status_code=403, detail="Not authorized to delete this thread")
+
+    success = crud_chat.delete_thread(db=db, thread_id=thread_id, tenant_id=tenant_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Thread delete failed")
+    return {"message": "Thread deleted successfully"}
+
+
 # WebSocket endpoint for real-time updates
 @router.websocket("/ws/{user_id}")
 async def websocket_chat_endpoint(websocket: WebSocket, user_id: int):

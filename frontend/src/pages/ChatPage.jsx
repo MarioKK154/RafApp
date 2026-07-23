@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import axiosInstance from '../api/axiosInstance';
 import { useAuth } from '../context/AuthContext';
 import PageHeader from '../components/PageHeader';
-import { ChatBubbleLeftRightIcon, PlusIcon, PaperAirplaneIcon, UserGroupIcon, UserIcon } from '@heroicons/react/24/outline';
+import { ChatBubbleLeftRightIcon, PlusIcon, PaperAirplaneIcon, UserGroupIcon, UserIcon, TrashIcon } from '@heroicons/react/24/outline';
 
 function ChatPage() {
     const { t } = useTranslation();
@@ -147,12 +147,31 @@ function ChatPage() {
         }
     };
 
+    const handleDeleteThread = async (e, threadId) => {
+        if (e) e.stopPropagation();
+        if (!window.confirm(t('confirm_delete_conversation', { defaultValue: 'Ertu viss um að vilja eyða þessu samtali?' }))) {
+            return;
+        }
+        try {
+            await axiosInstance.delete(`/chat/threads/${threadId}`);
+            setThreads(prev => {
+                const updated = prev.filter(t => t.id !== threadId);
+                if (activeThread?.id === threadId) {
+                    setActiveThread(updated.length > 0 ? updated[0] : null);
+                }
+                return updated;
+            });
+        } catch (err) {
+            console.error("Failed to delete thread", err);
+        }
+    };
+
     const getOtherUser = (thread) => {
         if (!thread || thread.is_group) return null;
         const currentUserId = String(user?.id);
 
         // 1. Search in thread.participants
-        if (thread.participants && Array.isArray(thread.participants)) {
+        if (thread.participants && Array.isArray(thread.participants) && thread.participants.length > 0) {
             const otherP = thread.participants.find(p => String(p.user_id) !== currentUserId);
             if (otherP) {
                 if (otherP.user && (otherP.user.full_name || otherP.user.email)) {
@@ -177,12 +196,6 @@ function ChatPage() {
                     if (foundInUsers) return foundInUsers;
                 }
             }
-        }
-
-        // 3. Fallback: match other user in workspace if system has 2 users
-        if (users && users.length > 0) {
-            const otherInUsers = users.find(u => String(u.id) !== currentUserId);
-            if (otherInUsers) return otherInUsers;
         }
 
         return null;
@@ -241,9 +254,9 @@ function ChatPage() {
                                 <div 
                                     key={thread.id} 
                                     onClick={() => selectThread(thread)}
-                                    className={`p-4 cursor-pointer transition-all ${activeThread?.id === thread.id ? 'bg-indigo-50/80 dark:bg-indigo-950/40 border-l-4 border-indigo-600 dark:border-indigo-400' : 'hover:bg-gray-50/80 dark:hover:bg-gray-800/40'}`}
+                                    className={`group p-4 cursor-pointer transition-all flex items-center justify-between ${activeThread?.id === thread.id ? 'bg-indigo-50/80 dark:bg-indigo-950/40 border-l-4 border-indigo-600 dark:border-indigo-400' : 'hover:bg-gray-50/80 dark:hover:bg-gray-800/40'}`}
                                 >
-                                    <div className="flex items-center gap-3">
+                                    <div className="flex items-center gap-3 overflow-hidden flex-1 pr-2">
                                         <div className="h-9 w-9 rounded-xl bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold shrink-0">
                                             {thread.is_group ? <UserGroupIcon className="h-5 w-5" /> : (initial ? <span className="uppercase text-xs font-black">{initial}</span> : <UserIcon className="h-5 w-5" />)}
                                         </div>
@@ -252,6 +265,13 @@ function ChatPage() {
                                             <p className="text-[10px] text-gray-400 dark:text-gray-500 truncate mt-0.5">{getThreadSubtitle(thread)}</p>
                                         </div>
                                     </div>
+                                    <button
+                                        onClick={(e) => handleDeleteThread(e, thread.id)}
+                                        className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 transition shrink-0"
+                                        title="Eyða samtali / Delete Conversation"
+                                    >
+                                        <TrashIcon className="h-4 w-4" />
+                                    </button>
                                 </div>
                             );
                         })}
@@ -262,14 +282,24 @@ function ChatPage() {
                 <div className="flex-1 flex flex-col bg-gray-50/30 dark:bg-gray-950/30 relative">
                     {activeThread ? (
                         <>
-                            <div className="p-4 border-b border-gray-100 dark:border-gray-800 bg-white/60 dark:bg-gray-900/60 backdrop-blur-md flex items-center gap-3">
-                                <div className="h-9 w-9 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-black text-xs shrink-0">
-                                    {activeThread.is_group ? <UserGroupIcon className="h-5 w-5" /> : (getOtherUser(activeThread)?.full_name?.charAt(0) || <UserIcon className="h-5 w-5" />)}
+                            <div className="p-4 border-b border-gray-100 dark:border-gray-800 bg-white/60 dark:bg-gray-900/60 backdrop-blur-md flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="h-9 w-9 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-black text-xs shrink-0">
+                                        {activeThread.is_group ? <UserGroupIcon className="h-5 w-5" /> : (getOtherUser(activeThread)?.full_name?.charAt(0) || <UserIcon className="h-5 w-5" />)}
+                                    </div>
+                                    <div>
+                                        <h2 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-tight">{getThreadName(activeThread)}</h2>
+                                        <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500">{getThreadSubtitle(activeThread)}</p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <h2 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-tight">{getThreadName(activeThread)}</h2>
-                                    <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500">{getThreadSubtitle(activeThread)}</p>
-                                </div>
+                                <button
+                                    onClick={(e) => handleDeleteThread(e, activeThread.id)}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-red-200 dark:border-red-900/50 bg-red-50/50 dark:bg-red-950/30 text-red-600 dark:text-red-400 text-xs font-bold hover:bg-red-100 dark:hover:bg-red-900/50 transition cursor-pointer"
+                                    title="Delete conversation"
+                                >
+                                    <TrashIcon className="h-4 w-4" />
+                                    <span className="hidden sm:inline">Eyða / Delete</span>
+                                </button>
                             </div>
                             <div className="flex-1 overflow-y-auto p-6 space-y-4 flex flex-col">
                                 {messages.map(msg => {
