@@ -127,10 +127,34 @@ function LandingPage() {
             {
                 title: 'Advanced HR & Leave Pipeline',
                 title_en: 'Advanced HR & Leave Pipeline',
-                title_is: 'Tíma- og orlofsstjórnun',
+                title_is: 'Tíma- og orlofsstjórnun á vettvangi',
                 text: 'Track electrician logs, check-in locations, and request reviews in a unified workspace. Approve leave requests and export certified hours directly to accounting for payroll.',
                 text_en: 'Track electrician logs, check-in locations, and request reviews in a unified workspace. Approve leave requests and export certified hours directly to accounting for payroll.',
                 text_is: 'Fylgstu með stimplunum, staðsetningu og yfirferð í samræmdu vinnusvæði. Samþykktu orlof og flyttu út tíma í bókhald.'
+            },
+            {
+                title: 'Live Equipment Telemetry & Tool Registry',
+                title_en: 'Live Equipment Telemetry & Tool Registry',
+                title_is: 'Stafræn verkfæraskrá og mælingar',
+                text: 'Track tool checkouts, monitor maintenance statuses, and prevent high-value hardware losses across field teams.',
+                text_en: 'Track tool checkouts, monitor maintenance statuses, and prevent high-value hardware losses across field teams.',
+                text_is: 'Fylgstu með hvaða rafvirkjar eru með hvaða tæki í láni, skráðu verkfæri í viðgerð og komdu í veg fyrir tap á verðmætum búnaði.'
+            },
+            {
+                title: 'Certified Payroll & Accounting Export Engine',
+                title_en: 'Certified Payroll & Accounting Export Engine',
+                title_is: 'Bein tenging við launavinnslu og bókhald',
+                text: 'Automatically map electrician hours, overtime rates, and statutory agreements directly into accounting and payroll.',
+                text_en: 'Automatically map electrician hours, overtime rates, and statutory agreements directly into accounting and payroll.',
+                text_is: 'Kerfið flokkar vinnustundir sjálfkrafa eftir yfirvinnu, dagvinnu og kjarasamningum. Flyttu staðfestar tímaskráningar beint í bókhald.'
+            },
+            {
+                title: 'Mobile Blueprints & Photo Proof Engine',
+                title_en: 'Mobile Blueprints & Photo Proof Engine',
+                title_is: 'Teikningasafn og ljósmyndaskráning í síma',
+                text: 'Field technicians can view technical CAD blueprints, annotate revisions, and upload high-res completion photos directly from mobile.',
+                text_en: 'Field technicians can view technical CAD blueprints, annotate revisions, and upload high-res completion photos directly from mobile.',
+                text_is: 'Rafvirkjar geta skoðað nýjustu teikningar í símanum, merkt við framvindu og hlaðið upp myndum af frágangi beint á verknúmer.'
             }
         ],
         pricing_tiers: [
