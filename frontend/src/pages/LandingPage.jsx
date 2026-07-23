@@ -932,16 +932,18 @@ function LandingPage() {
                             {[
                                 { name: 'Reykjafell', desc: 'Heildverslun', url: 'https://www.reykjafell.is' },
                                 { name: 'Johan Rönning', desc: 'Rafefni', url: 'https://www.ronning.is' },
+                                { name: 'Ískraft', desc: 'Rafefni', url: 'https://iskraft.husa.is/' },
                                 { name: 'HMS', desc: 'Öryggisstaðlar', url: 'https://www.hms.is' },
                                 { name: 'SART', desc: 'Rafverktakar', url: 'https://www.sart.is' },
                                 { name: 'RAFÍS', desc: 'Stéttarfélag', url: 'https://www.rafis.is' },
-                                { name: 'Rafment', desc: 'Fræðslusetur', url: 'https://www.rafment.is' },
+                                { name: 'Rafmennt', desc: 'Fræðslusetur', url: 'https://www.rafmennt.is/' },
                                 { name: 'Reykjafell', desc: 'Heildverslun', url: 'https://www.reykjafell.is' },
                                 { name: 'Johan Rönning', desc: 'Rafefni', url: 'https://www.ronning.is' },
+                                { name: 'Ískraft', desc: 'Rafefni', url: 'https://iskraft.husa.is/' },
                                 { name: 'HMS', desc: 'Öryggisstaðlar', url: 'https://www.hms.is' },
                                 { name: 'SART', desc: 'Rafverktakar', url: 'https://www.sart.is' },
                                 { name: 'RAFÍS', desc: 'Stéttarfélag', url: 'https://www.rafis.is' },
-                                { name: 'Rafment', desc: 'Fræðslusetur', url: 'https://www.rafment.is' }
+                                { name: 'Rafmennt', desc: 'Fræðslusetur', url: 'https://www.rafmennt.is/' }
                             ].map((partner, idx) => (
                                 <a 
                                     key={idx}
