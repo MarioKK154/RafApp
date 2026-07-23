@@ -141,8 +141,8 @@ function LandingPage() {
                 text_is: 'Fylgstu með hvaða rafvirkjar eru með hvaða tæki í láni, skráðu verkfæri í viðgerð og komdu í veg fyrir tap á verðmætum búnaði.'
             },
             {
-                title: 'Certified Payroll & Accounting Export Engine',
-                title_en: 'Certified Payroll & Accounting Export Engine',
+                title: 'Payroll & Accounting Export Engine',
+                title_en: 'Payroll & Accounting Export Engine',
                 title_is: 'Bein tenging við launavinnslu og bókhald',
                 text: 'Automatically map electrician hours, overtime rates, and statutory agreements directly into accounting and payroll.',
                 text_en: 'Automatically map electrician hours, overtime rates, and statutory agreements directly into accounting and payroll.',
