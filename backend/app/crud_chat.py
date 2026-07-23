@@ -41,7 +41,9 @@ def get_user_threads(db: Session, user_id: int, tenant_id: int) -> List[models.C
     return threads
 
 def get_thread(db: Session, thread_id: int) -> Optional[models.ChatThread]:
-    return db.query(models.ChatThread).filter(models.ChatThread.id == thread_id).first()
+    return db.query(models.ChatThread).options(
+        joinedload(models.ChatThread.participants).joinedload(models.ThreadParticipant.user)
+    ).filter(models.ChatThread.id == thread_id).first()
 
 def get_thread_messages(db: Session, thread_id: int, limit: int = 50, offset: int = 0) -> List[models.ChatMessage]:
     return db.query(models.ChatMessage).filter(

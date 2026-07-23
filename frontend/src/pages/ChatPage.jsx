@@ -19,10 +19,29 @@ function ChatPage() {
     const ws = useRef(null);
     const messagesEndRef = useRef(null);
 
-    // Fetch initial threads and users for DM
+    // Fetch initial threads and users for DM in parallel
     useEffect(() => {
-        fetchThreads();
-        fetchUsers();
+        const loadChatData = async () => {
+            try {
+                const [usersRes, threadsRes] = await Promise.all([
+                    axiosInstance.get('/users/').catch(() => ({ data: [] })),
+                    axiosInstance.get('/chat/threads').catch(() => ({ data: [] }))
+                ]);
+                
+                const loadedUsers = usersRes.data || [];
+                const loadedThreads = threadsRes.data || [];
+                
+                setUsers(loadedUsers);
+                setThreads(loadedThreads);
+                
+                if (loadedThreads.length > 0 && !activeThread) {
+                    selectThread(loadedThreads[0]);
+                }
+            } catch (err) {
+                console.error("Failed to load chat data", err);
+            }
+        };
+        loadChatData();
     }, []);
 
     // Connect to WebSocket when the component mounts
@@ -130,15 +149,42 @@ function ChatPage() {
 
     const getOtherUser = (thread) => {
         if (!thread || thread.is_group) return null;
-        const otherP = thread.participants?.find(p => String(p.user_id) !== String(user?.id));
-        if (otherP?.user && (otherP.user.full_name || otherP.user.email)) {
-            return otherP.user;
+        const currentUserId = String(user?.id);
+
+        // 1. Search in thread.participants
+        if (thread.participants && Array.isArray(thread.participants)) {
+            const otherP = thread.participants.find(p => String(p.user_id) !== currentUserId);
+            if (otherP) {
+                if (otherP.user && (otherP.user.full_name || otherP.user.email)) {
+                    return otherP.user;
+                }
+                if (otherP.user_id) {
+                    const foundInUsers = users.find(u => String(u.id) === String(otherP.user_id));
+                    if (foundInUsers) return foundInUsers;
+                }
+            }
         }
-        const targetId = otherP?.user_id || thread.participants?.find(p => String(p.user_id) !== String(user?.id))?.user_id;
-        if (targetId) {
-            const foundUser = users.find(u => String(u.id) === String(targetId));
-            if (foundUser) return foundUser;
+
+        // 2. Search in thread.messages
+        if (messages && Array.isArray(messages)) {
+            const otherMsg = messages.find(m => m.thread_id === thread.id && String(m.author_id) !== currentUserId);
+            if (otherMsg) {
+                if (otherMsg.author && (otherMsg.author.full_name || otherMsg.author.email)) {
+                    return otherMsg.author;
+                }
+                if (otherMsg.author_id) {
+                    const foundInUsers = users.find(u => String(u.id) === String(otherMsg.author_id));
+                    if (foundInUsers) return foundInUsers;
+                }
+            }
         }
+
+        // 3. Fallback: match other user in workspace if system has 2 users
+        if (users && users.length > 0) {
+            const otherInUsers = users.find(u => String(u.id) !== currentUserId);
+            if (otherInUsers) return otherInUsers;
+        }
+
         return null;
     };
 
@@ -147,9 +193,9 @@ function ChatPage() {
         if (thread.is_group && thread.name) return thread.name;
         const otherUser = getOtherUser(thread);
         if (otherUser) {
-            return otherUser.full_name || otherUser.email;
+            return otherUser.full_name || otherUser.email || `User #${otherUser.id}`;
         }
-        return thread.name || "Direct Message";
+        return thread.name || `Direct Message`;
     };
 
     const getThreadSubtitle = (thread) => {
