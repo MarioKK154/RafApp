@@ -128,11 +128,36 @@ function ChatPage() {
         }
     };
 
+    const getOtherUser = (thread) => {
+        if (!thread || thread.is_group) return null;
+        const otherP = thread.participants?.find(p => String(p.user_id) !== String(user?.id));
+        if (otherP?.user && (otherP.user.full_name || otherP.user.email)) {
+            return otherP.user;
+        }
+        const targetId = otherP?.user_id || thread.participants?.find(p => String(p.user_id) !== String(user?.id))?.user_id;
+        if (targetId) {
+            const foundUser = users.find(u => String(u.id) === String(targetId));
+            if (foundUser) return foundUser;
+        }
+        return null;
+    };
+
     const getThreadName = (thread) => {
+        if (!thread) return "";
         if (thread.is_group && thread.name) return thread.name;
-        const otherParticipant = thread.participants?.find(p => p.user_id !== user.id);
-        if (otherParticipant && otherParticipant.user) {
-            return otherParticipant.user.full_name || otherParticipant.user.email;
+        const otherUser = getOtherUser(thread);
+        if (otherUser) {
+            return otherUser.full_name || otherUser.email;
+        }
+        return thread.name || "Direct Message";
+    };
+
+    const getThreadSubtitle = (thread) => {
+        if (!thread) return "";
+        if (thread.is_group) return "Group Channel";
+        const otherUser = getOtherUser(thread);
+        if (otherUser) {
+            return otherUser.email || (otherUser.role ? `Role: ${otherUser.role}` : "Direct Message");
         }
         return "Direct Message";
     };
@@ -163,23 +188,27 @@ function ChatPage() {
                         <span className="text-xs font-black text-gray-900 dark:text-white uppercase tracking-wider">Conversations</span>
                     </div>
                     <div className="flex-1 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-800/50">
-                        {threads.map(thread => (
-                            <div 
-                                key={thread.id} 
-                                onClick={() => selectThread(thread)}
-                                className={`p-4 cursor-pointer transition-all ${activeThread?.id === thread.id ? 'bg-indigo-50/80 dark:bg-indigo-950/40 border-l-4 border-indigo-600 dark:border-indigo-400' : 'hover:bg-gray-50/80 dark:hover:bg-gray-800/40'}`}
-                            >
-                                <div className="flex items-center gap-3">
-                                    <div className="h-9 w-9 rounded-xl bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold shrink-0">
-                                        {thread.is_group ? <UserGroupIcon className="h-5 w-5" /> : <UserIcon className="h-5 w-5" />}
-                                    </div>
-                                    <div className="overflow-hidden">
-                                        <h3 className="font-bold text-xs text-gray-900 dark:text-white truncate">{getThreadName(thread)}</h3>
-                                        <p className="text-[10px] text-gray-400 dark:text-gray-500 uppercase tracking-widest mt-0.5">Active Channel</p>
+                        {threads.map(thread => {
+                            const otherUser = getOtherUser(thread);
+                            const initial = thread.is_group ? null : (otherUser?.full_name?.charAt(0) || otherUser?.email?.charAt(0));
+                            return (
+                                <div 
+                                    key={thread.id} 
+                                    onClick={() => selectThread(thread)}
+                                    className={`p-4 cursor-pointer transition-all ${activeThread?.id === thread.id ? 'bg-indigo-50/80 dark:bg-indigo-950/40 border-l-4 border-indigo-600 dark:border-indigo-400' : 'hover:bg-gray-50/80 dark:hover:bg-gray-800/40'}`}
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div className="h-9 w-9 rounded-xl bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold shrink-0">
+                                            {thread.is_group ? <UserGroupIcon className="h-5 w-5" /> : (initial ? <span className="uppercase text-xs font-black">{initial}</span> : <UserIcon className="h-5 w-5" />)}
+                                        </div>
+                                        <div className="overflow-hidden flex-1">
+                                            <h3 className="font-bold text-xs text-gray-900 dark:text-white truncate">{getThreadName(thread)}</h3>
+                                            <p className="text-[10px] text-gray-400 dark:text-gray-500 truncate mt-0.5">{getThreadSubtitle(thread)}</p>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 </div>
 
@@ -188,10 +217,13 @@ function ChatPage() {
                     {activeThread ? (
                         <>
                             <div className="p-4 border-b border-gray-100 dark:border-gray-800 bg-white/60 dark:bg-gray-900/60 backdrop-blur-md flex items-center gap-3">
-                                <div className="h-8 w-8 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-500 font-bold text-xs">
-                                    #
+                                <div className="h-9 w-9 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-black text-xs shrink-0">
+                                    {activeThread.is_group ? <UserGroupIcon className="h-5 w-5" /> : (getOtherUser(activeThread)?.full_name?.charAt(0) || <UserIcon className="h-5 w-5" />)}
                                 </div>
-                                <h2 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-tight">{getThreadName(activeThread)}</h2>
+                                <div>
+                                    <h2 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-tight">{getThreadName(activeThread)}</h2>
+                                    <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500">{getThreadSubtitle(activeThread)}</p>
+                                </div>
                             </div>
                             <div className="flex-1 overflow-y-auto p-6 space-y-4 flex flex-col">
                                 {messages.map(msg => {

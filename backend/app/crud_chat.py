@@ -24,13 +24,17 @@ def create_thread(db: Session, thread_in: schemas.ChatThreadCreate, tenant_id: i
     db.refresh(db_thread)
     return db_thread
 
+from sqlalchemy.orm import Session, joinedload
+
 def get_user_threads(db: Session, user_id: int, tenant_id: int) -> List[models.ChatThread]:
     # Find all threads where user is a participant
     participant_threads = db.query(models.ThreadParticipant.thread_id).filter(
         models.ThreadParticipant.user_id == user_id
     ).subquery()
 
-    threads = db.query(models.ChatThread).filter(
+    threads = db.query(models.ChatThread).options(
+        joinedload(models.ChatThread.participants).joinedload(models.ThreadParticipant.user)
+    ).filter(
         models.ChatThread.tenant_id == tenant_id,
         models.ChatThread.id.in_(participant_threads)
     ).all()
