@@ -152,12 +152,13 @@ function CalendarPage() {
             const taskEvents = tasksRes.data
                 .filter(t => {
                     const s = t.status || '';
-                    return t.due_date && s !== 'Done' && s !== 'Commissioned' && s !== 'Cancelled';
+                    return (t.start_date || t.due_date) && s !== 'Done' && s !== 'Commissioned' && s !== 'Cancelled';
                 })
                 .map(task => ({
                     id: `task-${task.id}`,
                     title: `${t('prefix_task')} ${task.title}`,
-                    start: task.due_date,
+                    start: task.start_date || task.due_date,
+                    end: task.due_date || task.start_date,
                     backgroundColor: '#4f46e5',
                     extendedProps: { type: 'task', realId: task.id }
                 }));

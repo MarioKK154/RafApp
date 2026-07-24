@@ -941,7 +941,10 @@ class ToolRead(ToolBase):
     @property
     def image_url(self) -> Optional[str]:
         if self.image_path:
-            return f"{STATIC_BASE_URL}/{self.image_path}"
+            if self.image_path.startswith(("http://", "https://")):
+                return self.image_path
+            path = self.image_path.lstrip("/")
+            return f"{STATIC_BASE_URL}/{path}"
         return None
     model_config = ConfigDict(from_attributes=True)
 
@@ -1020,7 +1023,10 @@ class CarRead(CarBase):
     @property
     def image_url(self) -> Optional[str]:
         if self.image_path:
-            return f"{STATIC_BASE_URL}/{self.image_path}"
+            if self.image_path.startswith(("http://", "https://")):
+                return self.image_path
+            path = self.image_path.lstrip("/")
+            return f"{STATIC_BASE_URL}/{path}"
         return None
     model_config = ConfigDict(from_attributes=True)
 

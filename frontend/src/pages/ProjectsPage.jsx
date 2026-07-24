@@ -110,7 +110,9 @@ const ProjectsPage = () => {
             }
             
             let displayStatus = proj.status || 'Planning';
-            if (proj.status === 'Planning' && isStarted) {
+            if (['In Progress', 'In_Progress', 'Active'].includes(proj.status)) {
+                displayStatus = 'Active';
+            } else if (proj.status === 'Planning' && isStarted) {
                 displayStatus = 'Active';
             }
 
@@ -122,7 +124,7 @@ const ProjectsPage = () => {
 
         const filtered = statusFilter === 'All' 
             ? processed 
-            : processed.filter(p => p.displayStatus === statusFilter);
+            : processed.filter(p => p.displayStatus === statusFilter || (statusFilter === 'Active' && ['In Progress', 'In_Progress', 'Active'].includes(p.status)));
 
         const mainNodes = filtered.filter(p => !p.parent_id);
         const childNodes = filtered.filter(p => p.parent_id);
@@ -145,6 +147,7 @@ const ProjectsPage = () => {
                     }
                 } catch (e) {}
             }
+            if (['In Progress', 'In_Progress', 'Active'].includes(proj.status)) return 'Active';
             return proj.status === 'Planning' && isStarted ? 'Active' : (proj.status || 'Planning');
         });
 

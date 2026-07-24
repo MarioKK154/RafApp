@@ -458,23 +458,23 @@ def seed_demo_tenant(reset_existing: bool = True):
         # 5. Create Tasks per Project
         tasks_data = [
             # Isavia Tasks
-            {"proj": proj_dict["Verk 101: Isavia Terminal 3 - Nýbygging & Hovedtafla"], "name": "Uppsetning á Aðaltaflu 3200A", "status": "Done", "assignee": users_dict["aron@rafsud.is"]},
-            {"proj": proj_dict["Verk 101: Isavia Terminal 3 - Nýbygging & Hovedtafla"], "name": "Kapalleiðir & Tröppulagnir í Sal 2", "status": "In Progress", "assignee": users_dict["bjarki@rafsud.is"]},
-            {"proj": proj_dict["Verk 101: Isavia Terminal 3 - Nýbygging & Hovedtafla"], "name": "Lýsing & DALI Snjallstýring", "status": "In Progress", "assignee": users_dict["tomas@rafsud.is"]},
-            {"proj": proj_dict["Verk 101: Isavia Terminal 3 - Nýbygging & Hovedtafla"], "name": "Brunaútkallskerfi & Neyðarlýsing", "status": "Not Started", "assignee": users_dict["viktor@rafsud.is"]},
+            {"proj": proj_dict["Verk 101: Isavia Terminal 3 - Nýbygging & Hovedtafla"], "name": "Uppsetning á Aðaltaflu 3200A", "status": "Done", "assignee": users_dict["aron@rafsud.is"], "start": date(2026, 4, 1), "due": date(2026, 5, 15)},
+            {"proj": proj_dict["Verk 101: Isavia Terminal 3 - Nýbygging & Hovedtafla"], "name": "Kapalleiðir & Tröppulagnir í Sal 2", "status": "In Progress", "assignee": users_dict["bjarki@rafsud.is"], "start": date(2026, 5, 1), "due": date(2026, 7, 30)},
+            {"proj": proj_dict["Verk 101: Isavia Terminal 3 - Nýbygging & Hovedtafla"], "name": "Lýsing & DALI Snjallstýring", "status": "In Progress", "assignee": users_dict["tomas@rafsud.is"], "start": date(2026, 6, 1), "due": date(2026, 8, 15)},
+            {"proj": proj_dict["Verk 101: Isavia Terminal 3 - Nýbygging & Hovedtafla"], "name": "Brunaútkallskerfi & Neyðarlýsing", "status": "Not Started", "assignee": users_dict["viktor@rafsud.is"], "start": date(2026, 7, 15), "due": date(2026, 9, 1)},
 
             # Bláa Lónið Tasks
-            {"proj": proj_dict["Verk 102: Bláa Lónið Spa - Gólfhiti & Snjallstýring"], "name": "Gólfhiti & Hitastýringar í Spa 1", "status": "Done", "assignee": users_dict["sigurdur@rafsud.is"]},
-            {"proj": proj_dict["Verk 102: Bláa Lónið Spa - Gólfhiti & Snjallstýring"], "name": "Útilýsing & LED Borðar við Lónið", "status": "In Progress", "assignee": users_dict["kristin@rafsud.is"]},
-            {"proj": proj_dict["Verk 102: Bláa Lónið Spa - Gólfhiti & Snjallstýring"], "name": "Varastöð & Rafstýrðir Lokar", "status": "Not Started", "assignee": users_dict["elisabet@rafsud.is"]},
+            {"proj": proj_dict["Verk 102: Bláa Lónið Spa - Gólfhiti & Snjallstýring"], "name": "Gólfhiti & Hitastýringar í Spa 1", "status": "Done", "assignee": users_dict["sigurdur@rafsud.is"], "start": date(2026, 4, 15), "due": date(2026, 6, 1)},
+            {"proj": proj_dict["Verk 102: Bláa Lónið Spa - Gólfhiti & Snjallstýring"], "name": "Útilýsing & LED Borðar við Lónið", "status": "In Progress", "assignee": users_dict["kristin@rafsud.is"], "start": date(2026, 6, 1), "due": date(2026, 8, 10)},
+            {"proj": proj_dict["Verk 102: Bláa Lónið Spa - Gólfhiti & Snjallstýring"], "name": "Varastöð & Rafstýrðir Lokar", "status": "Not Started", "assignee": users_dict["elisabet@rafsud.is"], "start": date(2026, 7, 20), "due": date(2026, 8, 30)},
 
             # Landsvirkjun Tasks
-            {"proj": proj_dict["Verk 103: Landsvirkjun Ljósafoss - Endurnýjun Mælabúnaðar"], "name": "Róra- og Kapallagnir í Spennisal", "status": "Done", "assignee": users_dict["david@rafsud.is"]},
-            {"proj": proj_dict["Verk 103: Landsvirkjun Ljósafoss - Endurnýjun Mælabúnaðar"], "name": "Mælatöflur & Hátæknimælar", "status": "Done", "assignee": users_dict["katrin@rafsud.is"]},
+            {"proj": proj_dict["Verk 103: Landsvirkjun Ljósafoss - Endurnýjun Mælabúnaðar"], "name": "Róra- og Kapallagnir í Spennisal", "status": "Done", "assignee": users_dict["david@rafsud.is"], "start": date(2026, 3, 10), "due": date(2026, 5, 1)},
+            {"proj": proj_dict["Verk 103: Landsvirkjun Ljósafoss - Endurnýjun Mælabúnaðar"], "name": "Mælatöflur & Hátæknimælar", "status": "Done", "assignee": users_dict["katrin@rafsud.is"], "start": date(2026, 5, 1), "due": date(2026, 6, 20)},
 
             # Reykjanesbær Tasks
-            {"proj": proj_dict["Verk 104: Skrifstofur Reykjanesbæjar - Almennt Viðhald"], "name": "Skipta um Töfluvör & Lekaliða", "status": "Done", "assignee": users_dict["katrin@rafsud.is"]},
-            {"proj": proj_dict["Verk 104: Skrifstofur Reykjanesbæjar - Almennt Viðhald"], "name": "Prófun Neyðarlýsingar", "status": "In Progress", "assignee": users_dict["viktor@rafsud.is"]},
+            {"proj": proj_dict["Verk 104: Skrifstofur Reykjanesbæjar - Almennt Viðhald"], "name": "Skipta um Töfluvör & Lekaliða", "status": "Done", "assignee": users_dict["katrin@rafsud.is"], "start": date(2026, 5, 15), "due": date(2026, 6, 15)},
+            {"proj": proj_dict["Verk 104: Skrifstofur Reykjanesbæjar - Almennt Viðhald"], "name": "Prófun Neyðarlýsingar", "status": "In Progress", "assignee": users_dict["viktor@rafsud.is"], "start": date(2026, 6, 20), "due": date(2026, 8, 5)},
         ]
 
         for tdata in tasks_data:
@@ -483,9 +483,9 @@ def seed_demo_tenant(reset_existing: bool = True):
                 assignee_id=tdata["assignee"].id,
                 title=tdata["name"],
                 status=tdata["status"],
-                start_date=date.today() - timedelta(days=60),
-                due_date=date.today() + timedelta(days=30),
-                created_at=now - timedelta(days=60)
+                start_date=tdata["start"],
+                due_date=tdata["due"],
+                created_at=datetime.combine(tdata["start"], datetime.min.time()).replace(tzinfo=timezone.utc)
             )
             db.add(tsk)
 

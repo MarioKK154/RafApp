@@ -87,13 +87,13 @@ function GanttChartPage() {
     }, [fetchTasksForGantt, isLoadingProjects, hasAccess]);
 
     const activeAndPlanningProjects = useMemo(() =>
-        allProjects.filter(p => p.status === 'Active' || p.status === 'Planning'),
+        allProjects.filter(p => !['Completed', 'Archived'].includes(p.status)),
         [allProjects]
     );
 
     const activeProjectIds = useMemo(() =>
-        new Set(activeAndPlanningProjects.map(p => p.id)),
-        [activeAndPlanningProjects]
+        new Set(allProjects.map(p => p.id)),
+        [allProjects]
     );
 
     const ganttTasks = useMemo(() => {

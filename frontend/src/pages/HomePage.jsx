@@ -228,7 +228,9 @@ function HomePage() {
                 const isStarted = startDate && (isPast(startDate) || isToday(startDate));
                 
                 let displayStatus = proj.status;
-                if (['Planning', 'Active'].includes(proj.status)) {
+                if (['In Progress', 'In_Progress', 'Active'].includes(proj.status)) {
+                    displayStatus = 'Active';
+                } else if (proj.status === 'Planning') {
                     displayStatus = isStarted ? 'Active' : 'Planning';
                 }
                 return { ...proj, displayStatus };
@@ -247,7 +249,7 @@ function HomePage() {
 
             setStats({
                 ...statsRes.data,
-                active_projects: processedProjects.filter(p => p.displayStatus === 'Active').length,
+                active_projects: processedProjects.filter(p => p.displayStatus === 'Active' || ['In Progress', 'In_Progress', 'Active'].includes(p.status)).length,
                 pending_tasks: verifiedActiveTasks.length,
                 active_users: statsRes.data.active_users || 0,
                 weekly_hours: statsRes.data.weekly_hours || 0
