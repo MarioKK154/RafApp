@@ -145,18 +145,18 @@ def seed_demo_tenant(reset_existing: bool = True):
 
         # 1. Create 12 Personnel Users
         users_meta = [
-            {"email": "gunnar@rafapp.is", "full_name": "Gunnar Jónsson", "role": "admin", "emp_id": "EMP-001", "hourly": 6800},
-            {"email": "helga@rafapp.is", "full_name": "Helga Magnúsdóttir", "role": "accountant", "emp_id": "EMP-002", "hourly": 4800},
-            {"email": "stefan@rafapp.is", "full_name": "Stefán Kárason", "role": "project manager", "emp_id": "EMP-003", "hourly": 5900},
-            {"email": "david@rafapp.is", "full_name": "Davíð Ólafsson", "role": "team_lead", "emp_id": "EMP-004", "hourly": 5200},
-            {"email": "kristin@rafapp.is", "full_name": "Kristín Þorsteinsdóttir", "role": "team_lead", "emp_id": "EMP-005", "hourly": 5200},
-            {"email": "aron@rafapp.is", "full_name": "Aron Einarsson", "role": "electrician", "emp_id": "EMP-006", "hourly": 4500},
-            {"email": "bjarki@rafapp.is", "full_name": "Bjarki Hallgrímsson", "role": "electrician", "emp_id": "EMP-007", "hourly": 4500},
-            {"email": "katrin@rafapp.is", "full_name": "Katrín Guðmundsdóttir", "role": "electrician", "emp_id": "EMP-008", "hourly": 4400},
-            {"email": "tomas@rafapp.is", "full_name": "Tómas Helgason", "role": "electrician", "emp_id": "EMP-009", "hourly": 4300},
-            {"email": "sigurdur@rafapp.is", "full_name": "Sigurður Vignisson", "role": "electrician", "emp_id": "EMP-010", "hourly": 4300},
-            {"email": "viktor@rafapp.is", "full_name": "Viktor Pétursson", "role": "electrician", "emp_id": "EMP-011", "hourly": 3200},
-            {"email": "elisabet@rafapp.is", "full_name": "Elísabet Sveinsdóttir", "role": "electrician", "emp_id": "EMP-012", "hourly": 3200},
+            {"email": "gunnar@rafsud.is", "full_name": "Gunnar Jónsson", "role": "admin", "emp_id": "EMP-001", "hourly": 6800},
+            {"email": "helga@rafsud.is", "full_name": "Helga Magnúsdóttir", "role": "accountant", "emp_id": "EMP-002", "hourly": 4800},
+            {"email": "stefan@rafsud.is", "full_name": "Stefán Kárason", "role": "project manager", "emp_id": "EMP-003", "hourly": 5900},
+            {"email": "david@rafsud.is", "full_name": "Davíð Ólafsson", "role": "team_lead", "emp_id": "EMP-004", "hourly": 5200},
+            {"email": "kristin@rafsud.is", "full_name": "Kristín Þorsteinsdóttir", "role": "team_lead", "emp_id": "EMP-005", "hourly": 5200},
+            {"email": "aron@rafsud.is", "full_name": "Aron Einarsson", "role": "electrician", "emp_id": "EMP-006", "hourly": 4500},
+            {"email": "bjarki@rafsud.is", "full_name": "Bjarki Hallgrímsson", "role": "electrician", "emp_id": "EMP-007", "hourly": 4500},
+            {"email": "katrin@rafsud.is", "full_name": "Katrín Guðmundsdóttir", "role": "electrician", "emp_id": "EMP-008", "hourly": 4400},
+            {"email": "tomas@rafsud.is", "full_name": "Tómas Helgason", "role": "electrician", "emp_id": "EMP-009", "hourly": 4300},
+            {"email": "sigurdur@rafsud.is", "full_name": "Sigurður Vignisson", "role": "electrician", "emp_id": "EMP-010", "hourly": 4300},
+            {"email": "viktor@rafsud.is", "full_name": "Viktor Pétursson", "role": "electrician", "emp_id": "EMP-011", "hourly": 3200},
+            {"email": "elisabet@rafsud.is", "full_name": "Elísabet Sveinsdóttir", "role": "electrician", "emp_id": "EMP-012", "hourly": 3200},
         ]
 
         users_dict = {}
@@ -168,7 +168,7 @@ def seed_demo_tenant(reset_existing: bool = True):
                 role=u["role"],
                 tenant_id=tenant.id,
                 is_active=True,
-                is_superuser=(u["email"] == "gunnar@rafapp.is"),
+                is_superuser=False, # Root superuser is strictly reserved for tenant_id=1
                 employee_id=u["emp_id"],
                 hourly_rate=u["hourly"],
                 kennitala=f"15048{10 + idx}-3190",
@@ -205,14 +205,14 @@ def seed_demo_tenant(reset_existing: bool = True):
             cust_dict[c["name"]] = cust
 
         # 3. Create 4 Projects with Varied Budgets & Statuses
-        admin_user = users_dict["gunnar@rafapp.is"]
+        admin_user = users_dict["gunnar@rafsud.is"]
         projects_data = [
             {
                 "name": "Verk 101: Isavia Terminal 3 - Nýbygging & Hovedtafla",
                 "customer": cust_dict["Isavia KEF Terminal Extension"],
                 "status": "In Progress",
                 "budget": 48500000.0,
-                "pm": users_dict["stefan@rafapp.is"],
+                "pm": users_dict["stefan@rafsud.is"],
                 "location": "Keflavíkurflugvöllur Terminal 3",
                 "start": date.today() - timedelta(days=90),
                 "end": date.today() + timedelta(days=120)
@@ -222,7 +222,7 @@ def seed_demo_tenant(reset_existing: bool = True):
                 "customer": cust_dict["Bláa Lónið / Retreat Spa"],
                 "status": "In Progress",
                 "budget": 18200000.0,
-                "pm": users_dict["stefan@rafapp.is"],
+                "pm": users_dict["stefan@rafsud.is"],
                 "location": "Grindavík Retreat Spa",
                 "start": date.today() - timedelta(days=60),
                 "end": date.today() + timedelta(days=45)
@@ -232,7 +232,7 @@ def seed_demo_tenant(reset_existing: bool = True):
                 "customer": cust_dict["Landsvirkjun Svæðisskrifstofa"],
                 "status": "Commissioned",
                 "budget": 12800000.0,
-                "pm": users_dict["gunnar@rafapp.is"],
+                "pm": users_dict["gunnar@rafsud.is"],
                 "location": "Ljósafossstöð",
                 "start": date.today() - timedelta(days=100),
                 "end": date.today() - timedelta(days=10)
@@ -242,7 +242,7 @@ def seed_demo_tenant(reset_existing: bool = True):
                 "customer": cust_dict["Reykjanesbær Fasteignir"],
                 "status": "In Progress",
                 "budget": 6500000.0,
-                "pm": users_dict["gunnar@rafapp.is"],
+                "pm": users_dict["gunnar@rafsud.is"],
                 "location": "Tjarnargata 12, Keflavík",
                 "start": date.today() - timedelta(days=40),
                 "end": date.today() + timedelta(days=30)
@@ -268,11 +268,11 @@ def seed_demo_tenant(reset_existing: bool = True):
             proj_dict[p["name"]] = proj
 
             # Project Assignments
-            assigned_users = [users_dict["aron@rafapp.is"], users_dict["bjarki@rafapp.is"], users_dict["tomas@rafapp.is"]]
+            assigned_users = [users_dict["aron@rafsud.is"], users_dict["bjarki@rafsud.is"], users_dict["tomas@rafsud.is"]]
             if "Bláa Lónið" in p["name"]:
-                assigned_users = [users_dict["sigurdur@rafapp.is"], users_dict["kristin@rafapp.is"], users_dict["elisabet@rafapp.is"]]
+                assigned_users = [users_dict["sigurdur@rafsud.is"], users_dict["kristin@rafsud.is"], users_dict["elisabet@rafsud.is"]]
             elif "Landsvirkjun" in p["name"]:
-                assigned_users = [users_dict["david@rafapp.is"], users_dict["katrin@rafapp.is"]]
+                assigned_users = [users_dict["david@rafsud.is"], users_dict["katrin@rafsud.is"]]
 
             for uobj in assigned_users:
                 pa = models.ProjectAssignment(
@@ -311,23 +311,23 @@ def seed_demo_tenant(reset_existing: bool = True):
         # 5. Create Realistic Tasks per Project
         tasks_data = [
             # Isavia Tasks
-            {"proj": proj_dict["Verk 101: Isavia Terminal 3 - Nýbygging & Hovedtafla"], "name": "Uppsetning á Aðaltaflu 3200A", "status": "Done", "assignee": users_dict["aron@rafapp.is"], "hours": 120},
-            {"proj": proj_dict["Verk 101: Isavia Terminal 3 - Nýbygging & Hovedtafla"], "name": "Kapalleiðir & Tröppulagnir í Sal 2", "status": "In Progress", "assignee": users_dict["bjarki@rafapp.is"], "hours": 180},
-            {"proj": proj_dict["Verk 101: Isavia Terminal 3 - Nýbygging & Hovedtafla"], "name": "Lýsing & DALI Snjallstýring", "status": "In Progress", "assignee": users_dict["tomas@rafapp.is"], "hours": 110},
-            {"proj": proj_dict["Verk 101: Isavia Terminal 3 - Nýbygging & Hovedtafla"], "name": "Brunaútkallskerfi & Neyðarlýsing", "status": "Not Started", "assignee": users_dict["viktor@rafapp.is"], "hours": 70},
+            {"proj": proj_dict["Verk 101: Isavia Terminal 3 - Nýbygging & Hovedtafla"], "name": "Uppsetning á Aðaltaflu 3200A", "status": "Done", "assignee": users_dict["aron@rafsud.is"], "hours": 120},
+            {"proj": proj_dict["Verk 101: Isavia Terminal 3 - Nýbygging & Hovedtafla"], "name": "Kapalleiðir & Tröppulagnir í Sal 2", "status": "In Progress", "assignee": users_dict["bjarki@rafsud.is"], "hours": 180},
+            {"proj": proj_dict["Verk 101: Isavia Terminal 3 - Nýbygging & Hovedtafla"], "name": "Lýsing & DALI Snjallstýring", "status": "In Progress", "assignee": users_dict["tomas@rafsud.is"], "hours": 110},
+            {"proj": proj_dict["Verk 101: Isavia Terminal 3 - Nýbygging & Hovedtafla"], "name": "Brunaútkallskerfi & Neyðarlýsing", "status": "Not Started", "assignee": users_dict["viktor@rafsud.is"], "hours": 70},
 
             # Bláa Lónið Tasks
-            {"proj": proj_dict["Verk 102: Bláa Lónið Spa - Gólfhiti & Snjallstýring"], "name": "Gólfhiti & Hitastýringar í Spa 1", "status": "Done", "assignee": users_dict["sigurdur@rafapp.is"], "hours": 90},
-            {"proj": proj_dict["Verk 102: Bláa Lónið Spa - Gólfhiti & Snjallstýring"], "name": "Útilýsing & LED Borðar við Lónið", "status": "In Progress", "assignee": users_dict["kristin@rafapp.is"], "hours": 85},
-            {"proj": proj_dict["Verk 102: Bláa Lónið Spa - Gólfhiti & Snjallstýring"], "name": "Varastöð & Rafstýrðir Lokar", "status": "Not Started", "assignee": users_dict["elisabet@rafapp.is"], "hours": 35},
+            {"proj": proj_dict["Verk 102: Bláa Lónið Spa - Gólfhiti & Snjallstýring"], "name": "Gólfhiti & Hitastýringar í Spa 1", "status": "Done", "assignee": users_dict["sigurdur@rafsud.is"], "hours": 90},
+            {"proj": proj_dict["Verk 102: Bláa Lónið Spa - Gólfhiti & Snjallstýring"], "name": "Útilýsing & LED Borðar við Lónið", "status": "In Progress", "assignee": users_dict["kristin@rafsud.is"], "hours": 85},
+            {"proj": proj_dict["Verk 102: Bláa Lónið Spa - Gólfhiti & Snjallstýring"], "name": "Varastöð & Rafstýrðir Lokar", "status": "Not Started", "assignee": users_dict["elisabet@rafsud.is"], "hours": 35},
 
             # Landsvirkjun Tasks
-            {"proj": proj_dict["Verk 103: Landsvirkjun Ljósafoss - Endurnýjun Mælabúnaðar"], "name": "Róra- og Kapallagnir í Spennisal", "status": "Done", "assignee": users_dict["david@rafapp.is"], "hours": 95},
-            {"proj": proj_dict["Verk 103: Landsvirkjun Ljósafoss - Endurnýjun Mælabúnaðar"], "name": "Mælatöflur & Hátæknimælar", "status": "Done", "assignee": users_dict["katrin@rafapp.is"], "hours": 85},
+            {"proj": proj_dict["Verk 103: Landsvirkjun Ljósafoss - Endurnýjun Mælabúnaðar"], "name": "Róra- og Kapallagnir í Spennisal", "status": "Done", "assignee": users_dict["david@rafsud.is"], "hours": 95},
+            {"proj": proj_dict["Verk 103: Landsvirkjun Ljósafoss - Endurnýjun Mælabúnaðar"], "name": "Mælatöflur & Hátæknimælar", "status": "Done", "assignee": users_dict["katrin@rafsud.is"], "hours": 85},
 
             # Reykjanesbær Tasks
-            {"proj": proj_dict["Verk 104: Skrifstofur Reykjanesbæjar - Almennt Viðhald"], "name": "Skipta um Töfluvör & Lekaliða", "status": "Done", "assignee": users_dict["katrin@rafapp.is"], "hours": 40},
-            {"proj": proj_dict["Verk 104: Skrifstofur Reykjanesbæjar - Almennt Viðhald"], "name": "Prófun Neyðarlýsingar", "status": "In Progress", "assignee": users_dict["viktor@rafapp.is"], "hours": 25},
+            {"proj": proj_dict["Verk 104: Skrifstofur Reykjanesbæjar - Almennt Viðhald"], "name": "Skipta um Töfluvör & Lekaliða", "status": "Done", "assignee": users_dict["katrin@rafsud.is"], "hours": 40},
+            {"proj": proj_dict["Verk 104: Skrifstofur Reykjanesbæjar - Almennt Viðhald"], "name": "Prófun Neyðarlýsingar", "status": "In Progress", "assignee": users_dict["viktor@rafsud.is"], "hours": 25},
         ]
 
         for tdata in tasks_data:
@@ -365,32 +365,32 @@ def seed_demo_tenant(reset_existing: bool = True):
         for d in work_days:
             # Aron - Isavia Heavy (8.0h - 10.0h)
             if random.random() > 0.1:
-                add_tlog(users_dict["aron@rafapp.is"], proj_dict["Verk 101: Isavia Terminal 3 - Nýbygging & Hovedtafla"], d, random.choice([7.5, 8.0, 8.5, 9.5]), "Draga stofnkapla og tengja aðaltaflu 3200A")
+                add_tlog(users_dict["aron@rafsud.is"], proj_dict["Verk 101: Isavia Terminal 3 - Nýbygging & Hovedtafla"], d, random.choice([7.5, 8.0, 8.5, 9.5]), "Draga stofnkapla og tengja aðaltaflu 3200A")
 
             # Bjarki - Isavia (7.5h - 8.5h)
             if random.random() > 0.15:
-                add_tlog(users_dict["bjarki@rafapp.is"], proj_dict["Verk 101: Isavia Terminal 3 - Nýbygging & Hovedtafla"], d, random.choice([7.5, 8.0, 8.5]), "Setja upp kapalleiðir og tröppur í sal 2")
+                add_tlog(users_dict["bjarki@rafsud.is"], proj_dict["Verk 101: Isavia Terminal 3 - Nýbygging & Hovedtafla"], d, random.choice([7.5, 8.0, 8.5]), "Setja upp kapalleiðir og tröppur í sal 2")
 
             # Tómas - Isavia & Reykjanesbær
             if random.random() > 0.2:
-                add_tlog(users_dict["tomas@rafapp.is"], proj_dict["Verk 101: Isavia Terminal 3 - Nýbygging & Hovedtafla"], d, random.choice([7.5, 8.0]), "Tengja DALI snjallstýringar og ljósakúpla")
+                add_tlog(users_dict["tomas@rafsud.is"], proj_dict["Verk 101: Isavia Terminal 3 - Nýbygging & Hovedtafla"], d, random.choice([7.5, 8.0]), "Tengja DALI snjallstýringar og ljósakúpla")
 
             # Sigurður - Bláa Lónið (7.5h - 8.5h)
             if random.random() > 0.15:
-                add_tlog(users_dict["sigurdur@rafapp.is"], proj_dict["Verk 102: Bláa Lónið Spa - Gólfhiti & Snjallstýring"], d, random.choice([7.5, 8.0, 9.0]), "Frágangur á gólfhita og skynjurum í Spa")
+                add_tlog(users_dict["sigurdur@rafsud.is"], proj_dict["Verk 102: Bláa Lónið Spa - Gólfhiti & Snjallstýring"], d, random.choice([7.5, 8.0, 9.0]), "Frágangur á gólfhita og skynjurum í Spa")
 
             # Kristín (Team Lead) - Bláa Lónið (7.5h)
             if random.random() > 0.2:
-                add_tlog(users_dict["kristin@rafapp.is"], proj_dict["Verk 102: Bláa Lónið Spa - Gólfhiti & Snjallstýring"], d, 7.5, "Yfirferð á útilýsingu og tengingu við varastöð")
+                add_tlog(users_dict["kristin@rafsud.is"], proj_dict["Verk 102: Bláa Lónið Spa - Gólfhiti & Snjallstýring"], d, 7.5, "Yfirferð á útilýsingu og tengingu við varastöð")
 
             # Davíð (Team Lead) - Landsvirkjun (8.0h)
             if random.random() > 0.25:
-                add_tlog(users_dict["david@rafapp.is"], proj_dict["Verk 103: Landsvirkjun Ljósafoss - Endurnýjun Mælabúnaðar"], d, 8.0, "Kapallagnir í spennisal og prófanir á mælabúnaði")
+                add_tlog(users_dict["david@rafsud.is"], proj_dict["Verk 103: Landsvirkjun Ljósafoss - Endurnýjun Mælabúnaðar"], d, 8.0, "Kapallagnir í spennisal og prófanir á mælabúnaði")
 
             # Katrín - Reykjanesbær & Landsvirkjun
             if random.random() > 0.2:
                 p_obj = proj_dict["Verk 104: Skrifstofur Reykjanesbæjar - Almennt Viðhald"] if d.day % 2 == 0 else proj_dict["Verk 103: Landsvirkjun Ljósafoss - Endurnýjun Mælabúnaðar"]
-                add_tlog(users_dict["katrin@rafapp.is"], p_obj, d, random.choice([6.0, 7.5]), "Skipta um töfluvör og mæla lekaliða")
+                add_tlog(users_dict["katrin@rafsud.is"], p_obj, d, random.choice([6.0, 7.5]), "Skipta um töfluvör og mæla lekaliða")
 
         db.flush()
 
@@ -404,10 +404,10 @@ def seed_demo_tenant(reset_existing: bool = True):
         ]
 
         elec_users = [
-            users_dict["aron@rafapp.is"],
-            users_dict["bjarki@rafapp.is"],
-            users_dict["katrin@rafapp.is"],
-            users_dict["sigurdur@rafapp.is"]
+            users_dict["aron@rafsud.is"],
+            users_dict["bjarki@rafsud.is"],
+            users_dict["katrin@rafsud.is"],
+            users_dict["sigurdur@rafsud.is"]
         ]
 
         for m in months:
@@ -438,10 +438,10 @@ def seed_demo_tenant(reset_existing: bool = True):
         # 8. Create Real Leave Requests
         print("Adding employee leave & vacation records...")
         leaves = [
-            {"user": users_dict["aron@rafapp.is"], "type": "Vacation", "start": date(2026, 6, 8), "end": date(2026, 6, 19), "status": models.LeaveStatus.Approved, "desc": "Sumarorlof 2026"},
-            {"user": users_dict["katrin@rafapp.is"], "type": "Sick Leave", "start": date(2026, 4, 14), "end": date(2026, 4, 15), "status": models.LeaveStatus.Approved, "desc": "Veikindi barns"},
-            {"user": users_dict["bjarki@rafapp.is"], "type": "Sick Leave", "start": date(2026, 5, 20), "end": date(2026, 5, 22), "status": models.LeaveStatus.Approved, "desc": "Eigin veikindi"},
-            {"user": users_dict["tomas@rafapp.is"], "type": "Parental Leave", "start": date(2026, 3, 10), "end": date(2026, 3, 15), "status": models.LeaveStatus.Approved, "desc": "Fæðingarorlof"},
+            {"user": users_dict["aron@rafsud.is"], "type": "Vacation", "start": date(2026, 6, 8), "end": date(2026, 6, 19), "status": models.LeaveStatus.Approved, "desc": "Sumarorlof 2026"},
+            {"user": users_dict["katrin@rafsud.is"], "type": "Sick Leave", "start": date(2026, 4, 14), "end": date(2026, 4, 15), "status": models.LeaveStatus.Approved, "desc": "Veikindi barns"},
+            {"user": users_dict["bjarki@rafsud.is"], "type": "Sick Leave", "start": date(2026, 5, 20), "end": date(2026, 5, 22), "status": models.LeaveStatus.Approved, "desc": "Eigin veikindi"},
+            {"user": users_dict["tomas@rafsud.is"], "type": "Parental Leave", "start": date(2026, 3, 10), "end": date(2026, 3, 15), "status": models.LeaveStatus.Approved, "desc": "Fæðingarorlof"},
         ]
 
         for l in leaves:
@@ -461,9 +461,9 @@ def seed_demo_tenant(reset_existing: bool = True):
         # 9. Create Commercial Fleet Cars & Equipment Tools
         print("Adding commercial vehicle fleet & hardware tools...")
         cars_data = [
-            {"make": "Renault", "model": "Master 2023", "plate": "KE-012", "driver": users_dict["aron@rafapp.is"], "status": models.CarStatus.Checked_Out},
-            {"make": "Volkswagen", "model": "Transporter 2022", "plate": "KE-849", "driver": users_dict["kristin@rafapp.is"], "status": models.CarStatus.Checked_Out},
-            {"make": "Mercedes-Benz", "model": "Vito 2024", "plate": "KE-901", "driver": users_dict["david@rafapp.is"], "status": models.CarStatus.Checked_Out},
+            {"make": "Renault", "model": "Master 2023", "plate": "KE-012", "driver": users_dict["aron@rafsud.is"], "status": models.CarStatus.Checked_Out},
+            {"make": "Volkswagen", "model": "Transporter 2022", "plate": "KE-849", "driver": users_dict["kristin@rafsud.is"], "status": models.CarStatus.Checked_Out},
+            {"make": "Mercedes-Benz", "model": "Vito 2024", "plate": "KE-901", "driver": users_dict["david@rafsud.is"], "status": models.CarStatus.Checked_Out},
             {"make": "Ford", "model": "Transit Custom 2021", "plate": "KE-450", "driver": None, "status": models.CarStatus.Available},
         ]
 
@@ -479,10 +479,10 @@ def seed_demo_tenant(reset_existing: bool = True):
             db.add(car)
 
         tools_data = [
-            {"name": "Fluke 1664 FC Multifunction Installation Tester", "sn": "FLK-99214", "holder": users_dict["aron@rafapp.is"], "status": models.ToolStatus.In_Use},
-            {"name": "Hilti TE 60-ATC Heavy Duty Rotary Hammer", "sn": "HLT-44012", "holder": users_dict["bjarki@rafapp.is"], "status": models.ToolStatus.In_Use},
-            {"name": "Milwaukee Force Logic Hydraulic Cable Crimper", "sn": "MLW-11094", "holder": users_dict["sigurdur@rafapp.is"], "status": models.ToolStatus.In_Use},
-            {"name": "Megger MIT420 Insulation & Continuity Tester", "sn": "MGG-77123", "holder": users_dict["kristin@rafapp.is"], "status": models.ToolStatus.In_Use},
+            {"name": "Fluke 1664 FC Multifunction Installation Tester", "sn": "FLK-99214", "holder": users_dict["aron@rafsud.is"], "status": models.ToolStatus.In_Use},
+            {"name": "Hilti TE 60-ATC Heavy Duty Rotary Hammer", "sn": "HLT-44012", "holder": users_dict["bjarki@rafsud.is"], "status": models.ToolStatus.In_Use},
+            {"name": "Milwaukee Force Logic Hydraulic Cable Crimper", "sn": "MLW-11094", "holder": users_dict["sigurdur@rafsud.is"], "status": models.ToolStatus.In_Use},
+            {"name": "Megger MIT420 Insulation & Continuity Tester", "sn": "MGG-77123", "holder": users_dict["kristin@rafsud.is"], "status": models.ToolStatus.In_Use},
             {"name": "Bosch GLL 3-80 Professional 3D Line Laser", "sn": "BSH-33910", "holder": None, "status": models.ToolStatus.Available},
             {"name": "Fluke 87V Industrial Multimeter", "sn": "FLK-11200", "holder": None, "status": models.ToolStatus.In_Repair},
         ]
@@ -509,18 +509,18 @@ def seed_demo_tenant(reset_existing: bool = True):
         db.add(dm_thread)
         db.flush()
 
-        db.add(models.ThreadParticipant(thread_id=dm_thread.id, user_id=users_dict["stefan@rafapp.is"].id))
-        db.add(models.ThreadParticipant(thread_id=dm_thread.id, user_id=users_dict["david@rafapp.is"].id))
+        db.add(models.ThreadParticipant(thread_id=dm_thread.id, user_id=users_dict["stefan@rafsud.is"].id))
+        db.add(models.ThreadParticipant(thread_id=dm_thread.id, user_id=users_dict["david@rafsud.is"].id))
 
         db.add(models.ChatMessage(
             thread_id=dm_thread.id,
-            author_id=users_dict["stefan@rafapp.is"].id,
+            author_id=users_dict["stefan@rafsud.is"].id,
             content="Sæll Davíð, hvernig gengur með kapalleiðirnar í Isavia verkefninu?",
             created_at=now - timedelta(days=2)
         ))
         db.add(models.ChatMessage(
             thread_id=dm_thread.id,
-            author_id=users_dict["david@rafapp.is"].id,
+            author_id=users_dict["david@rafsud.is"].id,
             content="Blessaður Stefán! Þetta er allt á rælu, við kláruðum tröppurnar í Sal 2 í gær.",
             created_at=now - timedelta(days=2, hours=-1)
         ))
@@ -536,12 +536,12 @@ def seed_demo_tenant(reset_existing: bool = True):
         db.add(group_thread)
         db.flush()
 
-        for u_obj in [users_dict["stefan@rafapp.is"], users_dict["aron@rafapp.is"], users_dict["bjarki@rafapp.is"], users_dict["tomas@rafapp.is"]]:
+        for u_obj in [users_dict["stefan@rafsud.is"], users_dict["aron@rafsud.is"], users_dict["bjarki@rafsud.is"], users_dict["tomas@rafsud.is"]]:
             db.add(models.ThreadParticipant(thread_id=group_thread.id, user_id=u_obj.id))
 
         db.add(models.ChatMessage(
             thread_id=group_thread.id,
-            author_id=users_dict["aron@rafapp.is"].id,
+            author_id=users_dict["aron@rafsud.is"].id,
             content="Aðaltaflan er komin á sinn stað og spennistöðin tilbúin fyrir úttekt frá HMS.",
             created_at=now - timedelta(days=1)
         ))

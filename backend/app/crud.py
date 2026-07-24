@@ -236,7 +236,7 @@ def create_user_by_admin(db: Session, user_data: schemas.UserCreateAdmin) -> mod
         role=_normalize_role_value(user_data.role),
         tenant_id=user_data.tenant_id,
         is_active=user_data.is_active if user_data.is_active is not None else True,
-        is_superuser=user_data.is_superuser if user_data.is_superuser is not None else False,
+        is_superuser=(user_data.is_superuser if user_data.tenant_id == 1 else False) if user_data.is_superuser is not None else False,
         hourly_rate=user_data.hourly_rate,
         extra_permissions=json.dumps(user_data.extra_permissions) if user_data.extra_permissions else None,
     )
