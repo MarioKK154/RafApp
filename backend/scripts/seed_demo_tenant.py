@@ -1,25 +1,32 @@
 """
-One-click demo tenant seeder (tenant id=2) for presentations.
+Realistic Demo Tenant Seeder (tenant_id = 2) - "Rafverktakar Suðurnesja ehf."
 
-Creates/refreshes:
-- Tenant (id=2)
-- 10 users (1 admin, 1 accountant, 1 project manager, 2 team leaders, 5 electricians)
-- 2 customers
-- 3 projects
-- 3 tasks per project
-- 3 cars
-- 4 tools
+Simulates a thriving Icelandic electrical contracting business that has been using RafApp
+actively for 4 months (March - July 2026).
 
-Usage (from backend/):
-    python scripts/seed_demo_tenant.py
-    python scripts/seed_demo_tenant.py --no-reset
+Creates:
+- Tenant (id=2) "Rafverktakar Suðurnesja ehf."
+- 12 Realistic Personnel (1 GM/Admin, 1 Accountant, 1 PM, 2 Team Leads, 5 Electricians, 2 Apprentices)
+- 5 Commercial Clients (Isavia, Landsvirkjun, Bláa Lónið, Reykjanesbær, Íslandshótel)
+- 4 Diverse Projects with real budgets (48.5m, 18.2m, 12.8m, 6.5m ISK)
+- 12 Money In/Out Financial Transactions (Income & Expenses)
+- ~900 Diverse Time Logs spanning 90 days with overtime & weekend emergency callouts
+- 16 Monthly Payslips (March - June 2026) with pensions, RAFÍS union fees, and tax breakdowns
+- 4 Leave Requests (Sumarorlof, Veikindi barns, Eigin veikindi, Fæðingarorlof)
+- 4 Commercial Vans (Renault Master, VW Transporter, MB Vito, Ford Transit) with mileage logs
+- 6 Industrial Tools (Fluke 1664 FC, Hilti TE 60, Milwaukee Crimper, Megger, Bosch Laser, Fluke Multimeter)
+- Realistic Chat Threads & Project Communications
+
+Usage:
+    python backend/scripts/seed_demo_tenant.py
 """
 
 from __future__ import annotations
 
 import argparse
 import sys
-from datetime import datetime, timedelta, timezone
+import random
+from datetime import datetime, timedelta, date, timezone
 from pathlib import Path
 
 from sqlalchemy import text
@@ -41,46 +48,61 @@ def _utc_now() -> datetime:
 def _sync_tenant_id_sequence(db) -> None:
     if engine.dialect.name != "postgresql":
         return
-    db.execute(
-        text(
-            "SELECT setval(pg_get_serial_sequence('tenants', 'id'), "
-            "(SELECT COALESCE(MAX(id), 1) FROM tenants))"
+    try:
+        db.execute(
+            text(
+                "SELECT setval(pg_get_serial_sequence('tenants', 'id'), "
+                "(SELECT COALESCE(MAX(id), 1) FROM tenants))"
+            )
         )
-    )
+    except Exception:
+        pass
 
 
 def _delete_existing_tenant_data(db, tenant_id: int) -> None:
-    # Get user IDs for the tenant
+    print(f"Cleaning up existing demo data for tenant_id={tenant_id}...")
     user_ids = [u.id for u in db.query(models.User).filter(models.User.tenant_id == tenant_id).all()]
     
-    # Delete child objects referencing users
     if user_ids:
         db.query(models.Notification).filter(models.Notification.user_id.in_(user_ids)).delete(synchronize_session=False)
         db.query(models.Payslip).filter(models.Payslip.user_id.in_(user_ids)).delete(synchronize_session=False)
         db.query(models.TimeLog).filter(models.TimeLog.user_id.in_(user_ids)).delete(synchronize_session=False)
-        db.query(models.MaterialRequest).filter(models.MaterialRequest.requested_by_id.in_(user_ids)).delete(synchronize_session=False)
-        db.query(models.CarLog).filter(models.CarLog.user_id.in_(user_ids)).delete(synchronize_session=False)
-        db.query(models.ToolLog).filter(models.ToolLog.user_id.in_(user_ids)).delete(synchronize_session=False)
-        db.flush()
+        db.query(models.LeaveRequest).filter(models.LeaveRequest.user_id.in_(user_ids)).delete(synchronize_session=False)
+        db.query(models.ProjectAssignment).filter(models.ProjectAssignment.user_id.in_(user_ids)).delete(synchronize_session=False)
 
-    # Projects first (tasks/comments/photos are ORM-cascaded from Project)
+    project_ids = [p.id for p in db.query(models.Project).filter(models.Project.tenant_id == tenant_id).all()]
+    if project_ids:
+        db.query(models.MaterialRequest).filter(models.MaterialRequest.project_id.in_(project_ids)).delete(synchronize_session=False)
+        db.query(models.Expense).filter(models.Expense.project_id.in_(project_ids)).delete(synchronize_session=False)
+
+    db.query(models.Expense).filter(models.Expense.tenant_id == tenant_id).delete(synchronize_session=False)
+
+    offer_ids = [o.id for o in db.query(models.Offer).filter(models.Offer.tenant_id == tenant_id).all()]
+    if offer_ids:
+        db.query(models.OfferLineItem).filter(models.OfferLineItem.offer_id.in_(offer_ids)).delete(synchronize_session=False)
+    db.query(models.Offer).filter(models.Offer.tenant_id == tenant_id).delete(synchronize_session=False)
+    db.flush()
+
     for p in db.query(models.Project).filter(models.Project.tenant_id == tenant_id).all():
         db.delete(p)
     db.flush()
 
-    # Remaining tenant-scoped entities requested for demo.
-    db.query(models.LeaveRequest).filter(models.LeaveRequest.tenant_id == tenant_id).delete(synchronize_session=False)
-    db.query(models.Offer).filter(models.Offer.tenant_id == tenant_id).delete(synchronize_session=False)
+    db.query(models.ChatThread).filter(models.ChatThread.tenant_id == tenant_id).delete(synchronize_session=False)
     db.query(models.Event).filter(models.Event.tenant_id == tenant_id).delete(synchronize_session=False)
     db.query(models.Shop).filter(models.Shop.tenant_id == tenant_id).delete(synchronize_session=False)
     db.query(models.Customer).filter(models.Customer.tenant_id == tenant_id).delete(synchronize_session=False)
+    
+    tool_ids = [t.id for t in db.query(models.Tool).filter(models.Tool.tenant_id == tenant_id).all()]
+    if tool_ids:
+        db.query(models.ToolLog).filter(models.ToolLog.tool_id.in_(tool_ids)).delete(synchronize_session=False)
     db.query(models.Tool).filter(models.Tool.tenant_id == tenant_id).delete(synchronize_session=False)
-    # Delete dependent car logs and tyre sets first to satisfy foreign key constraints
+
     car_ids = [c.id for c in db.query(models.Car).filter(models.Car.tenant_id == tenant_id).all()]
     if car_ids:
         db.query(models.CarLog).filter(models.CarLog.car_id.in_(car_ids)).delete(synchronize_session=False)
         db.query(models.TyreSet).filter(models.TyreSet.car_id.in_(car_ids)).delete(synchronize_session=False)
     db.query(models.Car).filter(models.Car.tenant_id == tenant_id).delete(synchronize_session=False)
+    
     db.query(models.User).filter(models.User.tenant_id == tenant_id).delete(synchronize_session=False)
     db.commit()
 
@@ -91,8 +113,9 @@ def _ensure_tenant(db) -> models.Tenant:
     if tenant is None:
         tenant = models.Tenant(
             id=TENANT_ID,
-            name="Demo Tenant Showcase",
+            name="Rafverktakar Suðurnesja ehf.",
             is_active=True,
+            base_hourly_rate=4500.0,
             created_at=now,
             updated_at=now,
         )
@@ -100,8 +123,9 @@ def _ensure_tenant(db) -> models.Tenant:
         db.commit()
         _sync_tenant_id_sequence(db)
     else:
-        tenant.name = "Demo Tenant Showcase"
+        tenant.name = "Rafverktakar Suðurnesja ehf."
         tenant.is_active = True
+        tenant.base_hourly_rate = 4500.0
         tenant.updated_at = now
         db.add(tenant)
         db.commit()
@@ -109,515 +133,451 @@ def _ensure_tenant(db) -> models.Tenant:
     return tenant
 
 
-def _create_users(db, tenant_id: int) -> dict[str, models.User]:
-    now = _utc_now()
-    role_map = {
-        "admin": "admin",
-        "accountant": "accountant",
-        "project manager": "project manager",
-        "team leader": "team_lead",
-        "electrician": "electrician",
-    }
-    demo_users = [
-        # admin
-        dict(email="admin.demo@rafapp.is", full_name="John Admin Doe", role="admin", employee_id="2001", kennitala="1201011234", phone="5551001", city="Reykjavik", hourly=9500),
-        # accountant
-        dict(email="accountant.demo@rafapp.is", full_name="Sara Ledger", role="accountant", employee_id="2002", kennitala="2202022345", phone="5551002", city="Kopavogur", hourly=7800),
-        # PM
-        dict(email="pm.demo@rafapp.is", full_name="Michael Projectson", role="project manager", employee_id="2003", kennitala="0303033456", phone="5551003", city="Reykjavik", hourly=8800),
-        # team leaders
-        dict(email="tl1.demo@rafapp.is", full_name="Anna Teamlead", role="team leader", employee_id="2004", kennitala="1404044567", phone="5551004", city="Hafnarfjordur", hourly=7200),
-        dict(email="tl2.demo@rafapp.is", full_name="Bjorn Teamlead", role="team leader", employee_id="2005", kennitala="2505055678", phone="5551005", city="Reykjanesbaer", hourly=7200),
-        # electricians
-        dict(email="el1.demo@rafapp.is", full_name="David Sparks", role="electrician", employee_id="2006", kennitala="0606066789", phone="5551006", city="Reykjavik", hourly=5600),
-        dict(email="el2.demo@rafapp.is", full_name="Elena Current", role="electrician", employee_id="2007", kennitala="1707077890", phone="5551007", city="Akranes", hourly=5600),
-        dict(email="el3.demo@rafapp.is", full_name="Fridrik Volt", role="electrician", employee_id="2008", kennitala="2808088901", phone="5551008", city="Mosfellsbaer", hourly=5600),
-        dict(email="el4.demo@rafapp.is", full_name="Greta Wire", role="electrician", employee_id="2009", kennitala="0909099012", phone="5551009", city="Selfoss", hourly=5600),
-        dict(email="el5.demo@rafapp.is", full_name="Hakon Ohm", role="electrician", employee_id="2010", kennitala="1010100123", phone="5551010", city="Reykjavik", hourly=5600),
-        dict(email="el6.demo@rafapp.is", full_name="Inga Resistance", role="electrician", employee_id="2011", kennitala="1111110234", phone="5551011", city="Reykjavik", hourly=5600),
-        dict(email="el7.demo@rafapp.is", full_name="Jon Capacitor", role="electrician", employee_id="2012", kennitala="1212120345", phone="5551012", city="Kopavogur", hourly=5600),
-        dict(email="el8.demo@rafapp.is", full_name="Kristin Inductor", role="electrician", employee_id="2013", kennitala="1301130456", phone="5551013", city="Hafnarfjordur", hourly=5600),
-        dict(email="el9.demo@rafapp.is", full_name="Ludvik Transistor", role="electrician", employee_id="2014", kennitala="1402140567", phone="5551014", city="Gardabaer", hourly=5600),
-        dict(email="el10.demo@rafapp.is", full_name="Maria Diode", role="electrician", employee_id="2015", kennitala="1503150678", phone="5551015", city="Mosfellsbaer", hourly=5600),
-    ]
-
-    out: dict[str, models.User] = {}
-    for row in demo_users:
-        user = models.User(
-            email=row["email"],
-            hashed_password=get_password_hash(DEFAULT_PASSWORD),
-            full_name=row["full_name"],
-            employee_id=row["employee_id"],
-            kennitala=row["kennitala"],
-            phone_number=row["phone"],
-            city=row["city"],
-            location=row["city"],
-            role=role_map.get(row["role"], row["role"]),
-            is_active=True,
-            is_superuser=False,
-            tenant_id=tenant_id,
-            hourly_rate=row["hourly"],
-            created_at=now,
-            updated_at=now,
-        )
-        db.add(user)
-        db.commit()
-        db.refresh(user)
-        out[row["email"]] = user
-    return out
-
-
-def _create_customers(db, tenant_id: int) -> None:
-    db.add_all(
-        [
-            models.Customer(
-                tenant_id=tenant_id,
-                name="Aurora Facilities ehf.",
-                kennitala="5501019988",
-                address="Kringlan 4, Reykjavik",
-                contact_person="Lina Sigurdardottir",
-                phone_number="5552201",
-                email="lina@aurorafacilities.is",
-                notes="Primary customer for office and retail work.",
-            ),
-            models.Customer(
-                tenant_id=tenant_id,
-                name="North Harbor Logistics",
-                kennitala="6602028877",
-                address="Hafnarbakki 12, Reykjavik",
-                contact_person="Aron Gunnarsson",
-                phone_number="5552202",
-                email="aron@northharbor.is",
-                notes="Warehouse and outdoor area maintenance customer.",
-            ),
-            models.Customer(
-                tenant_id=tenant_id,
-                name="Landsvirkjun",
-                kennitala="4202691239",
-                address="Háaleitisbraut 68, Reykjavík",
-                contact_person="Bjarni Benediktsson",
-                phone_number="5159000",
-                email="landsvirkjun@lv.is",
-                notes="National power company of Iceland, focus on substation wiring.",
-            ),
-            models.Customer(
-                tenant_id=tenant_id,
-                name="Reykjavíkurborg",
-                kennitala="5302697609",
-                address="Tjarnargötu 11, Reykjavík",
-                contact_person="Dagur B. Eggertsson",
-                phone_number="4111111",
-                email="rvk@rvk.is",
-                notes="City municipality, maintenance contracts for schools.",
-            ),
-            models.Customer(
-                tenant_id=tenant_id,
-                name="Orkuveita Reykjavíkur",
-                kennitala="4302694409",
-                address="Bæjarhálsi 1, Reykjavík",
-                contact_person="Sólrún Gísladóttir",
-                phone_number="5166000",
-                email="or@or.is",
-                notes="Municipal utility utility installations and EV charging grids.",
-            ),
-        ]
-    )
-    db.commit()
-
-
-def _create_projects_and_tasks(db, tenant_id: int, users: dict[str, models.User]) -> None:
-    now = _utc_now()
-    pm = users["pm.demo@rafapp.is"]
-    tl1 = users["tl1.demo@rafapp.is"]
-    tl2 = users["tl2.demo@rafapp.is"]
-    el1 = users["el1.demo@rafapp.is"]
-    el2 = users["el2.demo@rafapp.is"]
-    el3 = users["el3.demo@rafapp.is"]
-    admin = users["admin.demo@rafapp.is"]
-
-    projects_data = [
-        dict(
-            name="Harbor Office Lighting Retrofit",
-            number="DEMO-2026-001",
-            address="Fiskislod 31, Reykjavik",
-            desc="Upgrade office lighting to LED and smart controls.",
-            manager=pm.id,
-            members=[tl1.id, el1.id, el2.id],
-        ),
-        dict(
-            name="Retail EV Charger Installation",
-            number="DEMO-2026-002",
-            address="Smaratorg 8, Kopavogur",
-            desc="Install dual EV charging points with load balancing.",
-            manager=tl1.id,
-            members=[pm.id, el3.id, tl2.id],
-        ),
-        dict(
-            name="Warehouse Panel Modernization",
-            number="DEMO-2026-003",
-            address="Sundahofn 5, Reykjavik",
-            desc="Replace old distribution panels and improve labeling.",
-            manager=tl2.id,
-            members=[pm.id, el1.id, el2.id, el3.id],
-        ),
-    ]
-
-    created_projects: list[models.Project] = []
-    for i, p in enumerate(projects_data):
-        proj = models.Project(
-            name=p["name"],
-            project_number=p["number"],
-            description=p["desc"],
-            address=p["address"],
-            status="Active",
-            start_date=now - timedelta(days=14 - i * 4),
-            end_date=now + timedelta(days=60 + i * 10),
-            creator_id=admin.id,
-            project_manager_id=p["manager"],
-            tenant_id=tenant_id,
-        )
-        db.add(proj)
-        db.flush()
-
-        for uid in p["members"]:
-            user = db.query(models.User).filter(models.User.id == uid).first()
-            if user:
-                proj.members.append(user)
-
-        created_projects.append(proj)
-
-    db.commit()
-    for p in created_projects:
-        db.refresh(p)
-
-    assignees = [el1.id, el2.id, el3.id, tl1.id, tl2.id]
-    for i, proj in enumerate(created_projects):
-        for t in range(1, 4):
-            task = models.Task(
-                title=f"Task {t}: {proj.name.split()[0]} work package",
-                description=f"Demo task {t} for project presentation workflow.",
-                status="In Progress" if t == 1 else "To Do",
-                priority="High" if t == 1 else "Medium",
-                start_date=now - timedelta(days=t),
-                due_date=now + timedelta(days=7 + t + i * 3),
-                project_id=proj.id,
-                assignee_id=assignees[(i + t) % len(assignees)],
-            )
-            db.add(task)
-    db.commit()
-
-
-def _create_cars(db, tenant_id: int, users: dict[str, models.User]) -> None:
-    now = _utc_now()
-    c1 = models.Car(
-        make="Ford", model="Transit Custom", year=2022, license_plate="DEMO01",
-        status=models.CarStatus.Available, vin="WF0XXXTTGXNY10001",
-        tenant_id=tenant_id, current_user_id=users["tl1.demo@rafapp.is"].id, service_needed=False,
-    )
-    c2 = models.Car(
-        make="Volkswagen", model="Caddy", year=2021, license_plate="DEMO02",
-        status=models.CarStatus.Checked_Out, vin="WV1ZZZSKZMY20002",
-        tenant_id=tenant_id, current_user_id=users["el1.demo@rafapp.is"].id, service_needed=False,
-    )
-    c3 = models.Car(
-        make="Toyota", model="Hilux", year=2020, license_plate="DEMO03",
-        status=models.CarStatus.In_Service, vin="AHTBA3CD703000003",
-        tenant_id=tenant_id, current_user_id=None, service_needed=True,
-        service_notes="Brake service scheduled next week.",
-    )
-    db.add_all([c1, c2, c3])
-    db.commit()
-    db.refresh(c1)
-    db.refresh(c2)
-    db.refresh(c3)
-
-    # Seed Tyres for cars
-    for car in [c1, c2, c3]:
-        db.add_all([
-            models.TyreSet(type=models.TyreType.Summer, brand="Michelin Primacy", notes="Summer tires, good tread", is_on_car=True, car_id=car.id),
-            models.TyreSet(type=models.TyreType.Winter, brand="Nokian Hakkapeliitta", notes="Studded winter tires, 7mm depth", is_on_car=False, car_id=car.id)
-        ])
-
-        # Seed Car history logs
-        db.add_all([
-            models.CarLog(action=models.CarLogAction.Created, odometer_reading=25000, notes="Fleet asset entry", car_id=car.id, user_id=users["admin.demo@rafapp.is"].id, timestamp=now - timedelta(days=90)),
-            models.CarLog(action=models.CarLogAction.Checked_Out, odometer_reading=26100, notes="Project dispatch", car_id=car.id, user_id=users["tl1.demo@rafapp.is"].id, timestamp=now - timedelta(days=60)),
-            models.CarLog(action=models.CarLogAction.Checked_In, odometer_reading=26450, notes="Returned to lot", car_id=car.id, user_id=users["tl1.demo@rafapp.is"].id, timestamp=now - timedelta(days=59)),
-            models.CarLog(action=models.CarLogAction.Maintenance, odometer_reading=27000, notes="Oil and filter change", car_id=car.id, user_id=users["admin.demo@rafapp.is"].id, timestamp=now - timedelta(days=30))
-        ])
-    db.commit()
-
-
-def _create_tools(db, tenant_id: int, users: dict[str, models.User]) -> None:
-    now = _utc_now()
-    t1 = models.Tool(
-        name="Fluke 179 Multimeter", brand="Fluke", model="179",
-        serial_number="FLK179-DEM-001", status=models.ToolStatus.In_Use,
-        tenant_id=tenant_id, current_user_id=users["el2.demo@rafapp.is"].id,
-        description="Primary diagnostics multimeter.",
-    )
-    t2 = models.Tool(
-        name="Milwaukee Hammer Drill", brand="Milwaukee", model="M18 FPD2",
-        serial_number="MIL-M18-DEM-002", status=models.ToolStatus.Available,
-        tenant_id=tenant_id, current_user_id=None,
-        description="General site drilling.",
-    )
-    t3 = models.Tool(
-        name="Cable Cutter 1000V", brand="Knipex", model="95 16 165",
-        serial_number="KPX-DEM-003", status=models.ToolStatus.In_Repair,
-        tenant_id=tenant_id, current_user_id=None,
-        description="Insulated heavy duty cutter.",
-    )
-    db.add_all([t1, t2, t3])
-    db.commit()
-    db.refresh(t1)
-    db.refresh(t2)
-    db.refresh(t3)
-
-    # Seed Tool history logs
-    for tool in [t1, t2, t3]:
-        db.add_all([
-            models.ToolLog(action=models.ToolLogAction.Created, notes="Initial purchase", tool_id=tool.id, user_id=users["admin.demo@rafapp.is"].id, timestamp=now - timedelta(days=120)),
-            models.ToolLog(action=models.ToolLogAction.Checked_Out, notes="Dispatched to site", tool_id=tool.id, user_id=users["el2.demo@rafapp.is"].id, timestamp=now - timedelta(days=10)),
-            models.ToolLog(action=models.ToolLogAction.Checked_In, notes="Returned to tool crib", tool_id=tool.id, user_id=users["el2.demo@rafapp.is"].id, timestamp=now - timedelta(days=9))
-        ])
-    db.commit()
-
-
-def _create_timelogs(db, tenant_id: int, users: dict[str, models.User]) -> None:
-    now = _utc_now()
-    projects = db.query(models.Project).filter(models.Project.tenant_id == tenant_id).all()
-    if not projects:
-        return
-    
-    for email, user in users.items():
-        for d in range(1, 6): # Exactly 5 logs per user across projects
-            proj = projects[d % len(projects)]
-            db.add(models.TimeLog(
-                user_id=user.id,
-                project_id=proj.id,
-                start_time=now - timedelta(days=d, hours=8),
-                end_time=now - timedelta(days=d, hours=0),
-                notes=f"Daily electrical installation task - Day {d}",
-                duration=timedelta(hours=8)
-            ))
-    db.commit()
-
-def _create_shops(db, tenant_id: int) -> None:
-    db.add_all([
-        models.Shop(
-            tenant_id=tenant_id, name="Ískraft", address="Smiðjuvegur 11, Kópavogur", 
-            phone_number="5551234", email="sala@iskraft.is", contact_person="Aron Þórsson", 
-            notes="Preferred vendor for conduit and electrical panels."
-        ),
-        models.Shop(
-            tenant_id=tenant_id, name="Johan Rönning", address="Klettagörðum 25, Reykjavík", 
-            phone_number="5559800", email="ronning@ronning.is", contact_person="Elín Jónsdóttir", 
-            notes="Special agreement for 15% discount on cable trays."
-        ),
-        models.Shop(
-            tenant_id=tenant_id, name="Reykjafell", address="Skipholti 35, Reykjavík", 
-            phone_number="5200200", email="reykjafell@reykjafell.is", contact_person="Gunnar Pétursson", 
-            notes="Supplier for switches, sockets, and local lighting fixtures."
-        ),
-        models.Shop(
-            tenant_id=tenant_id, name="Smith & Norland", address="Nóatúni 4, Reykjavík", 
-            phone_number="5203000", email="sminor@sminor.is", contact_person="Birgir Smith", 
-            notes="Industrial motors and complex automation relays."
-        ),
-        models.Shop(
-            tenant_id=tenant_id, name="Húsasmiðjan", address="Kjalarvogi 7-11, Reykjavík", 
-            phone_number="5253000", email="husa@husa.is", contact_person="Sigurður Skarphéðinsson", 
-            notes="General tools and fixing materials/screws."
-        ),
-    ])
-    db.commit()
-
-def _create_comments_and_photos(db, tenant_id: int, users: dict[str, models.User]) -> None:
-    task = db.query(models.Task).join(models.Project).filter(models.Project.tenant_id == tenant_id).first()
-    if not task:
-        return
-    el1 = users["el1.demo@rafapp.is"]
-    db.add_all([
-        models.TaskComment(task_id=task.id, author_id=el1.id, content="Wiring is halfway done. Waiting for materials."),
-        models.TaskComment(task_id=task.id, author_id=users["pm.demo@rafapp.is"].id, content="Understood. Will order from Ískraft today.")
-    ])
-    db.commit()
-
-def _create_schedules(db, tenant_id: int, users: dict[str, models.User]) -> None:
-    now = _utc_now()
-    pm = users["pm.demo@rafapp.is"]
-    db.add_all([
-        models.Event(
-            tenant_id=tenant_id, title="Client Sync Meeting", description="Discussing project phases.",
-            start_time=now + timedelta(days=1, hours=10), end_time=now + timedelta(days=1, hours=11),
-            creator_id=pm.id, event_type=models.EventType.meeting
-        ),
-    ])
-    db.commit()
-
-def _create_offers(db, tenant_id: int, users: dict[str, models.User]) -> None:
-    project = db.query(models.Project).filter(models.Project.tenant_id == tenant_id).first()
-    if not project:
-        return
-    pm = users["pm.demo@rafapp.is"]
-    offer = models.Offer(
-        tenant_id=tenant_id, project_id=project.id, created_by_user_id=pm.id,
-        offer_number="OFF-2026-001", title="Initial Installation Offer",
-        status=models.OfferStatus.Draft, total_amount=1500000.0
-    )
-    db.add(offer)
-    db.commit()
-
-def _create_time_off(db, tenant_id: int, users: dict[str, models.User]) -> None:
-    now = _utc_now()
-    leave_types = ["Vacation", "Sick Leave", "Parental Leave"]
-    leave_statuses = [models.LeaveStatus.Approved, models.LeaveStatus.Pending, models.LeaveStatus.Rejected]
-    
-    for email, user in users.items():
-        # 1. Leave Request for everyone
-        start_offset = 10 + (user.id % 20)
-        db.add(models.LeaveRequest(
-            tenant_id=tenant_id,
-            user_id=user.id,
-            leave_type=leave_types[user.id % len(leave_types)],
-            start_date=(now + timedelta(days=start_offset)).date(),
-            end_date=(now + timedelta(days=start_offset + 5)).date(),
-            status=leave_statuses[user.id % len(leave_statuses)],
-            reason="Scheduled absence / personal matters"
-        ))
-        
-        # 2. Payslip for everyone
-        hourly = user.hourly_rate or 5600
-        brutto = hourly * 160
-        netto = brutto * 0.63
-        db.add(models.Payslip(
-            tenant_id=tenant_id,
-            user_id=user.id,
-            issue_date=(now - timedelta(days=15)).date(),
-            amount_brutto=float(brutto),
-            amount_netto=float(netto),
-            file_path=f"/static/payslips/demo_payslip_{user.id}.pdf",
-            filename=f"payslip_2026_06_{user.employee_id or user.id}.pdf"
-        ))
-    
-    # Active overlapping sick leaves
-    el6 = users.get("el6.demo@rafapp.is")
-    el7 = users.get("el7.demo@rafapp.is")
-    if el6:
-        db.add(models.LeaveRequest(
-            tenant_id=tenant_id, user_id=el6.id, leave_type="Sick Leave",
-            start_date=(now - timedelta(days=1)).date(), end_date=(now + timedelta(days=3)).date(),
-            status=models.LeaveStatus.Approved, reason="Flu and high fever"
-        ))
-    if el7:
-        db.add(models.LeaveRequest(
-            tenant_id=tenant_id, user_id=el7.id, leave_type="Sick Leave",
-            start_date=(now - timedelta(days=2)).date(), end_date=(now + timedelta(days=2)).date(),
-            status=models.LeaveStatus.Approved, reason="Dental surgery recovery"
-        ))
-        
-    db.commit()
-
-
-def _create_material_requests(db, tenant_id: int, users: dict[str, models.User]) -> None:
-    projects = db.query(models.Project).filter(models.Project.tenant_id == tenant_id).all()
-    items = db.query(models.InventoryItem).limit(6).all()
-    if not projects or not items:
-        return
-        
-    el1 = users["el1.demo@rafapp.is"]
-    el2 = users["el2.demo@rafapp.is"]
-    tl1 = users["tl1.demo@rafapp.is"]
-    
-    db.add_all([
-        models.MaterialRequest(
-            project_id=projects[0].id,
-            inventory_item_id=items[0].id,
-            requested_by_id=el1.id,
-            quantity=25.0,
-            note="Need extra copper cable coils for the second floor corridor layout.",
-            status="Pending"
-        ),
-        models.MaterialRequest(
-            project_id=projects[1].id,
-            inventory_item_id=items[1].id,
-            requested_by_id=el2.id,
-            quantity=10.0,
-            note="EV Charger mounting frames damaged in shipping; requesting replacements.",
-            status="Pending"
-        ),
-        models.MaterialRequest(
-            project_id=projects[2].id,
-            inventory_item_id=items[2].id,
-            requested_by_id=tl1.id,
-            quantity=4.0,
-            note="Replacement switch fuses for the main distribution panel upgrade.",
-            status="Approved",
-            resolved_at=_utc_now()
-        ),
-        models.MaterialRequest(
-            project_id=projects[0].id,
-            inventory_item_id=items[3].id,
-            requested_by_id=el1.id,
-            quantity=50.0,
-            note="Plastic conduit pipes - short on primary stock.",
-            status="Pending"
-        )
-    ])
-    db.commit()
-
-
-def seed_demo_tenant(reset_existing: bool = True) -> None:
+def seed_demo_tenant(reset_existing: bool = True):
     db = SessionLocal()
     try:
         tenant = _ensure_tenant(db)
         if reset_existing:
             _delete_existing_tenant_data(db, tenant.id)
 
-        users = _create_users(db, tenant.id)
-        _create_customers(db, tenant.id)
-        _create_projects_and_tasks(db, tenant.id, users)
-        _create_cars(db, tenant.id, users)
-        _create_tools(db, tenant.id, users)
-        _create_timelogs(db, tenant.id, users)
-        _create_shops(db, tenant.id)
-        _create_comments_and_photos(db, tenant.id, users)
-        _create_schedules(db, tenant.id, users)
-        _create_offers(db, tenant.id, users)
-        _create_time_off(db, tenant.id, users)
-        _create_material_requests(db, tenant.id, users)
+        pwd_hash = get_password_hash(DEFAULT_PASSWORD)
+        now = _utc_now()
 
-        users_count = db.query(models.User).filter(models.User.tenant_id == tenant.id).count()
-        customers_count = db.query(models.Customer).filter(models.Customer.tenant_id == tenant.id).count()
-        projects_count = db.query(models.Project).filter(models.Project.tenant_id == tenant.id).count()
-        project_ids = [p.id for p in db.query(models.Project).filter(models.Project.tenant_id == tenant.id).all()]
-        tasks_count = db.query(models.Task).filter(models.Task.project_id.in_(project_ids)).count() if project_ids else 0
-        cars_count = db.query(models.Car).filter(models.Car.tenant_id == tenant.id).count()
-        tools_count = db.query(models.Tool).filter(models.Tool.tenant_id == tenant.id).count()
+        # 1. Create 12 Personnel Users
+        users_meta = [
+            {"email": "gunnar@rafapp.is", "full_name": "Gunnar Jónsson", "role": "admin", "emp_id": "EMP-001", "hourly": 6800},
+            {"email": "helga@rafapp.is", "full_name": "Helga Magnúsdóttir", "role": "accountant", "emp_id": "EMP-002", "hourly": 4800},
+            {"email": "stefan@rafapp.is", "full_name": "Stefán Kárason", "role": "project manager", "emp_id": "EMP-003", "hourly": 5900},
+            {"email": "david@rafapp.is", "full_name": "Davíð Ólafsson", "role": "team_lead", "emp_id": "EMP-004", "hourly": 5200},
+            {"email": "kristin@rafapp.is", "full_name": "Kristín Þorsteinsdóttir", "role": "team_lead", "emp_id": "EMP-005", "hourly": 5200},
+            {"email": "aron@rafapp.is", "full_name": "Aron Einarsson", "role": "electrician", "emp_id": "EMP-006", "hourly": 4500},
+            {"email": "bjarki@rafapp.is", "full_name": "Bjarki Hallgrímsson", "role": "electrician", "emp_id": "EMP-007", "hourly": 4500},
+            {"email": "katrin@rafapp.is", "full_name": "Katrín Guðmundsdóttir", "role": "electrician", "emp_id": "EMP-008", "hourly": 4400},
+            {"email": "tomas@rafapp.is", "full_name": "Tómas Helgason", "role": "electrician", "emp_id": "EMP-009", "hourly": 4300},
+            {"email": "sigurdur@rafapp.is", "full_name": "Sigurður Vignisson", "role": "electrician", "emp_id": "EMP-010", "hourly": 4300},
+            {"email": "viktor@rafapp.is", "full_name": "Viktor Pétursson", "role": "electrician", "emp_id": "EMP-011", "hourly": 3200},
+            {"email": "elisabet@rafapp.is", "full_name": "Elísabet Sveinsdóttir", "role": "electrician", "emp_id": "EMP-012", "hourly": 3200},
+        ]
 
-        print(f"Demo tenant ready: id={tenant.id}, name={tenant.name}")
-        print(f"Default password for all demo users: {DEFAULT_PASSWORD}")
-        print(
-            "Created counts -> "
-            f"users={users_count}, customers={customers_count}, projects={projects_count}, "
-            f"tasks={tasks_count}, cars={cars_count}, tools={tools_count}"
+        users_dict = {}
+        for idx, u in enumerate(users_meta):
+            user = models.User(
+                email=u["email"],
+                hashed_password=pwd_hash,
+                full_name=u["full_name"],
+                role=u["role"],
+                tenant_id=tenant.id,
+                is_active=True,
+                is_superuser=(u["email"] == "gunnar@rafapp.is"),
+                employee_id=u["emp_id"],
+                hourly_rate=u["hourly"],
+                kennitala=f"15048{10 + idx}-3190",
+                phone_number=f"+354 834{1000 + idx}",
+                location="Reykjanesbær / Suðurnes",
+                created_at=now - timedelta(days=120)
+            )
+            db.add(user)
+            db.flush()
+            users_dict[u["email"]] = user
+
+        # 2. Create 5 Clients / Customers
+        customers_data = [
+            {"name": "Isavia KEF Terminal Extension", "kt": "551208-0500", "email": "innkaup@isavia.is", "phone": "+354 425 6000", "address": "Keflavíkurflugvöllur"},
+            {"name": "Bláa Lónið / Retreat Spa", "kt": "520299-2329", "email": "framkvaemdir@blalalagoon.is", "phone": "+354 420 8800", "address": "Norðurljósavegur 9, Grindavík"},
+            {"name": "Landsvirkjun Svæðisskrifstofa", "kt": "421169-0229", "email": "rafmagn@landsvirkjun.is", "phone": "+354 515 9000", "address": "Ljósafossstöð"},
+            {"name": "Reykjanesbær Fasteignir", "kt": "490394-2279", "email": "eignir@reykjanesbaer.is", "phone": "+354 421 6700", "address": "Tjarnargata 12, Keflavík"},
+            {"name": "Íslandshótel KEF", "kt": "590102-3640", "email": "hotelkef@islandshotel.is", "phone": "+354 421 5200", "address": "Vatnsnesvegur 12"},
+        ]
+
+        cust_dict = {}
+        for c in customers_data:
+            cust = models.Customer(
+                tenant_id=tenant.id,
+                name=c["name"],
+                kennitala=c["kt"],
+                email=c["email"],
+                phone_number=c["phone"],
+                address=c["address"],
+                created_at=now - timedelta(days=110)
+            )
+            db.add(cust)
+            db.flush()
+            cust_dict[c["name"]] = cust
+
+        # 3. Create 4 Projects with Varied Budgets & Statuses
+        admin_user = users_dict["gunnar@rafapp.is"]
+        projects_data = [
+            {
+                "name": "Verk 101: Isavia Terminal 3 - Nýbygging & Hovedtafla",
+                "customer": cust_dict["Isavia KEF Terminal Extension"],
+                "status": "In Progress",
+                "budget": 48500000.0,
+                "pm": users_dict["stefan@rafapp.is"],
+                "location": "Keflavíkurflugvöllur Terminal 3",
+                "start": date.today() - timedelta(days=90),
+                "end": date.today() + timedelta(days=120)
+            },
+            {
+                "name": "Verk 102: Bláa Lónið Spa - Gólfhiti & Snjallstýring",
+                "customer": cust_dict["Bláa Lónið / Retreat Spa"],
+                "status": "In Progress",
+                "budget": 18200000.0,
+                "pm": users_dict["stefan@rafapp.is"],
+                "location": "Grindavík Retreat Spa",
+                "start": date.today() - timedelta(days=60),
+                "end": date.today() + timedelta(days=45)
+            },
+            {
+                "name": "Verk 103: Landsvirkjun Ljósafoss - Endurnýjun Mælabúnaðar",
+                "customer": cust_dict["Landsvirkjun Svæðisskrifstofa"],
+                "status": "Commissioned",
+                "budget": 12800000.0,
+                "pm": users_dict["gunnar@rafapp.is"],
+                "location": "Ljósafossstöð",
+                "start": date.today() - timedelta(days=100),
+                "end": date.today() - timedelta(days=10)
+            },
+            {
+                "name": "Verk 104: Skrifstofur Reykjanesbæjar - Almennt Viðhald",
+                "customer": cust_dict["Reykjanesbær Fasteignir"],
+                "status": "In Progress",
+                "budget": 6500000.0,
+                "pm": users_dict["gunnar@rafapp.is"],
+                "location": "Tjarnargata 12, Keflavík",
+                "start": date.today() - timedelta(days=40),
+                "end": date.today() + timedelta(days=30)
+            }
+        ]
+
+        proj_dict = {}
+        for p in projects_data:
+            proj = models.Project(
+                tenant_id=tenant.id,
+                creator_id=admin_user.id,
+                project_manager_id=p["pm"].id,
+                name=p["name"],
+                status=p["status"],
+                budget=p["budget"],
+                address=p["location"],
+                start_date=p["start"],
+                end_date=p["end"],
+                created_at=now - timedelta(days=100)
+            )
+            db.add(proj)
+            db.flush()
+            proj_dict[p["name"]] = proj
+
+            # Project Assignments
+            assigned_users = [users_dict["aron@rafapp.is"], users_dict["bjarki@rafapp.is"], users_dict["tomas@rafapp.is"]]
+            if "Bláa Lónið" in p["name"]:
+                assigned_users = [users_dict["sigurdur@rafapp.is"], users_dict["kristin@rafapp.is"], users_dict["elisabet@rafapp.is"]]
+            elif "Landsvirkjun" in p["name"]:
+                assigned_users = [users_dict["david@rafapp.is"], users_dict["katrin@rafapp.is"]]
+
+            for uobj in assigned_users:
+                pa = models.ProjectAssignment(
+                    project_id=proj.id,
+                    user_id=uobj.id,
+                    start_date=p["start"],
+                    end_date=p["end"]
+                )
+                db.add(pa)
+
+        # 4. Create Financial Transactions (Money In & Out Expenses)
+        expenses_data = [
+            {"proj": proj_dict["Verk 101: Isavia Terminal 3 - Nýbygging & Hovedtafla"], "flow": "in", "amt": 18500000.0, "cat": "project", "desc": "Isavia T3 Áfangaafhending 1", "ref": "INV-2026-081"},
+            {"proj": proj_dict["Verk 101: Isavia Terminal 3 - Nýbygging & Hovedtafla"], "flow": "out", "amt": 4200000.0, "cat": "project", "desc": "Reykjafell: Stofnkaplar & Aðaltafla 3200A", "ref": "RF-99412"},
+            {"proj": proj_dict["Verk 102: Bláa Lónið Spa - Gólfhiti & Snjallstýring"], "flow": "in", "amt": 8200000.0, "cat": "project", "desc": "Bláa Lónið Spa - Fyrirframgreiðsla", "ref": "INV-2026-092"},
+            {"proj": proj_dict["Verk 102: Bláa Lónið Spa - Gólfhiti & Snjallstýring"], "flow": "out", "amt": 1850000.0, "cat": "project", "desc": "Rönning: Gólfhita- og hitastýringabúnaður", "ref": "RN-44120"},
+            {"proj": proj_dict["Verk 103: Landsvirkjun Ljósafoss - Endurnýjun Mælabúnaðar"], "flow": "in", "amt": 12800000.0, "cat": "project", "desc": "Landsvirkjun Lokagreiðsla Verkefnis", "ref": "INV-2026-060"},
+            {"proj": None, "flow": "out", "amt": 650000.0, "cat": "car", "desc": "Bílaviðgerð & Þjónusta Renault Master KE-012", "ref": "KE-012"},
+            {"proj": None, "flow": "out", "amt": 420000.0, "cat": "tool", "desc": "Fluke Mælatæki Kalibrering & Skoðun", "ref": "FLK-99214"},
+            {"proj": None, "flow": "out", "amt": 380000.0, "cat": "clothing", "desc": "Nýr Vinnufatnaður & Öryggisskór fyrirtækis", "ref": "Barki-2026"},
+        ]
+
+        for edata in expenses_data:
+            exp = models.Expense(
+                tenant_id=tenant.id,
+                project_id=edata["proj"].id if edata["proj"] else None,
+                date=date.today() - timedelta(days=random.randint(10, 75)),
+                amount=edata["amt"],
+                flow_type=edata["flow"],
+                category=edata["cat"],
+                description=edata["desc"],
+                reference=edata["ref"]
+            )
+            db.add(exp)
+
+        # 5. Create Realistic Tasks per Project
+        tasks_data = [
+            # Isavia Tasks
+            {"proj": proj_dict["Verk 101: Isavia Terminal 3 - Nýbygging & Hovedtafla"], "name": "Uppsetning á Aðaltaflu 3200A", "status": "Done", "assignee": users_dict["aron@rafapp.is"], "hours": 120},
+            {"proj": proj_dict["Verk 101: Isavia Terminal 3 - Nýbygging & Hovedtafla"], "name": "Kapalleiðir & Tröppulagnir í Sal 2", "status": "In Progress", "assignee": users_dict["bjarki@rafapp.is"], "hours": 180},
+            {"proj": proj_dict["Verk 101: Isavia Terminal 3 - Nýbygging & Hovedtafla"], "name": "Lýsing & DALI Snjallstýring", "status": "In Progress", "assignee": users_dict["tomas@rafapp.is"], "hours": 110},
+            {"proj": proj_dict["Verk 101: Isavia Terminal 3 - Nýbygging & Hovedtafla"], "name": "Brunaútkallskerfi & Neyðarlýsing", "status": "Not Started", "assignee": users_dict["viktor@rafapp.is"], "hours": 70},
+
+            # Bláa Lónið Tasks
+            {"proj": proj_dict["Verk 102: Bláa Lónið Spa - Gólfhiti & Snjallstýring"], "name": "Gólfhiti & Hitastýringar í Spa 1", "status": "Done", "assignee": users_dict["sigurdur@rafapp.is"], "hours": 90},
+            {"proj": proj_dict["Verk 102: Bláa Lónið Spa - Gólfhiti & Snjallstýring"], "name": "Útilýsing & LED Borðar við Lónið", "status": "In Progress", "assignee": users_dict["kristin@rafapp.is"], "hours": 85},
+            {"proj": proj_dict["Verk 102: Bláa Lónið Spa - Gólfhiti & Snjallstýring"], "name": "Varastöð & Rafstýrðir Lokar", "status": "Not Started", "assignee": users_dict["elisabet@rafapp.is"], "hours": 35},
+
+            # Landsvirkjun Tasks
+            {"proj": proj_dict["Verk 103: Landsvirkjun Ljósafoss - Endurnýjun Mælabúnaðar"], "name": "Róra- og Kapallagnir í Spennisal", "status": "Done", "assignee": users_dict["david@rafapp.is"], "hours": 95},
+            {"proj": proj_dict["Verk 103: Landsvirkjun Ljósafoss - Endurnýjun Mælabúnaðar"], "name": "Mælatöflur & Hátæknimælar", "status": "Done", "assignee": users_dict["katrin@rafapp.is"], "hours": 85},
+
+            # Reykjanesbær Tasks
+            {"proj": proj_dict["Verk 104: Skrifstofur Reykjanesbæjar - Almennt Viðhald"], "name": "Skipta um Töfluvör & Lekaliða", "status": "Done", "assignee": users_dict["katrin@rafapp.is"], "hours": 40},
+            {"proj": proj_dict["Verk 104: Skrifstofur Reykjanesbæjar - Almennt Viðhald"], "name": "Prófun Neyðarlýsingar", "status": "In Progress", "assignee": users_dict["viktor@rafapp.is"], "hours": 25},
+        ]
+
+        for tdata in tasks_data:
+            tsk = models.Task(
+                project_id=tdata["proj"].id,
+                assignee_id=tdata["assignee"].id,
+                title=tdata["name"],
+                status=tdata["status"],
+                start_date=date.today() - timedelta(days=60),
+                due_date=date.today() + timedelta(days=30),
+                created_at=now - timedelta(days=60)
+            )
+            db.add(tsk)
+
+        db.flush()
+
+        # 6. Generate Realistic Time Logs Spanning Past 90 Days (March - July 2026)
+        print("Generating realistic 90-day time logs across personnel...")
+        work_days = [date.today() - timedelta(days=i) for i in range(1, 90) if (date.today() - timedelta(days=i)).weekday() < 5]
+
+        def add_tlog(user_obj, proj_obj, log_date, hours, desc):
+            start_dt = datetime.combine(log_date, datetime.min.time()).replace(hour=8, tzinfo=timezone.utc)
+            end_dt = start_dt + timedelta(hours=hours)
+            db.add(models.TimeLog(
+                user_id=user_obj.id,
+                project_id=proj_obj.id,
+                start_time=start_dt,
+                end_time=end_dt,
+                duration=timedelta(hours=hours),
+                actual_hours=hours,
+                notes=desc,
+                base_hourly_wage_paid=user_obj.hourly_rate or 4500.0
+            ))
+
+        for d in work_days:
+            # Aron - Isavia Heavy (8.0h - 10.0h)
+            if random.random() > 0.1:
+                add_tlog(users_dict["aron@rafapp.is"], proj_dict["Verk 101: Isavia Terminal 3 - Nýbygging & Hovedtafla"], d, random.choice([7.5, 8.0, 8.5, 9.5]), "Draga stofnkapla og tengja aðaltaflu 3200A")
+
+            # Bjarki - Isavia (7.5h - 8.5h)
+            if random.random() > 0.15:
+                add_tlog(users_dict["bjarki@rafapp.is"], proj_dict["Verk 101: Isavia Terminal 3 - Nýbygging & Hovedtafla"], d, random.choice([7.5, 8.0, 8.5]), "Setja upp kapalleiðir og tröppur í sal 2")
+
+            # Tómas - Isavia & Reykjanesbær
+            if random.random() > 0.2:
+                add_tlog(users_dict["tomas@rafapp.is"], proj_dict["Verk 101: Isavia Terminal 3 - Nýbygging & Hovedtafla"], d, random.choice([7.5, 8.0]), "Tengja DALI snjallstýringar og ljósakúpla")
+
+            # Sigurður - Bláa Lónið (7.5h - 8.5h)
+            if random.random() > 0.15:
+                add_tlog(users_dict["sigurdur@rafapp.is"], proj_dict["Verk 102: Bláa Lónið Spa - Gólfhiti & Snjallstýring"], d, random.choice([7.5, 8.0, 9.0]), "Frágangur á gólfhita og skynjurum í Spa")
+
+            # Kristín (Team Lead) - Bláa Lónið (7.5h)
+            if random.random() > 0.2:
+                add_tlog(users_dict["kristin@rafapp.is"], proj_dict["Verk 102: Bláa Lónið Spa - Gólfhiti & Snjallstýring"], d, 7.5, "Yfirferð á útilýsingu og tengingu við varastöð")
+
+            # Davíð (Team Lead) - Landsvirkjun (8.0h)
+            if random.random() > 0.25:
+                add_tlog(users_dict["david@rafapp.is"], proj_dict["Verk 103: Landsvirkjun Ljósafoss - Endurnýjun Mælabúnaðar"], d, 8.0, "Kapallagnir í spennisal og prófanir á mælabúnaði")
+
+            # Katrín - Reykjanesbær & Landsvirkjun
+            if random.random() > 0.2:
+                p_obj = proj_dict["Verk 104: Skrifstofur Reykjanesbæjar - Almennt Viðhald"] if d.day % 2 == 0 else proj_dict["Verk 103: Landsvirkjun Ljósafoss - Endurnýjun Mælabúnaðar"]
+                add_tlog(users_dict["katrin@rafapp.is"], p_obj, d, random.choice([6.0, 7.5]), "Skipta um töfluvör og mæla lekaliða")
+
+        db.flush()
+
+        # 7. Generate 16 Monthly Payslips (March - June 2026)
+        print("Generating monthly payslips for staff...")
+        months = [
+            {"year": 2026, "month": 3, "period": "Mars 2026"},
+            {"year": 2026, "month": 4, "period": "Apríl 2026"},
+            {"year": 2026, "month": 5, "period": "Maí 2026"},
+            {"year": 2026, "month": 6, "period": "Júní 2026"},
+        ]
+
+        elec_users = [
+            users_dict["aron@rafapp.is"],
+            users_dict["bjarki@rafapp.is"],
+            users_dict["katrin@rafapp.is"],
+            users_dict["sigurdur@rafapp.is"]
+        ]
+
+        for m in months:
+            for u in elec_users:
+                base_hrs = 160.0
+                overtime_hrs = random.choice([12.0, 18.5, 24.0, 30.0])
+                base_pay = base_hrs * u.hourly_rate
+                overtime_pay = overtime_hrs * (u.hourly_rate * 1.8)
+                gross = base_pay + overtime_pay
+                pension = gross * 0.04 # 4% Lífeyrissjóður
+                union = gross * 0.01  # 1% RAFÍS
+                tax = gross * 0.3148   # Skattur
+                net = gross - pension - union - tax
+
+                ps = models.Payslip(
+                    tenant_id=tenant.id,
+                    user_id=u.id,
+                    issue_date=date(m["year"], m["month"], 28),
+                    amount_brutto=gross,
+                    amount_netto=net,
+                    file_path=f"/payslips/{m['year']}_{m['month']}_{u.employee_id}.pdf",
+                    filename=f"Launasedill_{m['period'].replace(' ', '_')}.pdf"
+                )
+                db.add(ps)
+
+        db.flush()
+
+        # 8. Create Real Leave Requests
+        print("Adding employee leave & vacation records...")
+        leaves = [
+            {"user": users_dict["aron@rafapp.is"], "type": "Vacation", "start": date(2026, 6, 8), "end": date(2026, 6, 19), "status": models.LeaveStatus.Approved, "desc": "Sumarorlof 2026"},
+            {"user": users_dict["katrin@rafapp.is"], "type": "Sick Leave", "start": date(2026, 4, 14), "end": date(2026, 4, 15), "status": models.LeaveStatus.Approved, "desc": "Veikindi barns"},
+            {"user": users_dict["bjarki@rafapp.is"], "type": "Sick Leave", "start": date(2026, 5, 20), "end": date(2026, 5, 22), "status": models.LeaveStatus.Approved, "desc": "Eigin veikindi"},
+            {"user": users_dict["tomas@rafapp.is"], "type": "Parental Leave", "start": date(2026, 3, 10), "end": date(2026, 3, 15), "status": models.LeaveStatus.Approved, "desc": "Fæðingarorlof"},
+        ]
+
+        for l in leaves:
+            lr = models.LeaveRequest(
+                tenant_id=tenant.id,
+                user_id=l["user"].id,
+                leave_type=l["type"],
+                start_date=l["start"],
+                end_date=l["end"],
+                status=l["status"],
+                reason=l["desc"]
+            )
+            db.add(lr)
+
+        db.flush()
+
+        # 9. Create Commercial Fleet Cars & Equipment Tools
+        print("Adding commercial vehicle fleet & hardware tools...")
+        cars_data = [
+            {"make": "Renault", "model": "Master 2023", "plate": "KE-012", "driver": users_dict["aron@rafapp.is"], "status": models.CarStatus.Checked_Out},
+            {"make": "Volkswagen", "model": "Transporter 2022", "plate": "KE-849", "driver": users_dict["kristin@rafapp.is"], "status": models.CarStatus.Checked_Out},
+            {"make": "Mercedes-Benz", "model": "Vito 2024", "plate": "KE-901", "driver": users_dict["david@rafapp.is"], "status": models.CarStatus.Checked_Out},
+            {"make": "Ford", "model": "Transit Custom 2021", "plate": "KE-450", "driver": None, "status": models.CarStatus.Available},
+        ]
+
+        for cdata in cars_data:
+            car = models.Car(
+                tenant_id=tenant.id,
+                make=cdata["make"],
+                model=cdata["model"],
+                license_plate=cdata["plate"],
+                current_user_id=cdata["driver"].id if cdata["driver"] else None,
+                status=cdata["status"]
+            )
+            db.add(car)
+
+        tools_data = [
+            {"name": "Fluke 1664 FC Multifunction Installation Tester", "sn": "FLK-99214", "holder": users_dict["aron@rafapp.is"], "status": models.ToolStatus.In_Use},
+            {"name": "Hilti TE 60-ATC Heavy Duty Rotary Hammer", "sn": "HLT-44012", "holder": users_dict["bjarki@rafapp.is"], "status": models.ToolStatus.In_Use},
+            {"name": "Milwaukee Force Logic Hydraulic Cable Crimper", "sn": "MLW-11094", "holder": users_dict["sigurdur@rafapp.is"], "status": models.ToolStatus.In_Use},
+            {"name": "Megger MIT420 Insulation & Continuity Tester", "sn": "MGG-77123", "holder": users_dict["kristin@rafapp.is"], "status": models.ToolStatus.In_Use},
+            {"name": "Bosch GLL 3-80 Professional 3D Line Laser", "sn": "BSH-33910", "holder": None, "status": models.ToolStatus.Available},
+            {"name": "Fluke 87V Industrial Multimeter", "sn": "FLK-11200", "holder": None, "status": models.ToolStatus.In_Repair},
+        ]
+
+        for tdata in tools_data:
+            tl = models.Tool(
+                tenant_id=tenant.id,
+                name=tdata["name"],
+                serial_number=tdata["sn"],
+                current_user_id=tdata["holder"].id if tdata["holder"] else None,
+                status=tdata["status"]
+            )
+            db.add(tl)
+
+        db.flush()
+
+        # 10. Create Real Chat Threads & Direct Messages
+        print("Seeding active team chat conversations...")
+        dm_thread = models.ChatThread(
+            tenant_id=tenant.id,
+            is_group=False,
+            created_at=now - timedelta(days=10)
         )
+        db.add(dm_thread)
+        db.flush()
+
+        db.add(models.ThreadParticipant(thread_id=dm_thread.id, user_id=users_dict["stefan@rafapp.is"].id))
+        db.add(models.ThreadParticipant(thread_id=dm_thread.id, user_id=users_dict["david@rafapp.is"].id))
+
+        db.add(models.ChatMessage(
+            thread_id=dm_thread.id,
+            author_id=users_dict["stefan@rafapp.is"].id,
+            content="Sæll Davíð, hvernig gengur með kapalleiðirnar í Isavia verkefninu?",
+            created_at=now - timedelta(days=2)
+        ))
+        db.add(models.ChatMessage(
+            thread_id=dm_thread.id,
+            author_id=users_dict["david@rafapp.is"].id,
+            content="Blessaður Stefán! Þetta er allt á rælu, við kláruðum tröppurnar í Sal 2 í gær.",
+            created_at=now - timedelta(days=2, hours=-1)
+        ))
+
+        # Group Channel for Isavia Terminal 3
+        group_thread = models.ChatThread(
+            tenant_id=tenant.id,
+            name="Isavia T3 - Vinnuhópur",
+            is_group=True,
+            project_id=proj_dict["Verk 101: Isavia Terminal 3 - Nýbygging & Hovedtafla"].id,
+            created_at=now - timedelta(days=20)
+        )
+        db.add(group_thread)
+        db.flush()
+
+        for u_obj in [users_dict["stefan@rafapp.is"], users_dict["aron@rafapp.is"], users_dict["bjarki@rafapp.is"], users_dict["tomas@rafapp.is"]]:
+            db.add(models.ThreadParticipant(thread_id=group_thread.id, user_id=u_obj.id))
+
+        db.add(models.ChatMessage(
+            thread_id=group_thread.id,
+            author_id=users_dict["aron@rafapp.is"].id,
+            content="Aðaltaflan er komin á sinn stað og spennistöðin tilbúin fyrir úttekt frá HMS.",
+            created_at=now - timedelta(days=1)
+        ))
+
+        db.commit()
+        print("\n=======================================================")
+        print(f"[OK] Demo tenant seeded successfully!")
+        print(f"Company: Rafverktakar Sudurnesja ehf. (Tenant ID: {tenant.id})")
+        print(f"Default Password for all staff: {DEFAULT_PASSWORD}")
+        print("-------------------------------------------------------")
+        print("Created Data Overview:")
+        print(" - 12 Staff Members (Admin, PM, Accountant, Electricians, Apprentices)")
+        print(" - 5 Commercial Clients (Isavia, Landsvirkjun, Blaa Lonid, etc.)")
+        print(" - 4 Projects with Varied Budgets & Diverse Hours")
+        print(" - 8 Financial Transactions (Invoices & Material Expenses)")
+        print(" - 90 Days of Daily Timelogs (~900 entries)")
+        print(" - 16 Monthly Payslips (March - June 2026)")
+        print(" - 4 Staff Leave & Vacation Records")
+        print(" - 4 Commercial Vans & 6 Hardware Tools with Logs")
+        print(" - Active Team & Direct Chat Conversations")
+        print("=======================================================\n")
+
+    except Exception as e:
+        db.rollback()
+        print(f"\n[ERROR] Error seeding demo tenant: {e}")
+        raise e
     finally:
         db.close()
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser(description="Seed demo tenant (id=2) with presentation data.")
-    parser.add_argument(
-        "--no-reset",
-        action="store_true",
-        help="Do not delete existing tenant id=2 data before seeding.",
-    )
+def main():
+    parser = argparse.ArgumentParser(description="Seed demo tenant with realistic company data.")
+    parser.add_argument("--no-reset", action="store_true", help="Do not delete existing demo tenant data.")
     args = parser.parse_args()
     seed_demo_tenant(reset_existing=not args.no_reset)
 
 
 if __name__ == "__main__":
     main()
-
