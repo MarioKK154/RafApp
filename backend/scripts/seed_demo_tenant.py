@@ -616,13 +616,13 @@ def seed_demo_tenant(reset_existing: bool = True):
 
         db.flush()
 
-        # 9. Create Commercial Fleet Cars (with VIN & Local Images) & Equipment Tools (with Local Images)
-        print("Adding commercial vehicle fleet with VIN & hardware tools with actual photos...")
+        # 9. Create Commercial Fleet Cars (with VIN & Supabase Images) & Equipment Tools (with Supabase Images)
+        print("Adding commercial vehicle fleet with VIN & hardware tools with Supabase Storage photos...")
         cars_data = [
-            {"make": "Renault", "model": "Master 2023", "plate": "KE-012", "vin": "VF1MA000368192014", "img": "car_images/renault_master.jpg", "driver": users_dict["aron@rafsud.is"], "status": models.CarStatus.Checked_Out},
-            {"make": "Volkswagen", "model": "Transporter 2022", "plate": "KE-849", "vin": "WV1ZZZ7JZNH019482", "img": "car_images/vw_transporter.jpg", "driver": users_dict["kristin@rafsud.is"], "status": models.CarStatus.Checked_Out},
-            {"make": "Mercedes-Benz", "model": "Vito 2024", "plate": "KE-901", "vin": "WDF44770313829104", "img": "car_images/mercedes_vito.jpg", "driver": users_dict["david@rafsud.is"], "status": models.CarStatus.Checked_Out},
-            {"make": "Ford", "model": "Transit Custom 2021", "plate": "KE-450", "vin": "1FTBR1Y84MKA91823", "img": "car_images/ford_transit.jpg", "driver": None, "status": models.CarStatus.Available},
+            {"make": "Renault", "model": "Master 2023", "plate": "KE-012", "vin": "VF1MA000368192014", "img": "https://tntvbultwjeyizswvqax.supabase.co/storage/v1/object/public/rafapp-uploads/car_images/renault_master.jpg", "driver": users_dict["aron@rafsud.is"], "status": models.CarStatus.Checked_Out},
+            {"make": "Volkswagen", "model": "Transporter 2022", "plate": "KE-849", "vin": "WV1ZZZ7JZNH019482", "img": "https://tntvbultwjeyizswvqax.supabase.co/storage/v1/object/public/rafapp-uploads/car_images/vw_transporter.jpg", "driver": users_dict["kristin@rafsud.is"], "status": models.CarStatus.Checked_Out},
+            {"make": "Mercedes-Benz", "model": "Vito 2024", "plate": "KE-901", "vin": "WDF44770313829104", "img": "https://tntvbultwjeyizswvqax.supabase.co/storage/v1/object/public/rafapp-uploads/car_images/mercedes_vito.jpg", "driver": users_dict["david@rafsud.is"], "status": models.CarStatus.Checked_Out},
+            {"make": "Ford", "model": "Transit Custom 2021", "plate": "KE-450", "vin": "1FTBR1Y84MKA91823", "img": "https://tntvbultwjeyizswvqax.supabase.co/storage/v1/object/public/rafapp-uploads/car_images/ford_transit.jpg", "driver": None, "status": models.CarStatus.Available},
         ]
 
         for cdata in cars_data:
@@ -639,12 +639,12 @@ def seed_demo_tenant(reset_existing: bool = True):
             db.add(car)
 
         tools_data = [
-            {"name": "Fluke 1664 FC Multifunction Installation Tester", "sn": "FLK-99214", "img": "tool_images/fluke_1664_fc.jpg", "holder": users_dict["aron@rafsud.is"], "status": models.ToolStatus.In_Use},
-            {"name": "Hilti TE 60-ATC Heavy Duty Rotary Hammer", "sn": "HLT-44012", "img": "tool_images/hilti_te_60_atc.jpg", "holder": users_dict["bjarki@rafsud.is"], "status": models.ToolStatus.In_Use},
-            {"name": "Milwaukee Force Logic Hydraulic Cable Crimper", "sn": "MLW-11094", "img": "tool_images/milwaukee_crimper.jpg", "holder": users_dict["sigurdur@rafsud.is"], "status": models.ToolStatus.In_Use},
-            {"name": "Megger MIT420 Insulation & Continuity Tester", "sn": "MGG-77123", "img": "tool_images/megger_mit420.jpg", "holder": users_dict["kristin@rafsud.is"], "status": models.ToolStatus.In_Use},
-            {"name": "Bosch GLL 3-80 Professional 3D Line Laser", "sn": "BSH-33910", "img": "tool_images/bosch_gll_3_80.jpg", "holder": None, "status": models.ToolStatus.Available},
-            {"name": "Fluke 87V Industrial Multimeter", "sn": "FLK-11200", "img": "tool_images/fluke_87v.jpg", "holder": None, "status": models.ToolStatus.In_Repair},
+            {"name": "Fluke 1664 FC Multifunction Installation Tester", "sn": "FLK-99214", "img": "https://tntvbultwjeyizswvqax.supabase.co/storage/v1/object/public/rafapp-uploads/tool_images/fluke_1664_fc.jpg", "holder": users_dict["aron@rafsud.is"], "status": models.ToolStatus.In_Use},
+            {"name": "Hilti TE 60-ATC Heavy Duty Rotary Hammer", "sn": "HLT-44012", "img": "https://tntvbultwjeyizswvqax.supabase.co/storage/v1/object/public/rafapp-uploads/tool_images/hilti_te_60_atc.jpg", "holder": users_dict["bjarki@rafsud.is"], "status": models.ToolStatus.In_Use},
+            {"name": "Milwaukee Force Logic Hydraulic Cable Crimper", "sn": "MLW-11094", "img": "https://tntvbultwjeyizswvqax.supabase.co/storage/v1/object/public/rafapp-uploads/tool_images/milwaukee_crimper.jpg", "holder": users_dict["sigurdur@rafsud.is"], "status": models.ToolStatus.In_Use},
+            {"name": "Megger MIT420 Insulation & Continuity Tester", "sn": "MGG-77123", "img": "https://tntvbultwjeyizswvqax.supabase.co/storage/v1/object/public/rafapp-uploads/tool_images/megger_mit420.jpg", "holder": users_dict["kristin@rafsud.is"], "status": models.ToolStatus.In_Use},
+            {"name": "Bosch GLL 3-80 Professional 3D Line Laser", "sn": "BSH-33910", "img": "https://tntvbultwjeyizswvqax.supabase.co/storage/v1/object/public/rafapp-uploads/tool_images/bosch_gll_3_80.jpg", "holder": None, "status": models.ToolStatus.Available},
+            {"name": "Fluke 87V Industrial Multimeter", "sn": "FLK-11200", "img": "https://tntvbultwjeyizswvqax.supabase.co/storage/v1/object/public/rafapp-uploads/tool_images/fluke_87v.jpg", "holder": None, "status": models.ToolStatus.In_Repair},
         ]
 
         for tdata in tools_data:
