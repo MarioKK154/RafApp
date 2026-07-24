@@ -592,8 +592,10 @@ def seed_demo_tenant(reset_existing: bool = True):
         # 8. Create Leave Requests (Approved & Pending)
         print("Adding employee leave & vacation records (Approved & Pending)...")
         leaves = [
+            {"user": users_dict["katrin@rafsud.is"], "type": "Vacation", "start": date(2026, 7, 20), "end": date(2026, 7, 26), "status": models.LeaveStatus.Approved, "desc": "Sumarorlof 2026"},
+            {"user": users_dict["viktor@rafsud.is"], "type": "Sick Leave", "start": date(2026, 7, 23), "end": date(2026, 7, 24), "status": models.LeaveStatus.Approved, "desc": "Eigin veikindi"},
+            {"user": users_dict["david@rafsud.is"], "type": "Vacation", "start": date(2026, 7, 27), "end": date(2026, 7, 31), "status": models.LeaveStatus.Approved, "desc": "Sumarleyfi"},
             {"user": users_dict["aron@rafsud.is"], "type": "Vacation", "start": date(2026, 6, 8), "end": date(2026, 6, 19), "status": models.LeaveStatus.Approved, "desc": "Sumarorlof 2026"},
-            {"user": users_dict["katrin@rafsud.is"], "type": "Sick Leave", "start": date(2026, 4, 14), "end": date(2026, 4, 15), "status": models.LeaveStatus.Approved, "desc": "Veikindi barns"},
             {"user": users_dict["bjarki@rafsud.is"], "type": "Sick Leave", "start": date(2026, 5, 20), "end": date(2026, 5, 22), "status": models.LeaveStatus.Approved, "desc": "Eigin veikindi"},
             {"user": users_dict["tomas@rafsud.is"], "type": "Parental Leave", "start": date(2026, 3, 10), "end": date(2026, 3, 15), "status": models.LeaveStatus.Approved, "desc": "Fæðingarorlof"},
             {"user": users_dict["tomas@rafsud.is"], "type": "Sick Leave", "start": date(2026, 8, 10), "end": date(2026, 8, 14), "status": models.LeaveStatus.Pending, "desc": "Læknisaðgerð og batatími"},
@@ -614,13 +616,13 @@ def seed_demo_tenant(reset_existing: bool = True):
 
         db.flush()
 
-        # 9. Create Commercial Fleet Cars (with VIN & Images) & Equipment Tools (with Images)
-        print("Adding commercial vehicle fleet with VIN & hardware tools with HD images...")
+        # 9. Create Commercial Fleet Cars (with VIN & Local Images) & Equipment Tools (with Local Images)
+        print("Adding commercial vehicle fleet with VIN & hardware tools with actual photos...")
         cars_data = [
-            {"make": "Renault", "model": "Master 2023", "plate": "KE-012", "vin": "VF1MA000368192014", "img": "https://images.unsplash.com/photo-1559297434-fae8a1916a79?w=600&auto=format&fit=crop", "driver": users_dict["aron@rafsud.is"], "status": models.CarStatus.Checked_Out},
-            {"make": "Volkswagen", "model": "Transporter 2022", "plate": "KE-849", "vin": "WV1ZZZ7JZNH019482", "img": "https://images.unsplash.com/photo-1541899481282-d53bffe3c35d?w=600&auto=format&fit=crop", "driver": users_dict["kristin@rafsud.is"], "status": models.CarStatus.Checked_Out},
-            {"make": "Mercedes-Benz", "model": "Vito 2024", "plate": "KE-901", "vin": "WDF44770313829104", "img": "https://images.unsplash.com/photo-1517524008697-84bbe3c3fd98?w=600&auto=format&fit=crop", "driver": users_dict["david@rafsud.is"], "status": models.CarStatus.Checked_Out},
-            {"make": "Ford", "model": "Transit Custom 2021", "plate": "KE-450", "vin": "1FTBR1Y84MKA91823", "img": "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=600&auto=format&fit=crop", "driver": None, "status": models.CarStatus.Available},
+            {"make": "Renault", "model": "Master 2023", "plate": "KE-012", "vin": "VF1MA000368192014", "img": "car_images/renault_master.jpg", "driver": users_dict["aron@rafsud.is"], "status": models.CarStatus.Checked_Out},
+            {"make": "Volkswagen", "model": "Transporter 2022", "plate": "KE-849", "vin": "WV1ZZZ7JZNH019482", "img": "car_images/vw_transporter.jpg", "driver": users_dict["kristin@rafsud.is"], "status": models.CarStatus.Checked_Out},
+            {"make": "Mercedes-Benz", "model": "Vito 2024", "plate": "KE-901", "vin": "WDF44770313829104", "img": "car_images/mercedes_vito.jpg", "driver": users_dict["david@rafsud.is"], "status": models.CarStatus.Checked_Out},
+            {"make": "Ford", "model": "Transit Custom 2021", "plate": "KE-450", "vin": "1FTBR1Y84MKA91823", "img": "car_images/ford_transit.jpg", "driver": None, "status": models.CarStatus.Available},
         ]
 
         for cdata in cars_data:
@@ -637,12 +639,12 @@ def seed_demo_tenant(reset_existing: bool = True):
             db.add(car)
 
         tools_data = [
-            {"name": "Fluke 1664 FC Multifunction Installation Tester", "sn": "FLK-99214", "img": "https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=600&auto=format&fit=crop", "holder": users_dict["aron@rafsud.is"], "status": models.ToolStatus.In_Use},
-            {"name": "Hilti TE 60-ATC Heavy Duty Rotary Hammer", "sn": "HLT-44012", "img": "https://images.unsplash.com/photo-1504148455328-c376907d081c?w=600&auto=format&fit=crop", "holder": users_dict["bjarki@rafsud.is"], "status": models.ToolStatus.In_Use},
-            {"name": "Milwaukee Force Logic Hydraulic Cable Crimper", "sn": "MLW-11094", "img": "https://images.unsplash.com/photo-1572981779307-38b8cabb2407?w=600&auto=format&fit=crop", "holder": users_dict["sigurdur@rafsud.is"], "status": models.ToolStatus.In_Use},
-            {"name": "Megger MIT420 Insulation & Continuity Tester", "sn": "MGG-77123", "img": "https://images.unsplash.com/photo-1581092335397-9583fe92d232?w=600&auto=format&fit=crop", "holder": users_dict["kristin@rafsud.is"], "status": models.ToolStatus.In_Use},
-            {"name": "Bosch GLL 3-80 Professional 3D Line Laser", "sn": "BSH-33910", "img": "https://images.unsplash.com/photo-1581092580497-e0d23cbdf1dc?w=600&auto=format&fit=crop", "holder": None, "status": models.ToolStatus.Available},
-            {"name": "Fluke 87V Industrial Multimeter", "sn": "FLK-11200", "img": "https://images.unsplash.com/photo-1581092162384-8987c1d64718?w=600&auto=format&fit=crop", "holder": None, "status": models.ToolStatus.In_Repair},
+            {"name": "Fluke 1664 FC Multifunction Installation Tester", "sn": "FLK-99214", "img": "tool_images/fluke_1664_fc.jpg", "holder": users_dict["aron@rafsud.is"], "status": models.ToolStatus.In_Use},
+            {"name": "Hilti TE 60-ATC Heavy Duty Rotary Hammer", "sn": "HLT-44012", "img": "tool_images/hilti_te_60_atc.jpg", "holder": users_dict["bjarki@rafsud.is"], "status": models.ToolStatus.In_Use},
+            {"name": "Milwaukee Force Logic Hydraulic Cable Crimper", "sn": "MLW-11094", "img": "tool_images/milwaukee_crimper.jpg", "holder": users_dict["sigurdur@rafsud.is"], "status": models.ToolStatus.In_Use},
+            {"name": "Megger MIT420 Insulation & Continuity Tester", "sn": "MGG-77123", "img": "tool_images/megger_mit420.jpg", "holder": users_dict["kristin@rafsud.is"], "status": models.ToolStatus.In_Use},
+            {"name": "Bosch GLL 3-80 Professional 3D Line Laser", "sn": "BSH-33910", "img": "tool_images/bosch_gll_3_80.jpg", "holder": None, "status": models.ToolStatus.Available},
+            {"name": "Fluke 87V Industrial Multimeter", "sn": "FLK-11200", "img": "tool_images/fluke_87v.jpg", "holder": None, "status": models.ToolStatus.In_Repair},
         ]
 
         for tdata in tools_data:
