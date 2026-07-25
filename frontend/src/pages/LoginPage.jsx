@@ -183,33 +183,31 @@ function LoginPage() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 p-4 relative overflow-hidden">
+        <div className="min-h-screen flex flex-col items-center justify-start pt-20 md:pt-24 pb-12 px-4 bg-gray-50 dark:bg-gray-900 relative overflow-y-auto">
             <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] pointer-events-none">
                 <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(#4f46e5 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
             </div>
 
-            <div className="absolute top-6 right-6 z-50">
-                <button onClick={toggleLanguage} className="flex items-center gap-2 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition px-3.5 py-2 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm font-bold text-xs uppercase tracking-widest">
-                    <FlagIcon lang={i18n.language?.toLowerCase().startsWith('en') ? 'is' : 'en'} className="w-4 h-3 rounded-[2px] shadow-sm shrink-0" />
-                    <span>{i18n.language?.toLowerCase().startsWith('en') ? 'IS' : 'EN'}</span>
-                </button>
-            </div>
-
-            <div className="absolute top-6 left-6 z-50">
-                <button onClick={() => navigate('/')} className="flex items-center gap-2 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm font-bold text-xs uppercase tracking-widest">
+            {/* Top Bar Header Navigation */}
+            <header className="w-full fixed top-0 left-0 right-0 z-50 px-6 py-4 flex items-center justify-between pointer-events-none">
+                <button onClick={() => navigate('/')} className="pointer-events-auto flex items-center gap-2 bg-white/90 dark:bg-gray-800/90 backdrop-blur-md text-gray-700 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-400 transition px-4 py-2 rounded-2xl border border-gray-200/80 dark:border-gray-700/80 shadow-xs font-bold text-xs uppercase tracking-widest">
                     <ArrowLeftIcon className="h-4 w-4" />
                     <span>{t('back', { defaultValue: 'Back' })}</span>
                 </button>
-            </div>
+                <button onClick={toggleLanguage} className="pointer-events-auto flex items-center gap-2 bg-white/90 dark:bg-gray-800/90 backdrop-blur-md text-gray-700 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-400 transition px-3.5 py-2 rounded-2xl border border-gray-200/80 dark:border-gray-700/80 shadow-xs font-bold text-xs uppercase tracking-widest">
+                    <FlagIcon lang={i18n.language?.toLowerCase().startsWith('en') ? 'is' : 'en'} className="w-4 h-3 rounded-[2px] shadow-sm shrink-0" />
+                    <span>{i18n.language?.toLowerCase().startsWith('en') ? 'IS' : 'EN'}</span>
+                </button>
+            </header>
 
-            <div className="w-full max-w-md animate-in fade-in zoom-in-95 duration-700">
+            <div className="w-full max-w-md animate-in fade-in zoom-in-95 duration-700 my-auto">
                 
-                <div className="text-center mb-8">
-                    <div className="inline-flex items-center justify-center p-5 bg-white dark:bg-gray-800 rounded-3xl border border-gray-150 dark:border-gray-700/80 mb-5 shadow-sm min-h-[110px] min-w-[110px]">
+                <div className="text-center mb-6 pt-2">
+                    <div className="inline-flex items-center justify-center p-4 bg-white dark:bg-gray-800 rounded-3xl border border-gray-200 dark:border-gray-700 mb-4 shadow-sm h-24 w-24">
                         <img 
                             src={(isSubdomainLocked && selectedTenant && selectedTenant.logo_url) ? resolveLoginAssetUrl(selectedTenant.logo_url) : defaultLogo} 
                             alt="Company Logo" 
-                            className="max-h-20 w-auto max-w-[220px] object-contain p-1" 
+                            className="h-16 w-16 object-contain p-0.5" 
                         />
                     </div>
                     
