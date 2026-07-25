@@ -118,6 +118,7 @@ def _ensure_tenant(db) -> models.Tenant:
             name="Rafverktakar Suðurnesja ehf.",
             is_active=True,
             base_hourly_rate=4500.0,
+            logo_url="https://tntvbultwjeyizswvqax.supabase.co/storage/v1/object/public/rafapp-uploads/tenant_assets/2/logo.png",
             created_at=now,
             updated_at=now,
         )
@@ -128,6 +129,7 @@ def _ensure_tenant(db) -> models.Tenant:
         tenant.name = "Rafverktakar Suðurnesja ehf."
         tenant.is_active = True
         tenant.base_hourly_rate = 4500.0
+        tenant.logo_url = "https://tntvbultwjeyizswvqax.supabase.co/storage/v1/object/public/rafapp-uploads/tenant_assets/2/logo.png"
         tenant.updated_at = now
         db.add(tenant)
         db.commit()

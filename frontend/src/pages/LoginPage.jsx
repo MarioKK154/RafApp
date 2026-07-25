@@ -204,8 +204,8 @@ function LoginPage() {
                 <div className="text-center mb-10">
                     <div className="inline-flex p-6 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-800 mb-6">
                         <img 
-                            src={(selectedTenant && selectedTenant.logo_url) ? resolveLoginAssetUrl(selectedTenant.logo_url) : defaultLogo} 
-                            alt="Logo" 
+                            src={(isSubdomainLocked && selectedTenant && selectedTenant.logo_url) ? resolveLoginAssetUrl(selectedTenant.logo_url) : defaultLogo} 
+                            alt="RafApp Logo" 
                             className="h-28 w-28 object-contain" 
                         />
                     </div>
