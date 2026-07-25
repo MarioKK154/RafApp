@@ -203,23 +203,31 @@ function LoginPage() {
 
             <div className="w-full max-w-md animate-in fade-in zoom-in-95 duration-700">
                 
-                <div className="text-center mb-10">
-                    <div className="inline-flex items-center justify-center p-4 bg-white dark:bg-gray-800 rounded-3xl border border-gray-150 dark:border-gray-700/80 mb-6 shadow-sm">
+                <div className="text-center mb-8">
+                    <div className="inline-flex items-center justify-center p-5 bg-white dark:bg-gray-800 rounded-3xl border border-gray-150 dark:border-gray-700/80 mb-5 shadow-sm min-h-[110px] min-w-[110px]">
                         <img 
                             src={(isSubdomainLocked && selectedTenant && selectedTenant.logo_url) ? resolveLoginAssetUrl(selectedTenant.logo_url) : defaultLogo} 
-                            alt="RafApp Logo" 
-                            className="h-24 w-auto max-w-[180px] max-h-24 object-contain p-1" 
+                            alt="Company Logo" 
+                            className="max-h-20 w-auto max-w-[220px] object-contain p-1" 
                         />
                     </div>
                     
-                    <h1 className="text-5xl font-black text-gray-900 dark:text-white tracking-tighter italic leading-none">
-                        RafApp
-                    </h1>
+                    {isSubdomainLocked && selectedTenant ? (
+                        <h1 className="text-2xl md:text-3xl font-black text-gray-900 dark:text-white tracking-tight uppercase leading-tight">
+                            {selectedTenant.name}
+                        </h1>
+                    ) : (
+                        <h1 className="text-5xl font-black text-gray-900 dark:text-white tracking-tighter italic leading-none">
+                            RafApp
+                        </h1>
+                    )}
                     
                     <div className="flex items-center justify-center gap-2 mt-3">
                         <span className="h-px w-8 bg-indigo-100 dark:bg-gray-700" />
                         <p className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.4em]">
-                            {t('industrial_os', { defaultValue: 'INDUSTRIAL OS' })}
+                            {isSubdomainLocked && selectedTenant?.subdomain 
+                                ? `${selectedTenant.subdomain}.rafapp.is` 
+                                : t('industrial_os', { defaultValue: 'INDUSTRIAL OS' })}
                         </p>
                         <span className="h-px w-8 bg-indigo-100 dark:bg-gray-700" />
                     </div>
@@ -234,19 +242,31 @@ function LoginPage() {
                                 </label>
                                 <div className="relative" ref={tenantPickerRef}>
                                     {isSubdomainLocked ? (
-                                        <div className="modern-input h-14 font-bold w-full flex items-center gap-3 bg-gray-50 dark:bg-gray-700/30 border border-gray-150 dark:border-gray-700 cursor-not-allowed">
-                                            {selectedTenant && selectedTenant.logo_url ? (
-                                                <img
-                                                    src={resolveLoginAssetUrl(selectedTenant.logo_url)}
-                                                    alt=""
-                                                    className="h-9 w-9 shrink-0 rounded-lg object-contain border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900"
-                                                />
-                                            ) : (
-                                                <div className="h-9 w-9 shrink-0 rounded-lg bg-gray-200 dark:bg-gray-700 flex items-center justify-center border border-gray-200 dark:border-gray-600">
-                                                    <BuildingOffice2Icon className="h-5 w-5 text-gray-500" />
+                                        <div className="p-4 rounded-2xl bg-indigo-50/60 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/50 flex items-center justify-between shadow-xs">
+                                            <div className="flex items-center gap-3 overflow-hidden">
+                                                {selectedTenant && selectedTenant.logo_url ? (
+                                                    <img
+                                                        src={resolveLoginAssetUrl(selectedTenant.logo_url)}
+                                                        alt=""
+                                                        className="h-10 w-10 shrink-0 rounded-xl object-contain border border-gray-200 dark:border-gray-700 bg-white p-1"
+                                                    />
+                                                ) : (
+                                                    <div className="h-10 w-10 shrink-0 rounded-xl bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold">
+                                                        <BuildingOffice2Icon className="h-5 w-5" />
+                                                    </div>
+                                                )}
+                                                <div className="truncate">
+                                                    <p className="text-xs font-black text-gray-900 dark:text-white uppercase tracking-tight truncate">
+                                                        {selectedTenant ? selectedTenant.name : 'Loading...'}
+                                                    </p>
+                                                    <p className="text-[10px] font-mono text-indigo-600 dark:text-indigo-400 font-bold">
+                                                        {selectedTenant?.subdomain ? `${selectedTenant.subdomain}.rafapp.is` : 'Enterprise Subdomain'}
+                                                    </p>
                                                 </div>
-                                            )}
-                                            <span className="truncate flex-1">{selectedTenant ? selectedTenant.name : 'Loading...'}</span>
+                                            </div>
+                                            <span className="flex items-center gap-1 text-[9px] font-black text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-2.5 py-1 rounded-full border border-emerald-200 dark:border-emerald-900/50 shrink-0">
+                                                <ShieldCheckIcon className="h-3.5 w-3.5" /> Locked
+                                            </span>
                                         </div>
                                     ) : (
                                         <>
