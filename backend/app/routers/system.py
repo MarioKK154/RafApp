@@ -52,7 +52,7 @@ def _default_landing_feed() -> schemas.LandingFeed:
         show_updates=True,
         show_tools=True,
         show_interesting=True,
-        background_image_urls=[],
+        background_image_urls=["https://tntvbultwjeyizswvqax.supabase.co/storage/v1/object/public/rafapp-uploads/landing/hero_electrician.jpg"],
         background_slide_seconds=8,
         hero_title="Welcome to Our Platform",
         hero_subtitle="We provide the best tools for your business.",

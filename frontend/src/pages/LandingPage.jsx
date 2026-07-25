@@ -451,7 +451,7 @@ function LandingPage() {
         if (Array.isArray(raw) && raw.length > 0) {
             return resolveMediaUrl(raw[0]);
         }
-        return 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&q=80'; // Fallback
+        return 'https://tntvbultwjeyizswvqax.supabase.co/storage/v1/object/public/rafapp-uploads/landing/hero_electrician.jpg'; // Custom Electrician PPE Hero
     }, [feed.background_image_urls]);
 
     const scrollToSection = (id) => {
@@ -703,8 +703,8 @@ function LandingPage() {
                         <button onClick={() => scrollToSection('contact')} className="text-gray-300 hover:text-[#0096FF] transition">{i18n.language.startsWith('en') ? (feed.nav_contact_en || 'Contact') : (feed.nav_contact_is || 'Hafa samband')}</button>
                         
                         <button onClick={toggleLanguage} className="flex items-center gap-1.5 text-gray-300 hover:text-white transition bg-gray-800/50 px-3 py-1 rounded-full border border-gray-700 font-bold text-xs">
-                            <FlagIcon lang={i18n.language?.toLowerCase().startsWith('en') ? 'en' : 'is'} className="w-4 h-3 rounded-[2px] shadow-sm shrink-0" />
-                            <span>{i18n.language?.toLowerCase().startsWith('en') ? 'EN' : 'IS'}</span>
+                            <FlagIcon lang={i18n.language?.toLowerCase().startsWith('en') ? 'is' : 'en'} className="w-4 h-3 rounded-[2px] shadow-sm shrink-0" />
+                            <span>{i18n.language?.toLowerCase().startsWith('en') ? 'IS' : 'EN'}</span>
                         </button>
 
                         {isSuperadmin && (
