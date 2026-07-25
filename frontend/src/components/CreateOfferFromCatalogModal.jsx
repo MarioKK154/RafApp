@@ -139,13 +139,13 @@ export default function CreateOfferFromCatalogModal({ selectedItems = [], onClos
                         {/* Selected items summary */}
                         {hasSelectedItems && (
                             <div>
-                                <h3 className="text-xs font-black uppercase text-gray-400 tracking-widest mb-2">Selected Work Items</h3>
+                                <h3 className="text-xs font-black uppercase text-gray-400 tracking-widest mb-2">{t('selected_work_items')}</h3>
                                 <div className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
                                     <table className="w-full text-sm">
                                         <thead className="bg-gray-50 dark:bg-gray-700/50 text-xs text-gray-500 uppercase">
                                             <tr>
-                                                <th className="px-4 py-3 text-left">Service</th>
-                                                <th className="px-4 py-3 text-right">Eining</th>
+                                                <th className="px-4 py-3 text-left">{t('service_description_req').replace('*','')}</th>
+                                                <th className="px-4 py-3 text-right">{t('col_eining')}</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
@@ -170,7 +170,7 @@ export default function CreateOfferFromCatalogModal({ selectedItems = [], onClos
                                         </tbody>
                                         <tfoot className="bg-indigo-50 dark:bg-indigo-900/20 font-black">
                                             <tr>
-                                                <td className="px-4 py-3 text-indigo-700 dark:text-indigo-300 text-xs">TOTAL</td>
+                                                <td className="px-4 py-3 text-indigo-700 dark:text-indigo-300 text-xs">{t('total')}</td>
                                                 <td className="px-4 py-3 text-right text-indigo-700 dark:text-indigo-300 font-mono text-xs">
                                                     {formatEining(totalEining)}
                                                 </td>

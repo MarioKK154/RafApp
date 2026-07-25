@@ -685,17 +685,17 @@ function OfferPage() {
                     {/* Technical Line Items Table */}
                     <section className="bg-white dark:bg-gray-800 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
                         <div className="p-8 border-b border-gray-50 dark:border-gray-700">
-                            <h2 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Technical Breakdown</h2>
+                            <h2 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight">{t('technical_breakdown')}</h2>
                         </div>
                         
                         <div className="overflow-x-auto">
                             <table className="w-full text-sm text-left">
                                 <thead className="text-[10px] text-gray-400 uppercase font-black bg-gray-50 dark:bg-gray-700/50">
                                     <tr>
-                                        <th className="py-5 px-8">Scope / Description</th>
-                                        <th className="py-5 px-4 text-right">Qty</th>
-                                        <th className="py-5 px-6 text-right">Unit Rate</th>
-                                        <th className="py-5 px-8 text-right">Line Total</th>
+                                        <th className="py-5 px-8">{t('scope_description')}</th>
+                                        <th className="py-5 px-4 text-right">{t('col_quantity')}</th>
+                                        <th className="py-5 px-6 text-right">{t('unit_price')}</th>
+                                        <th className="py-5 px-8 text-right">{t('total_amount')}</th>
                                         {canEditOffer && <th className="py-5 px-6"></th>}
                                     </tr>
                                 </thead>
