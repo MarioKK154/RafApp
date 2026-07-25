@@ -109,6 +109,7 @@ def get_settings() -> AppSettings:
             "http://127.0.0.1:5173",
             "https://www.rafapp.is",
             "https://rafapp.is",
+            "https://rafsud.rafapp.is",
         ]
 
     trusted = _split_csv("TRUSTED_HOSTS")

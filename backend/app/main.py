@@ -153,6 +153,7 @@ if _settings.trusted_hosts:
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_settings.cors_origins,
+    allow_origin_regex=r"https://.*\.rafapp\.is",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
