@@ -87,7 +87,8 @@ function LoginPage() {
                         const matched = tenantsList.find(
                             (tnt) => 
                                 (tnt.subdomain && tnt.subdomain.toLowerCase() === sub) ||
-                                (tnt.name || '').toLowerCase().replace(/\s+/g, '') === sub
+                                (tnt.name || '').toLowerCase().replace(/\s+/g, '') === sub ||
+                                (tnt.name || '').toLowerCase().includes(sub)
                         );
                         if (matched) {
                             setSelectedTenantId(String(matched.id));

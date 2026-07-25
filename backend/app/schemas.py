@@ -139,6 +139,7 @@ class LoginTokenResponse(BaseModel):
 class LoginTenantOption(BaseModel):
     id: int
     name: str
+    subdomain: Optional[str] = None
     logo_url: Optional[str] = None
 
 

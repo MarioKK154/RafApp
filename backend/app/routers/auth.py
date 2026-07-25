@@ -26,6 +26,7 @@ async def get_login_tenants(request: Request, db: DbDependency):
         schemas.LoginTenantOption(
             id=t.id,
             name=t.name,
+            subdomain=t.subdomain,
             logo_url=t.logo_url,
         )
         for t in tenants
