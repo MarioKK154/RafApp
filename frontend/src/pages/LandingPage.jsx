@@ -451,7 +451,7 @@ function LandingPage() {
         if (Array.isArray(raw) && raw.length > 0) {
             return resolveMediaUrl(raw[0]);
         }
-        return 'https://tntvbultwjeyizswvqax.supabase.co/storage/v1/object/public/rafapp-uploads/landing/hero_electrician.jpg'; // Custom Electrician PPE Hero
+        return 'https://tntvbultwjeyizswvqax.supabase.co/storage/v1/object/public/rafapp-uploads/landing/hero_electrician.png'; // Custom Electrician PPE Hero with RafApp screenshot
     }, [feed.background_image_urls]);
 
     const scrollToSection = (id) => {
