@@ -25,6 +25,7 @@ else:
 class TenantReadBasic(BaseModel):
     id: int
     name: str
+    subdomain: Optional[str] = None
     logo_url: Optional[str] = None
     background_image_url: Optional[str] = None
     background_image_urls: Optional[List[str]] = None
@@ -168,6 +169,7 @@ class TotpDisableBody(BaseModel):
 
 class TenantBase(BaseModel):
     name: str = Field(..., min_length=1)
+    subdomain: Optional[str] = None
     base_hourly_rate: Optional[float] = 6500.0
     logo_url: Optional[HttpUrl | str] = None
     background_image_url: Optional[HttpUrl | str] = None
@@ -199,6 +201,7 @@ class TenantCreate(TenantBase):
 
 class TenantUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=1)
+    subdomain: Optional[str] = None
     base_hourly_rate: Optional[float] = None
     logo_url: Optional[HttpUrl | str | None] = None
     background_image_url: Optional[HttpUrl | str | None] = None

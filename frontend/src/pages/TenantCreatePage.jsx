@@ -24,6 +24,7 @@ function TenantCreatePage() {
     // Form State
     const [formData, setFormData] = useState({
         name: '',
+        subdomain: '',
         logo_url: '',
         background_image_url: '',
         background_image_urls: [],
@@ -63,7 +64,7 @@ function TenantCreatePage() {
         setIsSubmitting(true);
 
         try {
-            const createPayload = { name: formData.name };
+            const createPayload = { name: formData.name, subdomain: formData.subdomain || null };
             const response = await axiosInstance.post('/tenants/', createPayload);
             const tenantId = response.data.id;
 
@@ -130,18 +131,35 @@ function TenantCreatePage() {
                             <BuildingOfficeIcon className="h-4 w-4" /> {t('organization_details')}
                         </h2>
                         
-                        <div>
-                            <label className="block text-[10px] font-black text-gray-500 uppercase mb-1 ml-1 tracking-widest">{t('company_entity_name')}</label>
-                            <input 
-                                type="text" 
-                                name="name" 
-                                required 
-                                value={formData.name} 
-                                onChange={handleChange} 
-                                placeholder={t('company_name_placeholder')}
-                                disabled={isSubmitting}
-                                className="block w-full h-12 rounded-2xl border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-orange-500 font-bold" 
-                            />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label className="block text-[10px] font-black text-gray-500 uppercase mb-1 ml-1 tracking-widest">{t('company_entity_name')}</label>
+                                <input 
+                                    type="text" 
+                                    name="name" 
+                                    required 
+                                    value={formData.name} 
+                                    onChange={handleChange} 
+                                    placeholder={t('company_name_placeholder')}
+                                    disabled={isSubmitting}
+                                    className="block w-full h-12 rounded-2xl border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-orange-500 font-bold" 
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-[10px] font-black text-gray-500 uppercase mb-1 ml-1 tracking-widest">Subdomain Slug (e.g. rafsud)</label>
+                                <div className="relative flex items-center">
+                                    <input 
+                                        type="text" 
+                                        name="subdomain" 
+                                        placeholder="rafsud"
+                                        value={formData.subdomain || ''} 
+                                        onChange={handleChange} 
+                                        disabled={isSubmitting}
+                                        className="block w-full h-12 pr-16 rounded-2xl border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-orange-500 font-bold text-xs lowercase" 
+                                    />
+                                    <span className="absolute right-3 text-[9px] font-black text-gray-400">.rafapp.is</span>
+                                </div>
+                            </div>
                         </div>
 
                         <div className="space-y-6 pt-4 border-t border-gray-50 dark:border-gray-700">

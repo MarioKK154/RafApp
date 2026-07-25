@@ -69,6 +69,7 @@ function TenantEditPage() {
                 setInitialTenantData(tenant);
                 setFormData({
                     name: tenant.name ?? '',
+                    subdomain: tenant.subdomain ?? '',
                     logo_url: tenant.logo_url ?? '',
                     background_image_url: tenant.background_image_url ?? '',
                     background_image_urls: Array.isArray(tenant.background_image_urls) ? tenant.background_image_urls : [],
@@ -276,7 +277,7 @@ function TenantEditPage() {
                             <BuildingOfficeIcon className="h-4 w-4" /> {t('node_identity')}
                         </h2>
                         
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <div>
                                 <label className="block text-[10px] font-black text-gray-500 uppercase mb-1 ml-1 tracking-widest">{t('company_entity_name')}</label>
                                 <input 
@@ -288,6 +289,21 @@ function TenantEditPage() {
                                     disabled={isSubmitting}
                                     className="block w-full h-12 rounded-2xl border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-orange-500 font-bold" 
                                 />
+                            </div>
+                            <div>
+                                <label className="block text-[10px] font-black text-gray-500 uppercase mb-1 ml-1 tracking-widest">Subdomain Slug</label>
+                                <div className="relative flex items-center">
+                                    <input 
+                                        type="text" 
+                                        name="subdomain" 
+                                        placeholder="rafsud"
+                                        value={formData.subdomain || ''} 
+                                        onChange={handleChange} 
+                                        disabled={isSubmitting}
+                                        className="block w-full h-12 pr-16 rounded-2xl border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-orange-500 font-bold text-xs lowercase" 
+                                    />
+                                    <span className="absolute right-3 text-[9px] font-black text-gray-400">.rafapp.is</span>
+                                </div>
                             </div>
                             <div>
                                 <label className="block text-[10px] font-black text-gray-500 uppercase mb-1 ml-1 tracking-widest">Base Hourly Rate (ISK)</label>

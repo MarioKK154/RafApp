@@ -116,6 +116,7 @@ def _ensure_tenant(db) -> models.Tenant:
         tenant = models.Tenant(
             id=TENANT_ID,
             name="Rafverktakar Suðurnesja ehf.",
+            subdomain="rafsud",
             is_active=True,
             base_hourly_rate=4500.0,
             logo_url="https://tntvbultwjeyizswvqax.supabase.co/storage/v1/object/public/rafapp-uploads/tenant_assets/2/logo.png",
@@ -127,6 +128,7 @@ def _ensure_tenant(db) -> models.Tenant:
         _sync_tenant_id_sequence(db)
     else:
         tenant.name = "Rafverktakar Suðurnesja ehf."
+        tenant.subdomain = "rafsud"
         tenant.is_active = True
         tenant.base_hourly_rate = 4500.0
         tenant.logo_url = "https://tntvbultwjeyizswvqax.supabase.co/storage/v1/object/public/rafapp-uploads/tenant_assets/2/logo.png"

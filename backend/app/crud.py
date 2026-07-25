@@ -86,6 +86,7 @@ def create_tenant(db: Session, tenant: schemas.TenantCreate) -> models.Tenant:
     now = datetime.now(timezone.utc)
     db_tenant = models.Tenant(
         name=tenant.name,
+        subdomain=tenant.subdomain.strip().lower() if tenant.subdomain else None,
         logo_url=str(tenant.logo_url) if tenant.logo_url else None,
         background_image_url=str(tenant.background_image_url) if tenant.background_image_url else None,
         background_image_urls=json.dumps(bg_urls) if bg_urls else None,
@@ -101,7 +102,9 @@ def create_tenant(db: Session, tenant: schemas.TenantCreate) -> models.Tenant:
 def update_tenant(db: Session, db_tenant: models.Tenant, tenant_update: schemas.TenantUpdate) -> models.Tenant:
     update_data = tenant_update.model_dump(exclude_unset=True)
     for key, value in update_data.items():
-        if key in ['logo_url', 'background_image_url'] and value:
+        if key == 'subdomain':
+            setattr(db_tenant, key, str(value).strip().lower() if value else None)
+        elif key in ['logo_url', 'background_image_url'] and value:
             setattr(db_tenant, key, str(value))
         elif key in ['background_image_urls', 'enabled_features']:
             setattr(db_tenant, key, json.dumps(value) if value else None)

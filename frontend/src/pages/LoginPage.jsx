@@ -85,7 +85,9 @@ function LoginPage() {
                     const sub = parts[0].toLowerCase();
                     if (sub !== 'www' && sub !== 'api') {
                         const matched = tenantsList.find(
-                            (tnt) => (tnt.name || '').toLowerCase().replace(/\s+/g, '') === sub
+                            (tnt) => 
+                                (tnt.subdomain && tnt.subdomain.toLowerCase() === sub) ||
+                                (tnt.name || '').toLowerCase().replace(/\s+/g, '') === sub
                         );
                         if (matched) {
                             setSelectedTenantId(String(matched.id));
@@ -202,11 +204,11 @@ function LoginPage() {
             <div className="w-full max-w-md animate-in fade-in zoom-in-95 duration-700">
                 
                 <div className="text-center mb-10">
-                    <div className="inline-flex p-6 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-800 mb-6">
+                    <div className="inline-flex items-center justify-center p-4 bg-white dark:bg-gray-800 rounded-3xl border border-gray-150 dark:border-gray-700/80 mb-6 shadow-sm">
                         <img 
                             src={(isSubdomainLocked && selectedTenant && selectedTenant.logo_url) ? resolveLoginAssetUrl(selectedTenant.logo_url) : defaultLogo} 
                             alt="RafApp Logo" 
-                            className="h-28 w-28 object-contain" 
+                            className="h-24 w-auto max-w-[180px] max-h-24 object-contain p-1" 
                         />
                     </div>
                     

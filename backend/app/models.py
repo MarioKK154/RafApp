@@ -137,6 +137,7 @@ class Tenant(Base):
     __tablename__ = "tenants"
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String, unique=True, index=True)
+    subdomain: Mapped[Optional[str]] = mapped_column(String, unique=True, index=True, nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     base_hourly_rate: Mapped[float] = mapped_column(Float, default=6500.0)
     logo_url: Mapped[Optional[str]] = mapped_column(String, nullable=True)

@@ -164,7 +164,14 @@ function TenantListPage() {
                                                 <div className="h-10 w-10 rounded-xl bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 flex-shrink-0 shadow-sm flex items-center justify-center text-xs font-black text-gray-600 dark:text-gray-200">
                                                     {(tenant.name || '?').charAt(0).toUpperCase()}
                                                 </div>
-                                                <span className="font-black text-gray-900 dark:text-white uppercase tracking-tight">{tenant.name}</span>
+                                                <div>
+                                                    <span className="font-black text-gray-900 dark:text-white uppercase tracking-tight block">{tenant.name}</span>
+                                                    {tenant.subdomain && (
+                                                        <span className="inline-block text-[9px] font-mono text-indigo-500 font-bold bg-indigo-50 dark:bg-indigo-900/30 px-2 py-0.5 rounded-md mt-0.5 border border-indigo-100 dark:border-indigo-800/50">
+                                                            {tenant.subdomain}.rafapp.is
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </div>
                                         </td>
                                         <td className="py-5 px-6">
