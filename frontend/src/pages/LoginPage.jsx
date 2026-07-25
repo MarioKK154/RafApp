@@ -190,10 +190,14 @@ function LoginPage() {
 
             {/* Top Bar Header Navigation */}
             <header className="w-full fixed top-0 left-0 right-0 z-50 px-6 py-4 flex items-center justify-between pointer-events-none">
-                <button onClick={() => navigate('/')} className="pointer-events-auto flex items-center gap-2 bg-white/90 dark:bg-gray-800/90 backdrop-blur-md text-gray-700 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-400 transition px-4 py-2 rounded-2xl border border-gray-200/80 dark:border-gray-700/80 shadow-xs font-bold text-xs uppercase tracking-widest">
-                    <ArrowLeftIcon className="h-4 w-4" />
-                    <span>{t('back', { defaultValue: 'Back' })}</span>
-                </button>
+                {!isSubdomainLocked ? (
+                    <button onClick={() => navigate('/')} className="pointer-events-auto flex items-center gap-2 bg-white/90 dark:bg-gray-800/90 backdrop-blur-md text-gray-700 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-400 transition px-4 py-2 rounded-2xl border border-gray-200/80 dark:border-gray-700/80 shadow-xs font-bold text-xs uppercase tracking-widest">
+                        <ArrowLeftIcon className="h-4 w-4" />
+                        <span>{t('back', { defaultValue: 'Back' })}</span>
+                    </button>
+                ) : (
+                    <div />
+                )}
                 <button onClick={toggleLanguage} className="pointer-events-auto flex items-center gap-2 bg-white/90 dark:bg-gray-800/90 backdrop-blur-md text-gray-700 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-400 transition px-3.5 py-2 rounded-2xl border border-gray-200/80 dark:border-gray-700/80 shadow-xs font-bold text-xs uppercase tracking-widest">
                     <FlagIcon lang={i18n.language?.toLowerCase().startsWith('en') ? 'is' : 'en'} className="w-4 h-3 rounded-[2px] shadow-sm shrink-0" />
                     <span>{i18n.language?.toLowerCase().startsWith('en') ? 'IS' : 'EN'}</span>
