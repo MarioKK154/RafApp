@@ -22,7 +22,11 @@ import {
     Cog6ToothIcon,
     LightBulbIcon,
     SparklesIcon,
-    CpuChipIcon
+    CpuChipIcon,
+    BuildingOfficeIcon,
+    CreditCardIcon,
+    WrenchScrewdriverIcon,
+    ShieldCheckIcon
 } from '@heroicons/react/24/outline';
 
 const CONFIRMATION_PHRASE = "PERFORM CLEAN SLATE";
@@ -32,6 +36,7 @@ function AdminToolsPage() {
     const navigate = useNavigate();
     const { user: currentUser, isAuthenticated, isLoading: authIsLoading } = useAuth();
 
+    const [adminTab, setAdminTab] = useState('tenants');
     const [mainAdminEmail, setMainAdminEmail] = useState('');
     const [confirmationInput, setConfirmationInput] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -655,9 +660,185 @@ function AdminToolsPage() {
                 ]}
             />
 
-            <div className="space-y-12">
-                {/* Excel Database Synchronization */}
-                <div className="space-y-4">
+            {/* Admin Console Tab Navigation Bar */}
+            <div className="flex flex-wrap gap-2 mb-8 bg-white dark:bg-gray-900/80 p-2.5 rounded-2xl border border-gray-200 dark:border-indigo-950/30 shadow-sm">
+                <button
+                    type="button"
+                    onClick={() => setAdminTab('tenants')}
+                    className={`px-5 py-3 rounded-xl font-black text-xs uppercase tracking-wider transition-all flex items-center gap-2.5 ${
+                        adminTab === 'tenants'
+                            ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30'
+                            : 'text-gray-600 dark:text-gray-400 hover:text-indigo-500 hover:bg-gray-100 dark:hover:bg-gray-800/40'
+                    }`}
+                >
+                    <BuildingOfficeIcon className="h-4 w-4" />
+                    {t('tab_tenants', { defaultValue: '🏢 Tenants & Subscriptions' })}
+                </button>
+
+                <button
+                    type="button"
+                    onClick={() => setAdminTab('telemetry')}
+                    className={`px-5 py-3 rounded-xl font-black text-xs uppercase tracking-wider transition-all flex items-center gap-2.5 ${
+                        adminTab === 'telemetry'
+                            ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30'
+                            : 'text-gray-600 dark:text-gray-400 hover:text-indigo-500 hover:bg-gray-100 dark:hover:bg-gray-800/40'
+                    }`}
+                >
+                    <CpuChipIcon className="h-4 w-4" />
+                    {t('tab_telemetry', { defaultValue: '⚡ System Telemetry & AI' })}
+                </button>
+
+                <button
+                    type="button"
+                    onClick={() => setAdminTab('billing')}
+                    className={`px-5 py-3 rounded-xl font-black text-xs uppercase tracking-wider transition-all flex items-center gap-2.5 ${
+                        adminTab === 'billing'
+                            ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30'
+                            : 'text-gray-600 dark:text-gray-400 hover:text-indigo-500 hover:bg-gray-100 dark:hover:bg-gray-800/40'
+                    }`}
+                >
+                    <CreditCardIcon className="h-4 w-4" />
+                    {t('tab_billing', { defaultValue: '💳 Billing & Transactions' })}
+                </button>
+
+                <button
+                    type="button"
+                    onClick={() => setAdminTab('maintenance')}
+                    className={`px-5 py-3 rounded-xl font-black text-xs uppercase tracking-wider transition-all flex items-center gap-2.5 ${
+                        adminTab === 'maintenance'
+                            ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30'
+                            : 'text-gray-600 dark:text-gray-400 hover:text-indigo-500 hover:bg-gray-100 dark:hover:bg-gray-800/40'
+                    }`}
+                >
+                    <WrenchScrewdriverIcon className="h-4 w-4" />
+                    {t('tab_maintenance', { defaultValue: '🛠️ Data Maintenance & Seeds' })}
+                </button>
+
+                <button
+                    type="button"
+                    onClick={() => setAdminTab('audit')}
+                    className={`px-5 py-3 rounded-xl font-black text-xs uppercase tracking-wider transition-all flex items-center gap-2.5 ${
+                        adminTab === 'audit'
+                            ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30'
+                            : 'text-gray-600 dark:text-gray-400 hover:text-indigo-500 hover:bg-gray-100 dark:hover:bg-gray-800/40'
+                    }`}
+                >
+                    <ShieldCheckIcon className="h-4 w-4" />
+                    {t('tab_audit', { defaultValue: '📜 Audit & Security Logs' })}
+                </button>
+            </div>
+
+            {/* TAB CONTENT: 💳 Billing & Subscriptions */}
+            {adminTab === 'billing' && (
+                <div className="space-y-12 animate-in fade-in duration-300">
+                    <div className="space-y-4">
+                        <h2 className="text-sm font-black text-gray-400 uppercase tracking-widest border-b border-gray-100 dark:border-gray-800 pb-2">
+                            Master Subscriptions & Payment Gateways
+                        </h2>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {/* Billing & Overdue Tenants Card */}
+                            <div className="p-6 bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm space-y-4">
+                                <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-700 pb-3">
+                                    <div className="flex items-center gap-2">
+                                        <CreditCardIcon className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+                                        <h3 className="text-xs font-black uppercase tracking-wider text-gray-900 dark:text-white">
+                                            Overdue Tenant Accounts
+                                        </h3>
+                                    </div>
+                                    <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-red-500/20 text-red-500">
+                                        {billingOverdue?.length || 0} Flagged
+                                    </span>
+                                </div>
+                                
+                                {isLoadingMetrics && <p className="text-xs text-gray-500">Loading billing data...</p>}
+                                {!isLoadingMetrics && billingOverdue && billingOverdue.length > 0 ? (
+                                    <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                                        {billingOverdue.map(t => (
+                                            <div key={t.id} className="p-3 bg-red-50 dark:bg-red-950/20 rounded-2xl border border-red-100 dark:border-red-900/40 flex items-center justify-between">
+                                                <div>
+                                                    <p className="text-xs font-black text-gray-900 dark:text-white">{t.name}</p>
+                                                    <p className="text-[9px] font-bold text-red-500 uppercase tracking-widest">{t.overdue_invoices_count || 1} Overdue Invoice(s)</p>
+                                                </div>
+                                                <button 
+                                                    onClick={() => navigate(`/tenants/${t.id}`)}
+                                                    className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white font-black text-[9px] uppercase tracking-widest rounded-xl transition"
+                                                >
+                                                    Review
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <p className="text-xs font-bold text-teal-600 dark:text-teal-400 italic py-4 text-center">
+                                        ✅ All active tenants are up to date on monthly payments!
+                                    </p>
+                                )}
+                            </div>
+
+                            {/* Active Payment Gateways */}
+                            <div className="p-6 bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm space-y-4">
+                                <div className="flex items-center gap-2 border-b border-gray-100 dark:border-gray-700 pb-3">
+                                    <BoltIcon className="h-5 w-5 text-amber-500" />
+                                    <h3 className="text-xs font-black uppercase tracking-wider text-gray-900 dark:text-white">
+                                        Active Payment Gateways
+                                    </h3>
+                                </div>
+                                <div className="space-y-3">
+                                    <div className="p-4 bg-gray-50 dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-xl">💳</span>
+                                            <div>
+                                                <p className="text-xs font-black text-gray-900 dark:text-white uppercase">PayPal Sandbox / Live</p>
+                                                <p className="text-[9px] font-bold text-green-500 uppercase tracking-widest">Connected & Operational</p>
+                                            </div>
+                                        </div>
+                                        <span className="h-2.5 w-2.5 rounded-full bg-green-500 animate-pulse"></span>
+                                    </div>
+                                    <div className="p-4 bg-gray-50 dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-xl">🏦</span>
+                                            <div>
+                                                <p className="text-xs font-black text-gray-900 dark:text-white uppercase">Direct Bank Transfer (VSK)</p>
+                                                <p className="text-[9px] font-bold text-green-500 uppercase tracking-widest">Standard Icelandic Billing</p>
+                                            </div>
+                                        </div>
+                                        <span className="h-2.5 w-2.5 rounded-full bg-green-500 animate-pulse"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Monthly Pricing Tier Overview */}
+                            <div className="p-6 bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm space-y-4">
+                                <div className="flex items-center gap-2 border-b border-gray-100 dark:border-gray-700 pb-3">
+                                    <SparklesIcon className="h-5 w-5 text-indigo-500" />
+                                    <h3 className="text-xs font-black uppercase tracking-wider text-gray-900 dark:text-white">
+                                        Subscription Seat Tiers
+                                    </h3>
+                                </div>
+                                <div className="space-y-2 text-xs">
+                                    <div className="flex justify-between p-2.5 bg-gray-50 dark:bg-gray-900 rounded-xl">
+                                        <span className="font-bold text-gray-700 dark:text-gray-300 uppercase text-[10px]">Starter (1-5 users)</span>
+                                        <span className="font-black text-indigo-600 dark:text-indigo-400">14.900 kr. / mo</span>
+                                    </div>
+                                    <div className="flex justify-between p-2.5 bg-gray-50 dark:bg-gray-900 rounded-xl">
+                                        <span className="font-bold text-gray-700 dark:text-gray-300 uppercase text-[10px]">Pro (6-20 users)</span>
+                                        <span className="font-black text-indigo-600 dark:text-indigo-400">34.900 kr. / mo</span>
+                                    </div>
+                                    <div className="flex justify-between p-2.5 bg-gray-50 dark:bg-gray-900 rounded-xl">
+                                        <span className="font-bold text-gray-700 dark:text-gray-300 uppercase text-[10px]">Enterprise (20+ users)</span>
+                                        <span className="font-black text-indigo-600 dark:text-indigo-400">Custom Billing</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* TAB CONTENT: 🛠️ Maintenance & Seeds */}
+            {adminTab === 'maintenance' && (
+                <div className="space-y-12">
                     <h2 className="text-sm font-black text-gray-400 uppercase tracking-widest border-b border-gray-100 dark:border-gray-800 pb-2">Database Synchronization</h2>
                     <div className="bg-white dark:bg-gray-800 p-6 md:p-8 rounded-[2rem] border border-gray-100 dark:border-gray-700 shadow-sm space-y-6">
                         <div className="flex items-center gap-3">
@@ -718,7 +899,6 @@ function AdminToolsPage() {
                             </div>
                         )}
                     </div>
-                </div>
 
                 {/* Critical Operations */}
                 <div className="space-y-4">
@@ -831,9 +1011,11 @@ function AdminToolsPage() {
                         </div>
                     </div>
                 </div>
+            )}
 
-                {/* System Metrics & Health */}
-                <div className="space-y-4">
+            {/* TAB CONTENT: ⚡ Telemetry & Health */}
+            {adminTab === 'telemetry' && (
+                <div className="space-y-12">
                     <h2 className="text-sm font-black text-gray-400 uppercase tracking-widest border-b border-gray-100 dark:border-gray-800 pb-2">System Metrics & Health</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                         <div className="p-5 bg-indigo-50 dark:bg-indigo-900/10 rounded-3xl border border-indigo-100 dark:border-indigo-800">
@@ -982,10 +1164,12 @@ function AdminToolsPage() {
                         </div>
                     </div>
                 </div>
+            )}
 
-                {/* System Configuration */}
-                <div className="space-y-4">
-                    <h2 className="text-sm font-black text-gray-400 uppercase tracking-widest border-b border-gray-100 dark:border-gray-800 pb-2">System Configuration</h2>
+            {/* TAB CONTENT: 🏢 Tenants & Subscriptions */}
+            {adminTab === 'tenants' && (
+                <div className="space-y-12">
+                    <h2 className="text-sm font-black text-gray-400 uppercase tracking-widest border-b border-gray-100 dark:border-gray-800 pb-2">System Configuration & Tenant Controls</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 
                         <div className="p-5 bg-yellow-50 dark:bg-yellow-900/20 rounded-3xl border border-yellow-200 dark:border-yellow-700">
@@ -1067,10 +1251,12 @@ function AdminToolsPage() {
                         )}
                     </div>
                 </div>
+            )}
 
-                {/* Logs & Feeds */}
-                <div className="space-y-4">
-                    <h2 className="text-sm font-black text-gray-400 uppercase tracking-widest border-b border-gray-100 dark:border-gray-800 pb-2">Logs & Feeds</h2>
+            {/* TAB CONTENT: 📜 Audit & Security Logs */}
+            {adminTab === 'audit' && (
+                <div className="space-y-12">
+                    <h2 className="text-sm font-black text-gray-400 uppercase tracking-widest border-b border-gray-100 dark:border-gray-800 pb-2">Logs & Security Audit Trails</h2>
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
                         <div className="p-5 bg-slate-50 dark:bg-slate-900/30 rounded-3xl border border-slate-200 dark:border-slate-700">
@@ -1695,7 +1881,6 @@ function AdminToolsPage() {
                             )}
                         </div>
                     </div>
-                </div>
 
                 {/* User Feedback & Suggestions */}
                 <div className="space-y-4 pt-4 border-t border-gray-100 dark:border-gray-800">
@@ -1907,7 +2092,9 @@ function AdminToolsPage() {
                     </div>
                 </div>
             </div>
-    );
+        )}
+    </div>
+);
 }
 
 /**

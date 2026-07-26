@@ -46,10 +46,33 @@ function LoginPage() {
     const [step, setStep] = useState('credentials');
     const [tempToken, setTempToken] = useState(null);
     const [totpCode, setTotpCode] = useState('');
+    const [forgotEmail, setForgotEmail] = useState('');
+    const [forgotSuccessMsg, setForgotSuccessMsg] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [tenantMenuOpen, setTenantMenuOpen] = useState(false);
     const [isSubdomainLocked, setIsSubdomainLocked] = useState(false);
     const tenantPickerRef = useRef(null);
+
+    const handleForgotPasswordSubmit = async (e) => {
+        e.preventDefault();
+        if (!forgotEmail) {
+            toast.error(t('enter_email', { defaultValue: 'Please enter your email address.' }));
+            return;
+        }
+        setIsLoading(true);
+        try {
+            const res = await axiosInstance.post('/auth/forgot-password', {
+                email: forgotEmail,
+                tenant_id: selectedTenantId ? Number(selectedTenantId) : null
+            });
+            setForgotSuccessMsg(res.data.message);
+            toast.success(t('forgot_link_sent', { defaultValue: 'Password reset link dispatched!' }));
+        } catch (err) {
+            toast.error(err.response?.data?.detail || t('error_sending_reset', { defaultValue: 'Failed to request password reset.' }));
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     const from = location.state?.from?.pathname || '/';
 
@@ -411,17 +434,30 @@ function LoginPage() {
                                 </div>
                             </div>
 
-                            <label className="flex items-center gap-3 px-2 cursor-pointer select-none">
-                                <input
-                                    type="checkbox"
-                                    checked={keepSignedIn}
-                                    onChange={(e) => setKeepSignedIn(e.target.checked)}
-                                    className="h-5 w-5 rounded-lg text-indigo-600 border-gray-300 dark:border-gray-600 dark:bg-gray-800"
-                                />
-                                <span className="text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest">
-                                    {t('keep_signed_in', { defaultValue: 'Keep me signed in' })}
-                                </span>
-                            </label>
+                            <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest px-1">
+                                <label className="flex items-center gap-2 cursor-pointer select-none">
+                                    <input
+                                        type="checkbox"
+                                        checked={keepSignedIn}
+                                        onChange={(e) => setKeepSignedIn(e.target.checked)}
+                                        className="h-4 w-4 rounded-md text-indigo-600 border-gray-300 dark:border-gray-600 dark:bg-gray-800"
+                                    />
+                                    <span className="text-gray-500 dark:text-gray-400">
+                                        {t('keep_signed_in', { defaultValue: 'Keep me signed in' })}
+                                    </span>
+                                </label>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setForgotEmail(email);
+                                        setForgotSuccessMsg('');
+                                        setStep('forgot');
+                                    }}
+                                    className="text-indigo-500 hover:text-indigo-400 transition"
+                                >
+                                    {t('forgot_password_link', { defaultValue: 'Gleymdir þú lykilorði?' })}
+                                </button>
+                            </div>
 
                             <button
                                 type="submit"
@@ -450,6 +486,74 @@ function LoginPage() {
                                     {t('request_access', { defaultValue: 'Request Access / Contact Us' })}
                                 </button>
                             </div>
+                        </form>
+                    )}
+
+                    {step === 'forgot' && (
+                        <form onSubmit={handleForgotPasswordSubmit} className="space-y-6 animate-in fade-in duration-300">
+                            <div>
+                                <h3 className="text-xs font-black uppercase tracking-widest text-white mb-1">
+                                    {t('forgot_password_title', { defaultValue: 'Endursetja Lykilorð' })}
+                                </h3>
+                                <p className="text-xs text-gray-400 font-semibold leading-relaxed">
+                                    {t('forgot_password_desc', { defaultValue: 'Sláðu inn netfangið þitt til að fá sendan hlekk í tölvupósti til að endursetja lykilorðið.' })}
+                                </p>
+                            </div>
+
+                            {forgotSuccessMsg ? (
+                                <div className="p-4 rounded-2xl bg-teal-950/40 border border-teal-500/30 text-teal-300 text-xs font-bold space-y-3">
+                                    <p>{forgotSuccessMsg}</p>
+                                    <button
+                                        type="button"
+                                        onClick={() => setStep('credentials')}
+                                        className="w-full py-2 bg-teal-600 hover:bg-teal-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition"
+                                    >
+                                        {t('back_to_login', { defaultValue: 'Aftur í innskráningu' })}
+                                    </button>
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="space-y-1">
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 flex items-center gap-1.5">
+                                            <EnvelopeIcon className="h-3 w-3" /> {t('email_address', { defaultValue: 'Email address' })}
+                                        </label>
+                                        <input
+                                            type="email"
+                                            required
+                                            value={forgotEmail}
+                                            onChange={(e) => setForgotEmail(e.target.value)}
+                                            placeholder="nafn@fyrirtaeki.is"
+                                            className="modern-input h-14"
+                                        />
+                                    </div>
+
+                                    <button
+                                        type="submit"
+                                        disabled={isLoading}
+                                        className="w-full h-14 inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition transform active:scale-95 disabled:opacity-50"
+                                    >
+                                        {isLoading ? (
+                                            <>
+                                                <ArrowPathIcon className="h-5 w-5 animate-spin" />
+                                                {t('sending', { defaultValue: 'Sendir...' })}
+                                            </>
+                                        ) : (
+                                            <>
+                                                <EnvelopeIcon className="h-5 w-5" />
+                                                {t('send_reset_link_btn', { defaultValue: 'Senda hlekk í tölvupósti' })}
+                                            </>
+                                        )}
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        onClick={() => setStep('credentials')}
+                                        className="w-full py-3 text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-white transition"
+                                    >
+                                        {t('cancel_back', { defaultValue: 'Hætta við / Aftur í innskráningu' })}
+                                    </button>
+                                </>
+                            )}
                         </form>
                     )}
 

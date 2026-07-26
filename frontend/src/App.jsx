@@ -14,6 +14,7 @@ import { useTenantBranding } from './hooks/useTenantBranding';
 
 // --- FEATURE PAGE IMPORTS ---
 import LoginPage from './pages/LoginPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
 import HomePage from './pages/HomePage';
 import LandingPage from './pages/LandingPage';
 import ProjectsPage from './pages/ProjectsPage';
@@ -317,6 +318,7 @@ function AppShell() {
                     <ErrorBoundary>
                     <Routes>
                         <Route path="/login" element={<LoginPage />} />
+                        <Route path="/reset-password" element={<ResetPasswordPage />} />
                         <Route path="/" element={<LandingPage />} />
 
                         {/* --- CORE OPERATIONAL HUB --- */}

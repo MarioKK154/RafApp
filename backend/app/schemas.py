@@ -320,6 +320,14 @@ class UserChangePassword(BaseModel):
 class UserSetPasswordByAdmin(BaseModel):
     new_password: str = Field(..., min_length=8)
 
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+    tenant_id: Optional[int] = None
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str = Field(..., min_length=8)
+
 class UserImportCSVRow(BaseModel):
     Name: Optional[str] = None
     Email: EmailStr

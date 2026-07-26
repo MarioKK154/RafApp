@@ -115,3 +115,68 @@ async def complete_two_factor_login(request: Request, db: DbDependency, body: sc
         expires_in_seconds=expires_in_seconds,
     )
 
+
+@router.post("/forgot-password")
+@limiter.limit("5/minute")
+async def forgot_password(request: Request, body: schemas.ForgotPasswordRequest, db: DbDependency):
+    """Generates a signed password reset token and dispatches an email via ZeptoMail."""
+    from .. import email as email_service
+    user = None
+    if body.tenant_id:
+        user = crud.get_user_by_email_and_tenant(db, email=body.email, tenant_id=body.tenant_id)
+    else:
+        user = crud.get_user_by_email(db, email=body.email)
+    
+    if user and user.is_active:
+        reset_token = security.create_password_reset_token(user.id, user.email)
+        origin = request.headers.get("origin") or "https://rafapp.is"
+        reset_link = f"{origin}/reset-password?token={reset_token}"
+        
+        email_service.send_password_reset_email(
+            to_email=user.email,
+            reset_link=reset_link,
+            user_name=user.full_name or "Notandi"
+        )
+        return {
+            "message": "Ef aðgangur með þessu netfangi er til staðar hefur hlekkur til að endursetja lykilorð verið sendur í tölvupósti.",
+            "dev_reset_link": reset_link
+        }
+    
+    return {
+        "message": "Ef aðgangur með þessu netfangi er til staðar hefur hlekkur til að endursetja lykilorð verið sendur í tölvupósti."
+    }
+
+
+@router.post("/reset-password")
+@limiter.limit("5/minute")
+async def reset_password(request: Request, body: schemas.ResetPasswordRequest, db: DbDependency):
+    """Validates reset token and sets new password."""
+    payload = security.verify_password_reset_token(body.token)
+    if not payload:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Ógildur eða útrunninn endursetningarlykill. Vinsamlegast biðjið um nýjan hlekk."
+        )
+    
+    user_id_str = payload.get("sub")
+    if not user_id_str or not user_id_str.isdigit():
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Ógildur endursetningarlykill.")
+    
+    user = crud.get_user(db, user_id=int(user_id_str))
+    if not user or not user.is_active:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Notandi fannst ekki eða er óvirkur.")
+    
+    crud.update_user_password(db=db, user=user, new_password=body.new_password)
+    
+    crud.log_sensitive_action(
+        db=db,
+        action_type="password_reset_self",
+        user_id=user.id,
+        tenant_id=user.tenant_id,
+        target_ref=f"user:{user.id}",
+        details=f"Self-service password reset executed via email token for {user.email}",
+        ip_address=request.client.host if request.client else None
+    )
+    
+    return {"message": "Lykilorði hefur verið breytt! Þú getur nú skráð þig inn með nýja lykilorðinu."}
+

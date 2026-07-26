@@ -32,6 +32,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES = JWT_REMEMBER_MINUTES  # legacy default for callers
 
 # Pending 2FA tokens must not authenticate normal API routes
 SCOPE_2FA_PENDING = "2fa_pending"
+SCOPE_PASSWORD_RESET = "password_reset"
 
 # --- Password Hashing ---
 # Using bcrypt as the scheme for password hashing
@@ -109,6 +110,30 @@ def decode_token_payload(token: str) -> Optional[dict]:
     """Decode JWT and return payload dict, or None if invalid."""
     try:
         return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+    except JWTError:
+        return None
+
+
+def create_password_reset_token(user_id: int, email: str) -> str:
+    """Create a 30-minute signed token for password reset."""
+    expires_delta = timedelta(minutes=30)
+    expire = datetime.now(timezone.utc) + expires_delta
+    to_encode = {
+        "sub": str(user_id),
+        "email": email,
+        "scope": SCOPE_PASSWORD_RESET,
+        "exp": expire
+    }
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+
+def verify_password_reset_token(token: str) -> Optional[dict]:
+    """Verify and decode a password reset token."""
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        if payload.get("scope") != SCOPE_PASSWORD_RESET:
+            return None
+        return payload
     except JWTError:
         return None
 

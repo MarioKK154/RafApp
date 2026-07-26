@@ -92,6 +92,36 @@ function HomePage() {
         ];
     });
 
+    // Role-tailored default dashboard layout configuration
+    useEffect(() => {
+        if (!user) return;
+        const saved = localStorage.getItem(`rafapp_dashboard_layout_${user.id}`) || localStorage.getItem('rafapp_dashboard_layout');
+        if (saved) return; // Retain user's custom layout preference if set
+
+        const role = user.role?.toLowerCase() || 'worker';
+        if (role === 'worker' || role === 'user') {
+            // Electrician / Field Technician: Mobile-first view focused on Clock-in & Assigned Tasks
+            setLayout([
+                { id: 'stat-cards', visible: true, title_en: 'My Personal Overview', title_is: 'Mín skráning og mælaborð', color: 'indigo' },
+                { id: 'action-center', visible: true, title_en: 'Electrician Quick Actions', title_is: 'Flýtiaðgerðir rafverktaka', color: 'indigo' },
+                { id: 'projects-list', visible: true, title_en: 'My Active Work Sites', title_is: 'Mín virku verkefni', color: 'indigo' },
+                { id: 'calendar', visible: true, title_en: 'Work Schedule', title_is: 'Tímaplan', color: 'indigo' },
+                { id: 'charts-block', visible: false, title_en: 'Financial Metrics', title_is: 'Fjármálagrafa yfirlit', color: 'indigo' },
+                { id: 'suggestions-feedback', visible: true, title_en: 'Feedback & Ideas', title_is: 'Ábendingar og hugmyndir', color: 'indigo' },
+                { id: 'alerts', visible: true, title_en: 'System Alerts', title_is: 'Kerfistilkynningar', color: 'indigo' }
+            ]);
+        } else if (role === 'accountant') {
+            // Accountant: Focused on Timesheets, Payroll & Monthly Subscriptions
+            setLayout([
+                { id: 'stat-cards', visible: true, title_en: 'Payroll & Invoicing Summary', title_is: 'Launa- og bókhaldsyfirlit', color: 'indigo' },
+                { id: 'charts-block', visible: true, title_en: 'Monthly Logged Hours per Project', title_is: 'Tímar á verkefni og útgjöld', color: 'indigo' },
+                { id: 'action-center', visible: true, title_en: 'Accounting Actions', title_is: 'Flýtiaðgerðir bókhalds', color: 'indigo' },
+                { id: 'projects-list', visible: true, title_en: 'Active Cost Centers', title_is: 'Kostnaðarstaðir verkefna', color: 'indigo' },
+                { id: 'alerts', visible: true, title_en: 'Billing Notifications', title_is: 'Bókhaldstilkynningar', color: 'indigo' }
+            ]);
+        }
+    }, [user]);
+
     const isIcelandic = !i18n.language.startsWith('en');
 
     // Destinations for functional search bar

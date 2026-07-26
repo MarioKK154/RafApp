@@ -1806,6 +1806,74 @@ function LandingPage() {
                     </div>
                 </section>
  
+                {/* Mobile App Download Section */}
+                <section id="mobile-download" className="py-20 bg-slate-950 border-t border-gray-800 text-left relative overflow-hidden">
+                    <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                        <div className="space-y-6">
+                            <div className="inline-block px-4 py-1.5 rounded-full bg-[#0096FF]/10 text-[#0096FF] font-black uppercase tracking-widest text-[10px] border border-[#0096FF]/20">
+                                {i18n.language.startsWith('en') ? 'Native Android & PWA App' : 'Snjallsímaapp fyrir rafverktaka'}
+                            </div>
+                            
+                            <h2 className="text-3xl md:text-5xl font-black text-white leading-tight">
+                                {i18n.language.startsWith('en') ? 'Take RafApp Everywhere On The Job Site' : 'Sæktu RafApp snjallsímaappið'}
+                            </h2>
+
+                            <p className="text-gray-400 text-sm md:text-base leading-relaxed">
+                                {i18n.language.startsWith('en')
+                                    ? 'Access live project drawings, clock-in instantly on active work sites, scan equipment, and log timesheets on the go — fully synced with offline resilience.'
+                                    : 'Stimplaðu þig inn á vinnustað með einum smelli, skoðaðu teikningar í símanum, skráðu tíma og verkefni beint af vettvangi — virkar samstundis á öllum snjallsímum.'}
+                            </p>
+
+                            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-4">
+                                <a
+                                    href="/downloads/rafapp-v1.0.apk"
+                                    download="rafapp-v1.0.apk"
+                                    className="px-6 py-4 bg-[#0096FF] hover:bg-blue-500 text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-lg shadow-[#0096FF]/30 transition flex items-center justify-center gap-3 text-center"
+                                >
+                                    <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                                        <path d="M17.523 15.3414C17.0628 15.3414 16.691 14.9696 16.691 14.5094C16.691 14.0492 17.0628 13.6774 17.523 13.6774C17.9832 13.6774 18.355 14.0492 18.355 14.5094C18.355 14.9696 17.9832 15.3414 17.523 15.3414ZM6.47704 15.3414C6.01684 15.3414 5.64502 14.9696 5.64502 14.5094C5.64502 14.0492 6.01684 13.6774 6.47704 13.6774C6.93724 13.6774 7.30906 14.0492 7.30906 14.5094C7.30906 14.9696 6.93724 15.3414 6.47704 15.3414ZM17.935 9.77198L19.5441 6.9856C19.7024 6.7113 19.6083 6.3606 19.334 6.2023C19.0597 6.044 18.709 6.1381 18.5507 6.4124L16.9069 9.2588C15.4265 8.5824 13.7644 8.2 12 8.2C10.2356 8.2 8.5735 8.5824 7.0931 9.2588L5.4493 6.4124C5.291 6.1381 4.9403 6.044 4.666 6.2023C4.3917 6.3606 4.2976 6.7113 4.4559 6.9856L6.065 9.77198C2.6568 11.6322 0.355 15.1118 0 19.1667H24C23.645 15.1118 21.3432 11.6322 17.935 9.77198Z" />
+                                    </svg>
+                                    <span>{i18n.language.startsWith('en') ? 'Download Android APK (v1.0)' : 'Sækja Android APK (v1.0)'}</span>
+                                </a>
+
+                                <div className="px-5 py-3.5 bg-gray-900 rounded-2xl border border-gray-800 flex items-center gap-3">
+                                    <div className="h-3 w-3 rounded-full bg-green-500 animate-ping shrink-0" />
+                                    <div className="text-[10px]">
+                                        <p className="font-black text-white uppercase tracking-wider">{i18n.language.startsWith('en') ? 'PWA Mobile Web App' : 'Vefapp í síma'}</p>
+                                        <p className="text-gray-400 font-bold">{i18n.language.startsWith('en') ? 'Tap "Add to Home Screen"' : 'Smelltu á "Bæta við á heimaskjá"'}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Phone Preview Mockup Graphic */}
+                        <div className="flex justify-center relative">
+                            <div className="relative w-72 h-[480px] bg-slate-900 rounded-[3rem] p-4 border-4 border-slate-800 shadow-2xl shadow-[#0096FF]/20 flex flex-col justify-between overflow-hidden">
+                                <div className="w-24 h-4 bg-slate-800 rounded-full mx-auto mb-2 shrink-0"></div>
+                                <div className="flex-1 bg-gradient-to-b from-indigo-950 via-slate-900 to-slate-950 rounded-[2rem] p-4 border border-indigo-500/20 text-white flex flex-col justify-between">
+                                    <div className="space-y-3">
+                                        <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-indigo-400">
+                                            <span>⚡ RafApp Mobile</span>
+                                            <span className="text-green-400">LIVE</span>
+                                        </div>
+                                        <div className="p-3 bg-indigo-600/20 rounded-xl border border-indigo-500/30">
+                                            <p className="text-[9px] font-black text-indigo-300 uppercase">Vinnusvæði</p>
+                                            <p className="text-xs font-black text-white">Landspítalinn - Nýbygging</p>
+                                        </div>
+                                        <div className="p-3 bg-gray-900/80 rounded-xl border border-gray-800 text-[10px] space-y-1">
+                                            <p className="font-bold text-gray-300">✓ Tímaskráning í gangi</p>
+                                            <p className="font-bold text-gray-300">✓ 3 Óloknar gátlistar</p>
+                                        </div>
+                                    </div>
+                                    <div className="p-3 bg-[#0096FF] text-white text-[10px] font-black uppercase tracking-widest text-center rounded-xl shadow-lg shadow-[#0096FF]/40">
+                                        Stimpla inn / út
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
                 {/* About Us & Contact Section */}
                 <section id="about" className="py-20 bg-gray-900 border-t border-gray-800">
                     <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-16">
