@@ -890,13 +890,13 @@ function LandingPage() {
                                 </>
                             )}
                             <div className="flex flex-wrap items-center gap-4">
-                                <Link 
-                                    to={isAuthenticated ? "/dashboard" : "/login"}
+                                <button 
+                                    onClick={() => scrollToSection('pricing')}
                                     className="bg-[#0096FF] hover:bg-blue-500 text-white px-8 py-4 rounded-full font-bold uppercase tracking-widest text-sm transition flex items-center gap-2 shadow-xl shadow-[#0096FF]/20"
                                 >
                                     {i18n.language.startsWith('en') ? 'Get Started' : 'Hefja handa'}
                                     <ArrowRightIcon className="h-4 w-4" />
-                                </Link>
+                                </button>
                                 <button 
                                     onClick={() => scrollToSection('about')}
                                     className="px-8 py-4 rounded-full font-bold uppercase tracking-widest text-sm text-white bg-gray-900/90 border border-gray-600 hover:border-gray-400 hover:bg-gray-800 transition shadow-lg backdrop-blur-sm"

@@ -78,7 +78,12 @@ async def clock_in(
         )
     
     if timelog_data.project_id:
-        await get_project_if_accessible(timelog_data.project_id, db, current_user)
+        project = await get_project_if_accessible(timelog_data.project_id, db, current_user)
+        if project and (project.status in ["Commissioned", "afhent", "Completed", "Archived"] or getattr(project, 'commissioned_at', None) is not None):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Cannot clock into a commissioned or completed project."
+            )
     
     return crud.create_timelog_entry(db=db, timelog_data=timelog_data, user_id=current_user.id)
 

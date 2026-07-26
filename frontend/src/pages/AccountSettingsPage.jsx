@@ -20,6 +20,8 @@ import {
     EnvelopeIcon,
     UserCircleIcon,
     FingerPrintIcon,
+    EyeIcon,
+    EyeSlashIcon,
 } from '@heroicons/react/24/outline';
 
 function AccountSettingsPage() {
@@ -38,6 +40,12 @@ function AccountSettingsPage() {
     const [newPassword, setNewPassword] = useState('');
     const [confirmNewPassword, setConfirmNewPassword] = useState('');
     const [isSubmittingPassword, setIsSubmittingPassword] = useState(false);
+
+    // Show/Hide Password States
+    const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+    const [showNewPassword, setShowNewPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [showDisableTotpPassword, setShowDisableTotpPassword] = useState(false);
 
     // Visual Identity State
     const [selectedFile, setSelectedFile] = useState(null);
@@ -378,35 +386,65 @@ function AccountSettingsPage() {
                         <form onSubmit={handlePasswordChangeSubmit} className="p-8 space-y-6">
                             <div>
                                 <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">{t('current_password', { defaultValue: 'Active Password' })}</label>
-                                <input 
-                                    type="password" 
-                                    required 
-                                    value={currentPassword} 
-                                    onChange={(e) => setCurrentPassword(e.target.value)} 
-                                    className="modern-input" 
-                                />
+                                <div className="relative">
+                                    <input 
+                                        type={showCurrentPassword ? "text" : "password"} 
+                                        required 
+                                        value={currentPassword} 
+                                        onChange={(e) => setCurrentPassword(e.target.value)} 
+                                        className="modern-input pr-12" 
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowCurrentPassword((prev) => !prev)}
+                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition"
+                                        title={showCurrentPassword ? "Hide password" : "Show password"}
+                                    >
+                                        {showCurrentPassword ? <EyeSlashIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
+                                    </button>
+                                </div>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">{t('new_password', { defaultValue: 'Target Password' })}</label>
-                                    <input 
-                                        type="password" 
-                                        required 
-                                        value={newPassword} 
-                                        onChange={(e) => setNewPassword(e.target.value)} 
-                                        className="modern-input"
-                                        placeholder="MIN. 8 CHARS"
-                                    />
+                                    <div className="relative">
+                                        <input 
+                                            type={showNewPassword ? "text" : "password"} 
+                                            required 
+                                            value={newPassword} 
+                                            onChange={(e) => setNewPassword(e.target.value)} 
+                                            className="modern-input pr-12"
+                                            placeholder="MIN. 8 CHARS"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowNewPassword((prev) => !prev)}
+                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition"
+                                            title={showNewPassword ? "Hide password" : "Show password"}
+                                        >
+                                            {showNewPassword ? <EyeSlashIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
+                                        </button>
+                                    </div>
                                 </div>
                                 <div>
                                     <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">{t('confirm_password', { defaultValue: 'Verify Protocol' })}</label>
-                                    <input 
-                                        type="password" 
-                                        required 
-                                        value={confirmNewPassword} 
-                                        onChange={(e) => setConfirmNewPassword(e.target.value)} 
-                                        className="modern-input" 
-                                    />
+                                    <div className="relative">
+                                        <input 
+                                            type={showConfirmPassword ? "text" : "password"} 
+                                            required 
+                                            value={confirmNewPassword} 
+                                            onChange={(e) => setConfirmNewPassword(e.target.value)} 
+                                            className="modern-input pr-12" 
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowConfirmPassword((prev) => !prev)}
+                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition"
+                                            title={showConfirmPassword ? "Hide password" : "Show password"}
+                                        >
+                                            {showConfirmPassword ? <EyeSlashIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                             <div className="flex justify-end pt-4 border-t border-gray-50 dark:border-gray-700">
@@ -441,13 +479,23 @@ function AccountSettingsPage() {
                                     <form onSubmit={handleTotpDisable} className="space-y-4">
                                         <div>
                                             <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">{t('current_password')}</label>
-                                            <input
-                                                type="password"
-                                                required
-                                                value={totpDisablePassword}
-                                                onChange={(e) => setTotpDisablePassword(e.target.value)}
-                                                className="modern-input"
-                                            />
+                                            <div className="relative">
+                                                <input
+                                                    type={showDisableTotpPassword ? "text" : "password"}
+                                                    required
+                                                    value={totpDisablePassword}
+                                                    onChange={(e) => setTotpDisablePassword(e.target.value)}
+                                                    className="modern-input pr-12"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowDisableTotpPassword((prev) => !prev)}
+                                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition"
+                                                    title={showDisableTotpPassword ? "Hide password" : "Show password"}
+                                                >
+                                                    {showDisableTotpPassword ? <EyeSlashIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
+                                                </button>
+                                            </div>
                                         </div>
                                         <div>
                                             <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">

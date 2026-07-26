@@ -287,6 +287,13 @@ function HomePage() {
             toast.warning(t('select_project_first', { defaultValue: 'Select a project to start.' }));
             return;
         }
+
+        const proj = managedProjects.find(p => p.id === parseInt(selectedProjectId));
+        if (proj && (proj.status === 'Commissioned' || proj.status === 'afhent' || proj.status === 'Completed' || proj.status === 'Archived' || proj.commissioned_at)) {
+            toast.error(t('cannot_clock_in_commissioned', { defaultValue: 'Cannot clock into a commissioned or completed project.' }));
+            return;
+        }
+
         setIsClocking(true);
         try {
             const res = await axiosInstance.post('/timelogs/clock-in', { 
@@ -916,7 +923,7 @@ function HomePage() {
                                                         -- {t('select_project')} --
                                                     </button>
                                                     {managedProjects
-                                                        .filter(p => p && (p.name || '').toLowerCase().includes((projectSearchQuery || '').toLowerCase()))
+                                                        .filter(p => p && p.status !== 'Commissioned' && p.status !== 'afhent' && p.status !== 'Completed' && p.status !== 'Archived' && !p.commissioned_at && (p.name || '').toLowerCase().includes((projectSearchQuery || '').toLowerCase()))
                                                         .map(p => (
                                                             <button
                                                                 key={p.id}
