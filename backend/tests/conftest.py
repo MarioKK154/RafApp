@@ -87,4 +87,9 @@ def authenticated_user_token(db: Session) -> Dict[str, Any]:
     token = create_access_token(data={"sub": str(user.id)})
     
     return {"user": user, "token": token}
+
+
+@pytest.fixture(scope="function")
+def auth_headers(authenticated_user_token: Dict[str, Any]) -> Dict[str, str]:
+    return {"Authorization": f"Bearer {authenticated_user_token['token']}"}
 # --- END NEW FIXTURE ---

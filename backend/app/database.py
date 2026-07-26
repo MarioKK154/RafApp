@@ -11,16 +11,34 @@ def get_database_url() -> str:
     return settings.database_url
 
 
+from sqlalchemy import create_engine, text, event
+
 def _create_engine(url: str):
     if url.startswith("sqlite"):
-        return create_engine(url, connect_args={"check_same_thread": False})
+        eng = create_engine(
+            url,
+            connect_args={"check_same_thread": False, "timeout": 30},
+            pool_pre_ping=True
+        )
+        @event.listens_for(eng, "connect")
+        def set_sqlite_pragma(dbapi_connection, connection_record):
+            cursor = dbapi_connection.cursor()
+            try:
+                cursor.execute("PRAGMA journal_mode=WAL")
+                cursor.execute("PRAGMA synchronous=NORMAL")
+                cursor.execute("PRAGMA foreign_keys=ON")
+            except Exception:
+                pass
+            finally:
+                cursor.close()
+        return eng
     return create_engine(
         url,
         pool_pre_ping=True,
-        pool_size=settings.db_pool_size,
-        max_overflow=settings.db_max_overflow,
-        pool_recycle=settings.db_pool_recycle,
-        pool_timeout=settings.db_pool_timeout,
+        pool_size=getattr(settings, "db_pool_size", 30),
+        max_overflow=getattr(settings, "db_max_overflow", 50),
+        pool_recycle=getattr(settings, "db_pool_recycle", 1800),
+        pool_timeout=getattr(settings, "db_pool_timeout", 30),
     )
 
 
