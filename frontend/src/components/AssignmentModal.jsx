@@ -2,11 +2,11 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import axiosInstance from '../api/axiosInstance';
 import { useAuth } from '../context/AuthContext';
-import { XMarkIcon, CalendarDaysIcon, BriefcaseIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, CalendarDaysIcon, BriefcaseIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { format } from 'date-fns';
 import { toast } from 'react-toastify';
 
-const AssignmentModal = ({ isOpen, onClose, selectedUser, selectedDate, onAssignmentCreated, leaveBlocks = [] }) => {
+const AssignmentModal = ({ isOpen, onClose, selectedUser, selectedDate, existingAssignment, onAssignmentCreated, leaveBlocks = [] }) => {
     const { t, i18n } = useTranslation();
     const { user: currentUser } = useAuth();
 
@@ -62,19 +62,30 @@ const AssignmentModal = ({ isOpen, onClose, selectedUser, selectedDate, onAssign
         );
     }, [selectedUser, leaveBlocks, formData.start_date, formData.end_date]);
 
-    // Sync form with the date clicked on the grid
+    // Sync form with selected date or existing assignment
     useEffect(() => {
-        if (selectedDate) {
+        if (existingAssignment) {
+            setFormData({
+                project_id: existingAssignment.project_id ? String(existingAssignment.project_id) : '',
+                task_id: '',
+                start_date: existingAssignment.start_date || '',
+                end_date: existingAssignment.end_date || '',
+                notes: existingAssignment.notes || ''
+            });
+        } else if (selectedDate) {
             const dateStr = format(selectedDate, 'yyyy-MM-dd');
-            setFormData(prev => ({ ...prev, start_date: dateStr, end_date: dateStr }));
+            setFormData({
+                project_id: '',
+                task_id: '',
+                start_date: dateStr,
+                end_date: dateStr,
+                notes: ''
+            });
         }
-    }, [selectedDate]);
+    }, [selectedDate, existingAssignment]);
 
     /**
      * Fetch options for the modal.
-     * - Admin/Superuser: full active project list (current behavior)
-     * - Project Manager: prefer active project & their own tasks on that project;
-     *   if no active project can be detected, fall back to project list.
      */
     useEffect(() => {
         const fetchOptions = async () => {
@@ -83,13 +94,11 @@ const AssignmentModal = ({ isOpen, onClose, selectedUser, selectedDate, onAssign
 
             try {
                 if (isProjectManager) {
-                    // 1. Determine the active project from current open timelog, if any
                     let activeLog = null;
                     try {
                         const activeRes = await axiosInstance.get('/timelogs/active');
                         activeLog = activeRes.data || null;
                     } catch (err) {
-                        // If status endpoint fails, fall back to projects below
                         console.error('Failed to resolve active timelog for PM:', err);
                     }
 
@@ -101,7 +110,6 @@ const AssignmentModal = ({ isOpen, onClose, selectedUser, selectedDate, onAssign
                                 : { id: activeLog.project_id, name: 'Active Project', project_number: null }
                         );
 
-                        // 2. Fetch tasks on that project assigned to the PM
                         try {
                             const tasksRes = await axiosInstance.get('/tasks/', {
                                 params: {
@@ -117,7 +125,6 @@ const AssignmentModal = ({ isOpen, onClose, selectedUser, selectedDate, onAssign
                             });
                             setTasks(filtered);
 
-                            // If we have at least one task, default-select it
                             if (filtered.length > 0) {
                                 setFormData((prev) => ({
                                     ...prev,
@@ -129,10 +136,9 @@ const AssignmentModal = ({ isOpen, onClose, selectedUser, selectedDate, onAssign
                             toast.error(t('toast_load_active_tasks_failed'));
                         }
 
-                        return; // We have active project context; skip generic project list.
+                        return;
                     }
 
-                    // Fallback: no active project – load projects like admin behavior
                     try {
                         const res = await axiosInstance.get('/projects/');
                         setProjects(res.data.filter((p) => p.status !== 'Completed'));
@@ -142,7 +148,6 @@ const AssignmentModal = ({ isOpen, onClose, selectedUser, selectedDate, onAssign
                     return;
                 }
 
-                // Default for admin / superuser and other roles that reach this modal
                 const res = await axiosInstance.get('/projects/');
                 setProjects(res.data.filter((p) => p.status !== 'Completed'));
             } catch (error) {
@@ -156,11 +161,27 @@ const AssignmentModal = ({ isOpen, onClose, selectedUser, selectedDate, onAssign
         fetchOptions();
     }, [isOpen, currentUser, isProjectManager]);
 
+    const handleDeleteAssignment = async () => {
+        if (!existingAssignment?.id) return;
+        if (window.confirm(t('confirm_remove_assignment', { userName: selectedUser?.full_name, projectName: existingAssignment.project_name || 'Project' }))) {
+            setIsSubmitting(true);
+            try {
+                await axiosInstance.delete(`/assignments/${existingAssignment.id}`);
+                toast.success(t('toast_assignment_purged'));
+                onAssignmentCreated();
+                onClose();
+            } catch (err) {
+                toast.error(err.response?.data?.detail || t('toast_delete_assignment_failed'));
+            } finally {
+                setIsSubmitting(false);
+            }
+        }
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsSubmitting(true);
         try {
-            // Resolve project_id depending on role/mode
             let resolvedProjectId = null;
             if (isProjectManager && activeProject && activeProject.id) {
                 resolvedProjectId = activeProject.id;
@@ -174,7 +195,6 @@ const AssignmentModal = ({ isOpen, onClose, selectedUser, selectedDate, onAssign
                 return;
             }
 
-            // Merge task information into notes for PMs so the grid shows task context
             let mergedNotes = formData.notes;
             if (isProjectManager && formData.task_id) {
                 const taskIdInt = parseInt(formData.task_id, 10);
@@ -195,7 +215,7 @@ const AssignmentModal = ({ isOpen, onClose, selectedUser, selectedDate, onAssign
             };
             await axiosInstance.post('/assignments/', payload);
             toast.success(t('toast_personnel_deployed', { name: selectedUser.full_name }));
-            onAssignmentCreated(); // Refresh the grid
+            onAssignmentCreated();
             onClose();
         } catch (err) {
             toast.error(err.response?.data?.detail || t('toast_deployment_protocol_failed'));
@@ -335,13 +355,30 @@ const AssignmentModal = ({ isOpen, onClose, selectedUser, selectedDate, onAssign
                         ></textarea>
                     </div>
 
-                    <button 
-                        type="submit"
-                        disabled={isSubmitting}
-                        className="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition transform active:scale-95 disabled:opacity-50"
-                    >
-                        {isSubmitting ? t('syncing', { defaultValue: 'Syncing...' }) : t('confirm_deployment', { defaultValue: 'Confirm Deployment' })}
-                    </button>
+                    <div className="flex items-center gap-3 pt-2">
+                        {existingAssignment && (
+                            <button 
+                                type="button"
+                                onClick={handleDeleteAssignment}
+                                disabled={isSubmitting}
+                                className="flex-1 inline-flex items-center justify-center gap-2 px-5 py-3 bg-red-600 hover:bg-red-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition transform active:scale-95 disabled:opacity-50 shadow-md shadow-red-500/20"
+                            >
+                                <TrashIcon className="h-4 w-4" />
+                                {t('unassign_personnel', { defaultValue: 'Unassign / Purge' })}
+                            </button>
+                        )}
+                        <button 
+                            type="submit"
+                            disabled={isSubmitting}
+                            className="flex-1 inline-flex items-center justify-center gap-2 px-5 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition transform active:scale-95 disabled:opacity-50 shadow-md shadow-indigo-500/20"
+                        >
+                            {isSubmitting 
+                                ? t('syncing', { defaultValue: 'Syncing...' }) 
+                                : (existingAssignment 
+                                    ? t('update_assignment', { defaultValue: 'Update Assignment' }) 
+                                    : t('confirm_deployment', { defaultValue: 'Confirm Deployment' }))}
+                        </button>
+                    </div>
                 </form>
             </div>
         </div>

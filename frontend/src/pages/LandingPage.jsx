@@ -8,7 +8,9 @@ import {
     PhoneIcon,
     CheckCircleIcon,
     LanguageIcon,
-    ArrowTopRightOnSquareIcon
+    ArrowTopRightOnSquareIcon,
+    Bars3Icon,
+    XMarkIcon
 } from '@heroicons/react/24/outline';
 import axiosInstance from '../api/axiosInstance';
 import defaultLogo from '../assets/logo.png';
@@ -725,10 +727,17 @@ function LandingPage() {
                     </nav>
 
                     {/* Mobile Nav Toggle */}
-                    <button className="md:hidden text-white" onClick={() => setIsMenuOpen(!isMenuOpen)}>
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={isMenuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} />
-                        </svg>
+                    <button 
+                        type="button"
+                        aria-label="Toggle Navigation"
+                        className="md:hidden flex items-center justify-center p-2.5 rounded-xl text-gray-300 hover:text-white hover:bg-gray-800/80 transition min-h-[44px] min-w-[44px]" 
+                        onClick={() => setIsMenuOpen(!isMenuOpen)}
+                    >
+                        {isMenuOpen ? (
+                            <XMarkIcon className="h-6 w-6" />
+                        ) : (
+                            <Bars3Icon className="h-6 w-6" />
+                        )}
                     </button>
                 </div>
                 

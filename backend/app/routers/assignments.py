@@ -70,14 +70,21 @@ def purge_assignment(
     """
     Purge Protocol: Removes a personnel link from a project.
     """
+    # Permission Guard: Only Admins or Managers can unassign personnel
+    if current_user.role not in ['admin', 'project manager'] and not current_user.is_superuser:
+        raise HTTPException(status_code=403, detail="Insufficient clearance for resource scheduling.")
+
     # Security: verify the assignment belongs to this tenant before deleting
-    db_assignment = db.query(models.Assignment).filter(
-        models.Assignment.id == assignment_id
+    db_assignment = db.query(models.ProjectAssignment).filter(
+        models.ProjectAssignment.id == assignment_id
     ).first()
     if not db_assignment:
         raise HTTPException(status_code=404, detail="Assignment node not found.")
-    if not current_user.is_superuser and db_assignment.tenant_id != current_user.tenant_id:
-        raise HTTPException(status_code=403, detail="Cross-tenant operation denied.")
+    
+    if not current_user.is_superuser:
+        proj = db_assignment.project
+        if proj and proj.tenant_id != current_user.tenant_id:
+            raise HTTPException(status_code=403, detail="Cross-tenant operation denied.")
 
     crud.delete_assignment(db, assignment_id=assignment_id)
     return {"message": "Assignment node purged successfully."}

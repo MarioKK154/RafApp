@@ -153,9 +153,9 @@ const SchedulingGridPage = () => {
         return visibleUsers.filter(u => u.city === selectedCity);
     }, [visibleUsers, selectedCity]);
         
-    const openAssignmentModal = (targetUser, day) => {
+    const openAssignmentModal = (targetUser, day, assignment = null) => {
         if (!canEdit) return;
-        setModalConfig({ isOpen: true, user: targetUser, date: day });
+        setModalConfig({ isOpen: true, user: targetUser, date: day, assignment: assignment });
     };
 
     const translateLeaveType = useCallback((rawType) => {
@@ -321,20 +321,31 @@ const SchedulingGridPage = () => {
                                             )}
                                             {userAssign ? (
                                                 <div 
-                                                    onClick={() => handleDeleteAssignment(userAssign.id, userAssign.project_name, user.full_name)}
-                                                    className="absolute inset-1.5 z-[5] bg-indigo-600 hover:bg-red-600 rounded-2xl p-3 shadow-lg shadow-indigo-100 dark:shadow-none flex flex-col justify-center overflow-hidden cursor-pointer hover:scale-[1.03] active:scale-95 transition-all group/assign"
+                                                    onClick={() => openAssignmentModal(user, day, userAssign)}
+                                                    className="absolute inset-1.5 z-[5] bg-indigo-600 hover:bg-indigo-700 rounded-2xl p-2.5 shadow-lg shadow-indigo-100 dark:shadow-none flex flex-col justify-center overflow-hidden cursor-pointer hover:scale-[1.02] active:scale-95 transition-all group/assign"
                                                 >
-                                                    <div className="group-hover/assign:hidden animate-in fade-in duration-300">
-                                                        <p className="text-[8px] font-black text-indigo-200 uppercase tracking-tighter truncate mb-1">
-                                                            #{userAssign.project_number}
-                                                        </p>
-                                                        <p className="text-[9px] font-black text-white uppercase leading-tight truncate">
-                                                            {userAssign.project_name}
-                                                        </p>
-                                                    </div>
-                                                    <div className="hidden group-hover/assign:flex flex-col items-center justify-center text-white animate-in zoom-in duration-200">
-                                                        <TrashIcon className="h-5 w-5 mb-1" />
-                                                        <span className="text-[8px] font-black uppercase">{t('remove', { defaultValue: 'Remove' })}</span>
+                                                    <div className="flex items-center justify-between gap-1">
+                                                        <div className="min-w-0 flex-1">
+                                                            <p className="text-[8px] font-black text-indigo-200 uppercase tracking-tighter truncate mb-0.5">
+                                                                #{userAssign.project_number}
+                                                            </p>
+                                                            <p className="text-[9px] font-black text-white uppercase leading-tight truncate">
+                                                                {userAssign.project_name}
+                                                            </p>
+                                                        </div>
+                                                        {canEdit && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    handleDeleteAssignment(userAssign.id, userAssign.project_name, user.full_name);
+                                                                }}
+                                                                className="p-1 rounded-lg bg-red-500 hover:bg-red-600 text-white opacity-90 group-hover/assign:opacity-100 transition-opacity shrink-0"
+                                                                title={t('unassign_personnel', { defaultValue: 'Unassign Personnel' })}
+                                                            >
+                                                                <TrashIcon className="h-3.5 w-3.5" />
+                                                            </button>
+                                                        )}
                                                     </div>
                                                 </div>
                                             ) : (
@@ -356,9 +367,10 @@ const SchedulingGridPage = () => {
 
             <AssignmentModal 
                 isOpen={modalConfig.isOpen}
-                onClose={() => setModalConfig({ ...modalConfig, isOpen: false })}
+                onClose={() => setModalConfig({ ...modalConfig, isOpen: false, assignment: null })}
                 selectedUser={modalConfig.user}
                 selectedDate={modalConfig.date}
+                existingAssignment={modalConfig.assignment}
                 leaveBlocks={leaveBlocks}
                 onAssignmentCreated={fetchData}
             />
