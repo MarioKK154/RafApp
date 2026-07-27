@@ -330,19 +330,44 @@ def _ensure_dynamic_shop_columns() -> None:
         db.close()
 
 
-# 6. SPA Catch-All Route
+# 6. Public File Downloads & SPA Catch-All Route
 FRONTEND_BUILD_DIR = BASE_DIR.parent.parent / "frontend" / "dist"
+
+@app.get("/downloads/{filename}")
+async def download_public_asset(filename: str):
+    """Direct handler for public downloadable package assets (APK, PWA, PDF)."""
+    safe_filename = os.path.basename(filename)
+    file_path = FRONTEND_BUILD_DIR / "downloads" / safe_filename
+    if not file_path.is_file():
+        file_path = BASE_DIR / "static" / "downloads" / safe_filename
+    if not file_path.is_file():
+        file_path = BASE_DIR.parent.parent / "frontend" / "public" / "downloads" / safe_filename
+
+    if file_path.is_file():
+        media_type = "application/vnd.android.package-archive" if safe_filename.endswith(".apk") else "application/octet-stream"
+        return FileResponse(
+            path=file_path,
+            filename=safe_filename,
+            media_type=media_type,
+            headers={"Content-Disposition": f'attachment; filename="{safe_filename}"'}
+        )
+    raise HTTPException(status_code=404, detail="Requested file not found")
 
 @app.get("/{full_path:path}")
 async def serve_spa(full_path: str):
     # Skip handling /api requests here, they should be handled by the api_router and return 404/405 correctly if missed.
-    # However, FastAPI evaluates this route last, so unmatched /api routes will hit this.
     if full_path.startswith("api/"):
         raise HTTPException(status_code=404, detail="Not Found")
 
     path = FRONTEND_BUILD_DIR / full_path
     if path.is_file():
-        return FileResponse(path)
+        media_type = "application/vnd.android.package-archive" if full_path.endswith(".apk") else None
+        return FileResponse(
+            path=path,
+            filename=path.name if full_path.endswith(".apk") else None,
+            media_type=media_type,
+            headers={"Content-Disposition": f'attachment; filename="{path.name}"'} if full_path.endswith(".apk") else None
+        )
     
     index_path = FRONTEND_BUILD_DIR / "index.html"
     if index_path.is_file():
