@@ -23,9 +23,28 @@ SuperUserDependency = Annotated[models.User, Depends(security.require_superuser)
 LANDING_FEED_KEY = "landing_feed_json"
 
 APP_DIR = Path(__file__).resolve().parent.parent
-LANDING_BG_DIR = APP_DIR / "static" / "landing_backgrounds"
 LANDING_BG_ALLOWED = {".png", ".jpg", ".jpeg", ".webp"}
 LANDING_BG_MAX_MB = 10
+
+from fastapi.responses import FileResponse
+
+@router.get("/download-apk")
+def download_apk():
+    """Download the official RafApp Android APK package."""
+    apk_paths = [
+        APP_DIR.parent.parent / "frontend" / "dist" / "downloads" / "rafapp-v1.0.apk",
+        APP_DIR.parent.parent / "frontend" / "public" / "downloads" / "rafapp-v1.0.apk",
+        APP_DIR / "static" / "downloads" / "rafapp-v1.0.apk"
+    ]
+    for p in apk_paths:
+        if p.is_file():
+            return FileResponse(
+                path=p,
+                filename="rafapp-v1.0.apk",
+                media_type="application/vnd.android.package-archive",
+                headers={"Content-Disposition": 'attachment; filename="rafapp-v1.0.apk"'}
+            )
+    raise HTTPException(status_code=404, detail="APK package file not found")
 
 
 def _default_landing_feed() -> schemas.LandingFeed:
