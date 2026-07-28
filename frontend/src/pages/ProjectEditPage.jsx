@@ -13,7 +13,6 @@ import ProjectInventory from '../components/ProjectInventory';
 import ProjectOffers from '../components/ProjectOffers';
 import ProjectLiveClockIns from '../components/ProjectLiveClockIns';
 import ProjectTasks from '../components/ProjectTasks';
-import ProjectWorkOrders from '../components/ProjectWorkOrders';
 import HMSInspectionModal from '../components/HMSInspectionModal';
 import DrivingLogModal from '../components/DrivingLogModal';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -321,10 +320,6 @@ function ProjectEditPage() {
 
             {/* INTEGRATED MODULES - section background containers */}
             <div className="space-y-16">
-                <div id="work-orders-section" className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden p-6">
-                    <ProjectWorkOrders projectId={projectId} isManagement={canEditParameters} />
-                </div>
-
                 <div id="tasks-section" className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
                     <ProjectTasks projectId={projectId} canCreateTask={canEditParameters} />
                 </div>
