@@ -515,6 +515,17 @@ const resources = {
       "registry_audit_trace": "Registry Audit Trace: Modifications to this node are permanent. All project associations linked to this client will be updated across the OS.",
       "specify_billing_nuances": "Specify billing nuances, site access keys, or behavioral preferences...",
 
+      // Competitor Feature Integrations
+      "work_orders": "Work Orders",
+      "new_work_order": "New Work Order",
+      "hms_inspection": "HMS Inspection Sheet",
+      "approval_queue": "Invoice Approval Queue",
+      "mileage_log": "Mileage & Travel Log",
+      "barcode_scanner": "Scan Barcode / QR Code",
+      "fixed_price": "Fixed-Price (Tilboðsverk)",
+      "time_and_materials": "Time & Materials (Mæld verk)",
+      "billing_mode": "Billing Mode",
+
       // Task Forms
       "toast_project_required": "A project assignment is required.",
       "toast_work_node_init": "Work node initialized:",

@@ -3492,4 +3492,87 @@ def calculate_project_settlement(db: Session, project_id: int) -> Dict[str, Any]
     }
 
 
+# --- Work Orders CRUD ---
+def get_work_orders(db: Session, tenant_id: int, project_id: Optional[int] = None):
+    q = db.query(models.WorkOrder).filter(models.WorkOrder.tenant_id == tenant_id)
+    if project_id:
+        q = q.filter(models.WorkOrder.project_id == project_id)
+    return q.order_by(models.WorkOrder.created_at.desc()).all()
+
+def create_work_order(db: Session, wo: schemas.WorkOrderCreate, tenant_id: int, creator_id: int):
+    db_wo = models.WorkOrder(**wo.model_dump(), tenant_id=tenant_id, creator_id=creator_id)
+    db.add(db_wo)
+    db.commit()
+    db.refresh(db_wo)
+    return db_wo
+
+def update_work_order(db: Session, wo_id: int, wo_update: schemas.WorkOrderUpdate, tenant_id: int):
+    db_wo = db.query(models.WorkOrder).filter(models.WorkOrder.id == wo_id, models.WorkOrder.tenant_id == tenant_id).first()
+    if not db_wo:
+        return None
+    for k, v in wo_update.model_dump(exclude_unset=True).items():
+        setattr(db_wo, k, v)
+    if wo_update.status == "Completed" and not db_wo.completed_at:
+        db_wo.completed_at = datetime.utcnow()
+    db.commit()
+    db.refresh(db_wo)
+    return db_wo
+
+# --- Invoice Approvals CRUD ---
+def get_invoice_approvals(db: Session, tenant_id: int, status: Optional[str] = None):
+    q = db.query(models.InvoiceApproval).filter(models.InvoiceApproval.tenant_id == tenant_id)
+    if status:
+        q = q.filter(models.InvoiceApproval.status == status)
+    return q.order_by(models.InvoiceApproval.created_at.desc()).all()
+
+def create_invoice_approval(db: Session, approval: schemas.InvoiceApprovalCreate, tenant_id: int):
+    db_app = models.InvoiceApproval(**approval.model_dump(), tenant_id=tenant_id)
+    db.add(db_app)
+    db.commit()
+    db.refresh(db_app)
+    return db_app
+
+def update_invoice_approval(db: Session, approval_id: int, update: schemas.InvoiceApprovalUpdate, tenant_id: int, reviewer_id: int):
+    db_app = db.query(models.InvoiceApproval).filter(models.InvoiceApproval.id == approval_id, models.InvoiceApproval.tenant_id == tenant_id).first()
+    if not db_app:
+        return None
+    for k, v in update.model_dump(exclude_unset=True).items():
+        setattr(db_app, k, v)
+    db_app.reviewer_id = reviewer_id
+    db_app.reviewed_at = datetime.utcnow()
+    db.commit()
+    db.refresh(db_app)
+    return db_app
+
+# --- HMS Inspections CRUD ---
+def get_hms_inspections(db: Session, tenant_id: int, project_id: Optional[int] = None):
+    q = db.query(models.HMSInspection).filter(models.HMSInspection.tenant_id == tenant_id)
+    if project_id:
+        q = q.filter(models.HMSInspection.project_id == project_id)
+    return q.order_by(models.HMSInspection.inspection_date.desc()).all()
+
+def create_hms_inspection(db: Session, insp: schemas.HMSInspectionCreate, tenant_id: int, inspector_id: int):
+    db_insp = models.HMSInspection(**insp.model_dump(), tenant_id=tenant_id, inspector_id=inspector_id)
+    db.add(db_insp)
+    db.commit()
+    db.refresh(db_insp)
+    return db_insp
+
+# --- Driving Logs CRUD ---
+def get_driving_logs(db: Session, tenant_id: int, user_id: Optional[int] = None, project_id: Optional[int] = None):
+    q = db.query(models.DrivingLog).filter(models.DrivingLog.tenant_id == tenant_id)
+    if user_id:
+        q = q.filter(models.DrivingLog.user_id == user_id)
+    if project_id:
+        q = q.filter(models.DrivingLog.project_id == project_id)
+    return q.order_by(models.DrivingLog.log_date.desc()).all()
+
+def create_driving_log(db: Session, log: schemas.DrivingLogCreate, tenant_id: int, user_id: int):
+    db_log = models.DrivingLog(**log.model_dump(), tenant_id=tenant_id, user_id=user_id)
+    db.add(db_log)
+    db.commit()
+    db.refresh(db_log)
+    return db_log
+
+
 

@@ -7,6 +7,7 @@ import { toast } from 'react-toastify';
 import { PieChart, Pie, BarChart, Bar, Cell, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import LoadingSpinner from '../components/LoadingSpinner';
 import PageHeader from '../components/PageHeader';
+import InvoiceApprovalQueue from '../components/InvoiceApprovalQueue';
 import { 
     BanknotesIcon, 
     CalendarIcon, 
@@ -295,6 +296,16 @@ function AccountingPage() {
                                 }`}
                             >
                                 {t('analytics')}
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('approvals')}
+                                className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                                    activeTab === 'approvals'
+                                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20'
+                                        : 'text-gray-400 hover:text-indigo-600 dark:hover:text-white'
+                                }`}
+                            >
+                                {t('approval_queue', 'Samþykktarkerfi')}
                             </button>
                         </div>
                     </div>
@@ -1656,6 +1667,12 @@ function AccountingPage() {
                             </div>
                         </div>
                     )}
+                </div>
+            )}
+
+            {isManagement && activeTab === 'approvals' && (
+                <div className="w-full px-4 md:px-8 mt-8 mb-12">
+                    <InvoiceApprovalQueue />
                 </div>
             )}
         </div>

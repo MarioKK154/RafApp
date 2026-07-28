@@ -361,6 +361,7 @@ class ProjectBase(BaseModel):
     project_manager_id: Optional[int] = None
     budget: Optional[float] = Field(None, ge=0)
     work_load_ratio_codes: Optional[str] = None  # JSON array of work load ratio codes e.g. ["3020","6013"]
+    billing_mode: Optional[str] = "time_and_materials"
 
 class ProjectCreate(ProjectBase):
     tenant_id: Optional[int] = None 
@@ -376,6 +377,7 @@ class ProjectUpdate(BaseModel):
     project_manager_id: Optional[int] = None
     budget: Optional[float] = Field(None, ge=0)
     work_load_ratio_codes: Optional[str] = None  # JSON array of work load ratio codes
+    billing_mode: Optional[str] = None
 
 class ProjectRead(ProjectBase):
     id: int
@@ -383,6 +385,7 @@ class ProjectRead(ProjectBase):
     tenant_id: int
     verified_by_admin: bool = False # ROADMAP #1
     commissioned_at: Optional[datetime] = None # ROADMAP #1
+    billing_mode: Optional[str] = "time_and_materials"
     tenant: Optional[TenantReadBasic] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
@@ -2166,5 +2169,125 @@ class ProjectSettlementRead(BaseModel):
     total_advance_wages_paid: float
     bonus_pool: float
     is_profitable_for_crew: bool
+
+
+# --- Work Order Schemas ---
+class WorkOrderBase(BaseModel):
+    title: str
+    description: Optional[str] = None
+    status: Optional[str] = "Open"
+    priority: Optional[str] = "Normal"
+    location: Optional[str] = None
+    project_id: Optional[int] = None
+    customer_id: Optional[int] = None
+    assigned_user_id: Optional[int] = None
+    scheduled_date: Optional[datetime] = None
+
+class WorkOrderCreate(WorkOrderBase):
+    pass
+
+class WorkOrderUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    status: Optional[str] = None
+    priority: Optional[str] = None
+    location: Optional[str] = None
+    project_id: Optional[int] = None
+    customer_id: Optional[int] = None
+    assigned_user_id: Optional[int] = None
+    scheduled_date: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
+    customer_signature_path: Optional[str] = None
+    signed_by_name: Optional[str] = None
+
+class WorkOrderRead(WorkOrderBase):
+    id: int
+    tenant_id: int
+    creator_id: Optional[int] = None
+    completed_at: Optional[datetime] = None
+    customer_signature_path: Optional[str] = None
+    signed_by_name: Optional[str] = None
+    signed_at: Optional[datetime] = None
+    created_at: Optional[datetime] = None
+    model_config = ConfigDict(from_attributes=True)
+
+
+# --- Invoice Approval Schemas ---
+class InvoiceApprovalBase(BaseModel):
+    supplier_name: str
+    invoice_number: str
+    invoice_date: Optional[date] = None
+    amount: float
+    vsk_amount: Optional[float] = 0.0
+    category: Optional[str] = "Materials"
+    notes: Optional[str] = None
+    project_id: Optional[int] = None
+
+class InvoiceApprovalCreate(InvoiceApprovalBase):
+    pass
+
+class InvoiceApprovalUpdate(BaseModel):
+    status: Optional[str] = None
+    notes: Optional[str] = None
+    reviewer_id: Optional[int] = None
+
+class InvoiceApprovalRead(InvoiceApprovalBase):
+    id: int
+    tenant_id: int
+    reviewer_id: Optional[int] = None
+    status: str = "Pending"
+    file_path: Optional[str] = None
+    created_at: Optional[datetime] = None
+    reviewed_at: Optional[datetime] = None
+    model_config = ConfigDict(from_attributes=True)
+
+
+# --- HMS Inspection Schemas ---
+class HMSInspectionBase(BaseModel):
+    project_id: int
+    title: str
+    location_circuit: Optional[str] = None
+    insulation_resistance_mOhm: Optional[float] = None
+    ground_resistance_Ohm: Optional[float] = None
+    rcd_trip_time_ms: Optional[float] = None
+    voltage_volts: Optional[float] = 230.0
+    status: Optional[str] = "Pass"
+    notes: Optional[str] = None
+    certified_by: Optional[str] = None
+    inspection_date: date
+
+class HMSInspectionCreate(HMSInspectionBase):
+    pass
+
+class HMSInspectionRead(HMSInspectionBase):
+    id: int
+    tenant_id: int
+    inspector_id: Optional[int] = None
+    created_at: Optional[datetime] = None
+    model_config = ConfigDict(from_attributes=True)
+
+
+# --- Driving Log Schemas ---
+class DrivingLogBase(BaseModel):
+    project_id: Optional[int] = None
+    car_id: Optional[int] = None
+    log_date: date
+    origin: Optional[str] = None
+    destination: Optional[str] = None
+    start_km: Optional[float] = None
+    end_km: Optional[float] = None
+    total_km: float
+    rate_per_km: Optional[float] = 140.0
+    purpose: Optional[str] = None
+
+class DrivingLogCreate(DrivingLogBase):
+    pass
+
+class DrivingLogRead(DrivingLogBase):
+    id: int
+    tenant_id: int
+    user_id: int
+    created_at: Optional[datetime] = None
+    model_config = ConfigDict(from_attributes=True)
 
 

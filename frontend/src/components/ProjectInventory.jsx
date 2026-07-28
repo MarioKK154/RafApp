@@ -7,6 +7,7 @@ import { toast } from 'react-toastify';
 import { useInventoryCatalogShopFilter } from '../hooks/useInventoryCatalogShopFilter';
 import LoadingSpinner from './LoadingSpinner';
 import InventoryCatalogShopFilters from './InventoryCatalogShopFilters';
+import BarcodeScannerModal from './BarcodeScannerModal';
 import {
     CubeIcon,
     PlusIcon,
@@ -17,6 +18,7 @@ import {
     BuildingStorefrontIcon,
     ArrowsRightLeftIcon,
     ArrowUturnLeftIcon,
+    QrCodeIcon,
 } from '@heroicons/react/24/outline';
 
 function ProjectInventory({ projectId }) {
@@ -28,6 +30,7 @@ function ProjectInventory({ projectId }) {
     const [error, setError] = useState('');
     const { user } = useAuth();
 
+    const [isBarcodeOpen, setIsBarcodeOpen] = useState(false);
     const [allocateMode, setAllocateMode] = useState('warehouse');
     const [selectedCatalogItemId, setSelectedCatalogItemId] = useState('');
     const [quantityToAdd, setQuantityToAdd] = useState(1);
@@ -285,10 +288,19 @@ function ProjectInventory({ projectId }) {
                         {t('local_stock')}
                     </h2>
                 </div>
-                <div className="flex items-center gap-3 px-4 py-2 bg-gray-50 dark:bg-gray-900 rounded-full border border-gray-100 dark:border-gray-800">
-                    <span className="text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest leading-none">
-                        {projectInventory.length} {t('registry_nodes', { defaultValue: 'items' })}
-                    </span>
+                <div className="flex items-center gap-3">
+                    <button
+                        type="button"
+                        onClick={() => setIsBarcodeOpen(true)}
+                        className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-widest rounded-full transition shadow-md shadow-indigo-500/20"
+                    >
+                        <QrCodeIcon className="h-4 w-4" /> {t('barcode_scanner', 'Strikamerki / QR')}
+                    </button>
+                    <div className="px-4 py-2 bg-gray-50 dark:bg-gray-900 rounded-full border border-gray-100 dark:border-gray-800">
+                        <span className="text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest leading-none">
+                            {projectInventory.length} {t('registry_nodes', { defaultValue: 'items' })}
+                        </span>
+                    </div>
                 </div>
             </header>
 
@@ -718,6 +730,20 @@ function ProjectInventory({ projectId }) {
                     </div>
                 </div>
             )}
+
+            <BarcodeScannerModal
+                isOpen={isBarcodeOpen}
+                onClose={() => setIsBarcodeOpen(false)}
+                onScanSuccess={(code) => {
+                    const match = inventoryCatalog.find(i => (i.item_code && i.item_code.includes(code)) || (i.name && i.name.toLowerCase().includes(code.toLowerCase())));
+                    if (match) {
+                        setSelectedCatalogItemId(match.id);
+                        toast.success(t('item_matched', { defaultValue: `Found item: ${match.name}` }));
+                    } else {
+                        toast.info(t('no_direct_match', { defaultValue: `Scanned code: ${code}. Select item from catalog.` }));
+                    }
+                }}
+            />
         </div>
     );
 }

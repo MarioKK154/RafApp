@@ -13,6 +13,9 @@ import ProjectInventory from '../components/ProjectInventory';
 import ProjectOffers from '../components/ProjectOffers';
 import ProjectLiveClockIns from '../components/ProjectLiveClockIns';
 import ProjectTasks from '../components/ProjectTasks';
+import ProjectWorkOrders from '../components/ProjectWorkOrders';
+import HMSInspectionModal from '../components/HMSInspectionModal';
+import DrivingLogModal from '../components/DrivingLogModal';
 import LoadingSpinner from '../components/LoadingSpinner';
 import PageHeader from '../components/PageHeader';
 
@@ -55,6 +58,8 @@ function ProjectEditPage() {
     const [isSaving, setIsSaving] = useState(false);
     const [projectManagers, setProjectManagers] = useState([]);
     const [error, setError] = useState('');
+    const [isHmsOpen, setIsHmsOpen] = useState(false);
+    const [isDrivingOpen, setIsDrivingOpen] = useState(false);
 
     const isSuperuser = currentUser?.is_superuser;
     const isAdmin = currentUser?.role === 'admin' || isSuperuser;
@@ -291,8 +296,35 @@ function ProjectEditPage() {
                 </div>
             </div>
 
+            {/* Quick Action Bar for Field Tools */}
+            <div className="flex flex-wrap gap-3 p-4 bg-indigo-50/60 dark:bg-indigo-950/40 rounded-2xl border border-indigo-100 dark:border-indigo-900/60 items-center justify-between">
+                <span className="text-xs font-black uppercase tracking-wider text-indigo-900 dark:text-indigo-200">
+                    {t('is_icelandic', 'Íslensk sérverkfæri & Öryggisúttektir')}
+                </span>
+                <div className="flex gap-2">
+                    <button
+                        type="button"
+                        onClick={() => setIsHmsOpen(true)}
+                        className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition shadow-md shadow-indigo-500/20"
+                    >
+                        ⚡ {t('hms_inspection', 'HMS Mæliblað')}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setIsDrivingOpen(true)}
+                        className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition shadow-md shadow-emerald-500/20"
+                    >
+                        🚗 {t('mileage_log', 'Akstursdagbók')}
+                    </button>
+                </div>
+            </div>
+
             {/* INTEGRATED MODULES - section background containers */}
             <div className="space-y-16">
+                <div id="work-orders-section" className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden p-6">
+                    <ProjectWorkOrders projectId={projectId} isManagement={canEditParameters} />
+                </div>
+
                 <div id="tasks-section" className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
                     <ProjectTasks projectId={projectId} canCreateTask={canEditParameters} />
                 </div>
@@ -321,6 +353,10 @@ function ProjectEditPage() {
                     <ProjectMembers projectId={projectId} />
                 </div>
             </div>
+
+            {/* Field Tool Modals */}
+            <HMSInspectionModal isOpen={isHmsOpen} onClose={() => setIsHmsOpen(false)} projectId={projectId} />
+            <DrivingLogModal isOpen={isDrivingOpen} onClose={() => setIsDrivingOpen(false)} projectId={projectId} />
         </div>
     );
 }

@@ -274,6 +274,7 @@ class Project(Base):
     work_load_ratio_codes = Column(Text, nullable=True)  # JSON array of codes e.g. ["3020","6013"]; applied to labor
     is_certified = Column(Boolean, default=False)
     certification_date = Column(DateTime(timezone=True), nullable=True)
+    billing_mode = Column(String, default="time_and_materials")  # "fixed_price" or "time_and_materials"
 
     tenant = relationship("Tenant", back_populates="projects")
     creator = relationship("User", foreign_keys=[creator_id], back_populates="projects_created")
@@ -1065,3 +1066,104 @@ def add_dynamic_shop_column(db, shop_id: int):
         
         mapper = class_mapper(InventoryItem)
         mapper.add_property(col_name, ColumnProperty(column))
+
+
+class WorkOrder(Base):
+    __tablename__ = "work_orders"
+    id = Column(Integer, primary_key=True, index=True)
+    tenant_id = Column(Integer, ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False)
+    project_id = Column(Integer, ForeignKey("projects.id", ondelete="SET NULL"), nullable=True)
+    customer_id = Column(Integer, ForeignKey("customers.id", ondelete="SET NULL"), nullable=True)
+    assigned_user_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    creator_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    
+    title = Column(String, nullable=False)
+    description = Column(Text, nullable=True)
+    status = Column(String, default="Open")  # Open, In Progress, Completed, Cancelled
+    priority = Column(String, default="Normal")  # Low, Normal, High, Emergency
+    location = Column(String, nullable=True)
+    scheduled_date = Column(DateTime(timezone=True), nullable=True)
+    completed_at = Column(DateTime(timezone=True), nullable=True)
+    
+    customer_signature_path = Column(String, nullable=True)
+    signed_by_name = Column(String, nullable=True)
+    signed_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    tenant = relationship("Tenant")
+    project = relationship("Project")
+    customer = relationship("Customer")
+    assigned_user = relationship("User", foreign_keys=[assigned_user_id])
+    creator = relationship("User", foreign_keys=[creator_id])
+
+
+class InvoiceApproval(Base):
+    __tablename__ = "invoice_approvals"
+    id = Column(Integer, primary_key=True, index=True)
+    tenant_id = Column(Integer, ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False)
+    project_id = Column(Integer, ForeignKey("projects.id", ondelete="SET NULL"), nullable=True)
+    reviewer_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    
+    supplier_name = Column(String, nullable=False)
+    invoice_number = Column(String, nullable=False)
+    invoice_date = Column(Date, nullable=True)
+    amount = Column(Float, nullable=False)
+    vsk_amount = Column(Float, default=0.0)
+    category = Column(String, default="Materials")
+    status = Column(String, default="Pending")  # Pending, Approved, Rejected
+    notes = Column(Text, nullable=True)
+    file_path = Column(String, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    reviewed_at = Column(DateTime(timezone=True), nullable=True)
+
+    tenant = relationship("Tenant")
+    project = relationship("Project")
+    reviewer = relationship("User")
+
+
+class HMSInspection(Base):
+    __tablename__ = "hms_inspections"
+    id = Column(Integer, primary_key=True, index=True)
+    tenant_id = Column(Integer, ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False)
+    project_id = Column(Integer, ForeignKey("projects.id", ondelete="CASCADE"), nullable=False)
+    inspector_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    
+    title = Column(String, nullable=False)
+    location_circuit = Column(String, nullable=True)
+    insulation_resistance_mOhm = Column(Float, nullable=True)  # Einangrunarmæling (MΩ)
+    ground_resistance_Ohm = Column(Float, nullable=True)       # Jarðbinding (Ω)
+    rcd_trip_time_ms = Column(Float, nullable=True)             # Leka-rofi viðbragðstími (ms)
+    voltage_volts = Column(Float, default=230.0)
+    status = Column(String, default="Pass")                    # Pass, Fail, Warning
+    notes = Column(Text, nullable=True)
+    certified_by = Column(String, nullable=True)
+    inspection_date = Column(Date, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    tenant = relationship("Tenant")
+    project = relationship("Project")
+    inspector = relationship("User")
+
+
+class DrivingLog(Base):
+    __tablename__ = "driving_logs"
+    id = Column(Integer, primary_key=True, index=True)
+    tenant_id = Column(Integer, ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    project_id = Column(Integer, ForeignKey("projects.id", ondelete="SET NULL"), nullable=True)
+    car_id = Column(Integer, ForeignKey("cars.id", ondelete="SET NULL"), nullable=True)
+    
+    log_date = Column(Date, nullable=False)
+    origin = Column(String, nullable=True)
+    destination = Column(String, nullable=True)
+    start_km = Column(Float, nullable=True)
+    end_km = Column(Float, nullable=True)
+    total_km = Column(Float, nullable=False)
+    rate_per_km = Column(Float, default=140.0)  # Standard Icelandic driving reimbursement (ISK/km)
+    purpose = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    tenant = relationship("Tenant")
+    user = relationship("User")
+    project = relationship("Project")
+    car = relationship("Car")
