@@ -121,20 +121,26 @@ const SchedulingGridPage = () => {
         return users.filter(u => u.id === user?.id);
     }, [users, pmVisibleUserIds, user, isAdmin, isPM]);
 
-    // Handle Deletion of an Assignment Node
-    const handleDeleteAssignment = async (assignmentId, projectName, userName) => {
+    // Handle Deletion of an Assignment Node (Single day by default)
+    const handleDeleteAssignment = async (assignmentId, projectName, userName, targetDate) => {
         if (!canEdit) {
             toast.info(t('toast_schedule_modifications_restricted'));
             return;
         }
-        if (window.confirm(t('confirm_remove_assignment', { userName, projectName }))) {
+        const isIcelandic = i18n.language.startsWith('is');
+        const dateStr = format(targetDate, 'yyyy-MM-dd');
+        const confirmMsg = isIcelandic
+            ? `Fjarlægja eingöngu daginn ${dateStr} hjá ${userName}?`
+            : `Remove only ${dateStr} for ${userName}?`;
+
+        if (window.confirm(confirmMsg)) {
             try {
-                await axiosInstance.delete(`/assignments/${assignmentId}`);
-                toast.success(t('toast_assignment_purged'));
+                await axiosInstance.delete(`/assignments/${assignmentId}?target_date=${dateStr}`);
+                toast.success(isIcelandic ? `Dagurinn ${dateStr} fjarlægður úr dagskrá!` : `Single day ${dateStr} unassigned!`);
                 fetchData(); // Refresh grid
             } catch (error) {
                 console.error('Delete assignment failed:', error);
-                toast.error(t('toast_delete_assignment_failed'));
+                toast.error(error.response?.data?.detail || t('toast_delete_assignment_failed'));
             }
         }
     };
@@ -338,10 +344,10 @@ const SchedulingGridPage = () => {
                                                                 type="button"
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
-                                                                    handleDeleteAssignment(userAssign.id, userAssign.project_name, user.full_name);
+                                                                    handleDeleteAssignment(userAssign.id, userAssign.project_name, user.full_name, day);
                                                                 }}
                                                                 className="p-1 rounded-lg bg-red-500 hover:bg-red-600 text-white opacity-90 group-hover/assign:opacity-100 transition-opacity shrink-0"
-                                                                title={t('unassign_personnel', { defaultValue: 'Unassign Personnel' })}
+                                                                title={i18n.language.startsWith('is') ? 'Fjarlægja eingöngu þennan dag' : 'Remove this day only'}
                                                             >
                                                                 <TrashIcon className="h-3.5 w-3.5" />
                                                             </button>
