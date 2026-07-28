@@ -36,10 +36,12 @@ from .routers import (
 )
 
 # 2. Database schema
-# SQLite (local dev): ensure tables exist via create_all.
-# PostgreSQL: apply schema with `alembic upgrade head` — avoid create_all fighting migrations.
-if is_sqlite():
+# Always create missing tables in PostgreSQL & SQLite
+try:
     models.Base.metadata.create_all(bind=engine)
+except Exception as _create_err:
+    import logging
+    logging.warning(f"Database schema init warning: {_create_err}")
 
 # Legacy SQLite-only migrations (old single-file DBs that predated full models).
 # PostgreSQL: use Alembic + model definitions; skip ad hoc ALTERs.
@@ -243,6 +245,26 @@ def _ensure_tenant_enabled_features_column() -> None:
     except Exception as e:
         import logging
         logging.warning(f"Failed to add enabled_features column to tenants table: {e}")
+
+
+@app.on_event("startup")
+def _ensure_project_billing_mode_column() -> None:
+    """Ensure billing_mode column exists on projects table for both PostgreSQL and SQLite."""
+    from sqlalchemy import text
+    try:
+        models.Base.metadata.create_all(bind=engine)
+        with engine.begin() as conn:
+            if is_sqlite():
+                try:
+                    conn.execute(text("ALTER TABLE projects ADD COLUMN billing_mode TEXT DEFAULT 'time_and_materials'"))
+                except Exception as e:
+                    if "duplicate column name" not in str(e).lower():
+                        raise
+            else:
+                conn.execute(text("ALTER TABLE projects ADD COLUMN IF NOT EXISTS billing_mode VARCHAR DEFAULT 'time_and_materials'"))
+    except Exception as e:
+        import logging
+        logging.warning(f"Failed to add billing_mode column to projects table: {e}")
 
 
 @app.on_event("startup")
