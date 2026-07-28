@@ -1826,8 +1826,8 @@ function LandingPage() {
 
                             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-4">
                                 <a
-                                    href="/downloads/rafapp-v1.0.apk"
-                                    download="rafapp-v1.0.apk"
+                                    href="https://tntvbultwjeyizswvqax.supabase.co/storage/v1/object/public/rafapp-uploads/downloads/RafApp.apk"
+                                    download="RafApp.apk"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="px-6 py-4 bg-[#0096FF] hover:bg-blue-500 text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-lg shadow-[#0096FF]/30 transition flex items-center justify-center gap-3 text-center"
