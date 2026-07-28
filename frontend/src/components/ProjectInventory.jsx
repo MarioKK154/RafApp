@@ -42,6 +42,9 @@ function ProjectInventory({ projectId }) {
     const [requestNote, setRequestNote] = useState('');
     const [isRequestSubmitting, setIsRequestSubmitting] = useState(false);
 
+    const [catalogSearchQuery, setCatalogSearchQuery] = useState('');
+    const [requestSearchQuery, setRequestSearchQuery] = useState('');
+
     const [modal, setModal] = useState(null);
     const [modalQty, setModalQty] = useState('');
     const [transferDestId, setTransferDestId] = useState('');
@@ -365,22 +368,56 @@ function ProjectInventory({ projectId }) {
                         )}
                         <form onSubmit={handleAddItem} className="grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
                             <div className="space-y-2">
-                                <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">
-                                    Material SKU
-                                </label>
+                                <div className="flex justify-between items-center ml-1">
+                                    <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest">
+                                        Material SKU
+                                    </label>
+                                    <span className="text-[9px] font-bold text-indigo-500">
+                                        {allocateMode === 'warehouse' ? warehouseSkusAvailable.length : inventoryCatalog.length} {t('items', { defaultValue: 'items' })}
+                                    </span>
+                                </div>
+                                <input
+                                    type="text"
+                                    placeholder={t('search_materials', { defaultValue: '🔍 Leita í efnisskrá...' })}
+                                    value={catalogSearchQuery}
+                                    onChange={(e) => setCatalogSearchQuery(e.target.value)}
+                                    className="modern-input h-9 text-[11px] font-bold mb-1"
+                                />
                                 <select
                                     value={selectedCatalogItemId}
                                     onChange={(e) => setSelectedCatalogItemId(e.target.value)}
                                     className="modern-input h-12 text-xs font-bold"
                                 >
-                                    <option value="">-- SELECT SKU --</option>
-                                    {(allocateMode === 'warehouse' ? warehouseSkusAvailable : inventoryCatalog).map(
-                                        (item) => (
-                                            <option key={item.id} value={item.id}>
-                                                {catalogLabel(item)}
-                                            </option>
-                                        ),
-                                    )}
+                                    <option value="">-- SELECT MATERIAL --</option>
+                                    {Object.entries(
+                                        (() => {
+                                            const rawList = allocateMode === 'warehouse' ? warehouseSkusAvailable : inventoryCatalog;
+                                            const q = catalogSearchQuery.trim().toLowerCase();
+                                            const filtered = rawList.filter((item) => {
+                                                if (!q) return true;
+                                                const name = (inventoryDisplayName(item, i18n.language) || '').toLowerCase();
+                                                const sku = (item.sku || '').toLowerCase();
+                                                const cat = (item.category || '').toLowerCase();
+                                                const brand = (item.brand || item.supplier || '').toLowerCase();
+                                                return name.includes(q) || sku.includes(q) || cat.includes(q) || brand.includes(q);
+                                            });
+                                            const groups = {};
+                                            filtered.forEach((item) => {
+                                                const catName = item.category || item.master_category || (isIcelandic ? 'Önnur efni' : 'General Materials');
+                                                if (!groups[catName]) groups[catName] = [];
+                                                groups[catName].push(item);
+                                            });
+                                            return groups;
+                                        })()
+                                    ).map(([category, items]) => (
+                                        <optgroup key={category} label={`⚡ ${category} (${items.length})`}>
+                                            {items.map((item) => (
+                                                <option key={item.id} value={item.id}>
+                                                    {catalogLabel(item)}
+                                                </option>
+                                            ))}
+                                        </optgroup>
+                                    ))}
                                 </select>
                             </div>
                             <div className="space-y-2">
@@ -441,19 +478,54 @@ function ProjectInventory({ projectId }) {
                         </div>
                         <form onSubmit={handleCreateRequest} className="grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
                             <div className="space-y-2">
-                                <label className="block text-[9px] font-black text-amber-700 uppercase tracking-widest ml-1">
-                                    Material SKU
-                                </label>
+                                <div className="flex justify-between items-center ml-1">
+                                    <label className="block text-[9px] font-black text-amber-700 uppercase tracking-widest">
+                                        Material SKU
+                                    </label>
+                                    <span className="text-[9px] font-bold text-amber-600">
+                                        {inventoryCatalog.length} {t('items', { defaultValue: 'items' })}
+                                    </span>
+                                </div>
+                                <input
+                                    type="text"
+                                    placeholder={t('search_materials', { defaultValue: '🔍 Leita í efnisskrá...' })}
+                                    value={requestSearchQuery}
+                                    onChange={(e) => setRequestSearchQuery(e.target.value)}
+                                    className="modern-input h-9 text-[11px] font-bold mb-1"
+                                />
                                 <select
                                     value={selectedRequestItemId}
                                     onChange={(e) => setSelectedRequestItemId(e.target.value)}
                                     className="modern-input h-12 text-xs font-bold"
                                 >
-                                    <option value="">-- SELECT SKU --</option>
-                                    {inventoryCatalog.map((item) => (
-                                        <option key={item.id} value={item.id}>
-                                            {inventoryDisplayName(item, i18n.language)}
-                                        </option>
+                                    <option value="">-- SELECT MATERIAL --</option>
+                                    {Object.entries(
+                                        (() => {
+                                            const q = requestSearchQuery.trim().toLowerCase();
+                                            const filtered = inventoryCatalog.filter((item) => {
+                                                if (!q) return true;
+                                                const name = (inventoryDisplayName(item, i18n.language) || '').toLowerCase();
+                                                const sku = (item.sku || '').toLowerCase();
+                                                const cat = (item.category || '').toLowerCase();
+                                                const brand = (item.brand || item.supplier || '').toLowerCase();
+                                                return name.includes(q) || sku.includes(q) || cat.includes(q) || brand.includes(q);
+                                            });
+                                            const groups = {};
+                                            filtered.forEach((item) => {
+                                                const catName = item.category || item.master_category || (isIcelandic ? 'Önnur efni' : 'General Materials');
+                                                if (!groups[catName]) groups[catName] = [];
+                                                groups[catName].push(item);
+                                            });
+                                            return groups;
+                                        })()
+                                    ).map(([category, items]) => (
+                                        <optgroup key={category} label={`⚡ ${category} (${items.length})`}>
+                                            {items.map((item) => (
+                                                <option key={item.id} value={item.id}>
+                                                    {inventoryDisplayName(item, i18n.language)}
+                                                </option>
+                                            ))}
+                                        </optgroup>
                                     ))}
                                 </select>
                             </div>

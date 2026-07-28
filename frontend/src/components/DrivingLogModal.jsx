@@ -37,7 +37,15 @@ const DrivingLogModal = ({ isOpen, onClose, projectId }) => {
     };
 
     useEffect(() => {
-        if (isOpen) fetchDrivingLogs();
+        if (isOpen) {
+            document.body.style.overflow = 'hidden';
+            fetchDrivingLogs();
+        } else {
+            document.body.style.overflow = 'auto';
+        }
+        return () => {
+            document.body.style.overflow = 'auto';
+        };
     }, [isOpen, projectId]);
 
     const handleCreateLog = async (e) => {
@@ -68,8 +76,8 @@ const DrivingLogModal = ({ isOpen, onClose, projectId }) => {
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm">
-            <div className="bg-white dark:bg-gray-800 w-full max-w-xl rounded-3xl p-6 shadow-2xl space-y-6 border border-gray-100 dark:border-gray-700 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-gray-900/70 backdrop-blur-md p-4 flex items-center justify-center min-h-screen">
+            <div className="bg-white dark:bg-gray-800 w-full max-w-xl rounded-3xl p-6 shadow-2xl space-y-6 border border-gray-100 dark:border-gray-700 my-auto max-h-[90vh] overflow-y-auto relative">
                 <div className="flex justify-between items-center pb-4 border-b border-gray-100 dark:border-gray-700">
                     <div className="flex items-center gap-3">
                         <TruckIcon className="h-7 w-7 text-indigo-600 dark:text-indigo-400" />
