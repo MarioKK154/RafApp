@@ -9,7 +9,6 @@ import {
     PlusIcon,
     XMarkIcon,
     BuildingStorefrontIcon,
-    CurrencyIslandicIcon,
     ArrowPathIcon,
     ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
