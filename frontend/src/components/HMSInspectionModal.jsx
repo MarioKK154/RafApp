@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import axiosInstance from '../api/axiosInstance';
 import { 
@@ -96,8 +97,8 @@ const HMSInspectionModal = ({ isOpen, onClose, projectId }) => {
 
     if (!isOpen) return null;
 
-    return (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-gray-900/70 backdrop-blur-md p-4 flex items-center justify-center min-h-screen">
+    return createPortal(
+        <div className="fixed inset-0 z-[9999] overflow-y-auto bg-gray-900/70 backdrop-blur-md p-4 flex items-center justify-center min-h-screen">
             <div className="bg-white dark:bg-gray-800 w-full max-w-4xl rounded-3xl p-6 md:p-8 shadow-2xl space-y-6 border border-gray-100 dark:border-gray-700 my-auto max-h-[92vh] overflow-y-auto relative">
                 
                 {/* Header Badge */}
@@ -378,7 +379,8 @@ const HMSInspectionModal = ({ isOpen, onClose, projectId }) => {
                     </div>
                 )}
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 

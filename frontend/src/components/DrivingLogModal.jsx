@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import axiosInstance from '../api/axiosInstance';
 import { 
@@ -75,67 +76,121 @@ const DrivingLogModal = ({ isOpen, onClose, projectId }) => {
 
     if (!isOpen) return null;
 
-    return (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-gray-900/70 backdrop-blur-md p-4 flex items-center justify-center min-h-screen">
+    return createPortal(
+        <div className="fixed inset-0 z-[9999] overflow-y-auto bg-gray-900/70 backdrop-blur-md p-4 flex items-center justify-center min-h-screen">
             <div className="bg-white dark:bg-gray-800 w-full max-w-xl rounded-3xl p-6 shadow-2xl space-y-6 border border-gray-100 dark:border-gray-700 my-auto max-h-[90vh] overflow-y-auto relative">
                 <div className="flex justify-between items-center pb-4 border-b border-gray-100 dark:border-gray-700">
                     <div className="flex items-center gap-3">
                         <TruckIcon className="h-7 w-7 text-indigo-600 dark:text-indigo-400" />
                         <div>
                             <h3 className="text-xs font-black uppercase tracking-widest text-gray-900 dark:text-white">
-                                {isIcelandic ? 'Akstursdagbók & Reiknuð Ökukostnaður' : 'Vehicle Mileage & Travel Log'}
+                                {isIcelandic ? 'Akstursdagbók & Akstursendurgjald' : 'Mileage & Travel Expenses'}
                             </h3>
                             <p className="text-[10px] text-gray-400 font-medium">
-                                {isIcelandic ? 'Skráðu akstur og kílómetragjald (140 kr/km) beint á verkefni.' : 'Log kilometers and driving expenses (140 ISK/km) directly to projects.'}
+                                {isIcelandic ? 'Reiknaðu út akstursendurgjald (140 kr/km miðað við Ríkisskattstjóra).' : 'Auto-calculate mileage reimbursement (140 ISK/km RSK rate).'}
                             </p>
                         </div>
                     </div>
-                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><XMarkIcon className="h-6 w-6" /></button>
+                    <button 
+                        onClick={onClose} 
+                        className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+                    >
+                        <XMarkIcon className="h-6 w-6" />
+                    </button>
                 </div>
 
-                <form onSubmit={handleCreateLog} className="p-4 bg-gray-50 dark:bg-gray-900/60 rounded-2xl border border-gray-100 dark:border-gray-700 space-y-3">
-                    <h4 className="text-xs font-black uppercase tracking-wider text-gray-900 dark:text-white">
-                        {isIcelandic ? 'Skrá nýjan akstur' : 'Log New Trip'}
-                    </h4>
-                    <div className="grid grid-cols-2 gap-2">
+                {/* Form to log mileage */}
+                <form onSubmit={handleCreateLog} className="space-y-4 p-4 bg-gray-50 dark:bg-gray-900/60 rounded-2xl border border-gray-100 dark:border-gray-700">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label className="block text-[9px] font-black uppercase text-gray-400 mb-1">
+                                {isIcelandic ? 'Brottför / Frá*' : 'Origin / From*'}
+                            </label>
+                            <input
+                                type="text"
+                                required
+                                placeholder="Reykjavík / Verkstæði"
+                                value={newLog.origin}
+                                onChange={(e) => setNewLog({ ...newLog, origin: e.target.value })}
+                                className="w-full px-3.5 py-2 bg-white dark:bg-gray-800 rounded-xl text-xs font-bold border-none"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-[9px] font-black uppercase text-gray-400 mb-1">
+                                {isIcelandic ? 'Áfangastaður / Til*' : 'Destination / To*'}
+                            </label>
+                            <input
+                                type="text"
+                                required
+                                placeholder="Keflavík / Vinnusvæði"
+                                value={newLog.destination}
+                                onChange={(e) => setNewLog({ ...newLog, destination: e.target.value })}
+                                className="w-full px-3.5 py-2 bg-white dark:bg-gray-800 rounded-xl text-xs font-bold border-none"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-3">
+                        <div>
+                            <label className="block text-[9px] font-black uppercase text-gray-400 mb-1">
+                                {isIcelandic ? 'Upphaf (km)' : 'Start Odometer'}
+                            </label>
+                            <input
+                                type="number"
+                                placeholder="124500"
+                                value={newLog.start_km}
+                                onChange={(e) => setNewLog({ ...newLog, start_km: e.target.value })}
+                                className="w-full px-3.5 py-2 bg-white dark:bg-gray-800 rounded-xl text-xs font-mono font-bold border-none"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-[9px] font-black uppercase text-gray-400 mb-1">
+                                {isIcelandic ? 'Lok (km)' : 'End Odometer'}
+                            </label>
+                            <input
+                                type="number"
+                                placeholder="124545"
+                                value={newLog.end_km}
+                                onChange={(e) => setNewLog({ ...newLog, end_km: e.target.value })}
+                                className="w-full px-3.5 py-2 bg-white dark:bg-gray-800 rounded-xl text-xs font-mono font-bold border-none"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-[9px] font-black uppercase text-gray-400 mb-1">
+                                {isIcelandic ? 'Samtals (km)' : 'Total Distance'}
+                            </label>
+                            <input
+                                type="number"
+                                placeholder="45"
+                                value={newLog.total_km}
+                                onChange={(e) => setNewLog({ ...newLog, total_km: e.target.value })}
+                                className="w-full px-3.5 py-2 bg-white dark:bg-gray-800 rounded-xl text-xs font-mono font-bold border-none text-indigo-600 dark:text-indigo-400"
+                            />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-[9px] font-black uppercase text-gray-400 mb-1">
+                            {isIcelandic ? 'Tilgangur / Lýsing' : 'Purpose / Notes'}
+                        </label>
                         <input
                             type="text"
-                            placeholder={isIcelandic ? 'Frá (Upphafstaður)' : 'Origin'}
-                            value={newLog.origin}
-                            onChange={(e) => setNewLog({...newLog, origin: e.target.value})}
-                            className="px-3 py-2 bg-white dark:bg-gray-800 rounded-xl text-xs font-bold border-none"
-                        />
-                        <input
-                            type="text"
-                            placeholder={isIcelandic ? 'Til (Áfangastaður)' : 'Destination'}
-                            value={newLog.destination}
-                            onChange={(e) => setNewLog({...newLog, destination: e.target.value})}
-                            className="px-3 py-2 bg-white dark:bg-gray-800 rounded-xl text-xs font-bold border-none"
-                        />
-                        <input
-                            type="number"
-                            placeholder={isIcelandic ? 'Heildar km*' : 'Total km*'}
-                            value={newLog.total_km}
-                            onChange={(e) => setNewLog({...newLog, total_km: e.target.value})}
-                            className="px-3 py-2 bg-white dark:bg-gray-800 rounded-xl text-xs font-bold border-none"
-                        />
-                        <input
-                            type="text"
-                            placeholder={isIcelandic ? 'Tilgangur ferðar' : 'Trip Purpose'}
+                            placeholder="Útkall / Efniskaup í Ískraft"
                             value={newLog.purpose}
-                            onChange={(e) => setNewLog({...newLog, purpose: e.target.value})}
-                            className="px-3 py-2 bg-white dark:bg-gray-800 rounded-xl text-xs font-bold border-none"
+                            onChange={(e) => setNewLog({ ...newLog, purpose: e.target.value })}
+                            className="w-full px-3.5 py-2 bg-white dark:bg-gray-800 rounded-xl text-xs font-bold border-none"
                         />
                     </div>
+
                     <button
                         type="submit"
                         className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs uppercase tracking-widest rounded-xl transition shadow-md shadow-indigo-500/20"
                     >
-                        {isIcelandic ? 'Vista akstur í akstursdagbók' : 'Save Driving Log'}
+                        {isIcelandic ? '+ Skrá Akstur & Reikna Endurgjald' : '+ Log Mileage & Calculate Reimbursement'}
                     </button>
                 </form>
 
-                {/* Driving Log History Table */}
+                {/* History List */}
                 <div className="space-y-2">
                     <h4 className="text-xs font-black uppercase tracking-wider text-gray-700 dark:text-gray-300">
                         {isIcelandic ? 'Nýlegar akstursfærslur' : 'Recent Mileage Logs'}
@@ -166,7 +221,8 @@ const DrivingLogModal = ({ isOpen, onClose, projectId }) => {
                     )}
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 

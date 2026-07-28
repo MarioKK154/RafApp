@@ -29,6 +29,7 @@ function ProjectBoQ({ projectId }) {
     // Registry Form State
     const [selectedItemId, setSelectedItemId] = useState('');
     const [quantityRequired, setQuantityRequired] = useState(1);
+    const [boqSearchQuery, setBoqSearchQuery] = useState('');
 
     // Authorization Clearance
     const canManageBoQ = user && (['admin', 'project manager'].includes(user.role) || user.is_superuser);
@@ -176,15 +177,52 @@ function ProjectBoQ({ projectId }) {
                         </div>
                         <form onSubmit={handleAddItem} className="grid grid-cols-1 md:grid-cols-12 gap-6 items-end">
                             <div className="md:col-span-6 space-y-2">
-                                <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">SKU Identification</label>
+                                <div className="flex justify-between items-center ml-1">
+                                    <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest">SKU Identification</label>
+                                    <span className="text-[9px] font-bold text-indigo-500">
+                                        {availableInventoryItems.length} {t('items', { defaultValue: 'items' })}
+                                    </span>
+                                </div>
+                                <input
+                                    type="text"
+                                    placeholder={t('search_materials', { defaultValue: '🔍 Leita í efnisskrá...' })}
+                                    value={boqSearchQuery}
+                                    onChange={(e) => setBoqSearchQuery(e.target.value)}
+                                    className="modern-input h-9 text-[11px] font-bold mb-1"
+                                />
                                 <select 
                                     value={selectedItemId} 
                                     onChange={e => setSelectedItemId(e.target.value)}
                                     className="modern-input h-12 text-xs font-bold"
                                 >
                                     <option value="">-- SELECT FROM CATALOG --</option>
-                                    {availableInventoryItems.map(item => (
-                                        <option key={item.id} value={item.id}>{inventoryDisplayName(item, i18n.language)} ({item.sku || 'NO-SKU'})</option>
+                                    {Object.entries(
+                                        (() => {
+                                            const q = boqSearchQuery.trim().toLowerCase();
+                                            const filtered = availableInventoryItems.filter((item) => {
+                                                if (!q) return true;
+                                                const name = (inventoryDisplayName(item, i18n.language) || '').toLowerCase();
+                                                const sku = (item.sku || '').toLowerCase();
+                                                const cat = (item.category || '').toLowerCase();
+                                                const brand = (item.brand || item.supplier || '').toLowerCase();
+                                                return name.includes(q) || sku.includes(q) || cat.includes(q) || brand.includes(q);
+                                            });
+                                            const groups = {};
+                                            filtered.forEach((item) => {
+                                                const catName = item.category || item.master_category || (isIcelandic ? 'Önnur efni' : 'General Materials');
+                                                if (!groups[catName]) groups[catName] = [];
+                                                groups[catName].push(item);
+                                            });
+                                            return groups;
+                                        })()
+                                    ).map(([category, items]) => (
+                                        <optgroup key={category} label={`⚡ ${category} (${items.length})`}>
+                                            {items.map((item) => (
+                                                <option key={item.id} value={item.id}>
+                                                    {inventoryDisplayName(item, i18n.language)} ({item.sku || 'NO-SKU'})
+                                                </option>
+                                            ))}
+                                        </optgroup>
                                     ))}
                                 </select>
                             </div>
