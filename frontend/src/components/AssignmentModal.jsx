@@ -161,8 +161,34 @@ const AssignmentModal = ({ isOpen, onClose, selectedUser, selectedDate, existing
         fetchOptions();
     }, [isOpen, currentUser, isProjectManager]);
 
-    const handleDeleteAssignment = async () => {
+    const handleDeleteAssignment = async (singleDayOnly = true) => {
         if (!existingAssignment?.id) return;
+        const isIcelandic = i18n.language.startsWith('is');
+
+        let targetDateStr = null;
+        if (selectedDate) {
+            targetDateStr = typeof selectedDate === 'string' ? selectedDate : format(selectedDate, 'yyyy-MM-dd');
+        }
+
+        const isMultiDay = existingAssignment.start_date !== existingAssignment.end_date;
+
+        if (singleDayOnly && isMultiDay && targetDateStr) {
+            if (window.confirm(isIcelandic ? `Fjarlægja eingöngu daginn ${targetDateStr} hjá ${selectedUser?.full_name || 'starfsmanni'}?` : `Remove only ${targetDateStr} for ${selectedUser?.full_name || 'user'}?`)) {
+                setIsSubmitting(true);
+                try {
+                    await axiosInstance.delete(`/assignments/${existingAssignment.id}?target_date=${targetDateStr}`);
+                    toast.success(isIcelandic ? `Dagurinn ${targetDateStr} fjarlægður úr dagskrá!` : `Single day ${targetDateStr} unassigned!`);
+                    onAssignmentCreated();
+                    onClose();
+                } catch (err) {
+                    toast.error(err.response?.data?.detail || 'Failed to remove single day from schedule.');
+                } finally {
+                    setIsSubmitting(false);
+                }
+            }
+            return;
+        }
+
         if (window.confirm(t('confirm_remove_assignment', { userName: selectedUser?.full_name, projectName: existingAssignment.project_name || 'Project' }))) {
             setIsSubmitting(true);
             try {
@@ -355,22 +381,35 @@ const AssignmentModal = ({ isOpen, onClose, selectedUser, selectedDate, existing
                         ></textarea>
                     </div>
 
-                    <div className="flex items-center gap-3 pt-2">
+                    <div className="flex flex-col sm:flex-row items-center gap-3 pt-2">
                         {existingAssignment && (
-                            <button 
-                                type="button"
-                                onClick={handleDeleteAssignment}
-                                disabled={isSubmitting}
-                                className="flex-1 inline-flex items-center justify-center gap-2 px-5 py-3 bg-red-600 hover:bg-red-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition transform active:scale-95 disabled:opacity-50 shadow-md shadow-red-500/20"
-                            >
-                                <TrashIcon className="h-4 w-4" />
-                                {t('unassign_personnel', { defaultValue: 'Unassign / Purge' })}
-                            </button>
+                            <>
+                                {existingAssignment.start_date !== existingAssignment.end_date && selectedDate && (
+                                    <button 
+                                        type="button"
+                                        onClick={() => handleDeleteAssignment(true)}
+                                        disabled={isSubmitting}
+                                        className="w-full sm:w-auto flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 bg-amber-600 hover:bg-amber-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition transform active:scale-95 disabled:opacity-50 shadow-md shadow-amber-500/20"
+                                    >
+                                        <TrashIcon className="h-4 w-4" />
+                                        {i18n.language.startsWith('is') ? 'Fjarlægja þennan dag' : 'Remove This Day'}
+                                    </button>
+                                )}
+                                <button 
+                                    type="button"
+                                    onClick={() => handleDeleteAssignment(false)}
+                                    disabled={isSubmitting}
+                                    className="w-full sm:w-auto flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 bg-red-600 hover:bg-red-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition transform active:scale-95 disabled:opacity-50 shadow-md shadow-red-500/20"
+                                >
+                                    <TrashIcon className="h-4 w-4" />
+                                    {i18n.language.startsWith('is') ? 'Eyða öllu tímabilinu' : 'Delete Entire Period'}
+                                </button>
+                            </>
                         )}
                         <button 
                             type="submit"
                             disabled={isSubmitting}
-                            className="flex-1 inline-flex items-center justify-center gap-2 px-5 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition transform active:scale-95 disabled:opacity-50 shadow-md shadow-indigo-500/20"
+                            className="w-full sm:w-auto flex-1 inline-flex items-center justify-center gap-2 px-5 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition transform active:scale-95 disabled:opacity-50 shadow-md shadow-indigo-500/20"
                         >
                             {isSubmitting 
                                 ? t('syncing', { defaultValue: 'Syncing...' }) 

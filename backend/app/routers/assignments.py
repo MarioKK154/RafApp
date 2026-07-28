@@ -2,7 +2,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from typing import List, Optional
-from datetime import date
+from datetime import date, timedelta
 from .. import crud, schemas, models, security
 from ..database import get_db
 
@@ -64,11 +64,13 @@ def create_new_assignment(
 @router.delete("/{assignment_id}")
 def purge_assignment(
     assignment_id: int,
+    target_date: Optional[date] = Query(None, description="Optional single date to unassign without deleting the full multi-day period"),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(security.get_current_user)
 ):
     """
     Purge Protocol: Removes a personnel link from a project.
+    If target_date is provided, removes or unassigns ONLY that single day.
     """
     # Permission Guard: Only Admins or Managers can unassign personnel
     if current_user.role not in ['admin', 'project manager'] and not current_user.is_superuser:
@@ -85,6 +87,40 @@ def purge_assignment(
         proj = db_assignment.project
         if proj and proj.tenant_id != current_user.tenant_id:
             raise HTTPException(status_code=403, detail="Cross-tenant operation denied.")
+
+    if target_date:
+        start_d = db_assignment.start_date
+        end_d = db_assignment.end_date
+
+        if start_d == end_d or (target_date <= start_d and target_date >= end_d):
+            crud.delete_assignment(db, assignment_id=assignment_id)
+            return {"message": "Assignment node purged successfully."}
+
+        if target_date == start_d:
+            db_assignment.start_date = start_d + timedelta(days=1)
+            db.commit()
+            return {"message": f"Single day {target_date} removed from assignment start."}
+
+        if target_date == end_d:
+            db_assignment.end_date = end_d - timedelta(days=1)
+            db.commit()
+            return {"message": f"Single day {target_date} removed from assignment end."}
+
+        if start_d < target_date < end_d:
+            old_end = db_assignment.end_date
+            db_assignment.end_date = target_date - timedelta(days=1)
+            
+            segment_2 = models.ProjectAssignment(
+                project_id=db_assignment.project_id,
+                user_id=db_assignment.user_id,
+                start_date=target_date + timedelta(days=1),
+                end_date=old_end,
+                role=db_assignment.role,
+                notes=db_assignment.notes
+            )
+            db.add(segment_2)
+            db.commit()
+            return {"message": f"Single day {target_date} removed; assignment split into two range segments."}
 
     crud.delete_assignment(db, assignment_id=assignment_id)
     return {"message": "Assignment node purged successfully."}
