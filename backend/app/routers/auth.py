@@ -43,8 +43,10 @@ async def login_for_access_token(
     keep_signed_in: bool = Form(False),
 ):
     user = crud.get_user_by_email_and_tenant(db, email=form_data.username, tenant_id=tenant_id)
-    if user and user.is_superuser and tenant_id != 1:
-        user = None
+    if not user:
+        user = crud.get_user_by_email(db, email=form_data.username)
+        if user and not user.is_superuser and user.tenant_id != tenant_id:
+            user = None
 
     if not user or not user.is_active or not security.verify_password(form_data.password, user.hashed_password):
         raise HTTPException(

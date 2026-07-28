@@ -455,7 +455,7 @@ function LoginPage() {
                                     }}
                                     className="text-indigo-500 hover:text-indigo-400 transition"
                                 >
-                                    {t('forgot_password_link', { defaultValue: 'Gleymdir þú lykilorði?' })}
+                                    {t('forgot_password_link', { defaultValue: 'Forgot password?' })}
                                 </button>
                             </div>
 
