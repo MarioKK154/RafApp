@@ -122,6 +122,9 @@ function LoginPage() {
                         }
                     }
                 }
+                if (!selectedTenantId && tenantsList.length > 0) {
+                    setSelectedTenantId(String(tenantsList[0].id));
+                }
             } catch (error) {
                 console.error('Tenant fetch failed:', error);
                 toast.error('Could not load company list.');

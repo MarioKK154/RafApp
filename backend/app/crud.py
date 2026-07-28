@@ -136,15 +136,17 @@ def get_user(db: Session, user_id: int) -> Optional[models.User]:
              .filter(models.User.id == user_id).first()
 
 def get_user_by_email(db: Session, email: str) -> Optional[models.User]:
+    clean_email = (email or "").strip().lower()
     return db.query(models.User)\
              .options(
                  joinedload(models.User.assigned_projects),
                  joinedload(models.User.tenant)
              )\
-             .filter(models.User.email == email).first()
+             .filter(func.lower(models.User.email) == clean_email).first()
 
 
 def get_user_by_email_and_tenant(db: Session, email: str, tenant_id: int) -> Optional[models.User]:
+    clean_email = (email or "").strip().lower()
     return (
         db.query(models.User)
         .options(
@@ -152,7 +154,7 @@ def get_user_by_email_and_tenant(db: Session, email: str, tenant_id: int) -> Opt
             joinedload(models.User.tenant),
         )
         .filter(
-            models.User.email == email,
+            func.lower(models.User.email) == clean_email,
             models.User.tenant_id == tenant_id,
         )
         .first()
