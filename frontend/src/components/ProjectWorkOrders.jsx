@@ -8,7 +8,8 @@ import {
     ClockIcon, 
     ExclamationTriangleIcon,
     PencilSquareIcon,
-    XMarkIcon
+    XMarkIcon,
+    WrenchScrewdriverIcon
 } from '@heroicons/react/24/outline';
 import { toast } from 'react-toastify';
 
@@ -137,7 +138,7 @@ const ProjectWorkOrders = ({ projectId, isManagement }) => {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-gray-800 p-6 rounded-3xl border border-gray-100 dark:border-gray-700/80 shadow-xs">
                 <div>
                     <h3 className="text-sm font-black uppercase tracking-wider text-gray-900 dark:text-white flex items-center gap-2">
-                        <WrenchIcon className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+                        <WrenchScrewdriverIcon className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
                         {isIcelandic ? 'Verkbeiðnir & Vettvangsstýring' : 'Work Orders & Field Dispatch'}
                     </h3>
                     <p className="text-xs text-gray-400 font-medium mt-1">
