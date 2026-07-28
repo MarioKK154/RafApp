@@ -349,13 +349,41 @@ def seed_demo_tenant(reset_existing: bool = True):
             db.flush()
             proj_dict[p["name"]] = proj
 
-            # Project Assignments
-            assigned_users = [users_dict["aron@rafsud.is"], users_dict["bjarki@rafsud.is"], users_dict["tomas@rafsud.is"]]
+            # Project Personnel Roster (project_members) & Shift Schedule Assignments
+            assigned_users = [
+                users_dict["david@rafsud.is"],
+                users_dict["aron@rafsud.is"],
+                users_dict["bjarki@rafsud.is"],
+                users_dict["tomas@rafsud.is"],
+                users_dict["viktor@rafsud.is"]
+            ]
             if "Bláa Lónið" in p["name"]:
-                assigned_users = [users_dict["sigurdur@rafsud.is"], users_dict["kristin@rafsud.is"], users_dict["elisabet@rafsud.is"]]
+                assigned_users = [
+                    users_dict["kristin@rafsud.is"],
+                    users_dict["sigurdur@rafsud.is"],
+                    users_dict["elisabet@rafsud.is"],
+                    users_dict["katrin@rafsud.is"]
+                ]
             elif "Landsvirkjun" in p["name"]:
-                assigned_users = [users_dict["david@rafsud.is"], users_dict["katrin@rafsud.is"]]
+                assigned_users = [
+                    users_dict["david@rafsud.is"],
+                    users_dict["katrin@rafsud.is"],
+                    users_dict["tomas@rafsud.is"]
+                ]
+            elif "Reykjanesbæjar" in p["name"]:
+                assigned_users = [
+                    users_dict["kristin@rafsud.is"],
+                    users_dict["viktor@rafsud.is"],
+                    users_dict["elisabet@rafsud.is"],
+                    users_dict["aron@rafsud.is"]
+                ]
 
+            # Populate official project membership table (project_members)
+            for uobj in assigned_users:
+                if uobj not in proj.members:
+                    proj.members.append(uobj)
+
+            # Create shift schedule entries (ProjectAssignment)
             for uobj in assigned_users:
                 pa = models.ProjectAssignment(
                     project_id=proj.id,
@@ -364,6 +392,7 @@ def seed_demo_tenant(reset_existing: bool = True):
                     end_date=p["end"]
                 )
                 db.add(pa)
+            db.flush()
 
         # 3b. Create Project Drawing Folders & PDF Schematics
         dfolder = models.DrawingFolder(

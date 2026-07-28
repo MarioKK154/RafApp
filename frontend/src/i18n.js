@@ -1481,8 +1481,9 @@ const resources = {
       // Toast messages - Scheduling
       "toast_sync_resource_grid_failed": "Failed to sync resource grid.",
       "toast_schedule_modifications_restricted": "Schedule modifications are restricted to Administrative personnel.",
-      "confirm_remove_assignment": "Are you sure you want to remove {{userName}} from project {{projectName}}?",
-      "toast_assignment_purged": "Assignment purged from registry.",
+      "confirm_remove_assignment": "Remove schedule shift entry for {{userName}} on {{projectName}}? (Worker will remain a member of the project team)",
+      "unassign_personnel": "Remove Shift Entry",
+      "toast_assignment_purged": "Shift entry removed from schedule.",
       "toast_delete_assignment_failed": "Failed to delete assignment.",
       "toast_load_active_tasks_failed": "Could not load active tasks for scheduling.",
       "toast_load_scheduling_metadata_failed": "Failed to load scheduling metadata.",
@@ -3137,8 +3138,9 @@ const resources = {
       // Toast messages - Scheduling
       "toast_sync_resource_grid_failed": "Tókst ekki að samstilla tímaplan.",
       "toast_schedule_modifications_restricted": "Breytingar á tímaplani eru bundnar við stjórnendur.",
-      "confirm_remove_assignment": "Ertu viss um að þú viljir fjarlægja {{userName}} af verkefninu {{projectName}}?",
-      "toast_assignment_purged": "Skráning hefur verið fjarlægð.",
+      "confirm_remove_assignment": "Fjarlægja vakt úr dagskrá fyrir {{userName}} í verkefni {{projectName}}? (Starfsmaður verður áfram skráður í verkefnahóp)",
+      "unassign_personnel": "Fjarlægja vakt",
+      "toast_assignment_purged": "Vakt var fjarlægð úr dagskrá.",
       "toast_delete_assignment_failed": "Tókst ekki að eyða skráningu.",
       "toast_load_active_tasks_failed": "Gat ekki sótt virk verk fyrir tímaplan.",
       "toast_load_scheduling_metadata_failed": "Gat ekki sótt gögn fyrir tímaplan.",
