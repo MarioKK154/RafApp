@@ -109,6 +109,16 @@ function OfferPage() {
     const [inventoryCatalog, setInventoryCatalog] = useState([]);
     const [laborCatalog, setLaborCatalog] = useState([]);
     const [workLoadRatios, setWorkLoadRatios] = useState([]);
+
+    const [rateInputValue, setRateInputValue] = useState('2985');
+    const [isUpdatingRate, setIsUpdatingRate] = useState(false);
+
+    useEffect(() => {
+        if (offer?.verdlag_per_eining) {
+            setRateInputValue(String(offer.verdlag_per_eining));
+        }
+    }, [offer?.verdlag_per_eining]);
+    
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
 
@@ -233,6 +243,27 @@ function OfferPage() {
             toast.error(err.response?.data?.detail || 'Failed to add assembly bundle.');
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const handleApplyRateToAllLabor = async () => {
+        const rate = parseFloat(rateInputValue);
+        if (isNaN(rate) || rate <= 0) {
+            toast.error("Vinsamlegast sláðu inn gildan einingartaxta (t.d. 2985.0 kr).");
+            return;
+        }
+        setIsUpdatingRate(true);
+        try {
+            await axiosInstance.put(`/offers/${offerId}`, {
+                verdlag_per_eining: rate
+            });
+            toast.success(i18n.language.startsWith('is') ? `Beitti ${rate} kr. einingarverði á allt verkið!` : `Applied ${rate} ISK rate to all labor items!`);
+            await reloadOfferFromServer();
+        } catch (err) {
+            console.error('Failed to update offer rate:', err);
+            toast.error('Gekk ekki að uppfæra einingarverð.');
+        } finally {
+            setIsUpdatingRate(false);
         }
     };
 
@@ -776,6 +807,71 @@ function OfferPage() {
                                     <span className="block text-xs font-black text-gray-900 dark:text-white group-hover:text-indigo-600 transition">⚡ 3-Fasa Aðaltaflu Pakki</span>
                                     <span className="text-[9px] font-medium text-gray-400 block mt-0.5">Tafla + Lekastraumsrofi + 2.0h SART vinna</span>
                                 </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* SART & RSÍ Eininga & Verðlags Engine (PM & Admins Only) */}
+                    {canManageOffer && (
+                        <div className="p-6 bg-slate-900 text-white rounded-[2.5rem] shadow-xl space-y-4 border border-slate-800">
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+                                <div>
+                                    <div className="flex items-center gap-2">
+                                        <span className="px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                                            SART / RSÍ Ákvæðisreikningar (ar.is)
+                                        </span>
+                                        <span className="text-[10px] font-bold text-slate-400">Opinn Kjarasamningur 2025/2026</span>
+                                    </div>
+                                    <h3 className="text-lg font-black text-white uppercase tracking-tight mt-1">
+                                        {i18n.language.startsWith('is') ? 'Eininga & Taxtareiknir Verks' : 'Work Unit & Rate Calculator'}
+                                    </h3>
+                                </div>
+                                <div className="text-left sm:text-right">
+                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Samtals Einingar Verks</span>
+                                    <span className="text-2xl font-black text-emerald-400 font-mono">
+                                        {lineItems.reduce((sum, item) => sum + ((item.eining_value || 0) * (item.quantity || 1)), 0).toFixed(2)} <span className="text-xs text-emerald-300">einingar</span>
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+                                <div className="bg-slate-800/80 p-4 rounded-2xl border border-slate-700/60">
+                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">
+                                        {i18n.language.startsWith('is') ? 'Samið Einingarverð (Verðlag kr/klst)' : 'Agreed Unit Rate (ISK/unit)'}
+                                    </span>
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            type="number"
+                                            value={rateInputValue}
+                                            onChange={(e) => setRateInputValue(e.target.value)}
+                                            placeholder="2985"
+                                            disabled={!canEditOffer || isUpdatingRate}
+                                            className="modern-input bg-slate-950 text-white font-mono font-bold text-sm h-10 w-full px-3 rounded-xl border-slate-700"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={handleApplyRateToAllLabor}
+                                            disabled={!canEditOffer || isUpdatingRate}
+                                            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition whitespace-nowrap shadow-md shadow-indigo-600/30"
+                                        >
+                                            {isUpdatingRate ? 'Uppfæri...' : (i18n.language.startsWith('is') ? 'Beita á allt' : 'Apply')}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className="bg-slate-800/80 p-4 rounded-2xl border border-slate-700/60 flex flex-col justify-center">
+                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Reikniformúla SART / ar.is</span>
+                                    <p className="text-xs font-bold text-slate-200 mt-1">
+                                        Heildarverð = (Einingar × Magn) × Taxti
+                                    </p>
+                                </div>
+
+                                <div className="bg-slate-800/80 p-4 rounded-2xl border border-slate-700/60 flex flex-col justify-center">
+                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Reiknuð Vinnutala</span>
+                                    <p className="text-lg font-black text-indigo-400 font-mono mt-1">
+                                        {formatCurrency(laborTotal)}
+                                    </p>
+                                </div>
                             </div>
                         </div>
                     )}

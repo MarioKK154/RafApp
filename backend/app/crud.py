@@ -2941,8 +2941,23 @@ def get_offers_for_project(db: Session, project_id: int) -> List[models.Offer]:
 
 def update_offer(db: Session, db_offer: models.Offer, offer_update: schemas.OfferUpdate) -> models.Offer:
     update_data = offer_update.model_dump(exclude_unset=True)
-    for key, value in update_data.items(): setattr(db_offer, key, value)
-    db.add(db_offer); db.commit(); db.refresh(db_offer); return db_offer
+    new_rate = update_data.get("verdlag_per_eining")
+    for key, value in update_data.items():
+        setattr(db_offer, key, value)
+
+    if new_rate is not None and new_rate > 0:
+        for item in db_offer.line_items:
+            if item.item_type == models.OfferLineItemType.Labor and item.eining_value:
+                item.unit_price = new_rate * item.eining_value
+                item.total_price = item.quantity * item.unit_price
+                db.add(item)
+        db.flush()
+        db_offer.total_amount = calculate_offer_total(db, offer_id=db_offer.id)
+
+    db.add(db_offer)
+    db.commit()
+    db.refresh(db_offer)
+    return db_offer
 
 def delete_offer(db: Session, db_offer: models.Offer):
     db.delete(db_offer); db.commit()
