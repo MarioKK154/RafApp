@@ -252,6 +252,7 @@ function AccountingPage() {
     }
 
     return (
+        <>
         <div className="animate-in fade-in duration-500 pb-12">
             <div className="container mx-auto p-4 md:p-8 max-w-[1600px]">
                 <PageHeader
@@ -1693,6 +1694,7 @@ function AccountingPage() {
             confirmText={t('delete', { defaultValue: 'Delete' })}
             type="danger"
         />
+        </>
     );
 
 }

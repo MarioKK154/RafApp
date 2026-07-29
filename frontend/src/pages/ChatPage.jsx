@@ -265,6 +265,7 @@ function ChatPage() {
     };
 
     return (
+        <>
         <div className="container mx-auto p-4 md:p-8 max-w-[1600px] h-[calc(100vh-5rem)] flex flex-col animate-in fade-in duration-500">
             <PageHeader
                 icon={ChatBubbleLeftRightIcon}
@@ -423,6 +424,7 @@ function ChatPage() {
             confirmText={t('delete', { defaultValue: 'Delete' })}
             type="danger"
         />
+        </>
     );
 }
 

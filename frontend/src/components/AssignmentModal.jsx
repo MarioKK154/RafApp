@@ -256,6 +256,7 @@ const AssignmentModal = ({ isOpen, onClose, selectedUser, selectedDate, existing
     if (!isOpen) return null;
 
     return (
+        <>
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm animate-in fade-in duration-200">
             <div className="bg-white dark:bg-gray-800 w-full max-w-lg rounded-[2.5rem] shadow-2xl border border-gray-100 dark:border-gray-700 overflow-hidden">
                 <header className="px-8 py-6 bg-gray-50 dark:bg-gray-900/50 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
@@ -441,6 +442,7 @@ const AssignmentModal = ({ isOpen, onClose, selectedUser, selectedDate, existing
             confirmText={t('remove', { defaultValue: 'Remove' })}
             type="danger"
         />
+        </>
     );
 };
 
