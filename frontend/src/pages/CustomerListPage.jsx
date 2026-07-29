@@ -92,7 +92,7 @@ function CustomerListPage() {
         if (!debouncedSearchTerm) return customers;
         const query = debouncedSearchTerm.toLowerCase();
         return customers.filter(cust =>
-            cust.name.toLowerCase().includes(query) ||
+            (cust.name || '').toLowerCase().includes(query) ||
             (cust.contact_person && cust.contact_person.toLowerCase().includes(query)) ||
             (cust.email && cust.email.toLowerCase().includes(query)) ||
             (cust.kennitala && cust.kennitala.includes(query))

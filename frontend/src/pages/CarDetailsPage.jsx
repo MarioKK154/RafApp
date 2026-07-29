@@ -292,7 +292,7 @@ function CarDetailsPage() {
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                             <ul className="space-y-4">
-                                {car.tyre_sets.map(tyre => (
+                                {(car.tyre_sets || []).map(tyre => (
                                     <li key={tyre.id} className="p-5 rounded-[1.5rem] border border-gray-100 dark:border-gray-700 flex justify-between items-center group hover:bg-gray-50 dark:hover:bg-gray-900/50 transition">
                                         <div>
                                             <p className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-tight">{tyre.brand || t('standard_tyre', { defaultValue: 'Standard' })} • {tyre.type}</p>

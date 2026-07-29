@@ -87,7 +87,7 @@ function NotificationHubPage() {
                                 {note.message}
                             </p>
                             <div className="flex items-center gap-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                                <span className="flex items-center gap-1.5"><ClockIcon className="h-3.5 w-3.5" /> {format(new Date(note.created_at), 'PPP p')}</span>
+                                <span className="flex items-center gap-1.5"><ClockIcon className="h-3.5 w-3.5" /> {(() => { try { return format(new Date(note.created_at), 'PPP p'); } catch { return '—'; } })()}</span>
                             </div>
                         </div>
 

@@ -254,14 +254,14 @@ function ToolInventoryPage() {
                             <div className="pt-2">
                                 {tool.status === 'Available' ? (
                                     <button 
-                                        onClick={() => handleCheckout(tool.id)}
+                                        onClick={(e) => { e.stopPropagation(); handleCheckout(tool.id); }}
                                         className="w-full flex items-center justify-center gap-2 h-11 bg-green-600 hover:bg-green-700 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-xl transition shadow-lg shadow-green-100 dark:shadow-none"
                                     >
                                         <ArrowUpOnSquareIcon className="h-4 w-4" /> {t('initialize_checkout', { defaultValue: 'Initialize Checkout' })}
                                     </button>
                                 ) : tool.status === 'In Use' && tool.current_user?.id === user.id ? (
                                     <button 
-                                        onClick={() => handleCheckin(tool.id)}
+                                        onClick={(e) => { e.stopPropagation(); handleCheckin(tool.id); }}
                                         className="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition"
                                     >
                                         <ArrowDownOnSquareIcon className="h-4 w-4" /> {t('end_assignment', { defaultValue: 'End Assignment' })}

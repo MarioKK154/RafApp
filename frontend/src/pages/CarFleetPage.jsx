@@ -78,9 +78,9 @@ function CarFleetPage() {
         if (!debouncedSearchTerm) return cars;
         const query = debouncedSearchTerm.toLowerCase();
         return cars.filter(car =>
-            car.make.toLowerCase().includes(query) ||
-            car.model.toLowerCase().includes(query) ||
-            car.license_plate.toLowerCase().includes(query) ||
+            (car.make || '').toLowerCase().includes(query) ||
+            (car.model || '').toLowerCase().includes(query) ||
+            (car.license_plate || '').toLowerCase().includes(query) ||
             (car.vin && car.vin.toLowerCase().includes(query))
         );
     }, [cars, debouncedSearchTerm]);

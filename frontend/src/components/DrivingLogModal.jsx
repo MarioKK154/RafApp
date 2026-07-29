@@ -212,8 +212,8 @@ const DrivingLogModal = ({ isOpen, onClose, projectId }) => {
                                         <span className="text-[10px] text-gray-400">{log.log_date} {log.purpose && `• ${log.purpose}`}</span>
                                     </div>
                                     <div className="text-right">
-                                        <span className="font-black text-indigo-600 dark:text-indigo-400 block">{log.total_km} km</span>
-                                        <span className="text-[10px] text-gray-400 font-bold">{(log.total_km * (log.rate_per_km || 140)).toLocaleString('is-IS')} ISK</span>
+                                        <span className="font-black text-indigo-600 dark:text-indigo-400 block">{log.total_km ?? '—'} km</span>
+                                        <span className="text-[10px] text-gray-400 font-bold">{((log.total_km ?? 0) * (log.rate_per_km || 140)).toLocaleString('is-IS')} ISK</span>
                                     </div>
                                 </div>
                             ))}
