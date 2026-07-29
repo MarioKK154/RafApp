@@ -56,11 +56,7 @@ function AccountSettingsPage() {
     const [invoices, setInvoices] = useState([]);
     const [isLoadingInvoices, setIsLoadingInvoices] = useState(false);
 
-    // PayPal checkout modal states
-    const [selectedInvoiceForPayment, setSelectedInvoiceForPayment] = useState(null);
-    const [paypalClientId, setPaypalClientId] = useState('sb');
-    const [paypalLoaded, setPaypalLoaded] = useState(false);
-    const [paymentStep, setPaymentStep] = useState('input'); // 'input' | 'processing' | 'success'
+
 
     const fetchTenantInvoices = async () => {
         setIsLoadingInvoices(true);
@@ -80,112 +76,6 @@ function AccountSettingsPage() {
         }
     }, [user]);
 
-    useEffect(() => {
-        const fetchAndLoadPaypal = async () => {
-            let cid = 'sb';
-            try {
-                const res = await axiosInstance.get('/system/paypal-client-id');
-                if (res.data && res.data.client_id) {
-                    cid = res.data.client_id;
-                }
-            } catch (err) {
-                console.warn("Failed to retrieve paypal client_id, falling back to sandbox (sb)", err);
-            }
-            setPaypalClientId(cid);
-
-            const scriptId = "paypal-js-sdk";
-            const existingScript = document.getElementById(scriptId);
-            if (existingScript) {
-                existingScript.remove();
-            }
-
-            const script = document.createElement("script");
-            script.id = scriptId;
-            script.src = `https://www.paypal.com/sdk/js?client-id=${cid}&currency=ISK`;
-            script.async = true;
-            script.onload = () => {
-                setPaypalLoaded(true);
-            };
-            script.onerror = () => {
-                console.error("Failed to load PayPal SDK script.");
-            };
-            document.body.appendChild(script);
-        };
-        
-        if (user && (user.role === 'admin' || user.is_superuser)) {
-            fetchAndLoadPaypal();
-        }
-
-        return () => {
-            const script = document.getElementById("paypal-js-sdk");
-            if (script) {
-                script.remove();
-            }
-        };
-    }, [user]);
-
-    useEffect(() => {
-        if (!selectedInvoiceForPayment || !paypalLoaded) return;
-
-        const timer = setTimeout(() => {
-            const container = document.getElementById("paypal-button-container");
-            if (container && window.paypal) {
-                container.innerHTML = "";
-                window.paypal.Buttons({
-                    style: {
-                        layout: 'vertical',
-                        color:  'gold',
-                        shape:  'rect',
-                        label:  'paypal'
-                    },
-                    createOrder: async (data, actions) => {
-                        try {
-                            const res = await axiosInstance.post(`/system/my-tenant/invoices/${selectedInvoiceForPayment.id}/paypal-order`);
-                            return res.data.order_id;
-                        } catch (err) {
-                            toast.error(t('paypal_order_failed', { defaultValue: 'Failed to initiate PayPal Order.' }));
-                            throw err;
-                        }
-                    },
-                    onApprove: async (data, actions) => {
-                        setPaymentStep('processing');
-                        try {
-                            const res = await axiosInstance.post(`/system/my-tenant/invoices/${selectedInvoiceForPayment.id}/paypal-capture`, {
-                                order_id: data.orderID
-                            });
-                            if (res.data && res.data.status === 'COMPLETED') {
-                                setPaymentStep('success');
-                                toast.success(t('payment_success', { defaultValue: "Payment processed via PayPal successfully!" }));
-                                fetchTenantInvoices();
-                                setTimeout(() => {
-                                    setSelectedInvoiceForPayment(null);
-                                    setPaymentStep('input');
-                                }, 2000);
-                            } else {
-                                toast.warning(t('paypal_payment_state', { defaultValue: 'PayPal payment state: {{status}}' }).replace('{{status}}', res.data.status));
-                                setPaymentStep('input');
-                            }
-                        } catch (err) {
-                            toast.error(err.response?.data?.detail || t('paypal_capture_failed', { defaultValue: 'PayPal transaction capture failed.' }));
-                            setPaymentStep('input');
-                        }
-                    },
-                    onError: (err) => {
-                        console.error("PayPal Checkout Error:", err);
-                        toast.error(t('paypal_checkout_error', { defaultValue: 'An error occurred during PayPal checkout.' }));
-                        setPaymentStep('input');
-                    }
-                }).render("#paypal-button-container");
-            }
-        }, 150);
-
-        return () => clearTimeout(timer);
-    }, [selectedInvoiceForPayment, paypalLoaded]);
-
-    const handleOpenPaymentModal = (invoice) => {
-        setSelectedInvoiceForPayment(invoice);
-        setPaymentStep('input');
-    };
 
     const handleDownloadInvoicePdf = async (invoiceId) => {
         try {
@@ -261,7 +151,11 @@ function AccountSettingsPage() {
                 return;
             }
             setSelectedFile(file);
-            setPreviewUrl(URL.createObjectURL(file));
+            // M2 fix: revoke the previous object URL before creating a new one to prevent memory leaks
+            setPreviewUrl(prev => {
+                if (prev) URL.revokeObjectURL(prev);
+                return URL.createObjectURL(file);
+            });
         }
     };
 
@@ -640,15 +534,7 @@ function AccountSettingsPage() {
                                                     >
                                                         {t('pdf', { defaultValue: 'PDF' })}
                                                     </button>
-                                                    {inv.status !== 'Paid' && (
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => handleOpenPaymentModal(inv)}
-                                                            className="px-4 py-2 bg-[#0096FF] hover:bg-blue-500 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition shadow shadow-blue-500/25"
-                                                        >
-                                                            {t('pay_bill_paypal', { defaultValue: 'Pay Bill (PayPal)' })}
-                                                        </button>
-                                                    )}
+
                                                 </div>
                                             </div>
                                         ))}
@@ -731,80 +617,7 @@ function AccountSettingsPage() {
             </div>
         </div>
 
-        {/* PayPal Premium Payment Modal */}
-        {selectedInvoiceForPayment && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-300">
-                <div className="bg-white dark:bg-gray-800 rounded-[2.5rem] border border-gray-100 dark:border-gray-700 shadow-2xl max-w-md w-full overflow-hidden p-8 text-left space-y-6">
-                    {paymentStep === 'input' && (
-                        <div className="space-y-6">
-                            <div className="flex justify-between items-center mb-6">
-                                <div>
-                                    <h3 className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-tight">{t('paypal_secure_checkout', { defaultValue: 'PayPal Secure Checkout' })}</h3>
-                                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{t('rafapp_subscription_service', { defaultValue: 'RafApp Subscription Service' })}</p>
-                                </div>
-                                <button 
-                                    type="button" 
-                                    onClick={() => setSelectedInvoiceForPayment(null)}
-                                    className="px-6 py-2 border-2 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 text-gray-600 dark:text-gray-300 text-[10px] font-black uppercase tracking-widest rounded-xl transition"
-                                >
-                                    {t('cancel_protocol', { defaultValue: 'Cancel Protocol' })}
-                                </button>
-                            </div>
 
-                            <div className="p-4 bg-indigo-50 dark:bg-indigo-950/30 rounded-2xl border border-indigo-100 dark:border-indigo-900/50 flex justify-between items-center text-xs">
-                                <div>
-                                    <span className="block text-[8px] font-black text-indigo-500 uppercase tracking-widest">Amount to Pay</span>
-                                    <span className="text-lg font-black text-indigo-950 dark:text-white">
-                                        {((selectedInvoiceForPayment.amount || 0) * 1.24).toLocaleString()} ISK
-                                    </span>
-                                    <span className="block text-[8px] text-indigo-400 font-bold uppercase mt-0.5">
-                                        (Subtotal: {selectedInvoiceForPayment.amount.toLocaleString()} ISK + 24% VSK)
-                                    </span>
-                                </div>
-                                <span className="px-3 py-1 bg-white dark:bg-gray-800 text-[10px] font-black text-indigo-600 dark:text-indigo-400 rounded-xl border border-indigo-100 dark:border-indigo-800 uppercase tracking-wider">
-                                    SECURE
-                                </span>
-                            </div>
-
-                            <div className="space-y-4">
-                                {!paypalLoaded ? (
-                                    <div className="flex flex-col items-center justify-center py-6 space-y-2">
-                                        <svg className="animate-spin h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24">
-                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                                        </svg>
-                                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{t('initializing_paypal_sdk', { defaultValue: 'Loading PayPal SDK...' })}</p>
-                                    </div>
-                                ) : (
-                                    <div id="paypal-button-container" className="w-full relative z-10 min-h-[150px]"></div>
-                                )}
-                            </div>
-                        </div>
-                    )}
-
-                    {paymentStep === 'processing' && (
-                        <div className="flex flex-col items-center justify-center py-12 space-y-4">
-                            <svg className="animate-spin h-10 w-10 text-indigo-600" fill="none" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                            </svg>
-                            <p className="text-sm font-black text-gray-800 dark:text-white uppercase tracking-wider text-center">{t('processing_paypal_capture', { defaultValue: 'Processing SECURE PayPal Checkout...' })}</p>
-                            <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest text-center">{t('do_not_close_window', { defaultValue: 'Do not close this window or refresh the page.' })}</p>
-                        </div>
-                    )}
-
-                    {paymentStep === 'success' && (
-                        <div className="flex flex-col items-center justify-center py-12 space-y-4 text-center">
-                            <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center text-emerald-600 text-3xl animate-bounce">
-                                ✓
-                            </div>
-                            <h3 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight">{t('payment_complete', { defaultValue: 'Payment Complete' })}</h3>
-                            <p className="text-sm text-gray-500 font-bold uppercase tracking-widest">{t('invoice_marked_paid', { defaultValue: 'Invoice marked as paid.' })}</p>
-                        </div>
-                    )}
-                </div>
-            </div>
-        )}
         </>
     );
 }

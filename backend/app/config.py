@@ -75,8 +75,7 @@ class AppSettings:
     smtp_password: Optional[str]
     smtp_from_email: Optional[str]
     admin_email: Optional[str]
-    paypal_client_id: Optional[str]
-    paypal_client_secret: Optional[str]
+
     supabase_url: Optional[str]
     supabase_service_key: Optional[str]
 
@@ -133,8 +132,7 @@ def get_settings() -> AppSettings:
         smtp_password=_env_str("SMTP_PASSWORD") or None,
         smtp_from_email=_env_str("SMTP_FROM_EMAIL") or "noreply@rafapp.is",
         admin_email=_env_str("ADMIN_EMAIL") or None,
-        paypal_client_id=_env_str("PAYPAL_CLIENT_ID") or None,
-        paypal_client_secret=_env_str("PAYPAL_CLIENT_SECRET") or None,
+
         supabase_url=_env_str("SUPABASE_URL") or None,
         supabase_service_key=_env_str("SUPABASE_SERVICE_KEY") or None,
     )

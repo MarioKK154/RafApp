@@ -1533,7 +1533,7 @@ class YearlyMoneyOverview(BaseModel):
 
 
 BillingStatusLiteral = Literal["Pending", "Paid", "Overdue"]
-BillingProviderLiteral = Literal["manual", "stripe", "paypal", "bokun"]
+BillingProviderLiteral = Literal["manual", "bokun"]
 
 
 class BillingInvoiceBase(BaseModel):
