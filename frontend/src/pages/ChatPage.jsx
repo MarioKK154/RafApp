@@ -4,6 +4,7 @@ import axiosInstance from '../api/axiosInstance';
 import { useAuth } from '../context/AuthContext';
 import PageHeader from '../components/PageHeader';
 import { ChatBubbleLeftRightIcon, PlusIcon, PaperAirplaneIcon, UserGroupIcon, UserIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { toast } from 'react-toastify';
 
 function ChatPage() {
     const { t } = useTranslation();
@@ -76,8 +77,27 @@ function ChatPage() {
             }
         };
 
+        ws.current.onerror = () => {
+            console.error('Chat WebSocket error');
+            toast.error(
+                t('chat_ws_error', { defaultValue: 'Chat connection error. Messages may not be delivered.' }),
+                { toastId: 'chat-ws-error', autoClose: 5000 }
+            );
+        };
+
+        ws.current.onclose = (event) => {
+            if (event.code !== 1000) {
+                // Abnormal close — backend dropped the connection
+                toast.warn(
+                    t('chat_ws_disconnected', { defaultValue: 'Chat disconnected. Refresh the page to reconnect.' }),
+                    { toastId: 'chat-ws-close', autoClose: 6000 }
+                );
+            }
+            ws.current = null;
+        };
+
         return () => {
-            if (ws.current) ws.current.close();
+            if (ws.current) ws.current.close(1000, 'Component unmounted');
         };
     }, [user]);
 

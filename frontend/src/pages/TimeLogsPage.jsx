@@ -191,7 +191,19 @@ function TimeLogsPage() {
     }, [timeLogs]);
     const chartData = useMemo(() => {
         if (!timeLogs || timeLogs.length === 0) return [];
-        
+
+        // Both filters active: group by date to show the timeline for this user+project
+        if (selectedProject && selectedUser) {
+            const groups = {};
+            timeLogs.forEach(log => {
+                const day = log.start_time ? log.start_time.slice(0, 10) : 'Unknown';
+                const hours = log.duration_hours || 0;
+                if (!groups[day]) groups[day] = { name: day, id: day, hours: 0, type: 'day' };
+                groups[day].hours += hours;
+            });
+            return Object.values(groups).sort((a, b) => a.name.localeCompare(b.name));
+        }
+
         if (!selectedProject && !selectedUser) {
             const groups = {};
             timeLogs.forEach(log => {
@@ -275,7 +287,15 @@ function TimeLogsPage() {
             if (editFormData.start_datetime) payload.start_time = new Date(editFormData.start_datetime).toISOString();
             if (editFormData.end_datetime) payload.end_time = new Date(editFormData.end_datetime).toISOString();
             payload.notes = editFormData.notes || null;
-            payload.travel_hours = parseFloat(editFormData.travel_hours) || 0.0;
+            // M6 fix: validate travel_hours — reject non-numeric or out-of-range values
+            const rawTravel = editFormData.travel_hours;
+            const parsedTravel = rawTravel === '' || rawTravel == null ? 0 : parseFloat(rawTravel);
+            if (isNaN(parsedTravel) || parsedTravel < 0 || parsedTravel > 24) {
+                toast.error(t('travel_hours_invalid', { defaultValue: 'Travel hours must be a number between 0 and 24.' }));
+                setIsSavingEdit(false);
+                return;
+            }
+            payload.travel_hours = parsedTravel;
             await axiosInstance.patch(`/timelogs/${logToEdit.id}`, payload);
             toast.success(t('save_changes'));
             setLogToEdit(null);
