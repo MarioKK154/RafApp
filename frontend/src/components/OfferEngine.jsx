@@ -32,16 +32,87 @@ const REIKNITALA_TABLE = [
 ];
 const DEFAULT_REIKNITALA = 946.19;
 
-// Standard surcharges (Álagshlutföll) per ar.is collective agreement
-const SURCHARGES = [
-    { id: 'evening',    emoji: '🌆', label: 'Evening work',        labelIs: 'Eftirvinna',          desc: '17:00–24:00',                              ratio: 0.33, color: 'amber'  },
-    { id: 'night',      emoji: '🌙', label: 'Night / Weekend',     labelIs: 'Næturvinna / Helgi',   desc: 'After midnight or full weekends',          ratio: 0.45, color: 'indigo' },
-    { id: 'holiday',    emoji: '🎉', label: 'Public holiday',      labelIs: 'Stórhátíð',            desc: 'Christmas, New Year, etc.',                ratio: 0.90, color: 'red'   },
-    { id: 'occupied',   emoji: '🏢', label: 'Occupied premises',   labelIs: 'Virkur rekstur',       desc: 'Working around operating businesses',      ratio: 0.10, color: 'blue'  },
-    { id: 'height_mid', emoji: '🏗️', label: 'Height 15–50m',      labelIs: 'Hæðarvinna 15–50m',    desc: 'Towers, masts, high ceilings',             ratio: 0.20, color: 'blue'  },
-    { id: 'height_high',emoji: '🏔️', label: 'Height >50m',        labelIs: 'Hæðarvinna >50m',      desc: 'Very high structures',                     ratio: 0.30, color: 'blue'  },
-    { id: 'difficult',  emoji: '⚠️', label: 'Difficult conditions',labelIs: 'Erfiðar aðstæður',    desc: 'Confined spaces, hazardous materials',     ratio: 0.15, color: 'orange'},
-    { id: 'outdoor',    emoji: '🌧️', label: 'Outdoor / exposed',   labelIs: 'Útiuppsetning',        desc: 'Exposed to weather, unprotected sites',    ratio: 0.10, color: 'teal'  },
+// ─── Official Álagshlutföll (Surcharges) from Ákvæðisgrundvöllur Álagshlutföll.xlsx ───
+// Types: 3 = project-wide modifier, 2 = per-item modifier
+// All active surcharges are SUMMED (not multiplied)
+
+const SURCHARGE_GROUPS = [
+    {
+        id: 'project',
+        label: 'Project conditions',
+        labelIs: 'Verkstæðisaðstæður',
+        tip: 'Apply to the whole project if site conditions are non-standard.',
+        tipIs: 'Gildir fyrir allt verkið ef aðstæður eru óvenjulegar.',
+        items: [
+            { id: '3020', code: '3020', emoji: '🏚️', label: 'Old / heritage building',    labelIs: 'Eldri bygging',           desc: 'Pre-1980 construction',                    ratio: 0.10 },
+            { id: '3030', code: '3030', emoji: '🏢', label: 'Building in operation',       labelIs: 'Húsnæði í notkun',        desc: 'Occupied during work',                     ratio: 0.10 },
+        ],
+    },
+    {
+        id: 'ceiling',
+        label: 'Ceiling height at work area',
+        labelIs: 'Lofthæð vinnusvæðis',
+        tip: 'Height of the ceiling/space where you are installing. Pick ONE.',
+        tipIs: 'Hæð lofts þar sem þú setur upp. Veldu EITT.',
+        exclusive: true,
+        items: [
+            { id: '4006', code: '4006', emoji: '🦆', label: 'Ceiling ≤ 0.60 m (crawl)',   labelIs: 'Lofthæð ≤ 0.60 m',       desc: 'Extremely confined / crawl space',         ratio: 0.50 },
+            { id: '4015', code: '4015', emoji: '🧎', label: 'Ceiling 0.61–1.50 m (low)',  labelIs: 'Lofthæð 0.61–1.50 m',    desc: 'Low, must crouch',                         ratio: 0.20 },
+            { id: '4050', code: '4050', emoji: '📏', label: 'Ceiling 3.00–5.00 m',        labelIs: 'Lofthæð 3.00–5.00 m',    desc: 'High ceiling, step ladder needed',         ratio: 0.10 },
+            { id: '4070', code: '4070', emoji: '🪜', label: 'Ceiling 5.01–7.00 m',        labelIs: 'Lofthæð 5.01–7.00 m',    desc: 'Very high, tall ladder or lift',           ratio: 0.25 },
+            { id: '4100', code: '4100', emoji: '🏭', label: 'Ceiling 7.01–10.00 m',       labelIs: 'Lofthæð 7.01–10.00 m',   desc: 'Industrial / hall height',                 ratio: 0.40 },
+        ],
+    },
+    {
+        id: 'scaffold',
+        label: 'Working from scaffold / platform',
+        labelIs: 'Vinna af vinnupöllum',
+        tip: 'If using a scaffold platform, pick the platform height. Pick ONE.',
+        tipIs: 'Ef unnið er af vinnupöllum, veldu hæð þeirra. Veldu EITT.',
+        exclusive: true,
+        items: [
+            { id: '5040', code: '5040', emoji: '🔧', label: 'Scaffold 2.00–4.00 m',       labelIs: 'Vinnupallar 2.00–4.00 m', desc: 'Low scaffold',                             ratio: 0.02 },
+            { id: '5060', code: '5060', emoji: '🔧', label: 'Scaffold 4.01–6.00 m',       labelIs: 'Vinnupallar 4.01–6.00 m', desc: 'Medium scaffold',                          ratio: 0.04 },
+            { id: '5080', code: '5080', emoji: '🔧', label: 'Scaffold 6.01–8.00 m',       labelIs: 'Vinnupallar 6.01–8.00 m', desc: 'High scaffold',                            ratio: 0.06 },
+            { id: '5100', code: '5100', emoji: '🔧', label: 'Scaffold 8.01–10.00 m',      labelIs: 'Vinnupallar 8.01–10.00 m','desc': 'Very high scaffold',                     ratio: 0.08 },
+        ],
+    },
+    {
+        id: 'floor',
+        label: 'Floor level in building',
+        labelIs: 'Hæð hússins (hæðartala)',
+        tip: 'Applies from the 5th floor upward. Pick ONE if applicable.',
+        tipIs: 'Á við frá 5. hæð og upp. Veldu EITT ef við á.',
+        exclusive: true,
+        items: [
+            { id: '6005', code: '6005', emoji: '5️⃣', label: '5th floor (+2%)',            labelIs: '5. hæð (+2%)',            desc: '',  ratio: 0.02 },
+            { id: '6006', code: '6006', emoji: '6️⃣', label: '6th floor (+3%)',            labelIs: '6. hæð (+3%)',            desc: '',  ratio: 0.03 },
+            { id: '6007', code: '6007', emoji: '7️⃣', label: '7th floor (+4%)',            labelIs: '7. hæð (+4%)',            desc: '',  ratio: 0.04 },
+            { id: '6008', code: '6008', emoji: '8️⃣', label: '8th floor (+5%)',            labelIs: '8. hæð (+5%)',            desc: '',  ratio: 0.05 },
+            { id: '6009', code: '6009', emoji: '9️⃣', label: '9th floor (+6%)',            labelIs: '9. hæð (+6%)',            desc: '',  ratio: 0.06 },
+            { id: '6010', code: '6010', emoji: '🔟', label: '10th floor (+7%)',            labelIs: '10. hæð (+7%)',           desc: '',  ratio: 0.07 },
+            { id: '6011', code: '6011', emoji: '🏢', label: '11th floor (+8%)',            labelIs: '11. hæð (+8%)',           desc: '',  ratio: 0.08 },
+            { id: '6012', code: '6012', emoji: '🏢', label: '12th floor (+9%)',            labelIs: '12. hæð (+9%)',           desc: '',  ratio: 0.09 },
+            { id: '6013', code: '6013', emoji: '🏢', label: '13th floor (+10%)',           labelIs: '13. hæð (+10%)',          desc: '',  ratio: 0.10 },
+            { id: '6014', code: '6014', emoji: '🏢', label: '14th floor (+11%)',           labelIs: '14. hæð (+11%)',          desc: '',  ratio: 0.11 },
+            { id: '6015', code: '6015', emoji: '🏢', label: '15th floor (+12%)',           labelIs: '15. hæð (+12%)',          desc: '',  ratio: 0.12 },
+            { id: '6016', code: '6016', emoji: '🏢', label: '16th floor (+13%)',           labelIs: '16. hæð (+13%)',          desc: '',  ratio: 0.13 },
+        ],
+    },
+    {
+        id: 'special',
+        label: 'Special work / discounts',
+        labelIs: 'Sérstök verk / afsláttur',
+        tip: 'Demolition work, salvage, or agreed discount. Can be negative.',
+        tipIs: 'Niðurrif, endurnýting eða saminn afsláttur. Getur verið neikvætt.',
+        items: [
+            { id: '2030', code: '2030', emoji: '📦', label: 'Panels moved with equipment', labelIs: 'Skápar fluttir með búnaði', desc: 'Moving full populated panels',           ratio: 1.00 },
+            { id: '2040', code: '2040', emoji: '🏗️', label: 'Boxes set in concrete/mold',  labelIs: 'Kassar í steypumót/vikur',  desc: 'Set after pouring',                     ratio: 1.00 },
+            { id: '2010', code: '2010', emoji: '♻️', label: 'Demolish & reuse material',   labelIs: 'Efni tekið niður, notað aftur','desc': 'Salvage work',                      ratio: -0.50 },
+            { id: '2020', code: '2020', emoji: '🗑️', label: 'Demolish, discard material',  labelIs: 'Efni tekið niður, fargað',  desc: 'Tear-out only, material disposed',      ratio: -0.70 },
+            { id: '1010', code: '1010', emoji: '🏷️', label: '10% agreed discount',         labelIs: '10% afsláttur',             desc: 'Contractually agreed discount',          ratio: -0.10 },
+        ],
+    },
 ];
 
 const DEFAULT_PAYROLL = 0.32; // 32% — statutory (Trygg. 6.35% + Líf. 11.5% + Orlof 10.17% + Sjúkl. 2.5%+)
@@ -145,10 +216,15 @@ export default function OfferEngine({ initialItems = [], onCreateOffer }) {
         [lines]
     );
 
-    const surchargeRatio = useMemo(
-        () => SURCHARGES.filter(s => activeSurcharges.has(s.id)).reduce((acc, s) => acc + s.ratio, 0),
-        [activeSurcharges]
-    );
+    const surchargeRatio = useMemo(() => {
+        let total = 0;
+        SURCHARGE_GROUPS.forEach(group => {
+            group.items.forEach(item => {
+                if (activeSurcharges.has(item.id)) total += item.ratio;
+            });
+        });
+        return total;
+    }, [activeSurcharges]);
 
     // C_labor: einingar × reiknitala × (1 + surcharges) × (1 + launagjöld 32%)
     const C_labor = totalEinningar * reiknitala * (1 + surchargeRatio) * (1 + DEFAULT_PAYROLL);
@@ -168,12 +244,22 @@ export default function OfferEngine({ initialItems = [], onCreateOffer }) {
     const removeLine = (id) =>
         setLines(prev => prev.filter(l => l.id !== id));
 
-    const toggleSurcharge = (id) =>
+    const toggleSurcharge = (id, groupId) => {
+        const group = SURCHARGE_GROUPS.find(g => g.id === groupId);
         setActiveSurcharges(prev => {
             const next = new Set(prev);
-            next.has(id) ? next.delete(id) : next.add(id);
+            if (next.has(id)) {
+                next.delete(id);
+            } else {
+                // For exclusive groups, remove any already-selected item from same group
+                if (group?.exclusive) {
+                    group.items.forEach(item => next.delete(item.id));
+                }
+                next.add(id);
+            }
             return next;
         });
+    };
 
     // ── Steps definition ──────────────────────────────────────────────────────
     const STEPS = [
@@ -304,79 +390,110 @@ export default function OfferEngine({ initialItems = [], onCreateOffer }) {
     );
 
     // ─────────────────────────────────────────────────────────────────────────
-    // STEP 1 — Site Conditions / Surcharges
+    // STEP 1 — Site Conditions / Surcharges (Official Álagshlutföll)
     // ─────────────────────────────────────────────────────────────────────────
     const renderStep1 = () => (
-        <div className="space-y-4">
+        <div className="space-y-5">
             <Tip>
-                {t('tip_step2', { defaultValue: 'If the job has special conditions (night work, height, hazardous areas), you must add surcharges as required by the ar.is collective agreement. Skip this step if it\'s a standard daytime job.' })}
+                {t('tip_step2', { defaultValue: 'Select any surcharges that apply to your project. These are official codes from the Ákvæðisgrundvöllur. For exclusive groups (ceiling height, scaffold, floor), only one can apply at a time.' })}
             </Tip>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                {SURCHARGES.map(s => {
-                    const active = activeSurcharges.has(s.id);
-                    return (
-                        <button
-                            key={s.id}
-                            type="button"
-                            onClick={() => toggleSurcharge(s.id)}
-                            className={`text-left p-3.5 rounded-xl border-2 transition-all ${
-                                active
-                                    ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/25 shadow-sm'
-                                    : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 hover:border-gray-300 dark:hover:border-gray-600'
-                            }`}
-                        >
-                            <div className="flex items-start gap-3">
-                                <div className={`w-5 h-5 rounded-full border-2 flex-shrink-0 mt-0.5 flex items-center justify-center transition-colors ${
-                                    active
-                                        ? 'border-indigo-500 bg-indigo-500'
-                                        : 'border-gray-300 dark:border-gray-600'
-                                }`}>
-                                    {active && <div className="w-2 h-2 bg-white rounded-full" />}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-1.5">
-                                        <span className="text-base leading-none">{s.emoji}</span>
-                                        <span className="text-sm font-bold text-gray-900 dark:text-gray-100">
+            {SURCHARGE_GROUPS.map(group => (
+                <div key={group.id}>
+                    <div className="flex items-center justify-between mb-2">
+                        <h4 className="text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            {isIS ? group.labelIs : group.label}
+                        </h4>
+                        {group.exclusive && (
+                            <span className="text-[9px] px-1.5 py-0.5 bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 rounded font-bold uppercase tracking-wider">pick one</span>
+                        )}
+                    </div>
+                    <p className="text-[10px] text-gray-400 dark:text-gray-500 mb-2">{isIS ? group.tipIs : group.tip}</p>
+                    <div className={`grid gap-2 ${
+                        group.id === 'floor' ? 'grid-cols-2 sm:grid-cols-3' :
+                        group.id === 'scaffold' ? 'grid-cols-2' :
+                        'grid-cols-1 sm:grid-cols-2'
+                    }`}>
+                        {group.items.map(s => {
+                            const active = activeSurcharges.has(s.id);
+                            const positive = s.ratio > 0;
+                            return (
+                                <button
+                                    key={s.id}
+                                    type="button"
+                                    onClick={() => toggleSurcharge(s.id, group.id)}
+                                    className={`text-left p-3 rounded-xl border-2 transition-all ${
+                                        active
+                                            ? positive
+                                                ? 'border-amber-500 bg-amber-50 dark:bg-amber-900/20'
+                                                : 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20'
+                                            : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 hover:border-gray-300 dark:hover:border-gray-600'
+                                    }`}
+                                >
+                                    <div className="flex items-center gap-2">
+                                        <div className={`w-4 h-4 rounded flex-shrink-0 border-2 flex items-center justify-center ${
+                                            group.exclusive ? 'rounded-full' : 'rounded'
+                                        } ${
+                                            active
+                                                ? positive ? 'border-amber-500 bg-amber-500' : 'border-emerald-500 bg-emerald-500'
+                                                : 'border-gray-300 dark:border-gray-600'
+                                        }`}>
+                                            {active && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
+                                        </div>
+                                        <span className="text-sm leading-none">{s.emoji}</span>
+                                        <span className={`flex-1 text-xs font-semibold ${
+                                            active
+                                                ? positive ? 'text-amber-800 dark:text-amber-200' : 'text-emerald-800 dark:text-emerald-200'
+                                                : 'text-gray-700 dark:text-gray-300'
+                                        }`}>
                                             {isIS ? s.labelIs : s.label}
                                         </span>
-                                        <span className={`ml-auto text-xs font-black px-1.5 py-0.5 rounded ${
+                                        <span className={`text-xs font-black px-1.5 py-0.5 rounded flex-shrink-0 ${
                                             active
-                                                ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300'
+                                                ? positive ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300' : 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300'
                                                 : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
                                         }`}>
-                                            +{(s.ratio * 100).toFixed(0)}%
+                                            {s.ratio >= 0 ? '+' : ''}{(s.ratio * 100).toFixed(0)}%
                                         </span>
                                     </div>
-                                    <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5 leading-snug">
-                                        {s.desc}
-                                    </p>
-                                </div>
-                            </div>
-                        </button>
-                    );
-                })}
-            </div>
+                                    {s.desc && (
+                                        <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-1 ml-6 leading-snug">{s.desc}</p>
+                                    )}
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
+            ))}
 
             {activeSurcharges.size > 0 ? (
                 <div className="flex items-center justify-between p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800/50 rounded-xl">
-                    <span className="text-sm font-bold text-amber-700 dark:text-amber-300">
-                        {t('total_surcharge', { defaultValue: 'Total surcharge applied:' })}
-                    </span>
-                    <span className="text-sm font-black text-amber-800 dark:text-amber-200">
-                        +{(surchargeRatio * 100).toFixed(0)}%
+                    <div>
+                        <span className="text-sm font-bold text-amber-700 dark:text-amber-300">
+                            {t('total_surcharge', { defaultValue: 'Total surcharge applied:' })}
+                        </span>
+                        <p className="text-[10px] text-amber-600 dark:text-amber-400 mt-0.5">
+                            {Array.from(activeSurcharges).map(id => {
+                                const item = SURCHARGE_GROUPS.flatMap(g => g.items).find(i => i.id === id);
+                                return item ? `${item.emoji} ${item.code}` : null;
+                            }).filter(Boolean).join(' + ')}
+                        </p>
+                    </div>
+                    <span className={`text-lg font-black ${surchargeRatio >= 0 ? 'text-amber-800 dark:text-amber-200' : 'text-emerald-700 dark:text-emerald-300'}`}>
+                        {surchargeRatio >= 0 ? '+' : ''}{(surchargeRatio * 100).toFixed(0)}%
                     </span>
                 </div>
             ) : (
                 <div className="flex items-center gap-2 p-3 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800/50 rounded-xl">
                     <CheckCircleIcon className="h-4 w-4 text-emerald-500" />
                     <span className="text-sm text-emerald-700 dark:text-emerald-300 font-medium">
-                        {t('no_surcharges', { defaultValue: 'Standard daytime work — no surcharges.' })}
+                        {t('no_surcharges', { defaultValue: 'No surcharges selected — standard conditions.' })}
                     </span>
                 </div>
             )}
         </div>
     );
+
 
     // ─────────────────────────────────────────────────────────────────────────
     // STEP 2 — Costs & Rates
