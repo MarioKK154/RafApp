@@ -942,7 +942,7 @@ function AdminToolsPage() {
                                         value={mainAdminEmail}
                                         onChange={(e) => setMainAdminEmail(e.target.value)}
                                         className="pl-10 block w-full rounded-2xl border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-red-500 h-12"
-                                        placeholder="admin@rafapp.com"
+                                        placeholder="mario@rafapp.is"
                                     />
                                 </div>
                             </div>

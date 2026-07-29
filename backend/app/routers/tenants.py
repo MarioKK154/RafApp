@@ -39,8 +39,8 @@ MAX_BACKGROUND_SIZE_MB = 10
 @limiter.limit("100/minute")
 async def create_new_tenant(request: Request, tenant_data: schemas.TenantCreate, db: DbDependency):
     """
-    Creates a new tenant and automatically creates a default admin user 
-    assigned to that tenant (admin@tenantname.com).
+    Creates a new tenant without creating automatic users.
+    Superadmins can create new admin users for the tenant manually afterwards.
     """
     # 1. Check if tenant name already exists
     existing_tenant = crud.get_tenant_by_name(db, name=tenant_data.name)
@@ -53,27 +53,6 @@ async def create_new_tenant(request: Request, tenant_data: schemas.TenantCreate,
     # 2. Create the tenant record
     new_tenant = crud.create_tenant(db=db, tenant=tenant_data)
     
-    # 3. Create the default tenant admin (Issue #3)
-    # Sanitize name for email (remove spaces, convert to lowercase)
-    safe_name = tenant_data.name.replace(" ", "").lower()
-    admin_email = f"{safe_name}_admin@{safe_name}.is"
-    
-    admin_create_data = schemas.UserCreateAdmin(
-        email=admin_email,
-        password=os.getenv("DEFAULT_TENANT_ADMIN_PASSWORD", "Admin123!"),
-        full_name=f"{tenant_data.name} Admin",
-        role="admin",
-        tenant_id=new_tenant.id,
-        is_active=True,
-        is_superuser=False
-    )
-    
-    try:
-        crud.create_user_by_admin(db=db, user_data=admin_create_data)
-    except Exception as e:
-        # We log the warning but don't fail the tenant creation if only the user part fails
-        print(f"Warning: Could not create default admin for {tenant_data.name}: {str(e)}")
-
     return new_tenant
 
 @router.get("/", response_model=List[schemas.TenantRead])

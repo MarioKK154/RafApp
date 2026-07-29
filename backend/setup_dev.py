@@ -32,8 +32,8 @@ def setup_database():
         print("Creating Superuser account...")
         hashed_password = security.get_password_hash("admin123") # Change this immediately!
         superuser = models.User(
-            email="admin@rafapp.com",
-            full_name="System Superadmin",
+            email="mario@rafapp.is",
+            full_name="Mario Superadmin",
             hashed_password=hashed_password,
             role="superuser",
             is_active=True,

@@ -59,8 +59,8 @@ def _reset_database_in_place() -> None:
         session.refresh(system_tenant)
 
         superuser = models.User(
-            email="admin@rafapp.com",
-            full_name="System Superadmin",
+            email="mario@rafapp.is",
+            full_name="Mario Superadmin",
             hashed_password=security.get_password_hash("admin123"),
             role="superuser",
             is_active=True,
