@@ -520,6 +520,7 @@ class OfferLineItem(Base):
     # F2: traceability back to labor catalog source item
     labor_catalog_item_id: Mapped[Optional[int]] = mapped_column(ForeignKey("labor_catalog_items.id"), nullable=True, index=True)
     eining_value: Mapped[Optional[float]] = mapped_column(Float, nullable=True)  # snapshot of reference_price at offer creation
+    unit: Mapped[Optional[str]] = mapped_column(String, nullable=True, default="stk")
     offer: Mapped["Offer"] = relationship(back_populates="line_items")
     inventory_item: Mapped[Optional["InventoryItem"]] = relationship(back_populates="offer_line_items")
 

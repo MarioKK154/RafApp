@@ -189,40 +189,48 @@ function OfferPage() {
     const handleAddBundle = async (bundleType) => {
         if (!offerId || !canEditOffer) return;
         setIsLoading(true);
+        const isIcelandic = i18n.language.startsWith('is');
         let itemsToAdd = [];
 
         if (bundleType === 'socket') {
             itemsToAdd = [
-                { item_type: 'Material', description: 'Ísetningardós í steypu/vegg (SART E-001)', quantity: 1, unit_price: 450, unit: 'stk' },
-                { item_type: 'Material', description: 'Dráttarkapall 3x1.5mm² (SART E-003)', quantity: 3, unit_price: 140, unit: 'm' },
-                { item_type: 'Material', description: '1-fasa veggtengill með jörð (SART E-004)', quantity: 1, unit_price: 1850, unit: 'stk' },
-                { item_type: 'Labor', description: 'Rafiðnaðarvinna - Frágangur og tenging tengils (SART taxti)', quantity: 0.5, unit_price: 12500, unit: 'klst' },
+                { item_type: 'Material', description: 'Ísetningardós í steypu/vegg (SART E-001)', quantity: 1, unit_price: 450, unit: 'stk', eining_value: 0.15 },
+                { item_type: 'Material', description: 'Dráttarkapall 3x1.5mm² (SART E-003)', quantity: 3, unit_price: 140, unit: 'm', eining_value: 0.05 },
+                { item_type: 'Material', description: '1-fasa veggtengill með jörð (SART E-004)', quantity: 1, unit_price: 1850, unit: 'stk', eining_value: 0.62 },
+                { item_type: 'Labor', description: 'Rafiðnaðarvinna - Frágangur og tenging tengils (SART taxti)', quantity: 0.5, unit_price: 12500, unit: 'klst', eining_value: 0.50 },
             ];
         } else if (bundleType === 'spot') {
             itemsToAdd = [
-                { item_type: 'Material', description: 'Ífelldur LED spotti 7W IP44 (SART E-007)', quantity: 1, unit_price: 3200, unit: 'stk' },
-                { item_type: 'Material', description: 'Fastspennugjafi / Dimmer driver', quantity: 1, unit_price: 1950, unit: 'stk' },
-                { item_type: 'Labor', description: 'Rafiðnaðarvinna - Borun og tenging ljósa (SART taxti)', quantity: 0.4, unit_price: 12500, unit: 'klst' },
+                { item_type: 'Material', description: 'Ífelldur LED spotti 7W IP44 (SART E-007)', quantity: 1, unit_price: 3200, unit: 'stk', eining_value: 1.07 },
+                { item_type: 'Material', description: 'Fastspennugjafi / Dimmer driver', quantity: 1, unit_price: 1950, unit: 'stk', eining_value: 0.65 },
+                { item_type: 'Labor', description: 'Rafiðnaðarvinna - Borun og tenging ljósa (SART taxti)', quantity: 0.4, unit_price: 12500, unit: 'klst', eining_value: 0.40 },
             ];
         } else if (bundleType === 'panel') {
             itemsToAdd = [
-                { item_type: 'Material', description: 'Aðaltafla 12-eininga utanáliggjandi (SART E-006)', quantity: 1, unit_price: 18500, unit: 'stk' },
-                { item_type: 'Material', description: 'Lekastraumsrofi 40A/30mA 4P', quantity: 1, unit_price: 9800, unit: 'stk' },
-                { item_type: 'Material', description: 'Sjálfvari / Öryggi 16A 1P', quantity: 4, unit_price: 1400, unit: 'stk' },
-                { item_type: 'Labor', description: 'Rafiðnaðarvinna - Töflusetning og mælingar (SART taxti)', quantity: 2.0, unit_price: 12500, unit: 'klst' },
+                { item_type: 'Material', description: 'Aðaltafla 12-eininga utanáliggjandi (SART E-006)', quantity: 1, unit_price: 18500, unit: 'stk', eining_value: 6.20 },
+                { item_type: 'Material', description: 'Lekastraumsrofi 40A/30mA 4P', quantity: 1, unit_price: 9800, unit: 'stk', eining_value: 3.28 },
+                { item_type: 'Material', description: 'Sjálfvari / Öryggi 16A 1P', quantity: 4, unit_price: 1400, unit: 'stk', eining_value: 0.47 },
+                { item_type: 'Labor', description: 'Rafiðnaðarvinna - Töflusetning og mælingar (SART taxti)', quantity: 2.0, unit_price: 12500, unit: 'klst', eining_value: 2.00 },
             ];
         }
 
         try {
             for (const item of itemsToAdd) {
-                await axiosInstance.post(`/offers/${offerId}/items`, item);
+                await axiosInstance.post(`/offers/${offerId}/items`, {
+                    item_type: item.item_type,
+                    description: item.description,
+                    quantity: item.quantity,
+                    unit_price: item.unit_price,
+                    unit: item.unit,
+                    eining_value: item.eining_value,
+                    inventory_item_id: null
+                });
             }
-            toast.success(i18n.language.startsWith('is') ? 'SART tilboðspakka bætt við!' : 'SART assembly bundle added!');
-            const updatedRes = await axiosInstance.get(`/offers/${offerId}`);
-            setOffer(updatedRes.data);
+            toast.success(isIcelandic ? 'SART tilboðspakka bætt við!' : 'SART assembly bundle added!');
+            await reloadOfferFromServer();
         } catch (err) {
             console.error('Failed to add bundle:', err);
-            toast.error('Failed to add assembly bundle.');
+            toast.error(err.response?.data?.detail || 'Failed to add assembly bundle.');
         } finally {
             setIsLoading(false);
         }

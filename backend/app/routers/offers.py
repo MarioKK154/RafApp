@@ -246,13 +246,8 @@ def add_item_to_an_offer(
             detail="Can only add items to offers in Draft status."
         )
     
-    # Validate Material type requirements
-    if item_data.item_type == models.OfferLineItemType.Material:
-        if not item_data.inventory_item_id:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST, 
-                detail="inventory_item_id is required for Material type items."
-            )
+    # Optional check if inventory_item_id is provided
+    if item_data.inventory_item_id:
         inv_item = crud.get_inventory_item(db, item_id=item_data.inventory_item_id)
         if not inv_item:
             raise HTTPException(status_code=404, detail="Inventory item not found.")

@@ -1573,6 +1573,9 @@ class OfferLineItemBase(BaseModel):
     quantity: float = Field(..., gt=0)
     unit_price: float = Field(..., ge=0)
     inventory_item_id: Optional[int] = None 
+    labor_catalog_item_id: Optional[int] = None
+    eining_value: Optional[float] = None
+    unit: Optional[str] = "stk"
 
 class OfferLineItemCreate(OfferLineItemBase):
     pass
@@ -1583,6 +1586,9 @@ class OfferLineItemUpdate(BaseModel):
     quantity: Optional[float] = Field(None, gt=0)
     unit_price: Optional[float] = Field(None, ge=0)
     inventory_item_id: Optional[int] = None 
+    labor_catalog_item_id: Optional[int] = None
+    eining_value: Optional[float] = None
+    unit: Optional[str] = None
 
 class OfferLineItemRead(OfferLineItemBase):
     id: int

@@ -329,6 +329,24 @@ def _ensure_timelogs_travel_hours_column() -> None:
         logging.warning(f"Failed to add travel_hours column to time_logs table: {e}")
 
 @app.on_event("startup")
+def _ensure_offer_line_items_unit_column() -> None:
+    """Ensure unit column exists on offer_line_items table."""
+    from sqlalchemy import text
+    try:
+        with engine.begin() as conn:
+            if is_sqlite():
+                try:
+                    conn.execute(text("ALTER TABLE offer_line_items ADD COLUMN unit TEXT DEFAULT 'stk'"))
+                except Exception as e:
+                    if "duplicate column name" not in str(e).lower():
+                        raise
+            else:
+                conn.execute(text("ALTER TABLE offer_line_items ADD COLUMN IF NOT EXISTS unit VARCHAR DEFAULT 'stk'"))
+    except Exception as e:
+        import logging
+        logging.warning(f"Failed to add unit column to offer_line_items table: {e}")
+
+@app.on_event("startup")
 def _seed_sart_piecework_rates() -> None:
     """Seed official SART / RSÍ piecework tariffs and rates if none exist."""
     from .database import SessionLocal
