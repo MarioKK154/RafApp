@@ -98,7 +98,7 @@ const LABOR_UNIT_OPTIONS = [
 ];
 
 function OfferPage() {
-    const { i18n } = useTranslation();
+    const { t, i18n } = useTranslation();
     const laborApiLang = i18n.language?.toLowerCase().startsWith('en') ? 'en' : 'is';
     const { offerId } = useParams();
     const navigate = useNavigate();

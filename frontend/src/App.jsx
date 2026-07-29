@@ -169,7 +169,7 @@ function useIsMobile() {
 }
 
 function AppShell() {
-    const { i18n } = useTranslation();
+    const { t, i18n } = useTranslation();
     const { background } = useTenantBranding();
     const { isAuthenticated, user: currentUser, isImpersonating, stopImpersonation } = useAuth();
     const [systemStatus, setSystemStatus] = useState(null);
