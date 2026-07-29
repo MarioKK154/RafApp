@@ -216,7 +216,7 @@ function ProjectBoQ({ projectId }) {
                     <div className="mb-10 p-6 bg-gray-50/50 dark:bg-gray-900/40 rounded-[2rem] border border-gray-100 dark:border-gray-700 shadow-inner">
                         <div className="flex items-center gap-2 mb-6 ml-1">
                             <PlusIcon className="h-4 w-4 text-emerald-500 stroke-[3px]" />
-                            <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Register Material Requirement</h3>
+                            <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">{t('register_material_requirement', { defaultValue: 'Register Material Requirement' })}</h3>
                         </div>
                         <div className="mb-6 p-4 rounded-2xl bg-white dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700">
                             <InventoryCatalogShopFilters
@@ -229,7 +229,7 @@ function ProjectBoQ({ projectId }) {
                         <form onSubmit={handleAddItem} className="grid grid-cols-1 md:grid-cols-12 gap-6 items-end">
                             <div className="md:col-span-6 space-y-2">
                                 <div className="flex justify-between items-center ml-1">
-                                    <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest">SKU Identification</label>
+                                    <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest">{t('sku_identification', { defaultValue: 'SKU Identification' })}</label>
                                     <span className="text-[9px] font-bold text-indigo-500">
                                         {availableInventoryItems.length} {t('items', { defaultValue: 'items' })}
                                     </span>
@@ -246,7 +246,7 @@ function ProjectBoQ({ projectId }) {
                                     onChange={e => setSelectedItemId(e.target.value)}
                                     className="modern-input h-12 text-xs font-bold"
                                 >
-                                    <option value="">-- SELECT FROM CATALOG --</option>
+                                    <option value="">{t('select_from_catalog', { defaultValue: '-- SELECT FROM CATALOG --' })}</option>
                                     {Object.entries(
                                         (() => {
                                             const q = boqSearchQuery.trim().toLowerCase();
@@ -278,7 +278,7 @@ function ProjectBoQ({ projectId }) {
                                 </select>
                             </div>
                             <div className="md:col-span-3 space-y-2">
-                                <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Target Quantity</label>
+                                <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">{t('target_quantity', { defaultValue: 'Target Quantity' })}</label>
                                 <input 
                                     type="number" 
                                     value={quantityRequired} 
@@ -307,12 +307,12 @@ function ProjectBoQ({ projectId }) {
                     <table className="w-full text-left border-collapse min-w-[600px]">
                         <thead>
                             <tr className="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-700">
-                                <th className="py-5 px-8 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Material Description</th>
-                                <th className="py-5 px-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] text-right">Required</th>
-                                <th className="py-5 px-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] text-right">Current Stock</th>
-                                <th className="py-5 px-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] text-right">Site Status</th>
-                                <th className="py-5 px-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Unit</th>
-                                {canManageBoQ && <th className="py-5 px-8 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] text-center">Protocol</th>}
+                                <th className="py-5 px-8 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">{t('material_description', { defaultValue: 'Material Description' })}</th>
+                                <th className="py-5 px-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] text-right">{t('required', { defaultValue: 'Required' })}</th>
+                                <th className="py-5 px-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] text-right">{t('current_stock', { defaultValue: 'Current Stock' })}</th>
+                                <th className="py-5 px-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] text-right">{t('site_status', { defaultValue: 'Site Status' })}</th>
+                                <th className="py-5 px-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">{t('unit', { defaultValue: 'Unit' })}</th>
+                                {canManageBoQ && <th className="py-5 px-8 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] text-center">{t('protocol', { defaultValue: 'Protocol' })}</th>}
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-50 dark:divide-gray-700">

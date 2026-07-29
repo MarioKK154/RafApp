@@ -148,7 +148,7 @@ function ShopCreatePage() {
                                         )}
                                         <label className="flex items-center gap-1 cursor-pointer bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 text-emerald-600 dark:text-emerald-400 px-2 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition">
                                             <CloudArrowUpIcon className="h-4 w-4" />
-                                            <span>Photo</span>
+                                            <span>{t('photo_label', { defaultValue: 'Photo' })}</span>
                                             <input 
                                                 type="file" 
                                                 accept="image/*" 
@@ -163,9 +163,9 @@ function ShopCreatePage() {
                                                             headers: { 'Content-Type': 'multipart/form-data' }
                                                         });
                                                         setFormData(prev => ({ ...prev, contact_person_photo_url: res.data.url }));
-                                                        toast.success('Photo uploaded successfully');
+                                                        toast.success(t('photo_uploaded_success', { defaultValue: 'Photo uploaded successfully' }));
                                                     } catch (err) {
-                                                        toast.error('Failed to upload photo');
+                                                        toast.error(t('photo_upload_failed', { defaultValue: 'Failed to upload photo' }));
                                                     }
                                                 }} 
                                             />

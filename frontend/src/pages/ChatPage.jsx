@@ -215,17 +215,17 @@ function ChatPage() {
         if (otherUser) {
             return otherUser.full_name || otherUser.email || `User #${otherUser.id}`;
         }
-        return thread.name || `Direct Message`;
+        return thread.name || t('direct_message', { defaultValue: 'Direct Message' });
     };
 
     const getThreadSubtitle = (thread) => {
         if (!thread) return "";
-        if (thread.is_group) return "Group Channel";
+        if (thread.is_group) return t('group_channel', { defaultValue: 'Group Channel' });
         const otherUser = getOtherUser(thread);
         if (otherUser) {
-            return otherUser.email || (otherUser.role ? `Role: ${otherUser.role}` : "Direct Message");
+            return otherUser.email || (otherUser.role ? `${t('role', { defaultValue: 'Role' })}: ${otherUser.role}` : t('direct_message', { defaultValue: 'Direct Message' }));
         }
-        return "Direct Message";
+        return t('direct_message', { defaultValue: 'Direct Message' });
     };
 
     return (
@@ -251,7 +251,7 @@ function ChatPage() {
                 {/* Left Sidebar: Threads */}
                 <div className="w-1/3 max-w-sm border-r border-gray-100 dark:border-gray-800 bg-white/50 dark:bg-gray-900/50 flex flex-col">
                     <div className="p-4 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-gray-50/50 dark:bg-gray-800/50">
-                        <span className="text-xs font-black text-gray-900 dark:text-white uppercase tracking-wider">Conversations</span>
+                        <span className="text-xs font-black text-gray-900 dark:text-white uppercase tracking-wider">{t('conversations', { defaultValue: 'Conversations' })}</span>
                     </div>
                     <div className="flex-1 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-800/50">
                         {threads.map(thread => {
@@ -302,10 +302,10 @@ function ChatPage() {
                                 <button
                                     onClick={(e) => handleDeleteThread(e, activeThread.id)}
                                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-red-200 dark:border-red-900/50 bg-red-50/50 dark:bg-red-950/30 text-red-600 dark:text-red-400 text-xs font-bold hover:bg-red-100 dark:hover:bg-red-900/50 transition cursor-pointer"
-                                    title="Delete conversation"
+                                    title={t('delete_conversation', { defaultValue: 'Delete conversation' })}
                                 >
                                     <TrashIcon className="h-4 w-4" />
-                                    <span className="hidden sm:inline">Eyða / Delete</span>
+                                    <span className="hidden sm:inline">{t('delete', { defaultValue: 'Delete' })}</span>
                                 </button>
                             </div>
                             <div className="flex-1 overflow-y-auto p-6 space-y-4 flex flex-col">
@@ -330,11 +330,11 @@ function ChatPage() {
                                         type="text" 
                                         value={newMessage}
                                         onChange={(e) => setNewMessage(e.target.value)}
-                                        placeholder="Type your message..."
+                                        placeholder={t('type_message', { defaultValue: 'Type your message...' })}
                                         className="flex-1 px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 text-xs text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
                                     />
                                     <button type="submit" className="px-5 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-blue-600 text-white font-black text-xs uppercase tracking-wider hover:from-indigo-600 hover:to-blue-700 transition shadow-lg shadow-indigo-500/20 flex items-center gap-2 cursor-pointer">
-                                        <span>Send</span>
+                                        <span>{t('send', { defaultValue: 'Send' })}</span>
                                         <PaperAirplaneIcon className="h-4 w-4" />
                                     </button>
                                 </form>
@@ -343,7 +343,7 @@ function ChatPage() {
                     ) : (
                         <div className="flex-1 flex flex-col items-center justify-center text-gray-400 dark:text-gray-600">
                             <ChatBubbleLeftRightIcon className="h-12 w-12 mb-3 opacity-30" />
-                            <p className="text-xs font-black uppercase tracking-widest">Select a conversation to start messaging</p>
+                            <p className="text-xs font-black uppercase tracking-widest">{t('select_conversation', { defaultValue: 'Select a conversation to start messaging' })}</p>
                         </div>
                     )}
                 </div>
@@ -353,7 +353,7 @@ function ChatPage() {
             {showNewThreadModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
                     <div className="bg-white dark:bg-gray-900 p-6 rounded-3xl shadow-2xl w-[420px] border border-gray-100 dark:border-gray-800">
-                        <h2 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-wider mb-4">Start New Conversation</h2>
+                        <h2 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-wider mb-4">{t('start_new_conversation', { defaultValue: 'Start New Conversation' })}</h2>
                         <div className="max-h-64 overflow-y-auto space-y-2 mb-6 pr-1 custom-scrollbar">
                             {users.filter(u => u.id !== user.id).map(u => (
                                 <button 
@@ -362,7 +362,7 @@ function ChatPage() {
                                     className="w-full text-left p-3 rounded-xl border border-gray-100 dark:border-gray-800 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:border-indigo-200 dark:hover:border-indigo-800 transition flex items-center justify-between group"
                                 >
                                     <span className="text-xs font-bold text-gray-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400">{u.full_name || u.email}</span>
-                                    <span className="text-[9px] font-black text-indigo-500 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition">Message &rarr;</span>
+                                    <span className="text-[9px] font-black text-indigo-500 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition">{t('message', { defaultValue: 'Message' })} &rarr;</span>
                                 </button>
                             ))}
                         </div>
@@ -370,7 +370,7 @@ function ChatPage() {
                             onClick={() => setShowNewThreadModal(false)}
                             className="w-full py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-xs font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition cursor-pointer"
                         >
-                            Cancel
+                            {t('cancel', { defaultValue: 'Cancel' })}
                         </button>
                     </div>
                 </div>

@@ -57,7 +57,7 @@ export default function InventoryMergeModal({ isOpen, onClose, selectedItems, on
                                 <div className="flex items-center justify-between mb-4">
                                     <Dialog.Title as="h3" className="text-lg font-medium leading-6 text-gray-900 flex items-center">
                                         <ExclamationTriangleIcon className="h-6 w-6 text-orange-500 mr-2" />
-                                        Merge Inventory Items
+                                        {t('merge_inventory_items', { defaultValue: 'Merge Inventory Items' })}
                                     </Dialog.Title>
                                     <button onClick={onClose} className="text-gray-400 hover:text-gray-500">
                                         <XMarkIcon className="h-6 w-6" />
@@ -65,13 +65,14 @@ export default function InventoryMergeModal({ isOpen, onClose, selectedItems, on
                                 </div>
 
                                 <div className="mt-2 text-sm text-gray-500 mb-6">
-                                    You are about to merge <strong>{selectedItems.length}</strong> items. Select the primary item that will be kept. 
-                                    All other items will have their shop links and references transferred to the primary item, and then they will be permanently deleted.
+                                    {t('merge_warning_1', { defaultValue: 'You are about to merge' })} <strong>{selectedItems.length}</strong> {t('merge_warning_2', { defaultValue: 'items. Select the primary item that will be kept.' })}
+                                    <br/><br/>
+                                    {t('merge_warning_3', { defaultValue: 'All other items will have their shop links and references transferred to the primary item, and then they will be permanently deleted.' })}
                                 </div>
 
                                 <form onSubmit={handleSubmit} className="space-y-4">
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">Select Primary Item</label>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">{t('select_primary_item', { defaultValue: 'Select Primary Item' })}</label>
                                         <div className="space-y-2 max-h-60 overflow-y-auto border border-gray-200 rounded-md p-2">
                                             {selectedItems.map((item) => (
                                                 <label key={item.id} className="flex items-start p-2 hover:bg-gray-50 rounded cursor-pointer">
@@ -86,8 +87,8 @@ export default function InventoryMergeModal({ isOpen, onClose, selectedItems, on
                                                     <div className="ml-3 text-sm">
                                                         <span className="font-medium text-gray-900">{item.name}</span>
                                                         <div className="text-gray-500 text-xs mt-0.5">
-                                                            {item.brand && <span className="mr-2">Brand: {item.brand}</span>}
-                                                            {item.category && <span>Category: {item.category}</span>}
+                                                            {item.brand && <span className="mr-2">{t('brand_label', { defaultValue: 'Brand:' })} {item.brand}</span>}
+                                                            {item.category && <span>{t('category_label', { defaultValue: 'Category:' })} {item.category}</span>}
                                                         </div>
                                                     </div>
                                                 </label>
@@ -101,14 +102,14 @@ export default function InventoryMergeModal({ isOpen, onClose, selectedItems, on
                                             onClick={onClose}
                                             className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
                                         >
-                                            {t('common.cancel', 'Cancel')}
+                                            {t('cancel', { defaultValue: 'Cancel' })}
                                         </button>
                                         <button
                                             type="submit"
                                             disabled={isSaving || !primaryId}
                                             className="px-4 py-2 text-sm font-medium text-white bg-orange-600 rounded-md hover:bg-orange-700 disabled:opacity-50"
                                         >
-                                            {isSaving ? 'Merging...' : 'Merge Items'}
+                                            {isSaving ? t('merging', { defaultValue: 'Merging...' }) : t('merge_items_btn', { defaultValue: 'Merge Items' })}
                                         </button>
                                     </div>
                                 </form>

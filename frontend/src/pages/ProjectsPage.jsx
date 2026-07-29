@@ -165,11 +165,11 @@ const ProjectsPage = () => {
     const handleArchive = async (projectId) => {
         try {
             await axiosInstance.post(`/projects/${projectId}/archive`);
-            toast.success("Node Archived & Verified.");
+            toast.success(t('node_archived', { defaultValue: 'Node Archived & Verified.' }));
             fetchProjects();
         } catch (error) {
             console.error('Archive failed:', error);
-            toast.error("Archival protocol denied.");
+            toast.error(t('archival_denied', { defaultValue: 'Archival protocol denied.' }));
         }
     };
 
@@ -177,7 +177,7 @@ const ProjectsPage = () => {
         if (!projectToDelete) return;
         try {
             await axiosInstance.delete(`/projects/${projectToDelete.id}`);
-            toast.success(`Node Purged.`);
+            toast.success(t('node_purged', { defaultValue: 'Node Purged.' }));
             fetchProjects();
         } catch (error) {
             console.error('Delete project failed:', error);
@@ -318,6 +318,7 @@ const ProjectsPage = () => {
 };
 
 function ProjectCard({ project, isChild = false, isAdmin, onArchive, onDelete }) {
+    const { t } = useTranslation();
     const isCommissioned = project.displayStatus === 'Commissioned';
     const isCompleted = project.displayStatus === 'Completed';
 
@@ -360,9 +361,9 @@ function ProjectCard({ project, isChild = false, isAdmin, onArchive, onDelete })
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 ml-1">
-                        <DetailRow icon={<MapPinIcon />} label="Deployment" value={project?.address} />
-                        <DetailRow icon={<CalendarIcon />} label="System Init" value={project?.start_date ? new Date(project.start_date).toLocaleDateString() : 'N/A'} />
-                        <DetailRow icon={<UserIcon />} label="Lead Personnel" value={project?.project_manager?.full_name || 'UNASSIGNED'} />
+                        <DetailRow icon={<MapPinIcon />} label={t('deployment', { defaultValue: 'Deployment' })} value={project?.address} />
+                        <DetailRow icon={<CalendarIcon />} label={t('system_init', { defaultValue: 'System Init' })} value={project?.start_date ? new Date(project.start_date).toLocaleDateString() : t('na', { defaultValue: 'N/A' })} />
+                        <DetailRow icon={<UserIcon />} label={t('lead_personnel', { defaultValue: 'Lead Personnel' })} value={project?.project_manager?.full_name || t('unassigned', { defaultValue: 'UNASSIGNED' })} />
                     </div>
 
                     <ProjectTimelineProgress project={project} />
@@ -372,7 +373,7 @@ function ProjectCard({ project, isChild = false, isAdmin, onArchive, onDelete })
                     {isCommissioned && isAdmin && (
                         <button onClick={() => onArchive(project.id)} className="flex-1 lg:flex-none flex items-center justify-center gap-2 h-12 px-6 bg-emerald-600 text-white rounded-xl shadow-lg hover:bg-emerald-700 transition transform active:scale-95">
                             <ShieldCheckIcon className="h-5 w-5 stroke-[2.5px]" />
-                            <span className="text-[10px] font-black uppercase tracking-widest">Archive</span>
+                            <span className="text-[10px] font-black uppercase tracking-widest">{t('archive', { defaultValue: 'Archive' })}</span>
                         </button>
                     )}
 
@@ -390,7 +391,7 @@ function ProjectCard({ project, isChild = false, isAdmin, onArchive, onDelete })
                         to={`/tasks?project_id=${project.id}`} 
                         className="flex-1 lg:flex-none flex items-center justify-center gap-3 h-12 px-6 bg-indigo-600 text-white rounded-xl shadow-lg hover:bg-indigo-700 transition transform active:scale-95"
                     >
-                        <span className="text-[10px] font-black uppercase tracking-widest">Tasks</span>
+                        <span className="text-[10px] font-black uppercase tracking-widest">{t('tasks', { defaultValue: 'Tasks' })}</span>
                         <ChevronRightIcon className="h-4 w-4 stroke-[3px]" />
                     </Link>
                 </div>
@@ -400,13 +401,14 @@ function ProjectCard({ project, isChild = false, isAdmin, onArchive, onDelete })
 }
 
 function DetailRow({ icon, label, value }) {
+    const { t } = useTranslation();
     return (
         <div className="flex items-start gap-4">
             <div className="mt-1 text-indigo-500 h-4 w-4 shrink-0">{icon}</div>
             <div className="min-w-0">
                 <p className="text-[8px] font-black text-gray-400 uppercase tracking-[0.2em] leading-none mb-1.5">{label}</p>
                 <p className="text-xs font-black text-gray-800 dark:text-gray-200 truncate uppercase tracking-tight">
-                    {value || 'DATA MISSING'}
+                    {value || t('data_missing', { defaultValue: 'DATA MISSING' })}
                 </p>
             </div>
         </div>
@@ -414,6 +416,7 @@ function DetailRow({ icon, label, value }) {
 }
 
 function ProjectTimelineProgress({ project }) {
+    const { t } = useTranslation();
     const start = project?.start_date ? new Date(project.start_date) : null;
     const end = project?.end_date ? new Date(project.end_date) : null;
     if (!start || Number.isNaN(start.getTime()) || !end || Number.isNaN(end.getTime()) || end <= start) return null;
@@ -426,7 +429,7 @@ function ProjectTimelineProgress({ project }) {
     return (
         <div className="mt-6 ml-1">
             <div className="flex items-center justify-between gap-4 mb-2">
-                <p className="text-[8px] font-black text-gray-400 uppercase tracking-[0.2em]">Timeline</p>
+                <p className="text-[8px] font-black text-gray-400 uppercase tracking-[0.2em]">{t('timeline', { defaultValue: 'Timeline' })}</p>
                 <p className="text-[8px] font-black text-gray-400 uppercase tracking-[0.2em]">{pct}%</p>
             </div>
             <div className="h-2.5 rounded-full bg-gray-100 dark:bg-gray-700 overflow-hidden border border-gray-100 dark:border-gray-700">

@@ -57,10 +57,10 @@ function CustomerListPage() {
     useEffect(() => {
         if (!authIsLoading) {
             if (!isAuthenticated) {
-                toast.error("Authentication required.");
+                toast.error(t('authentication_required', { defaultValue: 'Authentication required.' }));
                 navigate('/login', { replace: true });
             } else if (!isAdmin) {
-                toast.error("Clearance Level Insufficient.");
+                toast.error(t('clearance_level_insufficient', { defaultValue: 'Clearance Level Insufficient.' }));
                 navigate('/', { replace: true });
             }
         }
@@ -79,8 +79,8 @@ function CustomerListPage() {
             setCustomers(scoped);
         } catch (err) {
             console.error("CRM Sync Error:", err);
-            setError('Registry Error: Failed to synchronize with client database.');
-            toast.error('Registry sync failed.');
+            setError(t('registry_error_failed_sync', { defaultValue: 'Registry Error: Failed to synchronize with client database.' }));
+            toast.error(t('registry_sync_failed', { defaultValue: 'Registry sync failed.' }));
         } finally {
             setIsLoading(false);
         }
@@ -108,10 +108,10 @@ function CustomerListPage() {
         if (!customerToDelete) return;
         try {
             await axiosInstance.delete(`/customers/${customerToDelete.id}`);
-            toast.success(`Client purged from registry: ${customerToDelete.name}`);
+            toast.success(t('client_purged_success', { defaultValue: 'Client purged from registry: {{name}}', name: customerToDelete.name }));
             fetchCustomers();
         } catch (err) {
-            toast.error(err.response?.data?.detail || 'Purge protocol failed.');
+            toast.error(err.response?.data?.detail || t('purge_protocol_failed', { defaultValue: 'Purge protocol failed.' }));
         } finally {
             setIsDeleteModalOpen(false);
             setCustomerToDelete(null);
@@ -119,7 +119,7 @@ function CustomerListPage() {
     };
 
     if (authIsLoading || (isLoading && customers.length === 0)) {
-        return <LoadingSpinner text="Accessing Client Registry..." />;
+        return <LoadingSpinner text={t('accessing_client_registry', { defaultValue: 'Accessing Client Registry...' })} />;
     }
     
     if (!isAdmin) return null;
@@ -176,7 +176,7 @@ function CustomerListPage() {
                             <div className="flex items-center gap-2 mt-2">
                                 <HashtagIcon className="h-3.5 w-3.5 text-indigo-500" />
                                 <span className="text-sm font-mono font-black text-gray-400 uppercase tracking-widest leading-none">
-                                    {cust.kennitala || 'UNREGISTERED'}
+                                    {cust.kennitala || t('unregistered', { defaultValue: 'UNREGISTERED' })}
                                 </span>
                             </div>
                         </div>
@@ -185,12 +185,12 @@ function CustomerListPage() {
                         <div className="p-8 flex-grow space-y-5">
                             <DetailRow 
                                 icon={<UserIcon />} 
-                                label="Primary Liaison" 
+                                label={t('primary_liaison', { defaultValue: 'Primary Liaison' })} 
                                 value={cust.contact_person} 
                             />
                             <DetailRow 
                                 icon={<MapPinIcon />} 
-                                label="HQ / Billing Address" 
+                                label={t('hq_billing_address', { defaultValue: 'HQ / Billing Address' })} 
                                 value={cust.address} 
                             />
 
@@ -204,7 +204,7 @@ function CustomerListPage() {
                                 {cust.email && (
                                     <a href={`mailto:${cust.email}`} className="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg text-[11px] font-bold text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900 hover:bg-indigo-100 transition-colors">
                                         <EnvelopeIcon className="h-3.5 w-3.5" />
-                                        Registry Email
+                                        {t('registry_email', { defaultValue: 'Registry Email' })}
                                     </a>
                                 )}
                             </div>
@@ -212,7 +212,7 @@ function CustomerListPage() {
                             {isSuperuser && cust.tenant && (
                                 <div className="mt-6 pt-6 border-t border-gray-50 dark:border-gray-700/50 flex items-center gap-2 text-[9px] font-black text-orange-600 uppercase tracking-[0.2em]">
                                     <BuildingOfficeIcon className="h-4 w-4" />
-                                    Cluster Owner: {cust.tenant.name}
+                                    {t('cluster_owner', { defaultValue: 'Cluster Owner: ' })}{cust.tenant.name}
                                 </div>
                             )}
                         </div>
@@ -223,14 +223,14 @@ function CustomerListPage() {
                                 <button 
                                     onClick={() => navigate(`/customers/edit/${cust.id}`)} 
                                     className="p-3 bg-white dark:bg-gray-800 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 transition transform active:scale-95"
-                                    title="Modify Profile"
+                                    title={t('modify_profile', { defaultValue: 'Modify Profile' })}
                                 >
                                     <PencilIcon className="h-5 w-5" />
                                 </button>
                                 <button 
                                     onClick={() => triggerDelete(cust)} 
                                     className="p-3 bg-white dark:bg-gray-800 text-gray-400 hover:text-red-600 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 transition transform active:scale-95"
-                                    title="Purge Node"
+                                    title={t('purge_node', { defaultValue: 'Purge Node' })}
                                 >
                                     <TrashIcon className="h-5 w-5" />
                                 </button>
@@ -239,14 +239,14 @@ function CustomerListPage() {
                                 to={`/customers/edit/${cust.id}`} 
                                 className="flex items-center gap-2 text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-[0.2em] hover:gap-3 transition-all"
                             >
-                                Management Hub <ChevronRightIcon className="h-3.5 w-3.5" />
+                                {t('management_hub', { defaultValue: 'Management Hub' })} <ChevronRightIcon className="h-3.5 w-3.5" />
                             </Link>
                         </div>
                     </div>
                 )) : (
                     <div className="col-span-full py-32 text-center bg-white dark:bg-gray-800 rounded-[3rem] border-2 border-dashed border-gray-100 dark:border-gray-700">
                         <UserGroupIcon className="h-16 w-16 text-gray-200 dark:text-gray-700 mx-auto mb-6" />
-                        <h3 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">No clients detected in registry</h3>
+                        <h3 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">{t('no_clients_detected_in_registry', { defaultValue: 'No clients detected in registry' })}</h3>
                         <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-2">{t('adjust_filters_or_new_customer')}</p>
                     </div>
                 )}
@@ -257,8 +257,8 @@ function CustomerListPage() {
                 onClose={() => setIsDeleteModalOpen(false)}
                 onConfirm={confirmDelete}
                 title={t('purge_customer_registry')}
-                message={`CRITICAL: Are you sure you want to permanently delete "${customerToDelete?.name}"? This will terminate all active project associations for this entity.`}
-                confirmText="PURGE RECORD"
+                message={t('confirm_delete_customer_message', { defaultValue: 'CRITICAL: Are you sure you want to permanently delete "{{name}}"? This will terminate all active project associations for this entity.', name: customerToDelete?.name })}
+                confirmText={t('purge_record', { defaultValue: 'PURGE RECORD' })}
                 type="danger"
             />
         </div>
@@ -269,13 +269,14 @@ function CustomerListPage() {
  * Helper Node: Telemetry Row
  */
 function DetailRow({ icon, label, value }) {
+    const { t } = useTranslation();
     return (
         <div className="flex items-start gap-4">
             <div className="mt-1 text-indigo-500 h-4 w-4 shrink-0">{icon}</div>
             <div className="min-w-0">
                 <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] leading-none mb-1.5">{label}</p>
                 <p className="text-sm font-black text-gray-800 dark:text-gray-200 truncate leading-tight uppercase tracking-tight">
-                    {value || 'DATA MISSING'}
+                    {value || t('data_missing', { defaultValue: 'DATA MISSING' })}
                 </p>
             </div>
         </div>

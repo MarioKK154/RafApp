@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { BoltIcon, ExclamationTriangleIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
 
 const BREAKER_STEPS_KA = [3, 6, 10, 16, 25, 36, 50];
 
 function ShortCircuitCalculator() {
+    const { t } = useTranslation();
     const [data, setData] = useState({
         transformerKVA: 400,
         voltageLL: 400,
@@ -50,10 +52,10 @@ function ShortCircuitCalculator() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="space-y-3">
                     <label className="block text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] ml-1">
-                        Transformer
+                        {t('transformer_label', { defaultValue: 'Transformer' })}
                     </label>
                     <span className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.18em] mb-1 ml-1">
-                        Rating (kVA)
+                        {t('rating_kva', { defaultValue: 'Rating (kVA)' })}
                     </span>
                     <input
                         type="number"
@@ -63,7 +65,7 @@ function ShortCircuitCalculator() {
                         className="w-full h-12 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 text-xs font-bold text-gray-900 dark:text-white"
                     />
                     <span className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.18em] mb-1 ml-1">
-                        Voltage (V L-L)
+                        {t('voltage_ll', { defaultValue: 'Voltage (V L-L)' })}
                     </span>
                     <input
                         type="number"
@@ -73,7 +75,7 @@ function ShortCircuitCalculator() {
                         className="w-full h-12 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 text-xs font-bold text-gray-900 dark:text-white"
                     />
                     <span className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.18em] mb-1 ml-1">
-                        % Impedance
+                        {t('percent_impedance', { defaultValue: '% Impedance' })}
                     </span>
                     <input
                         type="number"
@@ -86,10 +88,10 @@ function ShortCircuitCalculator() {
 
                 <div className="space-y-3">
                     <label className="block text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] ml-1">
-                        Feeder Run
+                        {t('feeder_run', { defaultValue: 'Feeder Run' })}
                     </label>
                     <span className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.18em] mb-1 ml-1">
-                        Distance to Panel (m)
+                        {t('distance_to_panel', { defaultValue: 'Distance to Panel (m)' })}
                     </span>
                     <input
                         type="number"
@@ -99,7 +101,7 @@ function ShortCircuitCalculator() {
                         className="w-full h-12 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 text-xs font-bold text-gray-900 dark:text-white"
                     />
                     <span className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.18em] mb-1 ml-1">
-                        Conductor Material
+                        {t('conductor_material', { defaultValue: 'Conductor Material' })}
                     </span>
                     <select
                         name="material"
@@ -107,11 +109,11 @@ function ShortCircuitCalculator() {
                         onChange={handleChange}
                         className="w-full h-12 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 text-xs font-black text-gray-900 dark:text-white"
                     >
-                        <option value="copper">Copper (Cu)</option>
-                        <option value="aluminum">Aluminum (Al)</option>
+                        <option value="copper">{t('copper_cu', { defaultValue: 'Copper (Cu)' })}</option>
+                        <option value="aluminum">{t('aluminum_al', { defaultValue: 'Aluminum (Al)' })}</option>
                     </select>
                     <span className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.18em] mb-1 ml-1">
-                        Cross-Section (mm²)
+                        {t('cross_section_mm2', { defaultValue: 'Cross-Section (mm²)' })}
                     </span>
                     <input
                         type="number"
@@ -124,11 +126,11 @@ function ShortCircuitCalculator() {
 
                 <div className="space-y-3">
                     <label className="block text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] ml-1">
-                        Results Snapshot
+                        {t('results_snapshot', { defaultValue: 'Results Snapshot' })}
                     </label>
                     <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-4">
                         <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.18em] mb-1">
-                            I<sub>sc</sub> at Transformer
+                            {t('isc_at_transformer', { defaultValue: 'Isc at Transformer' })}
                         </p>
                         <p className="text-xl font-black text-gray-900 dark:text-white">
                             {Number.isFinite(Isc_tx) ? (Isc_tx / 1000).toFixed(2) : '--'} kA
@@ -136,7 +138,7 @@ function ShortCircuitCalculator() {
                     </div>
                     <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-4">
                         <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.18em] mb-1">
-                            I<sub>sc</sub> at Panel
+                            {t('isc_at_panel', { defaultValue: 'Isc at Panel' })}
                         </p>
                         <p className="text-xl font-black text-gray-900 dark:text-white">
                             {Number.isFinite(Isc_panel_kA) ? Isc_panel_kA.toFixed(2) : '--'} kA
@@ -145,8 +147,7 @@ function ShortCircuitCalculator() {
                     <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-4 flex items-center">
                         <BoltIcon className="h-6 w-6 text-indigo-500 mr-3" />
                         <p className="text-[10px] text-gray-500 leading-relaxed">
-                            Use as a sizing sanity-check. Final values must be confirmed against detailed manufacturer data and
-                            local short-circuit calculation practice.
+                            {t('isc_sanity_check', { defaultValue: 'Use as a sizing sanity-check. Final values must be confirmed against detailed manufacturer data and local short-circuit calculation practice.' })}
                         </p>
                     </div>
                 </div>
@@ -166,11 +167,10 @@ function ShortCircuitCalculator() {
                 )}
                 <div>
                     <p className="font-black uppercase tracking-[0.18em] text-[10px] mb-1">
-                        {underRated ? 'Breaker Rating Undersized' : 'Suggested Minimum Breaking Capacity'}
+                        {underRated ? t('breaker_undersized', { defaultValue: 'Breaker Rating Undersized' }) : t('suggested_min_breaking_capacity', { defaultValue: 'Suggested Minimum Breaking Capacity' })}
                     </p>
                     <p className="text-[11px] leading-relaxed">
-                        Recommended breaking capacity at the panel: <strong>{suggestedBreakerKA} kA</strong>. Select a protective
-                        device with at least this rating (or the next standard size above the calculated fault current).
+                        {t('recommended_breaking_capacity', { defaultValue: 'Recommended breaking capacity at the panel:' })} <strong>{suggestedBreakerKA} kA</strong>. {t('select_protective_device', { defaultValue: 'Select a protective device with at least this rating (or the next standard size above the calculated fault current).' })}
                     </p>
                 </div>
             </div>

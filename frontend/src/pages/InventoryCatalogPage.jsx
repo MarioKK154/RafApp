@@ -229,7 +229,7 @@ function InventoryCatalogPage() {
         catch { toast.error('Failed to update categories.'); }
     };
     const handleBulkDelete = async () => {
-        if (!window.confirm(`Delete ${selectedItemIds.size} items permanently?`)) return;
+        if (!window.confirm(t('confirm_bulk_delete', { count: selectedItemIds.size, defaultValue: `Delete ${selectedItemIds.size} items permanently?` }))) return;
         try { await axiosInstance.post('/inventory/catalog/bulk-delete', { item_ids: Array.from(selectedItemIds) }); toast.success('Items deleted.'); setSelectedItemIds(new Set()); fetchItems(); }
         catch { toast.error('Failed to delete items.'); }
     };
@@ -317,21 +317,21 @@ function InventoryCatalogPage() {
                     <>
                         <div className="flex items-center gap-2">
                             <button type="button" onClick={() => navigate(`/inventory/edit/${item.id}`)}
-                                className="p-2.5 bg-white dark:bg-gray-800 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 transition" title="Edit">
+                                className="p-2.5 bg-white dark:bg-gray-800 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 transition" title={t('edit', { defaultValue: 'Edit' })}>
                                 <PencilIcon className="h-4 w-4" />
                             </button>
                             <button type="button" onClick={() => triggerDelete(item)}
-                                className="p-2.5 bg-white dark:bg-gray-800 text-gray-400 hover:text-red-600 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 transition" title="Delete">
+                                className="p-2.5 bg-white dark:bg-gray-800 text-gray-400 hover:text-red-600 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 transition" title={t('delete', { defaultValue: 'Delete' })}>
                                 <TrashIcon className="h-4 w-4" />
                             </button>
                         </div>
                         <Link to={`/inventory/edit/${item.id}`} className="flex items-center gap-1.5 text-[9px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-[0.2em] hover:gap-2.5 transition-all">
-                            Open <ChevronRightIcon className="h-3 w-3" />
+                            {t('open', { defaultValue: 'Open' })} <ChevronRightIcon className="h-3 w-3" />
                         </Link>
                     </>
                 ) : (
                     <Link to={`/inventory/edit/${item.id}`} className="ml-auto flex items-center gap-1.5 text-[9px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-[0.2em] hover:gap-2.5 transition-all">
-                        Open <ChevronRightIcon className="h-3 w-3" />
+                        {t('open', { defaultValue: 'Open' })} <ChevronRightIcon className="h-3 w-3" />
                     </Link>
                 )}
             </div>
@@ -444,7 +444,7 @@ function InventoryCatalogPage() {
                     </button>
 
                     {/* Loading spinner while items fetch */}
-                    {isLoading && <div className="py-16 flex justify-center"><LoadingSpinner text="Loading…" size="md" /></div>}
+                    {isLoading && <div className="py-16 flex justify-center"><LoadingSpinner text={t('loading')} size="md" /></div>}
 
                     {!isLoading && (
                         <>
@@ -479,7 +479,7 @@ function InventoryCatalogPage() {
                         className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-6 flex items-center gap-1 hover:text-indigo-600 transition-colors">
                         <ChevronLeftIcon className="h-3.5 w-3.5" /> {t('back', { defaultValue: 'Back' })}
                     </button>
-                    {isLoading && <div className="py-16 flex justify-center"><LoadingSpinner text="Loading…" size="md" /></div>}
+                    {isLoading && <div className="py-16 flex justify-center"><LoadingSpinner text={t('loading')} size="md" /></div>}
                     {!isLoading && renderProductGrid(visibleItems, brandOptions, selectedBrand, setSelectedBrand, t, renderProductCard)}
                 </div>
             )}
@@ -487,11 +487,11 @@ function InventoryCatalogPage() {
             {/* === Superuser bulk action bar === */}
             {isSuperuser && selectedItemIds.size > 0 && (
                 <div className="fixed bottom-6 inset-x-0 mx-auto max-w-2xl bg-white dark:bg-gray-800 shadow-2xl rounded-full border border-gray-200 dark:border-gray-700 p-4 flex items-center justify-between z-50">
-                    <span className="bg-blue-100 text-blue-800 text-sm font-bold px-3 py-1 rounded-full">{selectedItemIds.size} Selected</span>
+                    <span className="bg-blue-100 text-blue-800 text-sm font-bold px-3 py-1 rounded-full">{selectedItemIds.size} {t('selected_items', { defaultValue: 'Selected' })}</span>
                     <div className="flex space-x-3">
-                        <button onClick={() => setIsCategoryModalOpen(true)} className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm font-bold rounded-full">Move / Edit Category</button>
-                        {selectedItemIds.size > 1 && <button onClick={() => setIsMergeModalOpen(true)} className="px-4 py-2 bg-orange-100 hover:bg-orange-200 text-orange-800 text-sm font-bold rounded-full">Merge</button>}
-                        <button onClick={handleBulkDelete} className="px-4 py-2 bg-red-100 hover:bg-red-200 text-red-800 text-sm font-bold rounded-full">Delete</button>
+                        <button onClick={() => setIsCategoryModalOpen(true)} className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm font-bold rounded-full">{t('move_edit_category', { defaultValue: 'Move / Edit Category' })}</button>
+                        {selectedItemIds.size > 1 && <button onClick={() => setIsMergeModalOpen(true)} className="px-4 py-2 bg-orange-100 hover:bg-orange-200 text-orange-800 text-sm font-bold rounded-full">{t('merge', { defaultValue: 'Merge' })}</button>}
+                        <button onClick={handleBulkDelete} className="px-4 py-2 bg-red-100 hover:bg-red-200 text-red-800 text-sm font-bold rounded-full">{t('delete', { defaultValue: 'Delete' })}</button>
                         <button onClick={() => setSelectedItemIds(new Set())} className="px-3 py-2 text-gray-500 hover:text-gray-700"><XMarkIcon className="h-5 w-5" /></button>
                     </div>
                 </div>
@@ -500,7 +500,7 @@ function InventoryCatalogPage() {
             <InventoryCategoryModal isOpen={isCategoryModalOpen} onClose={() => setIsCategoryModalOpen(false)} selectedIds={Array.from(selectedItemIds)} onSave={handleBulkEditCategory} />
             <InventoryMergeModal isOpen={isMergeModalOpen} onClose={() => setIsMergeModalOpen(false)} selectedItems={items.filter(i => selectedItemIds.has(i.id))} onMerge={handleMergeItems} />
             <ConfirmationModal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} onConfirm={confirmDeleteItem}
-                title="Purge Catalog Entry" message={`Delete "${itemToDelete?.name}" permanently?`} confirmText="DELETE" type="danger" />
+                title={t('purge_catalog_entry', { defaultValue: 'Purge Catalog Entry' })} message={t('confirm_delete_permanently', { name: itemToDelete?.name, defaultValue: `Delete "${itemToDelete?.name}" permanently?` })} confirmText={t('delete_btn_uppercase', { defaultValue: 'DELETE' })} type="danger" />
         </div>
     );
 }
@@ -530,7 +530,7 @@ function renderProductGrid(visibleItems, brandOptions, selectedBrand, setSelecte
                 {visibleItems.length > 0 ? visibleItems.map(item => renderCard(item)) : (
                     <div className="col-span-full py-32 text-center bg-white dark:bg-gray-800 rounded-[3rem] border-2 border-dashed border-gray-100 dark:border-gray-700">
                         <CubeIcon className="h-16 w-16 text-gray-200 dark:text-gray-700 mx-auto mb-6" />
-                        <h3 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">No items found</h3>
+                        <h3 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">{t('no_items_found', { defaultValue: 'No items found' })}</h3>
                     </div>
                 )}
             </div>

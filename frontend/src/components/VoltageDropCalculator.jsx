@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { BoltIcon, ExclamationTriangleIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
 
 const SYSTEMS = [
@@ -18,6 +19,7 @@ const RHO = {
 };
 
 function VoltageDropCalculator() {
+    const { t } = useTranslation();
     const [data, setData] = useState({
         system: 'three_phase',
         voltage: 400,
@@ -56,7 +58,7 @@ function VoltageDropCalculator() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="space-y-3">
                     <label className="block text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] ml-1">
-                        System & Voltage
+                        {t('system_voltage_label', { defaultValue: 'System & Voltage' })}
                     </label>
                     <select
                         name="system"
@@ -75,18 +77,18 @@ function VoltageDropCalculator() {
                         placeholder="Voltage (V)"
                     />
                     <p className="text-[10px] text-gray-400">
-                        Use 230 V for single-phase, 400 V for standard three-phase systems.
+                        {t('vdrop_hint', { defaultValue: 'Use 230 V for single-phase, 400 V for standard three-phase systems.' })}
                     </p>
                 </div>
 
                 <div className="space-y-3">
                     <label className="block text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] ml-1">
-                        Load & Run
+                        {t('load_and_run', { defaultValue: 'Load & Run' })}
                     </label>
                     <div className="grid grid-cols-2 gap-3">
                         <div>
                             <span className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.18em] mb-1 ml-1">
-                                Load Current (A)
+                                {t('load_current_a', { defaultValue: 'Load Current (A)' })}
                             </span>
                             <input
                                 type="number"
@@ -98,7 +100,7 @@ function VoltageDropCalculator() {
                         </div>
                         <div>
                             <span className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.18em] mb-1 ml-1">
-                                Length (m)
+                                {t('length_m', { defaultValue: 'Length (m)' })}
                             </span>
                             <input
                                 type="number"
@@ -110,7 +112,7 @@ function VoltageDropCalculator() {
                         </div>
                     </div>
                     <span className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.18em] mb-1 ml-1">
-                        Max Allowed Drop (%)
+                        {t('max_allowed_drop_pct', { defaultValue: 'Max Allowed Drop (%)' })}
                     </span>
                     <input
                         type="number"
@@ -123,7 +125,7 @@ function VoltageDropCalculator() {
 
                 <div className="space-y-3">
                     <label className="block text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] ml-1">
-                        Conductor
+                        {t('conductor_label', { defaultValue: 'Conductor' })}
                     </label>
                     <select
                         name="material"
@@ -134,7 +136,7 @@ function VoltageDropCalculator() {
                         {MATERIALS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
                     </select>
                     <span className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.18em] mb-1 ml-1">
-                        Cross-Section (mm²)
+                        {t('cross_section_mm2', { defaultValue: 'Cross-Section (mm²)' })}
                     </span>
                     <input
                         type="number"
@@ -144,7 +146,7 @@ function VoltageDropCalculator() {
                         className="w-full h-12 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 text-xs font-bold text-gray-900 dark:text-white"
                     />
                     <span className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.18em] mb-1 ml-1">
-                        Power Factor (cos φ)
+                        {t('power_factor_label', { defaultValue: 'Power Factor (cos φ)' })}
                     </span>
                     <input
                         type="number"
@@ -162,7 +164,7 @@ function VoltageDropCalculator() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-4">
                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.18em] mb-1">
-                        Calculated Drop
+                        {t('calculated_drop', { defaultValue: 'Calculated Drop' })}
                     </p>
                     <p className="text-2xl font-black text-gray-900 dark:text-white">
                         {Number.isFinite(Vdrop) ? Vdrop.toFixed(2) : '--'} V
@@ -170,7 +172,7 @@ function VoltageDropCalculator() {
                 </div>
                 <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-4">
                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.18em] mb-1">
-                        Voltage Drop (%)
+                        {t('voltage_drop_pct', { defaultValue: 'Voltage Drop (%)' })}
                     </p>
                     <p className="text-2xl font-black text-gray-900 dark:text-white">
                         {Number.isFinite(VdropPercent) ? VdropPercent.toFixed(2) : '--'}%
@@ -179,7 +181,7 @@ function VoltageDropCalculator() {
                 <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-4 flex items-center">
                     <BoltIcon className="h-6 w-6 text-indigo-500 mr-3" />
                     <p className="text-[10px] text-gray-500 leading-relaxed">
-                        Quick check tool; always cross-check with manufacturer cable data and local voltage drop rules.
+                        {t('vdrop_note', { defaultValue: 'Quick check tool; always cross-check with manufacturer cable data and local voltage drop rules.' })}
                     </p>
                 </div>
             </div>
@@ -198,12 +200,12 @@ function VoltageDropCalculator() {
                 )}
                 <div>
                     <p className="font-black uppercase tracking-[0.18em] text-[10px] mb-1">
-                        {withinLimit ? 'Within Target Voltage Drop' : 'Above Target Voltage Drop'}
+                        {withinLimit ? t('within_target_vdrop', { defaultValue: 'Within Target Voltage Drop' }) : t('above_target_vdrop', { defaultValue: 'Above Target Voltage Drop' })}
                     </p>
                     <p className="text-[11px] leading-relaxed">
                         {withinLimit
-                            ? 'The selected cable size meets the configured voltage drop threshold.'
-                            : 'Consider increasing conductor size, shortening the run, or revising load distribution to reduce voltage drop.'}
+                            ? t('within_vdrop_text', { defaultValue: 'The selected cable size meets the configured voltage drop threshold.' })
+                            : t('above_vdrop_text', { defaultValue: 'Consider increasing conductor size, shortening the run, or revising load distribution to reduce voltage drop.' })}
                     </p>
                 </div>
             </div>

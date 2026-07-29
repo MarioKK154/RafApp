@@ -182,7 +182,7 @@ function ProjectDrawings({ projectId, onBack }) {
         }
     };
 
-    // --- ACTION: Trigger Update (Bumps Rev + Replace File) ---
+    // --- ACTION: Trigger Update (Bumps {t('rev', { defaultValue: 'Rev' })} + Replace File) ---
     const triggerUpdateProtocol = (drawing) => {
         setActiveDrawingForReplace(drawing);
         if (fileReplaceInputRef.current) fileReplaceInputRef.current.click();
@@ -355,27 +355,27 @@ function ProjectDrawings({ projectId, onBack }) {
                         </div>
                         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                             <div className="space-y-1">
-                                <label className="text-[9px] font-black text-gray-400 uppercase ml-1">Discipline</label>
+                                <label className="text-[9px] font-black text-gray-400 uppercase ml-1">{t('discipline', { defaultValue: 'Discipline' })}</label>
                                 <select value={uploadData.discipline} onChange={e => setUploadData({...uploadData, discipline: e.target.value})} className="modern-input h-12 text-[10px] font-black uppercase">
                                     {DISCIPLINES.map(d => <option key={d} value={d}>{d}</option>)}
                                 </select>
                             </div>
                             <div className="space-y-1">
-                                <label className="text-[9px] font-black text-gray-400 uppercase ml-1">Status</label>
+                                <label className="text-[9px] font-black text-gray-400 uppercase ml-1">{t('status', { defaultValue: 'Status' })}</label>
                                 <select value={uploadData.status} onChange={e => setUploadData({...uploadData, status: e.target.value})} className="modern-input h-12 text-[10px] font-black uppercase">
                                     {DRAWING_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
                                 </select>
                             </div>
                             <div className="space-y-1">
-                                <label className="text-[9px] font-black text-gray-400 uppercase ml-1">Init Rev</label>
+                                <label className="text-[9px] font-black text-gray-400 uppercase ml-1">{t('init_rev', { defaultValue: 'Init Rev' })}</label>
                                 <input type="text" value={uploadData.revision} onChange={e => setUploadData({...uploadData, revision: e.target.value.toUpperCase()})} className="modern-input h-12 text-center font-black" />
                             </div>
                             <div className="space-y-1">
-                                <label className="text-[9px] font-black text-gray-400 uppercase ml-1">Registry Date</label>
+                                <label className="text-[9px] font-black text-gray-400 uppercase ml-1">{t('registry_date', { defaultValue: 'Registry Date' })}</label>
                                 <input type="date" value={uploadData.drawing_date} onChange={e => setUploadData({...uploadData, drawing_date: e.target.value})} className="modern-input h-12 text-xs font-bold" />
                             </div>
                             <div className="space-y-1">
-                                <label className="text-[9px] font-black text-gray-400 uppercase ml-1">Author</label>
+                                <label className="text-[9px] font-black text-gray-400 uppercase ml-1">{t('author', { defaultValue: 'Author' })}</label>
                                 <input type="text" value={uploadData.author} readOnly className="modern-input h-12 bg-gray-50 dark:bg-gray-900/40 text-gray-400 font-bold text-xs" />
                             </div>
                         </div>
@@ -404,13 +404,13 @@ function ProjectDrawings({ projectId, onBack }) {
                     <table className="w-full text-left">
                         <thead className="bg-gray-50/50 dark:bg-gray-700/30 border-b">
                             <tr>
-                                <th className="py-6 px-8 text-[10px] font-black text-gray-400 uppercase tracking-widest">Asset Node</th>
-                                <th className="py-6 px-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Storage Cache</th>
-                                <th className="py-6 px-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Rev</th>
-                                <th className="py-6 px-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Status</th>
-                                <th className="py-6 px-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Author</th>
-                                <th className="py-6 px-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Registry Date</th>
-                                <th className="py-6 px-8 text-center text-[10px] font-black text-gray-400 uppercase tracking-widest">Actions</th>
+                                <th className="py-6 px-8 text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('asset_node', { defaultValue: 'Asset Node' })}</th>
+                                <th className="py-6 px-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('storage_cache', { defaultValue: 'Storage Cache' })}</th>
+                                <th className="py-6 px-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('rev', { defaultValue: 'Rev' })}</th>
+                                <th className="py-6 px-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('status', { defaultValue: 'Status' })}</th>
+                                <th className="py-6 px-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('author', { defaultValue: 'Author' })}</th>
+                                <th className="py-6 px-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('registry_date', { defaultValue: 'Registry Date' })}</th>
+                                <th className="py-6 px-8 text-center text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('actions', { defaultValue: 'Actions' })}</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-50 dark:divide-gray-700">

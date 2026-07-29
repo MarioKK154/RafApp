@@ -1,4 +1,5 @@
 import React, { Fragment } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Dialog, Transition } from '@headlessui/react';
 import { ExclamationTriangleIcon, XMarkIcon } from '@heroicons/react/24/outline';
 
@@ -13,10 +14,14 @@ export default function ConfirmationModal({
     onConfirm,    // The action to perform on confirmation
     title, 
     message, 
-    confirmText = "Confirm", 
-    cancelText = "Cancel",
+    confirmText, 
+    cancelText,
     type = "danger" // 'danger' (red) or 'warning' (yellow)
 }) {
+  const { t } = useTranslation();
+  
+  const finalConfirmText = confirmText || t('confirm', { defaultValue: 'Confirm' });
+  const finalCancelText = cancelText || t('cancel', { defaultValue: 'Cancel' });
   
   // Support both onCancel and onClose props for maximum compatibility with page logic
   const handleCancel = onCancel || onClose;
@@ -57,7 +62,7 @@ export default function ConfirmationModal({
                     className="rounded-md bg-white dark:bg-gray-800 text-gray-400 hover:text-gray-500 focus:outline-none"
                     onClick={onClose}
                   >
-                    <span className="sr-only">Close</span>
+                    <span className="sr-only">{t('close', { defaultValue: 'Close' })}</span>
                     <XMarkIcon className="h-6 w-6" aria-hidden="true" />
                   </button>
                 </div>
@@ -100,14 +105,14 @@ export default function ConfirmationModal({
                     } focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800`}
                     onClick={onConfirm}
                   >
-                    {confirmText}
+                    {finalConfirmText}
                   </button>
                   <button
                     type="button"
                     className="mt-3 inline-flex w-full justify-center rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-200 shadow-sm transition-all duration-150 ease-out hover:bg-gray-50 dark:hover:bg-gray-700 hover:-translate-y-0.5 hover:shadow-md sm:mt-0 sm:w-auto focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-500"
                     onClick={handleCancel}
                   >
-                    {cancelText}
+                    {finalCancelText}
                   </button>
                 </div>
               </Dialog.Panel>

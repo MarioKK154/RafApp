@@ -167,7 +167,7 @@ function AccountingPage() {
             setRecentExpenses(Array.isArray(expensesRes.data) ? expensesRes.data.slice(0, 10) : []);
         } catch (error) {
             console.error('Overview sync error:', error);
-            toast.error('Failed to load money overview.');
+            toast.error(t('failed_load_money_overview', { defaultValue: 'Failed to load money overview.' }));
         } finally {
             setIsLoadingOverview(false);
         }
@@ -185,24 +185,24 @@ function AccountingPage() {
                 project_id: editingExpenseData.project_id ? parseInt(editingExpenseData.project_id, 10) : null,
             };
             await axiosInstance.put(`/accounting/expenses/${expenseId}`, payload);
-            toast.success("Expense updated successfully");
+            toast.success(t('expense_updated_success', { defaultValue: 'Expense updated successfully' }));
             setEditingExpenseId(null);
             refreshOverview();
         } catch (error) {
             console.error('Update expense error:', error);
-            toast.error("Failed to update expense");
+            toast.error(t('failed_update_expense', { defaultValue: 'Failed to update expense' }));
         }
     };
 
     const handleDeleteExpense = async (expenseId) => {
-        if (!window.confirm("Are you sure you want to delete this entry?")) return;
+        if (!window.confirm(t('confirm_delete_entry', { defaultValue: 'Are you sure you want to delete this entry?' }))) return;
         try {
             await axiosInstance.delete(`/accounting/expenses/${expenseId}`);
-            toast.success("Expense deleted");
+            toast.success(t('expense_deleted_success', { defaultValue: 'Expense deleted' }));
             refreshOverview();
         } catch (error) {
             console.error('Delete expense error:', error);
-            toast.error("Failed to delete expense");
+            toast.error(t('failed_delete_expense', { defaultValue: 'Failed to delete expense' }));
         }
     };
 
@@ -387,15 +387,13 @@ function AccountingPage() {
                             <section className="bg-white dark:bg-gray-800 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-700 p-8 space-y-8">
                                 <div>
                                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-1">
-                                        {isIcelandic ? 'Reiknivél' : 'Calculator'}
+                                        {t('calculator', { defaultValue: 'Calculator' })}
                                     </p>
                                     <h2 className="text-lg font-black text-gray-900 dark:text-white tracking-tight">
-                                        {isIcelandic ? 'Launaáætlun' : 'Salary Estimator'}
+                                        {t('salary_estimator', { defaultValue: 'Salary Estimator' })}
                                     </h2>
                                     <p className="text-xs text-gray-500 mt-1 dark:text-gray-400">
-                                        {isIcelandic 
-                                            ? 'Reiknaðu út áætluð laun út frá skráðum tímum, samningsákvæðum og sköttum á Íslandi.' 
-                                            : 'Estimate your earnings based on logged hours, union agreements, and standard Icelandic taxes.'}
+                                        {t('estimate_your_earnings_based_on', { defaultValue: 'Estimate your earnings based on logged hours, union agreements, and standard Icelandic taxes.' })}
                                     </p>
                                 </div>
 
@@ -404,13 +402,13 @@ function AccountingPage() {
                                     <div className="lg:col-span-7 space-y-6">
                                         <div className="bg-gray-50 dark:bg-gray-900/50 p-6 rounded-3xl space-y-4">
                                             <h3 className="text-xs font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">
-                                                {isIcelandic ? 'Forsendur' : 'Parameters'}
+                                                {t('parameters', { defaultValue: 'Parameters' })}
                                             </h3>
 
                                             {isManagement ? (
                                                 <div>
                                                     <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">
-                                                        {isIcelandic ? 'Starfsmaður' : 'Employee'}
+                                                        {t('employee', { defaultValue: 'Employee' })}
                                                     </label>
                                                     <select
                                                         value={uploadUserId}
@@ -424,7 +422,7 @@ function AccountingPage() {
                                                         }}
                                                         className="modern-input h-9 text-[11px]"
                                                     >
-                                                        <option value="">{isIcelandic ? 'Veldu starfsmann' : 'Select employee'}</option>
+                                                        <option value="">{t('select_employee', { defaultValue: 'Select employee' })}</option>
                                                         {employees.map(u => (
                                                             <option key={u.id} value={u.id}>
                                                                 {u.full_name || u.email}
@@ -434,7 +432,7 @@ function AccountingPage() {
                                                 </div>
                                             ) : (
                                                 <div className="text-xs text-gray-600 dark:text-gray-300">
-                                                    <p className="font-bold">{isIcelandic ? 'Starfsmaður:' : 'Employee:'}</p>
+                                                    <p className="font-bold">{t('employee_1', { defaultValue: 'Employee:' })}</p>
                                                     <p className="mt-1 text-gray-900 dark:text-white">{currentUser?.full_name || currentUser?.email}</p>
                                                 </div>
                                             )}
@@ -442,7 +440,7 @@ function AccountingPage() {
                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                                 <div>
                                                     <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">
-                                                        {isIcelandic ? 'Tímabil frá' : 'Period From'}
+                                                        {t('period_from', { defaultValue: 'Period From' })}
                                                     </label>
                                                     <input
                                                         type="date"
@@ -453,7 +451,7 @@ function AccountingPage() {
                                                 </div>
                                                 <div>
                                                     <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">
-                                                        {isIcelandic ? 'Tímabil til' : 'Period To'}
+                                                        {t('period_to', { defaultValue: 'Period To' })}
                                                     </label>
                                                     <input
                                                         type="date"
@@ -469,11 +467,11 @@ function AccountingPage() {
                                                     type="button"
                                                     onClick={async () => {
                                                         if (!uploadUserId) {
-                                                            toast.warn(isIcelandic ? 'Veldu starfsmann fyrst.' : 'Please select an employee first.');
+                                                            toast.warn(t('please_select_an_employee_first', { defaultValue: 'Please select an employee first.' }));
                                                             return;
                                                         }
                                                         if (!calcFromDate || !calcToDate) {
-                                                            toast.warn(isIcelandic ? 'Veldu tímabil.' : 'Please select a period first.');
+                                                            toast.warn(t('please_select_a_period_first', { defaultValue: 'Please select a period first.' }));
                                                             return;
                                                         }
                                                         try {
@@ -487,7 +485,7 @@ function AccountingPage() {
                                                             const res = await axiosInstance.get(url, { params });
                                                             const logs = Array.isArray(res.data) ? res.data : [];
                                                             if (logs.length === 0) {
-                                                                toast.info(isIcelandic ? 'Engar tímaskráningar fundust á þessu tímabili.' : 'No time logs found for this period.');
+                                                                toast.info(t('no_time_logs_found_for', { defaultValue: 'No time logs found for this period.' }));
                                                                 return;
                                                             }
                                                             // Group hours by calendar day
@@ -507,58 +505,58 @@ function AccountingPage() {
                                                             });
                                                             setCalcHours(regularH.toFixed(2));
                                                             setCalcOvertimeHours(otH.toFixed(2));
-                                                            toast.success(isIcelandic ? 'Tímar sóttir úr vinnuskráningu.' : 'Hours loaded from time logs.');
+                                                            toast.success(t('hours_loaded_from_time_logs', { defaultValue: 'Hours loaded from time logs.' }));
                                                         } catch (error) {
                                                             console.error('Load hours failed:', error);
-                                                            toast.error(isIcelandic ? 'Gæti ekki sótt tíma.' : 'Failed to load hours.');
+                                                            toast.error(t('failed_to_load_hours', { defaultValue: 'Failed to load hours.' }));
                                                         }
                                                     }}
                                                     className="inline-flex items-center px-4 py-2 rounded-xl bg-gray-900 dark:bg-gray-800 text-white text-[9px] font-black uppercase tracking-[0.2em] hover:bg-black dark:hover:bg-gray-700 transition"
                                                 >
-                                                    {isIcelandic ? 'Sækja úr vinnuskráningu' : 'Load hours'}
+                                                    {t('load_hours', { defaultValue: 'Load hours' })}
                                                 </button>
                                             </div>
 
                                             <div className="grid grid-cols-2 gap-4 text-xs">
                                                 <div>
                                                     <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">
-                                                        {isIcelandic ? 'Dagvinna tímar' : 'Regular Hours'}
+                                                        {t('regular_hours', { defaultValue: 'Regular Hours' })}
                                                     </label>
                                                     <input type="number" min="0" step="any" value={calcHours} onChange={(e) => setCalcHours(e.target.value)} className="modern-input h-9" />
                                                 </div>
                                                 <div>
                                                     <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">
-                                                        {isIcelandic ? 'Tímakaup (kr.)' : 'Hourly Rate (ISK)'}
+                                                        {t('hourly_rate_isk', { defaultValue: 'Hourly Rate (ISK)' })}
                                                     </label>
                                                     <input type="number" min="0" step="any" value={calcHourlyRate} onChange={(e) => setCalcHourlyRate(e.target.value)} className="modern-input h-9" />
                                                 </div>
                                                 <div>
                                                     <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">
-                                                        {isIcelandic ? 'Eftirvinna tímar' : 'OT1 Hours'}
+                                                        {t('ot1_hours', { defaultValue: 'OT1 Hours' })}
                                                     </label>
                                                     <input type="number" min="0" step="any" value={calcOvertimeHours} onChange={(e) => setCalcOvertimeHours(e.target.value)} className="modern-input h-9" />
                                                 </div>
                                                 <div>
                                                     <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">
-                                                        {isIcelandic ? 'Eftirvinnustuðull' : 'OT1 Multiplier'}
+                                                        {t('ot1_multiplier', { defaultValue: 'OT1 Multiplier' })}
                                                     </label>
                                                     <input type="number" min="1" step="0.1" value={calcOvertimeMultiplier} onChange={(e) => setCalcOvertimeMultiplier(e.target.value)} className="modern-input h-9" />
                                                 </div>
                                                 <div>
                                                     <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">
-                                                        {isIcelandic ? 'Næturvinna tímar' : 'OT2 Hours'}
+                                                        {t('ot2_hours', { defaultValue: 'OT2 Hours' })}
                                                     </label>
                                                     <input type="number" min="0" step="any" value={calcOvertime2Hours} onChange={(e) => setCalcOvertime2Hours(e.target.value)} className="modern-input h-9" />
                                                 </div>
                                                 <div>
                                                     <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">
-                                                        {isIcelandic ? 'Næturvinnustuðull' : 'OT2 Multiplier'}
+                                                        {t('ot2_multiplier', { defaultValue: 'OT2 Multiplier' })}
                                                     </label>
                                                     <input type="number" min="1" step="0.1" value={calcOvertime2Multiplier} onChange={(e) => setCalcOvertime2Multiplier(e.target.value)} className="modern-input h-9" />
                                                 </div>
                                                 <div>
                                                     <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">
-                                                        {isIcelandic ? 'Séreignarsparnaður' : 'Private Pension'}
+                                                        {t('private_pension', { defaultValue: 'Private Pension' })}
                                                     </label>
                                                     <select
                                                         value={calcSereignarsparnadurPercent}
@@ -579,12 +577,12 @@ function AccountingPage() {
                                                         className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                                                     />
                                                     <label htmlFor="applyTaxCredit" className="text-[10px] font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider cursor-pointer">
-                                                        {isIcelandic ? 'Nýta persónuafslátt' : 'Apply Personal Tax Credit'}
+                                                        {t('apply_personal_tax_credit', { defaultValue: 'Apply Personal Tax Credit' })}
                                                     </label>
                                                 </div>
                                                 <div>
                                                     <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">
-                                                        {isIcelandic ? 'Skattár (Reikna út frá)' : 'Tax Year'}
+                                                        {t('tax_year', { defaultValue: 'Tax Year' })}
                                                     </label>
                                                     <select
                                                         value={calcTaxYear}
@@ -598,14 +596,14 @@ function AccountingPage() {
                                                 </div>
                                                 <div>
                                                     <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">
-                                                        {isIcelandic ? 'Orlofsprósenta' : 'Orlof %'}
+                                                        {t('orlof', { defaultValue: 'Orlof %' })}
                                                     </label>
                                                     <select
                                                         value={calcOrlofPercent}
                                                         onChange={(e) => setCalcOrlofPercent(e.target.value)}
                                                         className="modern-input h-9 text-[11px] font-bold"
                                                     >
-                                                        <option value="0">{isIcelandic ? 'Ekkert (0%)' : 'None (0%)'}</option>
+                                                        <option value="0">{t('none_0', { defaultValue: 'None (0%)' })}</option>
                                                         <option value="10.17">10.17% (24 dagar)</option>
                                                         <option value="10.64">10.64% (25 dagar)</option>
                                                         <option value="12.07">12.07% (30 dagar)</option>
@@ -613,27 +611,27 @@ function AccountingPage() {
                                                 </div>
                                                 <div>
                                                     <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">
-                                                        {isIcelandic ? 'Bónusar (kr.)' : 'Bonuses (ISK)'}
+                                                        {t('bonuses_isk', { defaultValue: 'Bonuses (ISK)' })}
                                                     </label>
                                                     <input type="number" min="0" step="any" value={calcBonuses} onChange={(e) => setCalcBonuses(e.target.value)} className="modern-input h-9" />
                                                 </div>
                                                 <div>
                                                     <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">
-                                                        {isIcelandic ? 'Lýsing bónusar' : 'Bonus Description'}
+                                                        {t('bonus_description', { defaultValue: 'Bonus Description' })}
                                                     </label>
-                                                    <input type="text" value={calcBonusDescription} onChange={(e) => setCalcBonusDescription(e.target.value)} className="modern-input h-9" placeholder={isIcelandic ? 't.d. bakvakt, bónus' : 'e.g. on-call, bonus'} />
+                                                    <input type="text" value={calcBonusDescription} onChange={(e) => setCalcBonusDescription(e.target.value)} className="modern-input h-9" placeholder={t('e_g_on_call_bonus', { defaultValue: 'e.g. on-call, bonus' })} />
                                                 </div>
                                                 <div>
                                                     <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">
-                                                        {isIcelandic ? 'Annar frádráttur (kr.)' : 'Other Deductions (ISK)'}
+                                                        {t('other_deductions_isk', { defaultValue: 'Other Deductions (ISK)' })}
                                                     </label>
                                                     <input type="number" min="0" step="any" value={calcOtherDeductions} onChange={(e) => setCalcOtherDeductions(e.target.value)} className="modern-input h-9" />
                                                 </div>
                                                 <div>
                                                     <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">
-                                                        {isIcelandic ? 'Lýsing frádráttur' : 'Deductions Description'}
+                                                        {t('deductions_description', { defaultValue: 'Deductions Description' })}
                                                     </label>
-                                                    <input type="text" value={calcDeductionsDescription} onChange={(e) => setCalcDeductionsDescription(e.target.value)} className="modern-input h-9" placeholder={isIcelandic ? 't.d. mötuneyti, félagsgjald' : 'e.g. canteen, dues'} />
+                                                    <input type="text" value={calcDeductionsDescription} onChange={(e) => setCalcDeductionsDescription(e.target.value)} className="modern-input h-9" placeholder={t('e_g_canteen_dues', { defaultValue: 'e.g. canteen, dues' })} />
                                                 </div>
                                             </div>
                                         </div>
@@ -724,7 +722,7 @@ function AccountingPage() {
                                                 <div className="bg-indigo-950 text-white rounded-[2rem] p-6 shadow-xl space-y-6">
                                                     <div className="border-b border-indigo-900 pb-4">
                                                         <h4 className="text-xs font-black uppercase tracking-[0.2em] text-indigo-300">
-                                                            {isIcelandic ? 'Áætlaður Launaseðill' : 'Estimated Earnings Slip'}
+                                                            {t('estimated_earnings_slip', { defaultValue: 'Estimated Earnings Slip' })}
                                                         </h4>
                                                         <p className="text-[10px] text-indigo-200 mt-1">
                                                             {isIcelandic ? `Skattár / Tax Year: ${calcTaxYear}` : `Tax Year / Skattár: ${calcTaxYear}`}
@@ -757,7 +755,7 @@ function AccountingPage() {
                                                         {bonus > 0 && (
                                                             <div className="flex justify-between">
                                                                 <span className="text-indigo-200">
-                                                                    {isIcelandic ? 'Álag og bónusar' : 'Bonuses and allowances'}
+                                                                    {t('bonuses_and_allowances', { defaultValue: 'Bonuses and allowances' })}
                                                                 </span>
                                                                 <span className="font-bold">{Math.round(bonus).toLocaleString('is-IS')} ISK</span>
                                                             </div>
@@ -769,17 +767,17 @@ function AccountingPage() {
                                                             </div>
                                                         )}
                                                         <div className="flex justify-between border-t border-indigo-900 pt-2 font-black text-sm text-indigo-300">
-                                                            <span>{isIcelandic ? 'Brúttólaun' : 'Gross Salary'}</span>
+                                                            <span>{t('gross_salary', { defaultValue: 'Gross Salary' })}</span>
                                                             <span>{Math.round(brutto).toLocaleString('is-IS')} ISK</span>
                                                         </div>
                                                     </div>
 
                                                     <div className="space-y-2 text-xs border-t border-indigo-900 pt-4">
                                                         <h5 className="text-[10px] font-black text-indigo-300 uppercase tracking-widest mb-1">
-                                                            {isIcelandic ? 'Frádrættir' : 'Deductions'}
+                                                            {t('deductions', { defaultValue: 'Deductions' })}
                                                         </h5>
                                                         <div className="flex justify-between text-indigo-200">
-                                                            <span>{isIcelandic ? 'Lífeyrissjóður (4%)' : 'Pension Contribution (4%)'}</span>
+                                                            <span>{t('pension_contribution_4', { defaultValue: 'Pension Contribution (4%)' })}</span>
                                                             <span>-{Math.round(pensionDeduction).toLocaleString('is-IS')} ISK</span>
                                                         </div>
                                                         {sereignDeduction > 0 && (
@@ -791,24 +789,24 @@ function AccountingPage() {
                                                             </div>
                                                         )}
                                                         <div className="flex justify-between text-indigo-200">
-                                                            <span>{isIcelandic ? 'Stéttarfélagsgjald RSÍ (1,0%)' : 'Union Fee RSÍ (1.0%)'}</span>
+                                                            <span>{t('union_fee_rs_1_0', { defaultValue: 'Union Fee RSÍ (1.0%)' })}</span>
                                                             <span>-{Math.round(unionFee).toLocaleString('is-IS')} ISK</span>
                                                         </div>
                                                         {netTax > 0 && (
                                                             <div className="flex justify-between text-indigo-200">
-                                                                <span>{isIcelandic ? 'Staðgreiðsla skatta' : 'Income Tax'}</span>
+                                                                <span>{t('income_tax', { defaultValue: 'Income Tax' })}</span>
                                                                 <span>-{Math.round(netTax).toLocaleString('is-IS')} ISK</span>
                                                             </div>
                                                         )}
                                                         {orlofAmount > 0 && (
                                                             <div className="flex justify-between text-indigo-200">
-                                                                <span>{isIcelandic ? 'Orlof lagt í banka' : 'Orlof deposited to bank'}</span>
+                                                                <span>{t('orlof_deposited_to_bank', { defaultValue: 'Orlof deposited to bank' })}</span>
                                                                 <span>-{Math.round(orlofAmount).toLocaleString('is-IS')} ISK</span>
                                                             </div>
                                                         )}
                                                         {od > 0 && (
                                                             <div className="flex justify-between text-indigo-200">
-                                                                <span>{isIcelandic ? 'Annar frádráttur' : 'Other Deductions'}</span>
+                                                                <span>{t('other_deductions', { defaultValue: 'Other Deductions' })}</span>
                                                                 <span>-{Math.round(od).toLocaleString('is-IS')} ISK</span>
                                                             </div>
                                                         )}
@@ -816,14 +814,14 @@ function AccountingPage() {
 
                                                     <div className="bg-indigo-900/60 p-4 rounded-2xl space-y-1">
                                                         <span className="text-[10px] font-black uppercase tracking-widest text-indigo-300">
-                                                            {isIcelandic ? 'Áætluð útborguð laun (Nettólaun)' : 'Estimated Net Salary'}
+                                                            {t('estimated_net_salary', { defaultValue: 'Estimated Net Salary' })}
                                                         </span>
                                                         <p className="text-2xl font-black text-green-400">{Math.round(netSalary).toLocaleString('is-IS')} ISK</p>
                                                     </div>
 
                                                     <div className="text-[10px] text-indigo-300 space-y-1">
-                                                        <p className="font-bold">{isIcelandic ? 'Mótframlag atvinnurekanda:' : 'Employer Contributions:'}</p>
-                                                        <p>{isIcelandic ? 'Mótframlag lífeyrissjóðs (11,5%):' : 'Employer Pension (11.5%):'} {Math.round(employerPension).toLocaleString('is-IS')} ISK</p>
+                                                        <p className="font-bold">{t('employer_contributions', { defaultValue: 'Employer Contributions:' })}</p>
+                                                        <p>{t('employer_pension_11_5', { defaultValue: 'Employer Pension (11.5%):' })} {Math.round(employerPension).toLocaleString('is-IS')} ISK</p>
                                                     </div>
 
                                                     <div className="flex flex-col gap-2 pt-2">
@@ -831,7 +829,7 @@ function AccountingPage() {
                                                             type="button"
                                                             onClick={async () => {
                                                                 if (!uploadUserId) {
-                                                                    toast.warn(isIcelandic ? 'Veldu starfsmann fyrst.' : 'Please select an employee first.');
+                                                                    toast.warn(t('please_select_an_employee_first', { defaultValue: 'Please select an employee first.' }));
                                                                     return;
                                                                 }
                                                                 try {
@@ -866,15 +864,15 @@ function AccountingPage() {
                                                                     document.body.appendChild(link);
                                                                     link.click();
                                                                     document.body.removeChild(link);
-                                                                    toast.success(isIcelandic ? 'Launaáætlun hlaðin niður sem PDF.' : 'Salary estimate downloaded as PDF.');
+                                                                    toast.success(t('salary_estimate_downloaded_as_pdf', { defaultValue: 'Salary estimate downloaded as PDF.' }));
                                                                 } catch (error) {
                                                                     console.error('Download estimate failed:', error);
-                                                                    toast.error(isIcelandic ? 'Ekki tókst að sækja launaáætlun.' : 'Failed to download salary estimate PDF.');
+                                                                    toast.error(t('failed_to_download_salary_estimate', { defaultValue: 'Failed to download salary estimate PDF.' }));
                                                                 }
                                                             }}
                                                             className="w-full inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-white text-indigo-950 text-[10px] font-black uppercase tracking-[0.2em] hover:bg-gray-100 transition shadow"
                                                         >
-                                                            {isIcelandic ? 'Sækja Launaáætlun (PDF)' : 'Download PDF Estimate'}
+                                                            {t('download_pdf_estimate', { defaultValue: 'Download PDF Estimate' })}
                                                         </button>
 
                                                         {isManagement && (
@@ -883,11 +881,11 @@ function AccountingPage() {
                                                                 onClick={() => {
                                                                     setUploadBrutto(brutto.toFixed(0));
                                                                     setUploadNetto(netSalary.toFixed(0));
-                                                                    toast.info(isIcelandic ? 'Gildi afrituð í uppgjörsform.' : 'Values copied to official upload form.');
+                                                                    toast.info(t('values_copied_to_official_upload', { defaultValue: 'Values copied to official upload form.' }));
                                                                 }}
                                                                 className="w-full inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-indigo-900 text-white text-[10px] font-black uppercase tracking-[0.2em] hover:bg-indigo-850 transition"
                                                             >
-                                                                {isIcelandic ? 'Afrita í uppgjörsform' : 'Copy to Official Upload'}
+                                                                {t('copy_to_official_upload', { defaultValue: 'Copy to Official Upload' })}
                                                             </button>
                                                         )}
                                                     </div>
@@ -966,13 +964,13 @@ function AccountingPage() {
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-1">
-                                        {isIcelandic ? 'Bókhald' : 'Official Payroll'}
+                                        {t('official_payroll', { defaultValue: 'Official Payroll' })}
                                     </p>
                                     <h2 className="text-lg font-black text-gray-900 dark:text-white tracking-tight">
-                                        {isIcelandic ? 'Útbúa og Vista Opinbera Launaseðla' : 'Payslip Registry'}
+                                        {t('payslip_registry', { defaultValue: 'Payslip Registry' })}
                                     </h2>
                                     <p className="text-xs text-gray-500 mt-1 dark:text-gray-400">
-                                        {isIcelandic ? 'Vistaðu launaútreikninginn opinberlega sem staðfestan launaseðil í gagnagrunni starfsmannsins.' : 'Save the salary calculation officially as a certified payslip in the employee database.'}
+                                        {t('save_the_salary_calculation_officially', { defaultValue: 'Save the salary calculation officially as a certified payslip in the employee database.' })}
                                     </p>
                                 </div>
                             </div>
@@ -980,13 +978,13 @@ function AccountingPage() {
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                                 <div className="space-y-4">
                                     <h3 className="text-[11px] font-black text-gray-500 uppercase tracking-[0.25em]">
-                                        {isIcelandic ? 'Skrá handvirkt' : 'Upload Signed PDF'}
+                                        {t('upload_signed_pdf', { defaultValue: 'Upload Signed PDF' })}
                                     </h3>
                                     <form
                                         onSubmit={async (e) => {
                                             e.preventDefault();
                                             if (!uploadUserId || !uploadIssueDate || !uploadBrutto || !uploadNetto || !uploadFile) {
-                                                toast.warn(isIcelandic ? 'Fylltu út alla reiti og veldu PDF skjal.' : 'Fill all fields and select a PDF.');
+                                                toast.warn(t('fill_all_fields_and_select', { defaultValue: 'Fill all fields and select a PDF.' }));
                                                 return;
                                             }
                                             setIsUploadingPayslip(true);
@@ -1001,14 +999,14 @@ function AccountingPage() {
                                                 await axiosInstance.post('/accounting/payslips', formData, {
                                                     headers: { 'Content-Type': 'multipart/form-data' },
                                                 });
-                                                toast.success(isIcelandic ? 'Launaseðill vistaður.' : 'Payslip uploaded.');
+                                                toast.success(t('payslip_uploaded', { defaultValue: 'Payslip uploaded.' }));
                                                 setUploadBrutto('');
                                                 setUploadNetto('');
                                                 setUploadFile(null);
                                                 fetchAccountingData();
                                             } catch (error) {
                                                 console.error('Payslip upload failed:', error);
-                                                toast.error(isIcelandic ? 'Gæti ekki vistað launaseðil.' : 'Failed to upload.');
+                                                toast.error(t('failed_to_upload', { defaultValue: 'Failed to upload.' }));
                                             } finally {
                                                 setIsUploadingPayslip(false);
                                             }
@@ -1017,7 +1015,7 @@ function AccountingPage() {
                                     >
                                         <div>
                                             <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">
-                                                {isIcelandic ? 'Starfsmaður' : 'Employee'}
+                                                {t('employee', { defaultValue: 'Employee' })}
                                             </label>
                                             <select
                                                 value={uploadUserId}
@@ -1031,7 +1029,7 @@ function AccountingPage() {
                                                 }}
                                                 className="modern-input h-9 text-[11px]"
                                             >
-                                                <option value="">{isIcelandic ? 'Veldu starfsmann' : 'Select employee'}</option>
+                                                <option value="">{t('select_employee', { defaultValue: 'Select employee' })}</option>
                                                 {employees.map(u => (
                                                     <option key={u.id} value={u.id}>
                                                         {u.full_name || u.email}
@@ -1042,7 +1040,7 @@ function AccountingPage() {
                                         <div className="grid grid-cols-2 gap-3">
                                             <div>
                                                 <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">
-                                                    {isIcelandic ? 'Útgáfudagur' : 'Issue Date'}
+                                                    {t('issue_date', { defaultValue: 'Issue Date' })}
                                                 </label>
                                                 <input
                                                     type="date"
@@ -1053,7 +1051,7 @@ function AccountingPage() {
                                             </div>
                                             <div>
                                                 <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-1">
-                                                    {isIcelandic ? 'PDF Skrá' : 'Signed PDF'}
+                                                    {t('signed_pdf', { defaultValue: 'Signed PDF' })}
                                                 </label>
                                                 <input
                                                     type="file"
@@ -1097,7 +1095,7 @@ function AccountingPage() {
                                                 disabled={isUploadingPayslip}
                                                 className="inline-flex items-center px-6 py-2 rounded-2xl bg-indigo-600 text-white text-[10px] font-black uppercase tracking-[0.25em] hover:bg-indigo-700 transition disabled:opacity-50"
                                             >
-                                                {isUploadingPayslip ? (isIcelandic ? 'Sendir...' : 'Sending...') : (isIcelandic ? 'Skrá Launaseðil' : 'Upload PDF')}
+                                                {isUploadingPayslip ? (t('sending', { defaultValue: 'Sending...' })) : (t('upload_pdf', { defaultValue: 'Upload PDF' }))}
                                             </button>
                                         </div>
                                     </form>
@@ -1105,10 +1103,10 @@ function AccountingPage() {
 
                                 <div className="space-y-4">
                                     <h3 className="text-[11px] font-black text-gray-500 uppercase tracking-[0.25em]">
-                                        {isIcelandic ? 'Útbúa og Vista sjálfvirkt' : 'Autogenerate & Save'}
+                                        {t('autogenerate_save', { defaultValue: 'Autogenerate & Save' })}
                                     </h3>
                                     <p className="text-xs text-gray-600 dark:text-gray-400">
-                                        {isIcelandic ? 'Þessi hnappur býr til opinberan launaseðil á PDF formi út frá gildunum í reiknivélinni hér að ofan, vistar hann á skráarþjóni og tengir við launasögu starfsmannsins.' : 'This button generates an official payslip in PDF format based on the values in the calculator above, saves it on the server, and links it to the employee\'s salary history.'}
+                                        {t('this_button_generates_an_official', { defaultValue: "This button generates an official payslip in PDF format based on the values in the calculator above, saves it on the server, and links it to the employee's salary history." })}
                                     </p>
                                     <button
                                         type="button"
@@ -1132,18 +1130,18 @@ function AccountingPage() {
                                                     deductions_description: calcDeductionsDescription || null,
                                                 };
                                                 await axiosInstance.post('/accounting/payslips/auto', payload);
-                                                toast.success(isIcelandic ? 'Opinber launaseðill útbúinn og vistaður.' : 'Official payslip generated and saved.');
+                                                toast.success(t('official_payslip_generated_and_saved', { defaultValue: 'Official payslip generated and saved.' }));
                                                 fetchAccountingData();
                                             } catch (error) {
                                                 console.error('Auto payslip generation failed:', error);
-                                                toast.error(isIcelandic ? 'Mistókst að útbúa launaseðil.' : 'Failed to generate payslip.');
+                                                toast.error(t('failed_to_generate_payslip', { defaultValue: 'Failed to generate payslip.' }));
                                             } finally {
                                                 setIsUploadingPayslip(false);
                                             }
                                         }}
                                         className="inline-flex items-center px-6 py-2.5 rounded-2xl bg-gray-900 text-white text-[10px] font-black uppercase tracking-[0.25em] hover:bg-black transition disabled:opacity-50"
                                     >
-                                        {isIcelandic ? 'Stofna & Vista Launaseðil' : 'Auto-generate & Save'}
+                                        {t('auto_generate_save', { defaultValue: 'Auto-generate & Save' })}
                                     </button>
                                 </div>
                             </div>
@@ -1205,13 +1203,13 @@ function AccountingPage() {
                                         onChange={(e) => setFilterCategory(e.target.value)}
                                         className="modern-input h-9 text-[11px]"
                                     >
-                                        <option value="">All</option>
-                                        <option value="project">Project</option>
-                                        <option value="car">Car</option>
-                                        <option value="tool">Tool</option>
-                                        <option value="repair">Repair</option>
-                                        <option value="clothing">Clothing</option>
-                                        <option value="other">Other</option>
+                                        <option value="">{t('all', { defaultValue: 'All' })}</option>
+                                        <option value="project">{t('project', { defaultValue: 'Project' })}</option>
+                                        <option value="car">{t('car', { defaultValue: 'Car' })}</option>
+                                        <option value="tool">{t('tool', { defaultValue: 'Tool' })}</option>
+                                        <option value="repair">{t('repair', { defaultValue: 'Repair' })}</option>
+                                        <option value="clothing">{t('clothing', { defaultValue: 'Clothing' })}</option>
+                                        <option value="other">{t('other', { defaultValue: 'Other' })}</option>
                                     </select>
                                 </div>
                                 <div>
@@ -1223,7 +1221,7 @@ function AccountingPage() {
                                         onChange={(e) => setFilterProjectId(e.target.value)}
                                         className="modern-input h-9 text-[11px]"
                                     >
-                                        <option value="">All</option>
+                                        <option value="">{t('all', { defaultValue: 'All' })}</option>
                                         {projects.map(p => (
                                             <option key={p.id} value={p.id}>
                                                 {p.name}
@@ -1262,7 +1260,7 @@ function AccountingPage() {
                                         value={filterSearch}
                                         onChange={(e) => setFilterSearch(e.target.value)}
                                         className="modern-input h-9 text-[11px]"
-                                        placeholder="Search description or reference..."
+                                        placeholder={t('search_desc_ref', { defaultValue: 'Search description or reference...' })}
                                     />
                                 </div>
                             </div>
@@ -1478,12 +1476,12 @@ function AccountingPage() {
                                             onChange={(e) => setExpenseCategory(e.target.value)}
                                             className="modern-input h-10 text-xs font-bold"
                                         >
-                                            <option value="project">Project</option>
-                                            <option value="car">Car</option>
-                                            <option value="tool">Tool</option>
-                                            <option value="repair">Repair</option>
-                                            <option value="clothing">Clothing</option>
-                                            <option value="other">Other</option>
+                                            <option value="project">{t('project', { defaultValue: 'Project' })}</option>
+                                            <option value="car">{t('car', { defaultValue: 'Car' })}</option>
+                                            <option value="tool">{t('tool', { defaultValue: 'Tool' })}</option>
+                                            <option value="repair">{t('repair', { defaultValue: 'Repair' })}</option>
+                                            <option value="clothing">{t('clothing', { defaultValue: 'Clothing' })}</option>
+                                            <option value="other">{t('other', { defaultValue: 'Other' })}</option>
                                         </select>
                                     </div>
                                 </div>
@@ -1496,7 +1494,7 @@ function AccountingPage() {
                                         onChange={(e) => setExpenseProjectId(e.target.value)}
                                         className="modern-input h-10 text-xs font-bold"
                                     >
-                                        <option value="">Unlinked</option>
+                                        <option value="">{t('unlinked', { defaultValue: 'Unlinked' })}</option>
                                         {projects.map(p => (
                                             <option key={p.id} value={p.id}>
                                                 {p.name} (#{p.project_number || p.id})
@@ -1585,12 +1583,12 @@ function AccountingPage() {
                                 <table className="w-full text-left text-xs">
                                     <thead className="bg-gray-50 dark:bg-gray-900 border-b border-gray-100 dark:border-gray-700">
                                         <tr>
-                                            <th className="px-4 py-3 font-black text-gray-500 uppercase tracking-wider rounded-tl-xl">Date</th>
-                                            <th className="px-4 py-3 font-black text-gray-500 uppercase tracking-wider">Amount</th>
-                                            <th className="px-4 py-3 font-black text-gray-500 uppercase tracking-wider">Type / Cat</th>
-                                            <th className="px-4 py-3 font-black text-gray-500 uppercase tracking-wider">Project</th>
-                                            <th className="px-4 py-3 font-black text-gray-500 uppercase tracking-wider">Desc / Ref</th>
-                                            <th className="px-4 py-3 font-black text-gray-500 uppercase tracking-wider text-right rounded-tr-xl">Actions</th>
+                                            <th className="px-4 py-3 font-black text-gray-500 uppercase tracking-wider rounded-tl-xl">{t('date', { defaultValue: 'Date' })}</th>
+                                            <th className="px-4 py-3 font-black text-gray-500 uppercase tracking-wider">{t('amount', { defaultValue: 'Amount' })}</th>
+                                            <th className="px-4 py-3 font-black text-gray-500 uppercase tracking-wider">{t('type_cat', { defaultValue: 'Type / Cat' })}</th>
+                                            <th className="px-4 py-3 font-black text-gray-500 uppercase tracking-wider">{t('project', { defaultValue: 'Project' })}</th>
+                                            <th className="px-4 py-3 font-black text-gray-500 uppercase tracking-wider">{t('desc_ref', { defaultValue: 'Desc / Ref' })}</th>
+                                            <th className="px-4 py-3 font-black text-gray-500 uppercase tracking-wider text-right rounded-tr-xl">{t('actions', { defaultValue: 'Actions' })}</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
@@ -1606,21 +1604,21 @@ function AccountingPage() {
                                                         </td>
                                                         <td className="px-4 py-3">
                                                             <select value={editingExpenseData.flow_type} onChange={(ev) => setEditingExpenseData({...editingExpenseData, flow_type: ev.target.value})} className="modern-input h-8 w-16 mb-1">
-                                                                <option value="out">Out</option>
-                                                                <option value="in">In</option>
+                                                                <option value="out">{t('out', { defaultValue: 'Out' })}</option>
+                                                                <option value="in">{t('in', { defaultValue: 'In' })}</option>
                                                             </select>
                                                             <select value={editingExpenseData.category} onChange={(ev) => setEditingExpenseData({...editingExpenseData, category: ev.target.value})} className="modern-input h-8 w-20">
-                                                                <option value="car">Car</option>
-                                                                <option value="tool">Tool</option>
-                                                                <option value="repair">Repair</option>
-                                                                <option value="clothing">Clothing</option>
-                                                                <option value="project">Project</option>
-                                                                <option value="other">Other</option>
+                                                                <option value="car">{t('car', { defaultValue: 'Car' })}</option>
+                                                                <option value="tool">{t('tool', { defaultValue: 'Tool' })}</option>
+                                                                <option value="repair">{t('repair', { defaultValue: 'Repair' })}</option>
+                                                                <option value="clothing">{t('clothing', { defaultValue: 'Clothing' })}</option>
+                                                                <option value="project">{t('project', { defaultValue: 'Project' })}</option>
+                                                                <option value="other">{t('other', { defaultValue: 'Other' })}</option>
                                                             </select>
                                                         </td>
                                                         <td className="px-4 py-3">
                                                             <select value={editingExpenseData.project_id || ''} onChange={(ev) => setEditingExpenseData({...editingExpenseData, project_id: ev.target.value})} className="modern-input h-8 w-full">
-                                                                <option value="">None</option>
+                                                                <option value="">{t('none', { defaultValue: 'None' })}</option>
                                                                 {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                                                             </select>
                                                         </td>
@@ -1630,8 +1628,8 @@ function AccountingPage() {
                                                         </td>
                                                         <td className="px-4 py-3 text-right">
                                                             <div className="flex justify-end gap-2">
-                                                                <button onClick={() => handleEditExpenseSubmit(e.id)} className="px-2 py-1 bg-green-500 hover:bg-green-600 text-white rounded font-bold">Save</button>
-                                                                <button onClick={() => setEditingExpenseId(null)} className="px-2 py-1 bg-gray-400 hover:bg-gray-500 text-white rounded font-bold">Cancel</button>
+                                                                <button onClick={() => handleEditExpenseSubmit(e.id)} className="px-2 py-1 bg-green-500 hover:bg-green-600 text-white rounded font-bold">{t('save', { defaultValue: 'Save' })}</button>
+                                                                <button onClick={() => setEditingExpenseId(null)} className="px-2 py-1 bg-gray-400 hover:bg-gray-500 text-white rounded font-bold">{t('cancel', { defaultValue: 'Cancel' })}</button>
                                                             </div>
                                                         </td>
                                                     </>
@@ -1651,8 +1649,8 @@ function AccountingPage() {
                                                         </td>
                                                         <td className="px-4 py-3 text-right">
                                                             <div className="flex justify-end gap-2">
-                                                                <button onClick={() => { setEditingExpenseId(e.id); setEditingExpenseData(e); }} className="text-indigo-500 hover:text-indigo-700 font-bold uppercase tracking-widest text-[9px]">Edit</button>
-                                                                <button onClick={() => handleDeleteExpense(e.id)} className="text-red-500 hover:text-red-700 font-bold uppercase tracking-widest text-[9px]">Del</button>
+                                                                <button onClick={() => { setEditingExpenseId(e.id); setEditingExpenseData(e); }} className="text-indigo-500 hover:text-indigo-700 font-bold uppercase tracking-widest text-[9px]">{t('edit', { defaultValue: 'Edit' })}</button>
+                                                                <button onClick={() => handleDeleteExpense(e.id)} className="text-red-500 hover:text-red-700 font-bold uppercase tracking-widest text-[9px]">{t('delete', { defaultValue: 'Del' })}</button>
                                                             </div>
                                                         </td>
                                                     </>

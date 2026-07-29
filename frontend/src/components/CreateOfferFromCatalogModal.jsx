@@ -63,12 +63,12 @@ export default function CreateOfferFromCatalogModal({ selectedItems = [], onClos
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!projectId) { toast.error('Please select a project'); return; }
+        if (!projectId) { toast.error(t('toast_select_project', { defaultValue: 'Please select a project' })); return; }
         if (projectId === 'CREATE_NEW' && !newProjectName.trim()) {
-            toast.error('Please enter a name for the new project.');
+            toast.error(t('toast_enter_new_project_name', { defaultValue: 'Please enter a name for the new project.' }));
             return;
         }
-        if (hasSelectedItems && (!verdlagNum || verdlagNum <= 0)) { toast.error('Enter a valid ISK/eining rate'); return; }
+        if (hasSelectedItems && (!verdlagNum || verdlagNum <= 0)) { toast.error(t('toast_enter_valid_isk', { defaultValue: 'Enter a valid ISK/eining rate' })); return; }
 
         setLoading(true);
         try {
@@ -105,7 +105,7 @@ export default function CreateOfferFromCatalogModal({ selectedItems = [], onClos
                 onCreated(res.data.id);
             }
         } catch (err) {
-            toast.error(err.response?.data?.detail || 'Failed to create offer');
+            toast.error(err.response?.data?.detail || t('toast_failed_create_offer', { defaultValue: 'Failed to create offer' }));
         } finally {
             setLoading(false);
         }
@@ -121,10 +121,10 @@ export default function CreateOfferFromCatalogModal({ selectedItems = [], onClos
                         <CalculatorIcon className="h-7 w-7 text-white" />
                         <div>
                             <h2 className="text-lg font-black text-white text-left">
-                                {hasSelectedItems ? "Create Offer from Catalog" : "Create New Offer"}
+                                {hasSelectedItems ? t('create_offer_from_catalog', { defaultValue: 'Create Offer from Catalog' }) : t('create_new_offer', { defaultValue: 'Create New Offer' })}
                             </h2>
                             <p className="text-indigo-200 text-xs text-left">
-                                {hasSelectedItems ? `${selectedItems.length} items · ${formatEining(totalEining)} total` : "Create a blank proposal for a project"}
+                                {hasSelectedItems ? `${selectedItems.length} ${t('items_lowercase', { defaultValue: 'items' })} · ${formatEining(totalEining)} ${t('total_lowercase', { defaultValue: 'total' })}` : t('create_blank_proposal', { defaultValue: 'Create a blank proposal for a project' })}
                             </p>
                         </div>
                     </div>
@@ -184,7 +184,7 @@ export default function CreateOfferFromCatalogModal({ selectedItems = [], onClos
                         {/* Verðlag (ISK per eining) */}
                         {hasSelectedItems && (
                             <div>
-                                <h3 className="text-xs font-black uppercase text-gray-400 tracking-widest mb-3">Verðlag (ISK/eining)</h3>
+                                <h3 className="text-xs font-black uppercase text-gray-400 tracking-widest mb-3">{t('verdlag_isk_eining', { defaultValue: 'Verðlag (ISK/eining)' })}</h3>
                                 <div className="relative">
                                     <BanknotesIcon className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
                                     <input
@@ -199,7 +199,7 @@ export default function CreateOfferFromCatalogModal({ selectedItems = [], onClos
                                     />
                                 </div>
                                 <p className="mt-2 text-xs text-gray-500">
-                                    Your company's ISK rate per Eining.
+                                    {t('verdlag_desc', { defaultValue: 'Your company\'s ISK rate per Eining.' })}
                                 </p>
                             </div>
                         )}
@@ -207,7 +207,7 @@ export default function CreateOfferFromCatalogModal({ selectedItems = [], onClos
                         {/* Offer details */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-xs font-black uppercase text-gray-400 tracking-widest mb-1">Project *</label>
+                                <label className="block text-xs font-black uppercase text-gray-400 tracking-widest mb-1">{t('project', { defaultValue: 'Project' })} *</label>
                                 {projectsLoading ? (
                                     <div className="h-11 rounded-xl bg-gray-100 dark:bg-gray-700 animate-pulse" />
                                 ) : (
@@ -218,8 +218,8 @@ export default function CreateOfferFromCatalogModal({ selectedItems = [], onClos
                                             required
                                             className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 text-sm"
                                         >
-                                            <option value="">— Select project —</option>
-                                            <option value="CREATE_NEW" className="text-indigo-600 font-bold dark:text-indigo-400">+ Create a New Project...</option>
+                                            <option value="">— {t('select_project', { defaultValue: 'Select project' })} —</option>
+                                            <option value="CREATE_NEW" className="text-indigo-600 font-bold dark:text-indigo-400">{t('create_new_project', { defaultValue: '+ Create a New Project...' })}</option>
                                             {projects.map(p => (
                                                 <option key={p.id} value={p.id}>
                                                     {p.project_number ? `[${p.project_number}] ` : ''}{p.name}
@@ -228,7 +228,7 @@ export default function CreateOfferFromCatalogModal({ selectedItems = [], onClos
                                         </select>
                                         {projectId === 'CREATE_NEW' && (
                                             <div className="mt-3 space-y-1 animate-in fade-in duration-200">
-                                                <label className="block text-[9px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest ml-1">New Project Name *</label>
+                                                <label className="block text-[9px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest ml-1">{t('new_project_name', { defaultValue: 'New Project Name' })} *</label>
                                                 <input
                                                     type="text"
                                                     required
@@ -243,7 +243,7 @@ export default function CreateOfferFromCatalogModal({ selectedItems = [], onClos
                                 )}
                             </div>
                             <div>
-                                <label className="block text-xs font-black uppercase text-gray-400 tracking-widest mb-1">Offer Title</label>
+                                <label className="block text-xs font-black uppercase text-gray-400 tracking-widest mb-1">{t('offer_title', { defaultValue: 'Offer Title' })}</label>
                                 <div className="relative">
                                     <FolderIcon className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                                     <input
@@ -255,7 +255,7 @@ export default function CreateOfferFromCatalogModal({ selectedItems = [], onClos
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-xs font-black uppercase text-gray-400 tracking-widest mb-1">Client Name</label>
+                                <label className="block text-xs font-black uppercase text-gray-400 tracking-widest mb-1">{t('client_name', { defaultValue: 'Client Name' })}</label>
                                 <input
                                     type="text"
                                     value={clientName}
@@ -265,7 +265,7 @@ export default function CreateOfferFromCatalogModal({ selectedItems = [], onClos
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-black uppercase text-gray-400 tracking-widest mb-1">Expiry Date</label>
+                                <label className="block text-xs font-black uppercase text-gray-400 tracking-widest mb-1">{t('expiry_date', { defaultValue: 'Expiry Date' })}</label>
                                 <input
                                     type="date"
                                     value={expiryDate}
@@ -283,7 +283,7 @@ export default function CreateOfferFromCatalogModal({ selectedItems = [], onClos
                             onClick={onClose}
                             className="px-5 py-2.5 text-sm font-semibold text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white border border-gray-200 dark:border-gray-600 rounded-xl transition"
                         >
-                            Cancel
+                            {t('cancel', { defaultValue: 'Cancel' })}
                         </button>
                         <button
                             type="submit"
@@ -295,7 +295,7 @@ export default function CreateOfferFromCatalogModal({ selectedItems = [], onClos
                             ) : (
                                 <ArrowRightIcon className="h-4 w-4" />
                             )}
-                            {hasSelectedItems ? `Create Offer · ${formatEining(totalEining)}` : 'Create Offer'}
+                            {hasSelectedItems ? `${t('create_offer', { defaultValue: 'Create Offer' })} · ${formatEining(totalEining)}` : t('create_offer', { defaultValue: 'Create Offer' })}
                         </button>
                     </div>
                 </form>

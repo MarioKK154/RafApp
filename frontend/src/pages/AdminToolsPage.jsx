@@ -751,7 +751,7 @@ function AdminToolsPage() {
                                     </span>
                                 </div>
                                 
-                                {isLoadingMetrics && <p className="text-xs text-gray-500">Loading billing data...</p>}
+                                {isLoadingMetrics && <p className="text-xs text-gray-500">{t('loading_billing_data', { defaultValue: 'Loading billing data...' })}</p>}
                                 {!isLoadingMetrics && billingOverdue && billingOverdue.length > 0 ? (
                                     <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
                                         {billingOverdue.map(t => (
@@ -789,8 +789,8 @@ function AdminToolsPage() {
                                         <div className="flex items-center gap-3">
                                             <span className="text-xl">💳</span>
                                             <div>
-                                                <p className="text-xs font-black text-gray-900 dark:text-white uppercase">PayPal Sandbox / Live</p>
-                                                <p className="text-[9px] font-bold text-green-500 uppercase tracking-widest">Connected & Operational</p>
+                                                <p className="text-xs font-black text-gray-900 dark:text-white uppercase">{t('paypal_sandbox_live', { defaultValue: 'PayPal Sandbox / Live' })}</p>
+                                                <p className="text-[9px] font-bold text-green-500 uppercase tracking-widest">{t('connected_operational', { defaultValue: 'Connected & Operational' })}</p>
                                             </div>
                                         </div>
                                         <span className="h-2.5 w-2.5 rounded-full bg-green-500 animate-pulse"></span>
@@ -799,8 +799,8 @@ function AdminToolsPage() {
                                         <div className="flex items-center gap-3">
                                             <span className="text-xl">🏦</span>
                                             <div>
-                                                <p className="text-xs font-black text-gray-900 dark:text-white uppercase">Direct Bank Transfer (VSK)</p>
-                                                <p className="text-[9px] font-bold text-green-500 uppercase tracking-widest">Standard Icelandic Billing</p>
+                                                <p className="text-xs font-black text-gray-900 dark:text-white uppercase">{t('direct_bank_transfer_vsk', { defaultValue: 'Direct Bank Transfer (VSK)' })}</p>
+                                                <p className="text-[9px] font-bold text-green-500 uppercase tracking-widest">{t('standard_icelandic_billing', { defaultValue: 'Standard Icelandic Billing' })}</p>
                                             </div>
                                         </div>
                                         <span className="h-2.5 w-2.5 rounded-full bg-green-500 animate-pulse"></span>
@@ -818,16 +818,16 @@ function AdminToolsPage() {
                                 </div>
                                 <div className="space-y-2 text-xs">
                                     <div className="flex justify-between p-2.5 bg-gray-50 dark:bg-gray-900 rounded-xl">
-                                        <span className="font-bold text-gray-700 dark:text-gray-300 uppercase text-[10px]">Starter (1-5 users)</span>
+                                        <span className="font-bold text-gray-700 dark:text-gray-300 uppercase text-[10px]">{t('starter_1_5_users', { defaultValue: 'Starter (1-5 users)' })}</span>
                                         <span className="font-black text-indigo-600 dark:text-indigo-400">14.900 kr. / mo</span>
                                     </div>
                                     <div className="flex justify-between p-2.5 bg-gray-50 dark:bg-gray-900 rounded-xl">
-                                        <span className="font-bold text-gray-700 dark:text-gray-300 uppercase text-[10px]">Pro (6-20 users)</span>
-                                        <span className="font-black text-indigo-600 dark:text-indigo-400">34.900 kr. / mo</span>
+                                        <span className="font-bold text-gray-700 dark:text-gray-300 uppercase text-[10px]">{t('pro_6_20_users', { defaultValue: 'Pro (6-20 users)' })}</span>
+                                        <span className="font-black text-indigo-600 dark:text-indigo-400">{t('34_900_kr_mo', { defaultValue: '34.900 kr. / mo' })}</span>
                                     </div>
                                     <div className="flex justify-between p-2.5 bg-gray-50 dark:bg-gray-900 rounded-xl">
-                                        <span className="font-bold text-gray-700 dark:text-gray-300 uppercase text-[10px]">Enterprise (20+ users)</span>
-                                        <span className="font-black text-indigo-600 dark:text-indigo-400">Custom Billing</span>
+                                        <span className="font-bold text-gray-700 dark:text-gray-300 uppercase text-[10px]">{t('enterprise_20_users', { defaultValue: 'Enterprise (20+ users)' })}</span>
+                                        <span className="font-black text-indigo-600 dark:text-indigo-400">{t('custom_billing', { defaultValue: 'Custom Billing' })}</span>
                                     </div>
                                 </div>
                             </div>
@@ -839,20 +839,20 @@ function AdminToolsPage() {
             {/* TAB CONTENT: 🛠️ Maintenance & Seeds */}
             {adminTab === 'maintenance' && (
                 <div className="space-y-12">
-                    <h2 className="text-sm font-black text-gray-400 uppercase tracking-widest border-b border-gray-100 dark:border-gray-800 pb-2">Database Synchronization</h2>
+                    <h2 className="text-sm font-black text-gray-400 uppercase tracking-widest border-b border-gray-100 dark:border-gray-800 pb-2">{t('database_synchronization', { defaultValue: 'Database Synchronization' })}</h2>
                     <div className="bg-white dark:bg-gray-800 p-6 md:p-8 rounded-[2rem] border border-gray-100 dark:border-gray-700 shadow-sm space-y-6">
                         <div className="flex items-center gap-3">
                             <span className="text-2xl">📊</span>
                             <div>
-                                <h3 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-tight">Interactive Materials Database Sync</h3>
-                                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-[0.2em] mt-0.5">Upload your multi-sheet product Excel sheet (e.g. Cables, Pipes, etc.) to merge updates into the SQL database.</p>
+                                <h3 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-tight">{t('interactive_materials_database_sync', { defaultValue: 'Interactive Materials Database Sync' })}</h3>
+                                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-[0.2em] mt-0.5">{t('upload_your_multi_sheet_product_excel', { defaultValue: 'Upload your multi-sheet product Excel sheet (e.g. Cables, Pipes, etc.) to merge updates into the SQL database.' })}</p>
                             </div>
                         </div>
 
                         <form onSubmit={handleExcelSyncSubmit} className="space-y-4">
                             <div className="flex flex-col sm:flex-row gap-4 items-end">
                                 <div className="flex-1 w-full">
-                                    <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">Select Product Database Excel (.xlsx)</label>
+                                    <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">{t('select_product_database_excel_xlsx', { defaultValue: 'Select Product Database Excel (.xlsx)' })}</label>
                                     <input 
                                         type="file" 
                                         accept=".xlsx, .xls"
@@ -888,7 +888,7 @@ function AdminToolsPage() {
                                 <p className="text-gray-600 dark:text-gray-300">{excelSyncResult.message}</p>
                                 {excelSyncResult.sheets_processed && (
                                     <div className="pt-2 border-t border-green-100 dark:border-green-900 space-y-1">
-                                        <p className="font-bold text-[10px] uppercase tracking-wider text-gray-400">Processed Sheets:</p>
+                                        <p className="font-bold text-[10px] uppercase tracking-wider text-gray-400">{t('processed_sheets', { defaultValue: 'Processed Sheets:' })}</p>
                                         {Object.entries(excelSyncResult.sheets_processed).map(([sheet, stats]) => (
                                             <p key={sheet} className="font-mono text-[10px] text-gray-500">
                                                 - {sheet}: {stats.created} new, {stats.updated} updated, {stats.skipped} skipped
@@ -902,17 +902,17 @@ function AdminToolsPage() {
 
                 {/* Critical Operations */}
                 <div className="space-y-4">
-                    <h2 className="text-sm font-black text-gray-400 uppercase tracking-widest border-b border-gray-100 dark:border-gray-800 pb-2">Critical Operations</h2>
+                    <h2 className="text-sm font-black text-gray-400 uppercase tracking-widest border-b border-gray-100 dark:border-gray-800 pb-2">{t('critical_operations', { defaultValue: 'Critical Operations' })}</h2>
                     <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
                         <div>
                     <div className="bg-white dark:bg-gray-800 p-6 md:p-10 rounded-3xl shadow-xl shadow-red-100 dark:shadow-none border-2 border-red-200 dark:border-red-900/50">
                         <div className="flex items-center gap-2 mb-6 text-red-600 dark:text-red-400">
                             <ExclamationTriangleIcon className="h-6 w-6" />
-                            <h2 className="text-xl font-black uppercase tracking-tight">Perform Clean Slate</h2>
+                            <h2 className="text-xl font-black uppercase tracking-tight">{t('perform_clean_slate', { defaultValue: 'Perform Clean Slate' })}</h2>
                         </div>
 
                         <div className="bg-red-50 dark:bg-red-900/20 rounded-2xl p-4 mb-8 space-y-3">
-                            <p className="text-xs font-bold text-red-700 dark:text-red-300 uppercase tracking-widest">Destructive Action Warning</p>
+                            <p className="text-xs font-bold text-red-700 dark:text-red-300 uppercase tracking-widest">{t('destructive_action_warning', { defaultValue: 'Destructive Action Warning' })}</p>
                             <ul className="space-y-2">
                                 <WarningItem text="Deactivates all user accounts except the specified admin." />
                                 <WarningItem text="Reassigns all project ownership to the surviving admin." />
@@ -933,7 +933,7 @@ function AdminToolsPage() {
                         )}
                         <form onSubmit={handleCleanSlateSubmit} className="space-y-6">
                             <div>
-                                <label className="block text-[10px] font-black text-gray-400 uppercase mb-1 ml-1 tracking-widest">Admin Account to Preserve</label>
+                                <label className="block text-[10px] font-black text-gray-400 uppercase mb-1 ml-1 tracking-widest">{t('admin_account_to_preserve', { defaultValue: 'Admin Account to Preserve' })}</label>
                                 <div className="relative">
                                     <EnvelopeIcon className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" />
                                     <input
@@ -987,7 +987,7 @@ function AdminToolsPage() {
                         <div className="bg-green-600 text-white p-6 md:p-8 rounded-3xl shadow-xl animate-in zoom-in duration-300">
                             <div className="flex items-center gap-2 mb-6">
                                 <CheckBadgeIcon className="h-8 w-8" />
-                                <h3 className="text-xl font-black uppercase tracking-tighter">Operation Report</h3>
+                                <h3 className="text-xl font-black uppercase tracking-tighter">{t('operation_report', { defaultValue: 'Operation Report' })}</h3>
                             </div>
                             <div className="space-y-4">
                                 <StatRow label="Users Deactivated" value={resultSummary.users_deactivated} />
@@ -997,14 +997,14 @@ function AdminToolsPage() {
                             </div>
                             <div className="mt-8 pt-6 border-t border-green-500 flex items-center gap-2 text-xs font-bold text-green-100">
                                 <DocumentMagnifyingGlassIcon className="h-4 w-4" />
-                                <span>Registry integrity verified.</span>
+                                <span>{t('registry_integrity_verified', { defaultValue: 'Registry integrity verified.' })}</span>
                             </div>
                         </div>
                     ) : (
                         <div className="bg-gray-900 text-white p-8 rounded-3xl shadow-xl flex flex-col items-center justify-center text-center min-h-[300px]">
                             <ArrowPathIcon className="h-12 w-12 text-gray-700 mb-4" />
-                            <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">Waiting for Input</p>
-                            <p className="text-xs text-gray-500 mt-2">Results will appear here after the scrub is initialized.</p>
+                            <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">{t('waiting_for_input', { defaultValue: 'Waiting for Input' })}</p>
+                            <p className="text-xs text-gray-500 mt-2">{t('results_will_appear_here_after_the', { defaultValue: 'Results will appear here after the scrub is initialized.' })}</p>
                         </div>
                     )}
 
@@ -1016,7 +1016,7 @@ function AdminToolsPage() {
             {/* TAB CONTENT: ⚡ Telemetry & Health */}
             {adminTab === 'telemetry' && (
                 <div className="space-y-12">
-                    <h2 className="text-sm font-black text-gray-400 uppercase tracking-widest border-b border-gray-100 dark:border-gray-800 pb-2">System Metrics & Health</h2>
+                    <h2 className="text-sm font-black text-gray-400 uppercase tracking-widest border-b border-gray-100 dark:border-gray-800 pb-2">{t('system_metrics_health', { defaultValue: 'System Metrics & Health' })}</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                         <div className="p-5 bg-indigo-50 dark:bg-indigo-900/10 rounded-3xl border border-indigo-100 dark:border-indigo-800">
                             <div className="flex items-center gap-2 mb-3">
@@ -1025,7 +1025,7 @@ function AdminToolsPage() {
                                     Tenant Heatmap
                                 </h3>
                             </div>
-                            {isLoadingMetrics && <p className="text-xs text-gray-500">Loading...</p>}
+                            {isLoadingMetrics && <p className="text-xs text-gray-500">{t('loading', { defaultValue: 'Loading...' })}</p>}
                             {!isLoadingMetrics && heatmap && heatmap.items && heatmap.items.length > 0 && (
                                 <div className="space-y-2 max-h-52 overflow-y-auto pr-1">
                                     {heatmap.items
@@ -1070,23 +1070,23 @@ function AdminToolsPage() {
                                     Platform Growth
                                 </h3>
                             </div>
-                            {isLoadingMetrics && <p className="text-xs text-gray-500">Loading...</p>}
+                            {isLoadingMetrics && <p className="text-xs text-gray-500">{t('loading', { defaultValue: 'Loading...' })}</p>}
                             {!isLoadingMetrics && growth && (
                                 <div className="grid grid-cols-2 gap-3 text-xs text-gray-700 dark:text-gray-200">
                                     <div>
-                                        <p className="text-[9px] font-black uppercase tracking-[0.2em] text-gray-400">Tenants</p>
+                                        <p className="text-[9px] font-black uppercase tracking-[0.2em] text-gray-400">{t('tenants', { defaultValue: 'Tenants' })}</p>
                                         <p className="text-xl font-black">{growth.total_tenants}</p>
                                     </div>
                                     <div>
-                                        <p className="text-[9px] font-black uppercase tracking-[0.2em] text-gray-400">Companies</p>
+                                        <p className="text-[9px] font-black uppercase tracking-[0.2em] text-gray-400">{t('companies', { defaultValue: 'Companies' })}</p>
                                         <p className="text-xl font-black">{growth.total_projects}</p>
                                     </div>
                                     <div>
-                                        <p className="text-[9px] font-black uppercase tracking-[0.2em] text-gray-400">Users</p>
+                                        <p className="text-[9px] font-black uppercase tracking-[0.2em] text-gray-400">{t('users', { defaultValue: 'Users' })}</p>
                                         <p className="text-xl font-black">{growth.total_users}</p>
                                     </div>
                                     <div>
-                                        <p className="text-[9px] font-black uppercase tracking-[0.2em] text-gray-400">New projects today</p>
+                                        <p className="text-[9px] font-black uppercase tracking-[0.2em] text-gray-400">{t('new_projects_today', { defaultValue: 'New projects today' })}</p>
                                         <p className="text-xl font-black">{growth.new_projects_today}</p>
                                     </div>
                                     <div className="col-span-2">
@@ -1111,7 +1111,7 @@ function AdminToolsPage() {
                                     Billing / Overdue Tenants
                                 </h3>
                             </div>
-                            {isLoadingMetrics && <p className="text-xs text-gray-600 dark:text-gray-300">Loading...</p>}
+                            {isLoadingMetrics && <p className="text-xs text-gray-600 dark:text-gray-300">{t('loading', { defaultValue: 'Loading...' })}</p>}
                             {!isLoadingMetrics && billingOverdue && billingOverdue.length > 0 && (
                                 <div className="space-y-2 text-xs text-gray-800 dark:text-gray-100 max-h-40 overflow-y-auto pr-1">
                                     {billingOverdue.map(t => (
@@ -1139,9 +1139,9 @@ function AdminToolsPage() {
                         <div className="p-5 bg-gray-900 text-white rounded-3xl border border-gray-800">
                             <div className="flex items-center gap-2 mb-3">
                                 <BoltIcon className="h-5 w-5 text-yellow-400" />
-                                <h3 className="text-xs font-black uppercase tracking-[0.25em]">System Load</h3>
+                                <h3 className="text-xs font-black uppercase tracking-[0.25em]">{t('system_load', { defaultValue: 'System Load' })}</h3>
                             </div>
-                            {isLoadingMetrics && <p className="text-xs text-gray-300">Loading...</p>}
+                            {isLoadingMetrics && <p className="text-xs text-gray-300">{t('loading', { defaultValue: 'Loading...' })}</p>}
                             {!isLoadingMetrics && systemLoad && (
                                 <div className="space-y-2 text-xs">
                                     <p>
@@ -1169,7 +1169,7 @@ function AdminToolsPage() {
             {/* TAB CONTENT: 🏢 Tenants & Subscriptions */}
             {adminTab === 'tenants' && (
                 <div className="space-y-12">
-                    <h2 className="text-sm font-black text-gray-400 uppercase tracking-widest border-b border-gray-100 dark:border-gray-800 pb-2">System Configuration & Tenant Controls</h2>
+                    <h2 className="text-sm font-black text-gray-400 uppercase tracking-widest border-b border-gray-100 dark:border-gray-800 pb-2">{t('system_configuration_tenant_controls', { defaultValue: 'System Configuration & Tenant Controls' })}</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 
                         <div className="p-5 bg-yellow-50 dark:bg-yellow-900/20 rounded-3xl border border-yellow-200 dark:border-yellow-700">
@@ -1236,7 +1236,7 @@ function AdminToolsPage() {
                                     </h3>
                                 </div>
                                 <p className="text-xs text-gray-700 dark:text-gray-200 mb-3">
-                                    One click will reset and seed tenant <span className="font-black">ID 2</span> with demo users,
+                                    One click will reset and seed tenant <span className="font-black">{t('id_2', { defaultValue: 'ID 2' })}</span> with demo users,
                                     projects, tasks, cars, tools, and customers for presentations.
                                 </p>
                                 <button
@@ -1256,7 +1256,7 @@ function AdminToolsPage() {
             {/* TAB CONTENT: 📜 Audit & Security Logs */}
             {adminTab === 'audit' && (
                 <div className="space-y-12">
-                    <h2 className="text-sm font-black text-gray-400 uppercase tracking-widest border-b border-gray-100 dark:border-gray-800 pb-2">Logs & Security Audit Trails</h2>
+                    <h2 className="text-sm font-black text-gray-400 uppercase tracking-widest border-b border-gray-100 dark:border-gray-800 pb-2">{t('logs_security_audit_trails', { defaultValue: 'Logs & Security Audit Trails' })}</h2>
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
                         <div className="p-5 bg-slate-50 dark:bg-slate-900/30 rounded-3xl border border-slate-200 dark:border-slate-700">
@@ -1266,7 +1266,7 @@ function AdminToolsPage() {
                                     Impersonation audit trail
                                 </h3>
                             </div>
-                            {isLoadingMetrics && <p className="text-xs text-gray-500">Loading...</p>}
+                            {isLoadingMetrics && <p className="text-xs text-gray-500">{t('loading', { defaultValue: 'Loading...' })}</p>}
                             {!isLoadingMetrics && impersonationLogs.length > 0 && (
                                 <div className="space-y-2 max-h-52 overflow-y-auto pr-1 text-[10px]">
                                     {impersonationLogs.map(log => (
@@ -1284,7 +1284,7 @@ function AdminToolsPage() {
                                 </div>
                             )}
                             {!isLoadingMetrics && (!impersonationLogs || impersonationLogs.length === 0) && (
-                                <p className="text-xs text-gray-500 italic">No impersonation sessions recorded.</p>
+                                <p className="text-xs text-gray-500 italic">{t('no_impersonation_sessions_recorded', { defaultValue: 'No impersonation sessions recorded.' })}</p>
                             )}
                         </div>
 
@@ -1295,7 +1295,7 @@ function AdminToolsPage() {
                                     Global audit logs
                                 </h3>
                             </div>
-                            {isLoadingMetrics && <p className="text-xs text-gray-500">Loading...</p>}
+                            {isLoadingMetrics && <p className="text-xs text-gray-500">{t('loading', { defaultValue: 'Loading...' })}</p>}
                             {!isLoadingMetrics && auditLogs.length > 0 && (
                                 <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1 text-[10px]">
                                     {auditLogs.slice(0, 50).map(log => (
@@ -1309,7 +1309,7 @@ function AdminToolsPage() {
                                 </div>
                             )}
                             {!isLoadingMetrics && (!auditLogs || auditLogs.length === 0) && (
-                                <p className="text-xs text-gray-500 italic">No audit entries yet.</p>
+                                <p className="text-xs text-gray-500 italic">{t('no_audit_entries_yet', { defaultValue: 'No audit entries yet.' })}</p>
                             )}
                         </div>
 
@@ -1334,7 +1334,7 @@ function AdminToolsPage() {
                             </form>
                             {activeBanner && (
                                 <div className="pt-2 border-t border-emerald-200 dark:border-emerald-700">
-                                    <p className="text-[10px] font-bold text-gray-500 uppercase mb-1">Current active</p>
+                                    <p className="text-[10px] font-bold text-gray-500 uppercase mb-1">{t('current_active', { defaultValue: 'Current active' })}</p>
                                     <p className="text-xs text-gray-800 dark:text-gray-100 mb-2">{activeBanner.message}</p>
                                     <button type="button" onClick={handleDismissBanner} className="text-xs font-bold text-red-600 hover:text-red-700 uppercase tracking-wider">
                                         Dismiss banner
@@ -1421,7 +1421,7 @@ function AdminToolsPage() {
                                 </div>
                                 <div className="space-y-4">
                                     {(landingFeed.contact_persons || []).length === 0 && (
-                                        <p className="text-[10px] text-gray-500 italic">No contact persons defined.</p>
+                                        <p className="text-[10px] text-gray-500 italic">{t('no_contact_persons_defined', { defaultValue: 'No contact persons defined.' })}</p>
                                     )}
                                     {(landingFeed.contact_persons || []).map((person, idx) => (
                                         <div key={`contact-${idx}`} className="p-3 rounded-xl border border-sky-100 dark:border-sky-800 bg-white dark:bg-gray-800 relative">
@@ -1493,7 +1493,7 @@ function AdminToolsPage() {
                                 </div>
                                 <div className="space-y-4">
                                     {(landingFeed.pricing_tiers || []).length === 0 && (
-                                        <p className="text-[10px] text-gray-500 italic">No pricing tiers defined.</p>
+                                        <p className="text-[10px] text-gray-500 italic">{t('no_pricing_tiers_defined', { defaultValue: 'No pricing tiers defined.' })}</p>
                                     )}
                                     {(landingFeed.pricing_tiers || []).map((tier, idx) => (
                                         <div key={`tier-${idx}`} className="p-3 rounded-xl border border-sky-100 dark:border-sky-800 bg-white dark:bg-gray-800 relative">
@@ -1533,7 +1533,7 @@ function AdminToolsPage() {
                                                 </label>
                                             </div>
                                             <div>
-                                                <p className="text-[10px] font-bold text-gray-500 uppercase mb-1">Features</p>
+                                                <p className="text-[10px] font-bold text-gray-500 uppercase mb-1">{t('features', { defaultValue: 'Features' })}</p>
                                                 {(tier.features || []).map((feature, fIdx) => (
                                                     <div key={`feature-${idx}-${fIdx}`} className="flex gap-2 mb-1">
                                                         <input
@@ -1683,7 +1683,7 @@ function AdminToolsPage() {
                                         </button>
                                     </div>
                                     {(landingFeed[section.key] || []).length === 0 && (
-                                        <p className="text-[10px] text-gray-500 italic">No items yet.</p>
+                                        <p className="text-[10px] text-gray-500 italic">{t('no_items_yet', { defaultValue: 'No items yet.' })}</p>
                                     )}
                                     {(landingFeed[section.key] || []).map((item, idx) => (
                                         <div
@@ -1804,7 +1804,7 @@ function AdminToolsPage() {
                                                     {section.label}
                                                 </p>
                                                 {(landingFeed[section.key] || []).length === 0 ? (
-                                                    <p className="text-xs text-gray-400 italic">No items.</p>
+                                                    <p className="text-xs text-gray-400 italic">{t('no_items', { defaultValue: 'No items.' })}</p>
                                                 ) : (
                                                     <div className="space-y-2">
                                                         {(landingFeed[section.key] || [])
@@ -1853,7 +1853,7 @@ function AdminToolsPage() {
                                     Tenant health & churn risk
                                 </h3>
                             </div>
-                            {isLoadingMetrics && <p className="text-xs text-gray-600">Loading...</p>}
+                            {isLoadingMetrics && <p className="text-xs text-gray-600">{t('loading', { defaultValue: 'Loading...' })}</p>}
                             {!isLoadingMetrics && tenantHealth.filter(t => t.churn_risk !== 'none').length > 0 && (
                                 <div className="space-y-2 text-xs max-h-52 overflow-y-auto pr-1">
                                     {tenantHealth.filter(t => t.churn_risk !== 'none').map(t => (
@@ -1877,14 +1877,14 @@ function AdminToolsPage() {
                                 </div>
                             )}
                             {!isLoadingMetrics && (!tenantHealth.length || tenantHealth.every(t => t.churn_risk === 'none')) && (
-                                <p className="text-xs text-gray-600 dark:text-gray-300 italic">No tenants flagged for churn risk.</p>
+                                <p className="text-xs text-gray-600 dark:text-gray-300 italic">{t('no_tenants_flagged_for_churn_risk', { defaultValue: 'No tenants flagged for churn risk.' })}</p>
                             )}
                         </div>
                     </div>
 
                 {/* User Feedback & Suggestions */}
                 <div className="space-y-4 pt-4 border-t border-gray-100 dark:border-gray-800">
-                    <h2 className="text-sm font-black text-gray-400 uppercase tracking-widest pb-2">User Feedback & Suggestions</h2>
+                    <h2 className="text-sm font-black text-gray-400 uppercase tracking-widest pb-2">{t('user_feedback_suggestions', { defaultValue: 'User Feedback & Suggestions' })}</h2>
                     
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                         {/* AI Scanning Brain Panel */}
@@ -1899,8 +1899,8 @@ function AdminToolsPage() {
                                             <LightBulbIcon className="h-6 w-6 text-yellow-300" />
                                         </div>
                                         <div>
-                                            <h3 className="text-sm font-black uppercase tracking-widest leading-none">AI Suggestions Brain</h3>
-                                            <span className="text-[8px] font-black uppercase tracking-[0.2em] text-indigo-400">Semantic Topic Clusterer</span>
+                                            <h3 className="text-sm font-black uppercase tracking-widest leading-none">{t('ai_suggestions_brain', { defaultValue: 'AI Suggestions Brain' })}</h3>
+                                            <span className="text-[8px] font-black uppercase tracking-[0.2em] text-indigo-400">{t('semantic_topic_clusterer', { defaultValue: 'Semantic Topic Clusterer' })}</span>
                                         </div>
                                     </div>
                                     <p className="text-[10px] text-gray-300 leading-relaxed font-medium uppercase tracking-tight">
@@ -1950,7 +1950,7 @@ function AdminToolsPage() {
                             {aiAnalysis && aiAnalysis.clusters?.length > 0 ? (
                                 <div className="space-y-6">
                                     <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-2">
-                                        <h3 className="text-xs font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-400">AI Clustered Results</h3>
+                                        <h3 className="text-xs font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-400">{t('ai_clustered_results', { defaultValue: 'AI Clustered Results' })}</h3>
                                         <button 
                                             type="button" 
                                             onClick={() => setAiAnalysis(null)} 
@@ -2015,14 +2015,14 @@ function AdminToolsPage() {
                             ) : (
                                 <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 border border-gray-100 dark:border-gray-700 shadow-sm space-y-6">
                                     <div className="flex justify-between items-center border-b border-gray-50 dark:border-gray-700 pb-4">
-                                        <h3 className="text-xs font-black uppercase tracking-widest text-gray-900 dark:text-white">Feedback Registry</h3>
+                                        <h3 className="text-xs font-black uppercase tracking-widest text-gray-900 dark:text-white">{t('feedback_registry', { defaultValue: 'Feedback Registry' })}</h3>
                                         <span className="text-[9px] font-black uppercase tracking-widest bg-gray-50 dark:bg-gray-900 text-gray-500 px-3 py-1 rounded-full">
                                             {suggestions.length} items
                                         </span>
                                     </div>
                                     
                                     {isLoadingMetrics ? (
-                                        <p className="text-xs text-gray-400 italic">Refreshing feedback...</p>
+                                        <p className="text-xs text-gray-400 italic">{t('refreshing_feedback', { defaultValue: 'Refreshing feedback...' })}</p>
                                     ) : suggestions.length === 0 ? (
                                         <div className="text-center py-12 text-gray-400 uppercase tracking-widest text-[10px] font-bold italic leading-relaxed">
                                             No user suggestions logged.

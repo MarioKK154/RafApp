@@ -27,15 +27,14 @@ function NotFoundPage() {
             {/* Error Message */}
             <div className="max-w-md space-y-4">
                 <header>
-                    <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-[0.3em]">Error Protocol 404</span>
+                    <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-[0.3em]">{t('error_404_subtitle', { defaultValue: 'Error Protocol 404' })}</span>
                     <h1 className="text-5xl font-black text-gray-900 dark:text-white mt-2 tracking-tighter">
-                        Endpoint Lost
+                        {t('error_404_title', { defaultValue: 'Endpoint Lost' })}
                     </h1>
                 </header>
                 
                 <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed font-medium">
-                    The technical registry could not locate the requested coordinate. 
-                    The page may have been decommissioned or the path was incorrectly entered.
+                    {t('error_404_desc', { defaultValue: 'The technical registry could not locate the requested coordinate. The page may have been decommissioned or the path was incorrectly entered.' })}
                 </p>
 
                 {/* Action Interface */}

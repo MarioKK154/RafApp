@@ -45,7 +45,7 @@ function TaskComments({ taskId }) {
             })
             .catch(error => {
                 console.error('Fetch comments error:', error);
-                setError(t('failed_load_comments'));
+                setError(t('failed_load_comments', { defaultValue: 'Failed to load comments.' }));
             })
             .finally(() => {
                 setIsLoading(false);
@@ -61,18 +61,18 @@ function TaskComments({ taskId }) {
         const trimmedText = newCommentText.trim();
         
         if (!trimmedText) {
-            toast.warn(t('empty_comments_not_allowed'));
+            toast.warn(t('empty_comments_not_allowed', { defaultValue: 'Empty comments are not allowed.' }));
             return;
         }
 
         setIsSubmitting(true);
         try {
             await axiosInstance.post(`/tasks/${taskId}/comments/`, { content: trimmedText });
-            toast.success(t('comment_posted'));
+            toast.success(t('comment_posted', { defaultValue: 'Comment posted.' }));
             setNewCommentText('');
             fetchComments();
         } catch (error) {
-            toast.error(error.response?.data?.detail || t('failed_post_comment'));
+            toast.error(error.response?.data?.detail || t('failed_post_comment', { defaultValue: 'Failed to post comment.' }));
         } finally {
             setIsSubmitting(false);
         }
@@ -91,7 +91,7 @@ function TaskComments({ taskId }) {
 
     const triggerDelete = (comment) => {
         if (!canDeleteComment(comment)) {
-            toast.error("You do not have permission to moderate this comment.");
+            toast.error(t('no_permission_moderate', { defaultValue: 'You do not have permission to moderate this comment.' }));
             return;
         }
         setCommentToDelete(comment);
@@ -102,11 +102,11 @@ function TaskComments({ taskId }) {
         if (!commentToDelete) return;
         try {
             await axiosInstance.delete(`/comments/${commentToDelete.id}`);
-            toast.success(t('comment_removed'));
+            toast.success(t('comment_removed', { defaultValue: 'Comment removed.' }));
             fetchComments();
         } catch (error) {
             console.error('Delete comment failed:', error);
-            toast.error(t('failed_delete_comment'));
+            toast.error(t('failed_delete_comment', { defaultValue: 'Failed to delete comment.' }));
         } finally {
             setIsDeleteModalOpen(false);
             setCommentToDelete(null);
@@ -114,14 +114,14 @@ function TaskComments({ taskId }) {
     };
 
     if (isLoading) {
-        return <LoadingSpinner text={t('syncing_discussion')} size="sm" />;
+        return <LoadingSpinner text={t('syncing_discussion', { defaultValue: 'Syncing discussion...' })} size="sm" />;
     }
 
     return (
         <div className="mt-10 pt-8 border-t border-gray-200 dark:border-gray-700">
             <div className="flex items-center gap-2 mb-6">
                 <ChatBubbleLeftRightIcon className="h-6 w-6 text-indigo-600" />
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white">Discussion</h2>
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white">{t('discussion', { defaultValue: 'Discussion' })}</h2>
             </div>
 
             {error && <div className="mb-4 text-xs text-red-500 font-medium">{error}</div>}
@@ -136,7 +136,7 @@ function TaskComments({ taskId }) {
                             onChange={(e) => setNewCommentText(e.target.value)}
                             disabled={isSubmitting}
                             className="block w-full p-4 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 transition-all resize-none shadow-sm"
-                            placeholder={t('add_comment_placeholder')}
+                            placeholder={t('add_comment_placeholder', { defaultValue: 'Add a comment...' })}
                         ></textarea>
                         <div className="absolute right-3 bottom-3">
                             <button
@@ -144,9 +144,9 @@ function TaskComments({ taskId }) {
                                 disabled={isSubmitting || !newCommentText.trim()}
                                 className="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-md transition transform active:scale-95 disabled:opacity-50"
                             >
-                                {isSubmitting ? t('posting') : (
+                                {isSubmitting ? t('posting', { defaultValue: 'Posting...' }) : (
                                     <>
-                                        {t('post')} <PaperAirplaneIcon className="h-4 w-4 ml-2" />
+                                        {t('post', { defaultValue: 'Post' })} <PaperAirplaneIcon className="h-4 w-4 ml-2" />
                                     </>
                                 )}
                             </button>
@@ -159,7 +159,7 @@ function TaskComments({ taskId }) {
             <div className="space-y-4">
                 {comments.length === 0 ? (
                     <div className="py-8 text-center bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-dashed border-gray-200 dark:border-gray-700">
-                        <p className="text-sm text-gray-500 italic">{t('no_notes_yet')}</p>
+                        <p className="text-sm text-gray-500 italic">{t('no_notes_yet', { defaultValue: 'No discussion notes yet.' })}</p>
                     </div>
                 ) : (
                     comments.map(comment => (
@@ -185,7 +185,7 @@ function TaskComments({ taskId }) {
                                 <div className="flex items-center justify-between mb-1">
                                     <div className="flex items-center gap-2">
                                         <span className="text-sm font-bold text-gray-900 dark:text-white">
-                                            {comment.author?.full_name || 'Anonymous'}
+                                            {comment.author?.full_name || t('anonymous', { defaultValue: 'Anonymous' })}
                                         </span>
                                         <span className="text-[10px] text-indigo-600 dark:text-indigo-400 font-black uppercase tracking-widest">
                                             {comment.author?.role?.replace('_', ' ')}
@@ -202,7 +202,7 @@ function TaskComments({ taskId }) {
                                             <button
                                                 onClick={() => triggerDelete(comment)}
                                                 className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-red-600 transition"
-                                                title={t('delete_note')}
+                                                title={t('delete_note', { defaultValue: 'Delete Note' })}
                                             >
                                                 <TrashIcon className="h-4 w-4" />
                                             </button>
@@ -223,9 +223,9 @@ function TaskComments({ taskId }) {
                 isOpen={isDeleteModalOpen}
                 onClose={() => { setIsDeleteModalOpen(false); setCommentToDelete(null); }}
                 onConfirm={confirmDeleteComment}
-                title={t('remove_comment')}
-                message={t('delete_note_confirm')}
-                confirmText={t('delete_note')}
+                title={t('remove_comment', { defaultValue: 'Remove Comment' })}
+                message={t('delete_note_confirm', { defaultValue: 'Are you sure you want to delete this comment? This cannot be undone.' })}
+                confirmText={t('delete_note', { defaultValue: 'Delete Note' })}
                 type="danger"
             />
         </div>

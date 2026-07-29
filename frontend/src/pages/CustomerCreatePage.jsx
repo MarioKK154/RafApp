@@ -191,13 +191,13 @@ function CustomerCreatePage() {
                                         {formData.contact_person_photo_url && (
                                             <img 
                                                 src={formData.contact_person_photo_url} 
-                                                alt="Contact" 
+                                                alt={t('contact', { defaultValue: 'Contact' })} 
                                                 className="h-12 w-12 rounded-full object-cover border-2 border-gray-200 dark:border-gray-700" 
                                             />
                                         )}
                                         <label className="flex items-center gap-2 cursor-pointer bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 text-emerald-600 dark:text-emerald-400 px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition">
                                             <CloudArrowUpIcon className="h-4 w-4" />
-                                            <span>Photo</span>
+                                            <span>{t('photo', { defaultValue: 'Photo' })}</span>
                                             <input 
                                                 type="file" 
                                                 accept="image/*" 
@@ -212,9 +212,9 @@ function CustomerCreatePage() {
                                                             headers: { 'Content-Type': 'multipart/form-data' }
                                                         });
                                                         setFormData(prev => ({ ...prev, contact_person_photo_url: res.data.url }));
-                                                        toast.success('Photo uploaded successfully');
+                                                        toast.success(t('photo_uploaded_successfully', { defaultValue: 'Photo uploaded successfully' }));
                                                     } catch (err) {
-                                                        toast.error('Failed to upload photo');
+                                                        toast.error(t('failed_to_upload_photo', { defaultValue: 'Failed to upload photo' }));
                                                     }
                                                 }} 
                                             />

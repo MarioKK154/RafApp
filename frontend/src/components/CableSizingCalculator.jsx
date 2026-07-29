@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import axiosInstance from '../api/axiosInstance';
 import { toast } from 'react-toastify';
 import LoadingSpinner from './LoadingSpinner';
@@ -43,6 +44,7 @@ const LOAD_TYPES = [
 const formatNum = (num, digits = 2) => (num !== null && num !== undefined) ? num.toFixed(digits) : 'N/A';
 
 function CableSizingCalculator() {
+    const { t } = useTranslation();
     const [formData, setFormData] = useState({
         voltage_system: 'single_phase',
         voltage: 230,
@@ -138,26 +140,26 @@ function CableSizingCalculator() {
                     {/* Load Params */}
                     <div className="space-y-4">
                         <h4 className="text-sm font-black text-gray-400 uppercase tracking-widest flex items-center">
-                            <BoltIcon className="h-4 w-4 mr-2" /> Load Parameters
+                            <BoltIcon className="h-4 w-4 mr-2" /> {t('load_parameters', { defaultValue: 'Load Parameters' })}
                         </h4>
                         <div>
-                            <label className="block text-xs font-bold text-gray-500 mb-1 ml-1 uppercase">Phase System</label>
+                            <label className="block text-xs font-bold text-gray-500 mb-1 ml-1 uppercase">{t('phase_system', { defaultValue: 'Phase System' })}</label>
                             <select name="voltage_system" value={formData.voltage_system} onChange={handleChange} className="w-full rounded-xl border-gray-300 dark:bg-gray-700 dark:text-white">
                                 {VOLTAGE_SYSTEMS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                             </select>
                         </div>
                         <div className="grid grid-cols-2 gap-3">
                             <div>
-                                <label className="block text-xs font-bold text-gray-500 mb-1 ml-1 uppercase">Voltage (V)</label>
+                                <label className="block text-xs font-bold text-gray-500 mb-1 ml-1 uppercase">{t('voltage_v', { defaultValue: 'Voltage (V)' })}</label>
                                 <input type="number" name="voltage" value={formData.voltage} onChange={handleChange} className="w-full rounded-xl border-gray-300 dark:bg-gray-700 dark:text-white" />
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-gray-500 mb-1 ml-1 uppercase">Power (kW)</label>
+                                <label className="block text-xs font-bold text-gray-500 mb-1 ml-1 uppercase">{t('power_kw', { defaultValue: 'Power (kW)' })}</label>
                                 <input type="number" name="load_power_kw" value={formData.load_power_kw} onChange={handleChange} className="w-full rounded-xl border-gray-300 dark:bg-gray-700 dark:text-white" />
                             </div>
                         </div>
                         <div>
-                            <label className="block text-xs font-bold text-gray-500 mb-1 ml-1 uppercase">Power Factor (cos φ)</label>
+                            <label className="block text-xs font-bold text-gray-500 mb-1 ml-1 uppercase">{t('power_factor_label', { defaultValue: 'Power Factor (cos φ)' })}</label>
                             <input type="number" name="power_factor" value={formData.power_factor} onChange={handleChange} step="0.01" min="0.1" max="1" className="w-full rounded-xl border-gray-300 dark:bg-gray-700 dark:text-white" />
                         </div>
                     </div>
@@ -165,35 +167,35 @@ function CableSizingCalculator() {
                     {/* Cable Params */}
                     <div className="space-y-4">
                         <h4 className="text-sm font-black text-gray-400 uppercase tracking-widest flex items-center">
-                            <WrenchIcon className="h-4 w-4 mr-2" /> Installation
+                            <WrenchIcon className="h-4 w-4 mr-2" /> {t('installation_section', { defaultValue: 'Installation' })}
                         </h4>
                         <div className="grid grid-cols-2 gap-3">
                             <div>
-                                <label className="block text-xs font-bold text-gray-500 mb-1 ml-1 uppercase">Material</label>
+                                <label className="block text-xs font-bold text-gray-500 mb-1 ml-1 uppercase">{t('material_label', { defaultValue: 'Material' })}</label>
                                 <select name="material" value={formData.material} onChange={handleChange} className="w-full rounded-xl border-gray-300 dark:bg-gray-700 dark:text-white">
                                     {MATERIALS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-gray-500 mb-1 ml-1 uppercase">Insulation</label>
+                                <label className="block text-xs font-bold text-gray-500 mb-1 ml-1 uppercase">{t('insulation_label', { defaultValue: 'Insulation' })}</label>
                                 <select name="insulation" value={formData.insulation} onChange={handleChange} className="w-full rounded-xl border-gray-300 dark:bg-gray-700 dark:text-white">
                                     {INSULATION_TYPES.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                                 </select>
                             </div>
                         </div>
                         <div>
-                            <label className="block text-xs font-bold text-gray-500 mb-1 ml-1 uppercase">Method</label>
+                            <label className="block text-xs font-bold text-gray-500 mb-1 ml-1 uppercase">{t('installation_method_label', { defaultValue: 'Method' })}</label>
                             <select name="installation_method" value={formData.installation_method} onChange={handleChange} className="w-full rounded-xl border-gray-300 dark:bg-gray-700 dark:text-white">
                                 {INSTALLATION_METHODS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                             </select>
                         </div>
                         <div className="grid grid-cols-2 gap-3">
                             <div>
-                                <label className="block text-xs font-bold text-gray-500 mb-1 ml-1 uppercase">Length (m)</label>
+                                <label className="block text-xs font-bold text-gray-500 mb-1 ml-1 uppercase">{t('length_m', { defaultValue: 'Length (m)' })}</label>
                                 <input type="number" name="cable_length_m" value={formData.cable_length_m} onChange={handleChange} className="w-full rounded-xl border-gray-300 dark:bg-gray-700 dark:text-white" />
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-gray-500 mb-1 ml-1 uppercase">Temp (°C)</label>
+                                <label className="block text-xs font-bold text-gray-500 mb-1 ml-1 uppercase">{t('temp_c', { defaultValue: 'Temp (°C)' })}</label>
                                 <input type="number" name="ambient_temperature_c" value={formData.ambient_temperature_c} onChange={handleChange} className="w-full rounded-xl border-gray-300 dark:bg-gray-700 dark:text-white" />
                             </div>
                         </div>
@@ -202,16 +204,16 @@ function CableSizingCalculator() {
                     {/* Requirements */}
                     <div className="space-y-4">
                         <h4 className="text-sm font-black text-gray-400 uppercase tracking-widest flex items-center">
-                            <ExclamationTriangleIcon className="h-4 w-4 mr-2" /> Requirements
+                            <ExclamationTriangleIcon className="h-4 w-4 mr-2" /> {t('requirements_section', { defaultValue: 'Requirements' })}
                         </h4>
                         <div>
-                            <label className="block text-xs font-bold text-gray-500 mb-1 ml-1 uppercase">Application / Load Type</label>
+                            <label className="block text-xs font-bold text-gray-500 mb-1 ml-1 uppercase">{t('application_load_type', { defaultValue: 'Application / Load Type' })}</label>
                             <select name="load_type" value={formData.load_type} onChange={handleChange} className="w-full rounded-xl border-gray-300 dark:bg-gray-700 dark:text-white">
                                 {LOAD_TYPES.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                             </select>
                         </div>
                         <div>
-                            <label className="block text-xs font-bold text-gray-500 mb-1 ml-1 uppercase">Max VDrop Allowed (%)</label>
+                            <label className="block text-xs font-bold text-gray-500 mb-1 ml-1 uppercase">{t('max_vdrop_allowed', { defaultValue: 'Max VDrop Allowed (%)' })}</label>
                             <input 
                                 type="number" 
                                 name="allowable_vdrop_percent" 
@@ -230,7 +232,7 @@ function CableSizingCalculator() {
                                     <input type="checkbox" checked={enableSC} onChange={(e) => setEnableSC(e.target.checked)} className="hidden" />
                                     <div className={`absolute top-1 left-1 bg-white w-3 h-3 rounded-full transition-transform ${enableSC ? 'translate-x-5' : ''}`}></div>
                                 </div>
-                                <span className="text-sm font-bold text-gray-700 dark:text-gray-200 group-hover:text-indigo-600 transition">Enable S/C Protection Check</span>
+                                <span className="text-sm font-bold text-gray-700 dark:text-gray-200 group-hover:text-indigo-600 transition">{t('enable_sc_check', { defaultValue: 'Enable S/C Protection Check' })}</span>
                             </label>
                         </div>
                     </div>
@@ -240,34 +242,34 @@ function CableSizingCalculator() {
                 {enableSC && (
                     <div className="mt-8 pt-8 border-t-2 border-dashed border-gray-100 dark:border-gray-700 grid grid-cols-1 md:grid-cols-2 gap-6 animate-in slide-in-from-top duration-300">
                         <div className="space-y-4">
-                            <h5 className="text-xs font-black text-orange-500 uppercase tracking-widest">Fault Current Geometry</h5>
+                            <h5 className="text-xs font-black text-orange-500 uppercase tracking-widest">{t('fault_geometry_title', { defaultValue: 'Fault Current Geometry' })}</h5>
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
                                     <label className="flex items-center text-xs font-bold text-gray-500 mb-1 uppercase">
-                                        Fault at Load (kA)
+                                        {t('fault_at_load_ka', { defaultValue: 'Fault at Load (kA)' })}
                                         <InformationCircleIcon className="h-3 w-3 ml-1" title="Preferred: The calculated short-circuit current at the end of the cable run." />
                                     </label>
                                     <input type="number" name="fault_current_at_load_ka" value={formData.fault_current_at_load_ka} onChange={handleChange} step="0.1" className="w-full rounded-xl border-orange-200 dark:bg-gray-700 dark:text-white" placeholder="Optional" />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">Disconnect Time (s)</label>
+                                    <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">{t('disconnect_time_s', { defaultValue: 'Disconnect Time (s)' })}</label>
                                     <input type="number" name="disconnection_time_s" value={formData.disconnection_time_s} onChange={handleChange} step="0.1" className="w-full rounded-xl border-orange-200 dark:bg-gray-700 dark:text-white" />
                                 </div>
                             </div>
                         </div>
                         <div className="space-y-4">
-                            <h5 className="text-xs font-black text-orange-500 uppercase tracking-widest">Fallback Estimations</h5>
+                            <h5 className="text-xs font-black text-orange-500 uppercase tracking-widest">{t('fallback_estimations', { defaultValue: 'Fallback Estimations' })}</h5>
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
                                     <label className="flex items-center text-xs font-bold text-gray-500 mb-1 uppercase">
-                                        Fault at Panel (kA)
+                                        {t('fault_at_panel_ka', { defaultValue: 'Fault at Panel (kA)' })}
                                         <InformationCircleIcon className="h-3 w-3 ml-1" title="The maximum fault current available at the circuit's source panel." />
                                     </label>
                                     <input type="number" name="fault_current_ka" value={formData.fault_current_ka} onChange={handleChange} step="0.1" className="w-full rounded-xl border-orange-100 dark:bg-gray-700 dark:text-white" />
                                 </div>
                                 <div>
                                     <label className="flex items-center text-xs font-bold text-gray-500 mb-1 uppercase">
-                                        Attenuation (Z)
+                                        {t('attenuation_z', { defaultValue: 'Attenuation (Z)' })}
                                         <InformationCircleIcon className="h-3 w-3 ml-1" title="Fraction of panel fault current reaching the load (Default 0.1 / 10%)." />
                                     </label>
                                     <input type="number" name="assume_fault_at_load_fraction" value={formData.assume_fault_at_load_fraction} onChange={handleChange} step="0.05" className="w-full rounded-xl border-orange-100 dark:bg-gray-700 dark:text-white" placeholder="0.1" />
@@ -280,7 +282,7 @@ function CableSizingCalculator() {
                 <div className="mt-8 flex justify-end">
                     <button type="submit" disabled={isSubmitting} className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition transform active:scale-95 disabled:opacity-50">
                         {isSubmitting ? <LoadingSpinner text="Computing..." size="sm" /> : (
-                            <><CalculatorIcon className="h-5 w-5 mr-2" /> Calculate Compliance</>
+                            <><CalculatorIcon className="h-5 w-5 mr-2" /> {t('calculate_compliance', { defaultValue: 'Calculate Compliance' })}</>
                         )}
                     </button>
                 </div>
@@ -291,7 +293,7 @@ function CableSizingCalculator() {
                 <div className="space-y-6 animate-in fade-in slide-in-from-bottom duration-500">
                     {/* Final Badge */}
                     <div className="bg-gradient-to-br from-indigo-600 to-indigo-700 p-8 rounded-3xl text-white text-center shadow-xl">
-                        <h3 className="text-indigo-100 text-xs font-black uppercase tracking-[0.2em] mb-2">Recommended Cross-Section</h3>
+                        <h3 className="text-indigo-100 text-xs font-black uppercase tracking-[0.2em] mb-2">{t('recommended_cross_section', { defaultValue: 'Recommended Cross-Section' })}</h3>
                         <p className="text-6xl font-black mb-2">{result.final_selection.size_mm2} mm²</p>
                         <p className="text-indigo-200 text-sm font-medium">{result.final_message}</p>
                     </div>
@@ -299,10 +301,10 @@ function CableSizingCalculator() {
                     {/* Derived Stats */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         {[
-                            { label: 'Current Load', val: `${formatNum(result.derived_values.load_current_a)} A` },
-                            { label: 'Target Ampacity', val: `${formatNum(result.derived_values.effective_required_ampacity_a)} A` },
-                            { label: 'S/C Floor', val: `${formatNum(result.derived_values.short_circuit_min_mm2)} mm²` },
-                            { label: 'VDrop Cap', val: `${formatNum(result.derived_values.allowable_vdrop_percent)} %` }
+                            { label: t('current_load', { defaultValue: 'Current Load' }), val: `${formatNum(result.derived_values.load_current_a)} A` },
+                            { label: t('target_ampacity', { defaultValue: 'Target Ampacity' }), val: `${formatNum(result.derived_values.effective_required_ampacity_a)} A` },
+                            { label: t('sc_floor', { defaultValue: 'S/C Floor' }), val: `${formatNum(result.derived_values.short_circuit_min_mm2)} mm²` },
+                            { label: t('vdrop_cap', { defaultValue: 'VDrop Cap' }), val: `${formatNum(result.derived_values.allowable_vdrop_percent)} %` }
                         ].map((s, idx) => (
                             <div key={idx} className="bg-white dark:bg-gray-800 p-4 rounded-2xl border border-gray-100 dark:border-gray-700 text-center">
                                 <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">{s.label}</span>
@@ -314,17 +316,17 @@ function CableSizingCalculator() {
                     {/* Reasoning Table */}
                     <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
                         <div className="p-5 border-b border-gray-100 dark:border-gray-700">
-                            <h3 className="text-lg font-bold text-gray-900 dark:text-white">Validation Reasoning</h3>
-                            <p className="text-xs text-gray-500">How the engine verified each standard IEC size against your constraints.</p>
+                            <h3 className="text-lg font-bold text-gray-900 dark:text-white">{t('validation_reasoning', { defaultValue: 'Validation Reasoning' })}</h3>
+                            <p className="text-xs text-gray-500">{t('validation_reasoning_desc', { defaultValue: 'How the engine verified each standard IEC size against your constraints.' })}</p>
                         </div>
                         <div className="overflow-x-auto">
                             <table className="w-full text-sm text-left">
                                 <thead className="text-xs text-gray-400 uppercase bg-gray-50 dark:bg-gray-700/50 font-black">
                                     <tr>
-                                        <th className="py-4 px-6">Size (mm²)</th>
-                                        <th className="py-4 px-6">Ampacity</th>
-                                        <th className="py-4 px-6">Voltage Drop</th>
-                                        <th className="py-4 px-6">Thermal S/C</th>
+                                        <th className="py-4 px-6">{t('size_col', { defaultValue: 'Size (mm²)' })}</th>
+                                        <th className="py-4 px-6">{t('ampacity_col', { defaultValue: 'Ampacity' })}</th>
+                                        <th className="py-4 px-6">{t('voltage_drop_col', { defaultValue: 'Voltage Drop' })}</th>
+                                        <th className="py-4 px-6">{t('thermal_sc_col', { defaultValue: 'Thermal S/C' })}</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
@@ -346,7 +348,7 @@ function CableSizingCalculator() {
                                             <td className="py-4 px-6">
                                                 <div className="flex items-center gap-2">
                                                     {step.short_circuit_ok ? <CheckCircleIcon className="h-4 w-4 text-green-500" /> : <ExclamationTriangleIcon className="h-4 w-4 text-red-500" />}
-                                                    <span>{step.short_circuit_ok ? 'Compliant' : 'Insufficient'}</span>
+                                                    <span>{step.short_circuit_ok ? t('compliant_label', { defaultValue: 'Compliant' }) : t('insufficient_label', { defaultValue: 'Insufficient' })}</span>
                                                 </div>
                                             </td>
                                         </tr>

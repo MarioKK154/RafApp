@@ -79,8 +79,8 @@ function ProjectInventory({ projectId }) {
             setProjectsList(Array.isArray(projectsResponse.data) ? projectsResponse.data : []);
         } catch (err) {
             console.error('Inventory fetch error:', err);
-            setError('Registry Link Failure: Failed to load site stock.');
-            toast.error('Could not sync project stock with warehouse.');
+            setError(t('registry_link_failure', { defaultValue: 'Registry Link Failure: Failed to load site stock.' }));
+            toast.error(t('could_not_sync_stock', { defaultValue: 'Could not sync project stock with warehouse.' }));
         } finally {
             setIsLoading(false);
         }
@@ -102,13 +102,13 @@ function ProjectInventory({ projectId }) {
     const handleAddItem = async (e) => {
         e.preventDefault();
         if (!selectedCatalogItemId) {
-            toast.warn('Protocol Violation: Select a material from catalog.');
+            toast.warn(t('select_material_warning', { defaultValue: 'Protocol Violation: Select a material from catalog.' }));
             return;
         }
 
         const qty = parseFloat(quantityToAdd);
         if (!qty || qty <= 0) {
-            toast.warn('Enter a valid quantity.');
+            toast.warn(t('enter_valid_quantity', { defaultValue: 'Enter a valid quantity.' }));
             return;
         }
 
@@ -144,7 +144,7 @@ function ProjectInventory({ projectId }) {
             setLocation('');
             fetchData();
         } catch (err) {
-            toast.error(err.response?.data?.detail || 'Allocation failure.');
+            toast.error(err.response?.data?.detail || t('allocation_failure', { defaultValue: 'Allocation failure.' }));
         } finally {
             setIsSubmitting(false);
         }
@@ -153,11 +153,11 @@ function ProjectInventory({ projectId }) {
     const handleCreateRequest = async (e) => {
         e.preventDefault();
         if (!selectedRequestItemId) {
-            toast.warn('Select a material from catalog to request.');
+            toast.warn(t('select_material_request_warning', { defaultValue: 'Select a material from catalog to request.' }));
             return;
         }
         if (!quantityToRequest || Number(quantityToRequest) <= 0) {
-            toast.warn('Enter a valid quantity to request.');
+            toast.warn(t('enter_valid_quantity_request', { defaultValue: 'Enter a valid quantity to request.' }));
             return;
         }
 
@@ -170,14 +170,14 @@ function ProjectInventory({ projectId }) {
                 note: requestNote || null,
             };
             await axiosInstance.post('/shopping-list/requests', payload);
-            toast.success('Material request sent to procurement list.');
+            toast.success(t('material_request_sent', { defaultValue: 'Material request sent to procurement list.' }));
 
             setSelectedRequestItemId('');
             setQuantityToRequest(1);
             setRequestNote('');
         } catch (err) {
             console.error('Material request failed:', err);
-            toast.error(err.response?.data?.detail || 'Failed to submit material request.');
+            toast.error(err.response?.data?.detail || t('failed_submit_request', { defaultValue: 'Failed to submit material request.' }));
         } finally {
             setIsRequestSubmitting(false);
         }
@@ -186,18 +186,18 @@ function ProjectInventory({ projectId }) {
     const handleRemoveItem = async (projectInventoryItemId, itemName) => {
         if (
             !window.confirm(
-                `Remove "${itemName}" from this project entirely? This does not return quantity to the warehouse (use Return for that).`,
+                t('confirm_remove_item', { defaultValue: 'Remove "{{itemName}}" from this project entirely? This does not return quantity to the warehouse (use Return for that).', itemName: itemName })
             )
         )
             return;
 
         try {
             await axiosInstance.delete(`/project-inventory/${projectInventoryItemId}`);
-            toast.success(`"${itemName}" removed from site record.`);
+            toast.success(t('item_removed_success', { defaultValue: '"{{itemName}}" removed from site record.', itemName: itemName }));
             fetchData();
         } catch (err) {
             console.error('Remove item failed:', err);
-            toast.error('Registry Error: Failed to remove node.');
+            toast.error(t('registry_error_remove', { defaultValue: 'Registry Error: Failed to remove node.' }));
         }
     };
 
@@ -217,7 +217,7 @@ function ProjectInventory({ projectId }) {
         if (!modal || modal.type !== 'return') return;
         const qty = parseFloat(modalQty);
         if (!qty || qty <= 0) {
-            toast.warn('Enter a valid quantity.');
+            toast.warn(t('enter_valid_quantity', { defaultValue: 'Enter a valid quantity.' }));
             return;
         }
         try {
@@ -230,7 +230,7 @@ function ProjectInventory({ projectId }) {
             setModal(null);
             fetchData();
         } catch (err) {
-            toast.error(err.response?.data?.detail || 'Return failed.');
+            toast.error(err.response?.data?.detail || t('return_failed', { defaultValue: 'Return failed.' }));
         }
     };
 
@@ -239,12 +239,12 @@ function ProjectInventory({ projectId }) {
         if (!modal || modal.type !== 'transfer') return;
         const dest = parseInt(transferDestId, 10);
         if (!dest || dest === parseInt(projectId, 10)) {
-            toast.warn('Choose a different destination project.');
+            toast.warn(t('choose_different_project', { defaultValue: 'Choose a different destination project.' }));
             return;
         }
         const qty = parseFloat(modalQty);
         if (!qty || qty <= 0) {
-            toast.warn('Enter a valid quantity.');
+            toast.warn(t('enter_valid_quantity', { defaultValue: 'Enter a valid quantity.' }));
             return;
         }
         try {
@@ -259,7 +259,7 @@ function ProjectInventory({ projectId }) {
             setModal(null);
             fetchData();
         } catch (err) {
-            toast.error(err.response?.data?.detail || 'Transfer failed.');
+            toast.error(err.response?.data?.detail || t('transfer_failed', { defaultValue: 'Transfer failed.' }));
         }
     };
 
@@ -388,7 +388,7 @@ function ProjectInventory({ projectId }) {
                                     onChange={(e) => setSelectedCatalogItemId(e.target.value)}
                                     className="modern-input h-12 text-xs font-bold"
                                 >
-                                    <option value="">-- SELECT MATERIAL --</option>
+                                    <option value="">{t('select_material_option', { defaultValue: '-- SELECT MATERIAL --' })}</option>
                                     {Object.entries(
                                         (() => {
                                             const rawList = allocateMode === 'warehouse' ? warehouseSkusAvailable : inventoryCatalog;
@@ -443,7 +443,7 @@ function ProjectInventory({ projectId }) {
                                         type="text"
                                         value={location}
                                         onChange={(e) => setLocation(e.target.value)}
-                                        placeholder="Container / Zone"
+                                        placeholder={t('container_zone', { defaultValue: 'Container / Zone' })}
                                         className="modern-input h-12 pl-11 text-xs font-bold"
                                     />
                                 </div>
@@ -473,14 +473,14 @@ function ProjectInventory({ projectId }) {
                         <div className="flex items-center gap-2 mb-6 ml-1">
                             <PlusIcon className="h-4 w-4 text-amber-500 stroke-[3px]" />
                             <h3 className="text-[10px] font-black text-amber-700 dark:text-amber-200 uppercase tracking-[0.2em]">
-                                Request Materials from Procurement
+                                {t('request_materials_procurement', { defaultValue: 'Request Materials from Procurement' })}
                             </h3>
                         </div>
                         <form onSubmit={handleCreateRequest} className="grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
                             <div className="space-y-2">
                                 <div className="flex justify-between items-center ml-1">
                                     <label className="block text-[9px] font-black text-amber-700 uppercase tracking-widest">
-                                        Material SKU
+                                        {t('material_sku', { defaultValue: 'Material SKU' })}
                                     </label>
                                     <span className="text-[9px] font-bold text-amber-600">
                                         {inventoryCatalog.length} {t('items', { defaultValue: 'items' })}
@@ -498,7 +498,7 @@ function ProjectInventory({ projectId }) {
                                     onChange={(e) => setSelectedRequestItemId(e.target.value)}
                                     className="modern-input h-12 text-xs font-bold"
                                 >
-                                    <option value="">-- SELECT MATERIAL --</option>
+                                    <option value="">{t('select_material_option', { defaultValue: '-- SELECT MATERIAL --' })}</option>
                                     {Object.entries(
                                         (() => {
                                             const q = requestSearchQuery.trim().toLowerCase();
@@ -531,7 +531,7 @@ function ProjectInventory({ projectId }) {
                             </div>
                             <div className="space-y-2">
                                 <label className="block text-[9px] font-black text-amber-700 uppercase tracking-widest ml-1">
-                                    Requested Quantity
+                                    {t('requested_quantity', { defaultValue: 'Requested Quantity' })}
                                 </label>
                                 <input
                                     type="number"
@@ -544,13 +544,13 @@ function ProjectInventory({ projectId }) {
                             </div>
                             <div className="space-y-2 md:col-span-2">
                                 <label className="block text-[9px] font-black text-amber-700 uppercase tracking-widest ml-1">
-                                    Context / Notes (optional)
+                                    {t('context_notes', { defaultValue: 'Context / Notes (optional)' })}
                                 </label>
                                 <textarea
                                     value={requestNote}
                                     onChange={(e) => setRequestNote(e.target.value)}
                                     rows={2}
-                                    placeholder="Where and when is this needed?"
+                                    placeholder={t('request_notes_placeholder', { defaultValue: 'Where and when is this needed?' })}
                                     className="modern-input h-12 text-xs font-bold resize-none"
                                 />
                             </div>
@@ -617,12 +617,12 @@ function ProjectInventory({ projectId }) {
                                             </span>
                                         </td>
                                         <td className="py-5 px-6 text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                                            {item.inventory_item?.unit || 'pcs'}
+                                            {item.inventory_item?.unit || t('pcs', { defaultValue: 'pcs' })}
                                         </td>
                                         <td className="py-5 px-6">
                                             <div className="flex items-center gap-2 text-xs font-bold text-gray-600 dark:text-gray-300">
                                                 <MapPinIcon className="h-3.5 w-3.5 text-gray-400" />
-                                                {item.location || 'Main Site'}
+                                                {item.location || t('main_site', { defaultValue: 'Main Site' })}
                                             </div>
                                         </td>
                                         {canManageInventory && (
@@ -632,7 +632,7 @@ function ProjectInventory({ projectId }) {
                                                         type="button"
                                                         onClick={() => openReturnModal(item)}
                                                         className="inline-flex items-center gap-1 px-3 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest bg-emerald-50 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-200 border border-emerald-100 dark:border-emerald-800 hover:bg-emerald-100 transition"
-                                                        title="Return to warehouse"
+                                                        title={t('return_to_warehouse_title', { defaultValue: 'Return to central warehouse' })}
                                                     >
                                                         <ArrowUturnLeftIcon className="h-4 w-4" />
                                                         {t('to_warehouse', { defaultValue: 'Warehouse' })}
@@ -642,7 +642,7 @@ function ProjectInventory({ projectId }) {
                                                         onClick={() => openTransferModal(item)}
                                                         disabled={transferTargets.length === 0}
                                                         className="inline-flex items-center gap-1 px-3 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest bg-violet-50 dark:bg-violet-900/30 text-violet-800 dark:text-violet-200 border border-violet-100 dark:border-violet-800 hover:bg-violet-100 transition disabled:opacity-40"
-                                                        title="Transfer to another project"
+                                                        title={t('transfer_project_title', { defaultValue: 'Transfer to another project' })}
                                                     >
                                                         <ArrowsRightLeftIcon className="h-4 w-4" />
                                                         {t('transfer', { defaultValue: 'Transfer' })}
@@ -660,7 +660,7 @@ function ProjectInventory({ projectId }) {
                                                         )
                                                     }
                                                     className="p-2.5 text-gray-300 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all"
-                                                    title="Remove row"
+                                                    title={t('remove_row', { defaultValue: 'Remove row' })}
                                                 >
                                                     <TrashIcon className="h-5 w-5" />
                                                 </button>
@@ -674,7 +674,7 @@ function ProjectInventory({ projectId }) {
                                         <div className="flex flex-col items-center gap-3">
                                             <InboxStackIcon className="h-10 w-10 text-gray-200" />
                                             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest italic">
-                                                No site stock telemetry detected
+                                                {t('no_site_stock_telemetry', { defaultValue: 'No site stock telemetry detected' })}
                                             </p>
                                         </div>
                                     </td>
@@ -703,7 +703,7 @@ function ProjectInventory({ projectId }) {
                         </p>
                         <form onSubmit={submitReturn} className="space-y-4">
                             <div>
-                                <label className="block text-[10px] font-black text-gray-400 uppercase mb-2">Quantity</label>
+                                <label className="block text-[10px] font-black text-gray-400 uppercase mb-2">{t('quantity', { defaultValue: 'Quantity' })}</label>
                                 <input
                                     type="number"
                                     min="0.01"
@@ -754,7 +754,7 @@ function ProjectInventory({ projectId }) {
                         <form onSubmit={submitTransfer} className="space-y-4">
                             <div>
                                 <label className="block text-[10px] font-black text-gray-400 uppercase mb-2">
-                                    Destination project
+                                    {t('destination_project', { defaultValue: 'Destination project' })}
                                 </label>
                                 <select
                                     value={transferDestId}
@@ -762,7 +762,7 @@ function ProjectInventory({ projectId }) {
                                     className="modern-input w-full"
                                     required
                                 >
-                                    <option value="">-- SELECT PROJECT --</option>
+                                    <option value="">{t('select_project_option', { defaultValue: '-- SELECT PROJECT --' })}</option>
                                     {transferTargets.map((p) => (
                                         <option key={p.id} value={p.id}>
                                             {p.name || p.project_number || `Project #${p.id}`}
@@ -771,7 +771,9 @@ function ProjectInventory({ projectId }) {
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-[10px] font-black text-gray-400 uppercase mb-2">Quantity</label>
+                                <label className="block text-[10px] font-black text-gray-400 uppercase mb-2">
+                                    {t('quantity', { defaultValue: 'Quantity' })}
+                                </label>
                                 <input
                                     type="number"
                                     min="0.01"

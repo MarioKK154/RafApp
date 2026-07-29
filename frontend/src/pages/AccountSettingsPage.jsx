@@ -143,7 +143,7 @@ function AccountSettingsPage() {
                             const res = await axiosInstance.post(`/system/my-tenant/invoices/${selectedInvoiceForPayment.id}/paypal-order`);
                             return res.data.order_id;
                         } catch (err) {
-                            toast.error("Failed to initiate PayPal Order.");
+                            toast.error(t('paypal_order_failed', { defaultValue: 'Failed to initiate PayPal Order.' }));
                             throw err;
                         }
                     },
@@ -162,17 +162,17 @@ function AccountSettingsPage() {
                                     setPaymentStep('input');
                                 }, 2000);
                             } else {
-                                toast.warning(`PayPal payment state: ${res.data.status}`);
+                                toast.warning(t('paypal_payment_state', { defaultValue: 'PayPal payment state: {{status}}' }).replace('{{status}}', res.data.status));
                                 setPaymentStep('input');
                             }
                         } catch (err) {
-                            toast.error(err.response?.data?.detail || "PayPal transaction capture failed.");
+                            toast.error(err.response?.data?.detail || t('paypal_capture_failed', { defaultValue: 'PayPal transaction capture failed.' }));
                             setPaymentStep('input');
                         }
                     },
                     onError: (err) => {
                         console.error("PayPal Checkout Error:", err);
-                        toast.error("An error occurred during PayPal checkout.");
+                        toast.error(t('paypal_checkout_error', { defaultValue: 'An error occurred during PayPal checkout.' }));
                         setPaymentStep('input');
                     }
                 }).render("#paypal-button-container");
@@ -200,7 +200,7 @@ function AccountSettingsPage() {
             link.click();
             document.body.removeChild(link);
         } catch (err) {
-            toast.error("Failed to download invoice PDF.");
+            toast.error(t('invoice_download_failed', { defaultValue: 'Failed to download invoice PDF.' }));
         }
     };
 
@@ -602,15 +602,15 @@ function AccountSettingsPage() {
                                 <div className="flex items-center gap-3">
                                     <span className="text-indigo-600 text-lg">💳</span>
                                     <h2 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-widest">
-                                        Subscription & Billing Invoices
+                                        {t('subscription_invoices', { defaultValue: 'Subscription & Billing Invoices' })}
                                     </h2>
                                 </div>
                             </div>
                             <div className="p-8 space-y-4">
                                 {isLoadingInvoices ? (
-                                    <p className="text-xs text-gray-400 italic">Loading invoices...</p>
+                                    <p className="text-xs text-gray-400 italic">{t('loading_invoices', { defaultValue: 'Loading invoices...' })}</p>
                                 ) : invoices.length === 0 ? (
-                                    <p className="text-xs text-gray-400 italic">No subscription invoices found.</p>
+                                    <p className="text-xs text-gray-400 italic">{t('no_subscription_invoices', { defaultValue: 'No subscription invoices found.' })}</p>
                                 ) : (
                                     <div className="space-y-3">
                                         {invoices.map((inv) => (
@@ -618,7 +618,7 @@ function AccountSettingsPage() {
                                                 <div>
                                                     <div className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
                                                         <span>{((inv.amount || 0) * 1.24).toLocaleString()} ISK</span>
-                                                        <span className="text-[10px] text-gray-400 font-normal">(Incl. 24% VSK)</span>
+                                                        <span className="text-[10px] text-gray-400 font-normal">{t('incl_vsk', { defaultValue: '(Incl. 24% VSK)' })}</span>
                                                         <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider ${
                                                             inv.status === 'Paid' 
                                                                 ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-400'
@@ -629,8 +629,8 @@ function AccountSettingsPage() {
                                                             {inv.status}
                                                         </span>
                                                     </div>
-                                                    <p className="text-[10px] text-gray-500 mt-1">{inv.description || 'Monthly Subscription Fee'}</p>
-                                                    <p className="text-[9px] text-gray-400 font-mono mt-0.5">Due Date: {inv.due_date} | Base: {inv.amount.toLocaleString()} ISK + VSK</p>
+                                                    <p className="text-[10px] text-gray-500 mt-1">{inv.description || t('monthly_subscription_fee', { defaultValue: 'Monthly Subscription Fee' })}</p>
+                                                    <p className="text-[9px] text-gray-400 font-mono mt-0.5">{t('due_date', { defaultValue: 'Due Date:' })} {inv.due_date} | {t('base', { defaultValue: 'Base:' })} {inv.amount.toLocaleString()} ISK + VSK</p>
                                                 </div>
                                                 <div className="flex gap-2">
                                                     <button
@@ -638,7 +638,7 @@ function AccountSettingsPage() {
                                                         onClick={() => handleDownloadInvoicePdf(inv.id)}
                                                         className="px-3.5 py-2 bg-gray-700 hover:bg-gray-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition flex items-center gap-1.5"
                                                     >
-                                                        PDF
+                                                        {t('pdf', { defaultValue: 'PDF' })}
                                                     </button>
                                                     {inv.status !== 'Paid' && (
                                                         <button
@@ -646,7 +646,7 @@ function AccountSettingsPage() {
                                                             onClick={() => handleOpenPaymentModal(inv)}
                                                             className="px-4 py-2 bg-[#0096FF] hover:bg-blue-500 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition shadow shadow-blue-500/25"
                                                         >
-                                                            Pay Bill (PayPal)
+                                                            {t('pay_bill_paypal', { defaultValue: 'Pay Bill (PayPal)' })}
                                                         </button>
                                                     )}
                                                 </div>
@@ -737,17 +737,17 @@ function AccountSettingsPage() {
                 <div className="bg-white dark:bg-gray-800 rounded-[2.5rem] border border-gray-100 dark:border-gray-700 shadow-2xl max-w-md w-full overflow-hidden p-8 text-left space-y-6">
                     {paymentStep === 'input' && (
                         <div className="space-y-6">
-                            <div className="flex justify-between items-center border-b pb-4">
+                            <div className="flex justify-between items-center mb-6">
                                 <div>
-                                    <h3 className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-tight">PayPal Secure Checkout</h3>
-                                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">RafApp Subscription Service</p>
+                                    <h3 className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-tight">{t('paypal_secure_checkout', { defaultValue: 'PayPal Secure Checkout' })}</h3>
+                                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{t('rafapp_subscription_service', { defaultValue: 'RafApp Subscription Service' })}</p>
                                 </div>
                                 <button 
                                     type="button" 
                                     onClick={() => setSelectedInvoiceForPayment(null)}
-                                    className="text-gray-400 hover:text-gray-600 dark:hover:text-white text-lg font-black"
+                                    className="px-6 py-2 border-2 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 text-gray-600 dark:text-gray-300 text-[10px] font-black uppercase tracking-widest rounded-xl transition"
                                 >
-                                    ✕
+                                    {t('cancel_protocol', { defaultValue: 'Cancel Protocol' })}
                                 </button>
                             </div>
 
@@ -773,7 +773,7 @@ function AccountSettingsPage() {
                                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                                         </svg>
-                                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Loading PayPal SDK...</p>
+                                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{t('initializing_paypal_sdk', { defaultValue: 'Loading PayPal SDK...' })}</p>
                                     </div>
                                 ) : (
                                     <div id="paypal-button-container" className="w-full relative z-10 min-h-[150px]"></div>
@@ -788,8 +788,8 @@ function AccountSettingsPage() {
                                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                             </svg>
-                            <p className="text-sm font-black text-gray-800 dark:text-white uppercase tracking-wider text-center">Processing SECURE PayPal Checkout...</p>
-                            <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest text-center">Do not close this window or refresh the page.</p>
+                            <p className="text-sm font-black text-gray-800 dark:text-white uppercase tracking-wider text-center">{t('processing_paypal_capture', { defaultValue: 'Processing SECURE PayPal Checkout...' })}</p>
+                            <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest text-center">{t('do_not_close_window', { defaultValue: 'Do not close this window or refresh the page.' })}</p>
                         </div>
                     )}
 
@@ -798,8 +798,8 @@ function AccountSettingsPage() {
                             <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center text-emerald-600 text-3xl animate-bounce">
                                 ✓
                             </div>
-                            <p className="text-base font-black text-gray-900 dark:text-white uppercase tracking-widest text-center">Payment Confirmed!</p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">Subscription invoice has been successfully paid.</p>
+                            <h3 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight">{t('payment_complete', { defaultValue: 'Payment Complete' })}</h3>
+                            <p className="text-sm text-gray-500 font-bold uppercase tracking-widest">{t('invoice_marked_paid', { defaultValue: 'Invoice marked as paid.' })}</p>
                         </div>
                     )}
                 </div>

@@ -54,7 +54,7 @@ function CarDetailsPage() {
             setServiceNotes(data.service_notes || '');
         } catch (error) {
             console.error('Vehicle fetch failed:', error);
-            toast.error("Vehicle registry access denied or not found.");
+            toast.error(t('vehicle_not_found', { defaultValue: 'Vehicle registry access denied or not found.' }));
             navigate('/cars');
         } finally {
             setIsLoading(false);
@@ -70,17 +70,17 @@ function CarDetailsPage() {
                 service_needed: serviceNeeded, 
                 service_notes: serviceNotes 
             });
-            toast.success("Maintenance registry updated.");
+            toast.success(t('maintenance_registry_updated', { defaultValue: 'Maintenance registry updated.' }));
             fetchCar();
         } catch (error) {
             console.error('Service status update failed:', error);
-            toast.error("Failed to update service status.");
+            toast.error(t('failed_update_service_status', { defaultValue: 'Failed to update service status.' }));
         }
     };
 
     const handleCarAction = async (actionType) => {
         if (!odometer) {
-            toast.warn("Odometer reading is required for log accuracy.");
+            toast.warn(t('odometer_required', { defaultValue: 'Odometer reading is required for log accuracy.' }));
             return;
         }
         setIsActionLoading(true);
@@ -90,13 +90,13 @@ function CarDetailsPage() {
                 odometer_reading: parseInt(odometer, 10), 
                 notes: usageNotes 
             });
-            toast.success(actionType === 'out' ? "Trip started." : "Vehicle returned to pool.");
+            toast.success(actionType === 'out' ? t('trip_started', { defaultValue: 'Trip started.' }) : t('vehicle_returned', { defaultValue: 'Vehicle returned to pool.' }));
             setOdometer(''); 
             setUsageNotes('');
             fetchCar();
         } catch (error) {
             console.error('Car action failed:', error);
-            toast.error(error.response?.data?.detail || "Log submission failed.");
+            toast.error(error.response?.data?.detail || t('log_submission_failed', { defaultValue: 'Log submission failed.' }));
         } finally {
             setIsActionLoading(false);
         }
@@ -110,17 +110,17 @@ function CarDetailsPage() {
                 brand: tyreBrand, 
                 purchase_date: tyrePurchaseDate || null 
             });
-            toast.success("Tyre set registered.");
+            toast.success(t('tyre_registered', { defaultValue: 'Tyre set registered.' }));
             setTyreBrand(''); 
             setTyrePurchaseDate('');
             fetchCar();
         } catch (error) {
             console.error('Add tyre set failed:', error);
-            toast.error("Failed to add tyre configuration.");
+            toast.error(t('failed_add_tyre', { defaultValue: 'Failed to add tyre configuration.' }));
         }
     };
 
-    if (isLoading) return <LoadingSpinner text="Connecting to vehicle ECU..." />;
+    if (isLoading) return <LoadingSpinner text={t('connecting_to_vehicle_ecu', { defaultValue: 'Connecting to vehicle ECU...' })} />;
     if (!car) return null;
 
     return (
@@ -130,7 +130,7 @@ function CarDetailsPage() {
                 <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
                     <div>
                         <Link to="/cars" className="flex items-center text-[10px] font-black text-gray-400 hover:text-indigo-600 transition mb-3 uppercase tracking-[0.2em]">
-                            <ChevronLeftIcon className="h-3 w-3 mr-1" /> Back to Fleet Registry
+                            <ChevronLeftIcon className="h-3 w-3 mr-1" /> {t('back_to_fleet_registry', { defaultValue: 'Back to Fleet Registry' })}
                         </Link>
                         <div className="flex items-center gap-3">
                             <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
@@ -154,7 +154,7 @@ function CarDetailsPage() {
                             to={`/cars/edit/${car.id}`}
                             className="inline-flex items-center px-8 h-14 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black uppercase tracking-widest rounded-2xl transition-all duration-150 ease-out hover:-translate-y-0.5 shadow-xl shadow-indigo-200 active:translate-y-0"
                         >
-                            <PencilIcon className="h-4 w-4 mr-2" /> Edit Asset
+                            <PencilIcon className="h-4 w-4 mr-2" /> {t('edit_asset', { defaultValue: 'Edit Asset' })}
                         </Link>
                     )}
                 </div>
@@ -175,10 +175,10 @@ function CarDetailsPage() {
                                 {car.status.replace('_', ' ')}
                             </div>
                             <div className="space-y-4">
-                                <DetailRow icon={<UserIcon />} label="Custodian" value={car.current_user?.full_name || 'Fleet Pool'} />
-                                <DetailRow icon={<IdentificationIcon />} label="VIN Node" value={car.vin} mono />
-                                <DetailRow icon={<CalendarDaysIcon />} label="Deployment Year" value={car.year} />
-                                <DetailRow icon={<MapPinIcon />} label="Registry Date" value={car.purchase_date ? new Date(car.purchase_date).toLocaleDateString() : 'N/A'} />
+                                <DetailRow icon={<UserIcon />} label={t('custodian', { defaultValue: 'Custodian' })} value={car.current_user?.full_name || t('fleet_pool', { defaultValue: 'Fleet Pool' })} />
+                                <DetailRow icon={<IdentificationIcon />} label={t('vin_node', { defaultValue: 'VIN Node' })} value={car.vin} mono />
+                                <DetailRow icon={<CalendarDaysIcon />} label={t('deployment_year', { defaultValue: 'Deployment Year' })} value={car.year} />
+                                <DetailRow icon={<MapPinIcon />} label={t('registry_date', { defaultValue: 'Registry Date' })} value={car.purchase_date ? new Date(car.purchase_date).toLocaleDateString() : t('not_available_short', { defaultValue: 'N/A' })} />
                             </div>
                         </div>
                     </div>
@@ -191,11 +191,11 @@ function CarDetailsPage() {
                             </div>
                             <h3 className="text-xl font-black uppercase tracking-tighter mb-6 flex items-center gap-3">
                                 {car.status === 'Available' ? <ArrowUpCircleIcon className="h-6 w-6" /> : <ArrowDownCircleIcon className="h-6 w-6" />}
-                                {car.status === 'Available' ? 'Initialize Trip' : 'Return Vehicle'}
+                                {car.status === 'Available' ? t('initialize_trip', { defaultValue: 'Initialize Trip' }) : t('return_vehicle', { defaultValue: 'Return Vehicle' })}
                             </h3>
                             <div className="space-y-5 relative z-10">
                                 <div>
-                                    <label className="block text-[10px] font-black uppercase text-indigo-200 mb-2 ml-1 tracking-[0.1em]">Current Odometer (KM)</label>
+                                    <label className="block text-[10px] font-black uppercase text-indigo-200 mb-2 ml-1 tracking-[0.1em]">{t('current_odometer_km', { defaultValue: 'Current Odometer (KM)' })}</label>
                                     <input 
                                         type="number" 
                                         value={odometer} 
@@ -205,13 +205,13 @@ function CarDetailsPage() {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-[10px] font-black uppercase text-indigo-200 mb-2 ml-1 tracking-[0.1em]">Trip Telemetry/Notes</label>
+                                    <label className="block text-[10px] font-black uppercase text-indigo-200 mb-2 ml-1 tracking-[0.1em]">{t('trip_telemetry_notes', { defaultValue: 'Trip Telemetry/Notes' })}</label>
                                     <textarea 
                                         value={usageNotes} 
                                         onChange={e => setUsageNotes(e.target.value)} 
                                         className="w-full bg-indigo-700/50 border-2 border-indigo-400 rounded-2xl text-sm text-white font-bold placeholder-indigo-300 focus:ring-0 focus:border-white transition p-4"
                                         rows="3"
-                                        placeholder="Describe destination or operational purpose..."
+                                        placeholder={t('trip_notes_placeholder', { defaultValue: 'Describe destination or operational purpose...' })}
                                     ></textarea>
                                 </div>
                                 <button 
@@ -219,7 +219,7 @@ function CarDetailsPage() {
                                     disabled={isActionLoading}
                                     className="w-full h-14 bg-white text-indigo-600 text-xs font-black uppercase tracking-widest rounded-2xl hover:bg-indigo-50 transition transform active:scale-95 disabled:opacity-50 shadow-lg"
                                 >
-                                    {isActionLoading ? 'Processing...' : 'Confirm Log Entry'}
+                                    {isActionLoading ? t('processing', { defaultValue: 'Processing...' }) : t('confirm_log_entry', { defaultValue: 'Confirm Log Entry' })}
                                 </button>
                             </div>
                         </div>
@@ -234,7 +234,7 @@ function CarDetailsPage() {
                             <div className="p-2 bg-orange-100 dark:bg-orange-900/20 rounded-lg">
                                 <WrenchScrewdriverIcon className="h-6 w-6 text-orange-600" />
                             </div>
-                            <h2 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">Maintenance Log</h2>
+                            <h2 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">{t('maintenance_log', { defaultValue: 'Maintenance Log' })}</h2>
                         </div>
                         <form onSubmit={handleServiceUpdate} className="grid grid-cols-1 md:grid-cols-2 gap-10">
                             <div className="space-y-6">
@@ -247,35 +247,35 @@ function CarDetailsPage() {
                                         className="h-6 w-6 rounded-lg text-orange-600 focus:ring-orange-500 border-orange-300 bg-white dark:bg-gray-700"
                                     />
                                     <label htmlFor="service_needed" className="text-[11px] font-black uppercase tracking-widest text-orange-800 dark:text-orange-400">
-                                        Flag for inspection
+                                        {t('flag_for_inspection', { defaultValue: 'Flag for inspection' })}
                                     </label>
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="p-5 bg-gray-50 dark:bg-gray-900/50 rounded-2xl border border-gray-100 dark:border-gray-800">
-                                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Last Oil Log</p>
-                                        <p className="text-lg font-black text-gray-900 dark:text-white">{car.last_oil_change_km ? `${car.last_oil_change_km.toLocaleString()} KM` : 'N/A'}</p>
+                                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">{t('last_oil_log', { defaultValue: 'Last Oil Log' })}</p>
+                                        <p className="text-lg font-black text-gray-900 dark:text-white">{car.last_oil_change_km ? `${car.last_oil_change_km.toLocaleString()} KM` : t('not_available_short', { defaultValue: 'N/A' })}</p>
                                     </div>
                                     <div className="p-5 bg-gray-50 dark:bg-gray-900/50 rounded-2xl border border-gray-100 dark:border-gray-800">
-                                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Service Due</p>
-                                        <p className="text-lg font-black text-indigo-600 dark:text-indigo-400">{car.next_oil_change_due_km ? `${car.next_oil_change_due_km.toLocaleString()} KM` : 'N/A'}</p>
+                                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">{t('service_due', { defaultValue: 'Service Due' })}</p>
+                                        <p className="text-lg font-black text-indigo-600 dark:text-indigo-400">{car.next_oil_change_due_km ? `${car.next_oil_change_due_km.toLocaleString()} KM` : t('not_available_short', { defaultValue: 'N/A' })}</p>
                                     </div>
                                 </div>
                             </div>
                             <div className="space-y-4">
-                                <label className="block text-[10px] font-black text-gray-400 uppercase ml-1 tracking-widest">Repair/Service Details</label>
+                                <label className="block text-[10px] font-black text-gray-400 uppercase ml-1 tracking-widest">{t('repair_service_details', { defaultValue: 'Repair/Service Details' })}</label>
                                 <textarea 
                                     value={serviceNotes} 
                                     onChange={e => setServiceNotes(e.target.value)} 
                                     rows="4" 
                                     className="modern-input h-auto py-4 resize-none"
-                                    placeholder="Log mechanical updates or noted defects..."
+                                    placeholder={t('repair_notes_placeholder', { defaultValue: 'Log mechanical updates or noted defects...' })}
                                 ></textarea>
                                 <div className="flex justify-end">
                                     <button
                                         type="submit"
                                         className="px-10 h-12 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black uppercase tracking-widest rounded-xl transition-all duration-150 ease-out shadow-lg shadow-indigo-200 dark:shadow-none hover:-translate-y-0.5 active:translate-y-0"
                                     >
-                                        Synchronize
+                                        {t('synchronize', { defaultValue: 'Synchronize' })}
                                     </button>
                                 </div>
                             </div>
@@ -288,37 +288,37 @@ function CarDetailsPage() {
                             <div className="p-2 bg-indigo-100 dark:bg-indigo-900/20 rounded-lg">
                                 <TagIcon className="h-6 w-6 text-indigo-600" />
                             </div>
-                            <h2 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">Tyre Registry</h2>
+                            <h2 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">{t('tyre_registry', { defaultValue: 'Tyre Registry' })}</h2>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                             <ul className="space-y-4">
                                 {car.tyre_sets.map(tyre => (
                                     <li key={tyre.id} className="p-5 rounded-[1.5rem] border border-gray-100 dark:border-gray-700 flex justify-between items-center group hover:bg-gray-50 dark:hover:bg-gray-900/50 transition">
                                         <div>
-                                            <p className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-tight">{tyre.brand || 'Standard'} • {tyre.type}</p>
+                                            <p className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-tight">{tyre.brand || t('standard_tyre', { defaultValue: 'Standard' })} • {tyre.type}</p>
                                             <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest mt-1">
-                                                Registry: {tyre.purchase_date ? new Date(tyre.purchase_date).toLocaleDateString() : 'Historical'}
+                                                {t('registry', { defaultValue: 'Registry:' })} {tyre.purchase_date ? new Date(tyre.purchase_date).toLocaleDateString() : t('historical', { defaultValue: 'Historical' })}
                                             </p>
                                         </div>
-                                        {tyre.is_on_car && <span className="px-3 py-1 rounded-full bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-400 text-[9px] font-black uppercase tracking-widest border border-indigo-200 dark:border-indigo-800">Equipped</span>}
+                                        {tyre.is_on_car && <span className="px-3 py-1 rounded-full bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-400 text-[9px] font-black uppercase tracking-widest border border-indigo-200 dark:border-indigo-800">{t('equipped', { defaultValue: 'Equipped' })}</span>}
                                     </li>
                                 ))}
                             </ul>
                             {isAdmin && (
                                 <form onSubmit={handleAddTyreSet} className="p-6 bg-gray-50 dark:bg-gray-900/50 rounded-[2rem] border border-gray-100 dark:border-gray-800 space-y-4">
-                                    <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mb-2 ml-1">Add Configuration</h4>
+                                    <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mb-2 ml-1">{t('add_configuration', { defaultValue: 'Add Configuration' })}</h4>
                                     <div className="grid grid-cols-2 gap-3">
                                         {/* VISIBILITY FIX: Native select styled for dark mode */}
                                         <select value={tyreType} onChange={e => setTyreType(e.target.value)} className="modern-input bg-white dark:bg-gray-800">
-                                            <option className="dark:bg-gray-800">Summer</option>
-                                            <option className="dark:bg-gray-800">Winter</option>
-                                            <option className="dark:bg-gray-800">All-Season</option>
+                                            <option className="dark:bg-gray-800">{t('summer', { defaultValue: 'Summer' })}</option>
+                                            <option className="dark:bg-gray-800">{t('winter', { defaultValue: 'Winter' })}</option>
+                                            <option className="dark:bg-gray-800">{t('all_season', { defaultValue: 'All-Season' })}</option>
                                         </select>
-                                        <input type="text" placeholder="Brand Name" value={tyreBrand} onChange={e => setTyreBrand(e.target.value)} className="modern-input"/>
+                                        <input type="text" placeholder={t('brand_name_placeholder', { defaultValue: 'Brand Name' })} value={tyreBrand} onChange={e => setTyreBrand(e.target.value)} className="modern-input"/>
                                     </div>
                                     <input type="date" value={tyrePurchaseDate} onChange={e => setTyrePurchaseDate(e.target.value)} className="modern-input"/>
                                     <button type="submit" className="w-full h-12 bg-indigo-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-indigo-700 transition">
-                                        Register Tyre Set
+                                        {t('register_tyre_set', { defaultValue: 'Register Tyre Set' })}
                                     </button>
                                 </form>
                             )}
@@ -331,16 +331,16 @@ function CarDetailsPage() {
                             <div className="p-2 bg-gray-100 dark:bg-gray-900 rounded-lg">
                                 <ClipboardDocumentListIcon className="h-6 w-6 text-gray-600 dark:text-gray-400" />
                             </div>
-                            <h2 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">Usage History</h2>
+                            <h2 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">{t('usage_history', { defaultValue: 'Usage History' })}</h2>
                         </div>
                         <div className="overflow-x-auto">
                             <table className="w-full text-sm text-left">
                                 <thead className="text-[10px] text-gray-400 uppercase font-black bg-gray-50 dark:bg-gray-900/50">
                                     <tr>
-                                        <th className="py-5 px-10">Timestamp</th>
-                                        <th className="py-5 px-6">Operational Event</th>
+                                        <th className="py-5 px-10">{t('timestamp', { defaultValue: 'Timestamp' })}</th>
+                                        <th className="py-5 px-6">{t('operational_event', { defaultValue: 'Operational Event' })}</th>
                                         <th className="py-5 px-6">{t('personnel')}</th>
-                                        <th className="py-5 px-10 text-right">Odometer</th>
+                                        <th className="py-5 px-10 text-right">{t('odometer_header', { defaultValue: 'Odometer' })}</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-50 dark:divide-gray-700">
@@ -365,7 +365,7 @@ function CarDetailsPage() {
                                                         <div className="h-6 w-6 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-[8px] font-black">
                                                             {log.user?.full_name?.charAt(0)}
                                                         </div>
-                                                        <span className="font-bold text-gray-900 dark:text-white text-xs uppercase tracking-tight">{log.user?.full_name || 'Fleet System'}</span>
+                                                        <span className="font-bold text-gray-900 dark:text-white text-xs uppercase tracking-tight">{log.user?.full_name || t('fleet_system', { defaultValue: 'Fleet System' })}</span>
                                                     </div>
                                                 </td>
                                                 <td className="py-5 px-10 text-right font-mono font-black text-indigo-600 dark:text-indigo-400">
@@ -375,7 +375,7 @@ function CarDetailsPage() {
                                         ))
                                     ) : (
                                         <tr>
-                                            <td colSpan="4" className="py-20 text-center text-[10px] font-black text-gray-400 uppercase tracking-[0.3em]">No operational logs recorded.</td>
+                                            <td colSpan="4" className="py-20 text-center text-[10px] font-black text-gray-400 uppercase tracking-[0.3em]">{t('no_operational_logs', { defaultValue: 'No operational logs recorded.' })}</td>
                                         </tr>
                                     )}
                                 </tbody>

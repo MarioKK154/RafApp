@@ -65,8 +65,8 @@ function CarFleetPage() {
             setCars(scoped);
         } catch (err) {
             console.error("Fleet sync error:", err);
-            setError('Operational Error: Failed to synchronize with fleet registry.');
-            toast.error('Registry sync failed.');
+            setError(t('error_fleet_sync', { defaultValue: 'Operational Error: Failed to synchronize with fleet registry.' }));
+            toast.error(t('toast_sync_failure', { defaultValue: 'Registry sync failure.' }));
         } finally {
             setIsLoading(false);
         }
@@ -94,10 +94,10 @@ function CarFleetPage() {
         if (!carToDelete) return;
         try {
             await axiosInstance.delete(`/cars/${carToDelete.id}`);
-            toast.success(`Asset ${carToDelete.license_plate} purged from registry.`);
+            toast.success(t('asset_purged_license', { defaultValue: 'Asset {{license}} purged from registry.' }).replace('{{license}}', carToDelete.license_plate));
             fetchCars();
         } catch (err) {
-            toast.error(err.response?.data?.detail || 'Purge protocol failed.');
+            toast.error(err.response?.data?.detail || t('purge_protocol_failed', { defaultValue: 'Purge protocol failed.' }));
         } finally {
             setIsDeleteModalOpen(false);
             setCarToDelete(null);
@@ -126,7 +126,7 @@ function CarFleetPage() {
         return { available, checkedOut, inService, total: cars.length };
     }, [cars]);
 
-    if (isLoading && cars.length === 0) return <LoadingSpinner text="Synchronizing Fleet Data..." />;
+    if (isLoading && cars.length === 0) return <LoadingSpinner text={t('synchronizing_fleet_data', { defaultValue: 'Synchronizing Fleet Data...' })} />;
 
     return (
         <div className="container mx-auto p-4 md:p-8 max-w-[1600px] animate-in fade-in duration-500">
@@ -159,7 +159,7 @@ function CarFleetPage() {
                     <MagnifyingGlassIcon className="h-5 w-5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2 group-focus-within:text-indigo-500 transition-colors" />
                     <input
                         type="text"
-                        placeholder="Filter by Make, Model, Plate or Chassis VIN..."
+                        placeholder={t('search_car_placeholder', { defaultValue: 'Filter by Make, Model, Plate or Chassis VIN...' })}
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="modern-input pl-12 h-14 !rounded-[1.25rem]"
@@ -168,12 +168,12 @@ function CarFleetPage() {
                 <div className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-[1.25rem] p-4 flex items-center justify-around text-[10px] font-black uppercase tracking-widest shadow-sm">
                     <div className="flex items-center gap-2">
                         <span className="flex h-2 w-2 rounded-full bg-green-500"></span>
-                        <span className="text-gray-900 dark:text-gray-100">{cars.filter(c => c.status === 'Available').length} Ready</span>
+                        <span className="text-gray-900 dark:text-gray-100">{cars.filter(c => c.status === 'Available').length} {t('ready', { defaultValue: 'Ready' })}</span>
                     </div>
                     <div className="h-4 w-px bg-gray-100 dark:bg-gray-700"></div>
                     <div className="flex items-center gap-2">
                         <span className="flex h-2 w-2 rounded-full bg-orange-500 animate-pulse"></span>
-                        <span className="text-gray-900 dark:text-gray-100">{cars.filter(c => c.status === 'Checked Out').length} Active</span>
+                        <span className="text-gray-900 dark:text-gray-100">{cars.filter(c => c.status === 'Checked Out').length} {t('active', { defaultValue: 'Active' })}</span>
                     </div>
                 </div>
             </div>
@@ -217,7 +217,7 @@ function CarFleetPage() {
                                 <Link 
                                     to={`/cars/${car.id}`} 
                                     className="p-2 text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors transform group-hover:scale-110 duration-300"
-                                    title="Access Operational Hub"
+                                    title={t('access_operational_hub', { defaultValue: 'Access Operational Hub' })}
                                 >
                                     <ArrowRightCircleIcon className="h-10 w-10" />
                                 </Link>
@@ -227,16 +227,16 @@ function CarFleetPage() {
                                 <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-gray-400">
                                     <div className="flex items-center gap-2">
                                         <IdentificationIcon className="h-4 w-4" />
-                                        <span>Chassis VIN</span>
+                                        <span>{t('chassis_vin', { defaultValue: 'Chassis VIN' })}</span>
                                     </div>
-                                    <span className="text-gray-900 dark:text-gray-200 font-mono tracking-tighter">{car.vin ? car.vin.slice(-8) : 'MISSING'}</span>
+                                    <span className="text-gray-900 dark:text-gray-200 font-mono tracking-tighter">{car.vin ? car.vin.slice(-8) : t('missing', { defaultValue: 'MISSING' })}</span>
                                 </div>
                                 <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-gray-400">
                                     <div className="flex items-center gap-2">
                                         <UserIcon className="h-4 w-4" />
-                                        <span>Current Custodian</span>
+                                        <span>{t('current_custodian', { defaultValue: 'Current Custodian' })}</span>
                                     </div>
-                                    <span className="text-gray-900 dark:text-gray-200 truncate max-w-[140px]">{car.current_user?.full_name?.split(' ')[0] || 'Fleet Pool'}</span>
+                                    <span className="text-gray-900 dark:text-gray-200 truncate max-w-[140px]">{car.current_user?.full_name?.split(' ')[0] || t('fleet_pool', { defaultValue: 'Fleet Pool' })}</span>
                                 </div>
                                 {isSuperuser && car.tenant && (
                                     <div className="pt-2 border-t border-gray-50 dark:border-gray-700/50 flex items-center gap-2 text-[9px] text-orange-600 font-black uppercase tracking-widest">
@@ -257,9 +257,9 @@ function CarFleetPage() {
                                     }`}
                                 >
                                     {car.status === 'Available' ? (
-                                        <><ArrowPathRoundedSquareIcon className="h-4 w-4 mr-2" /> Initialize Trip</>
+                                        <><ArrowPathRoundedSquareIcon className="h-4 w-4 mr-2" /> {t('initialize_trip', { defaultValue: 'Initialize Trip' })}</>
                                     ) : (
-                                        <><WrenchIcon className="h-4 w-4 mr-2" /> View Operations</>
+                                        <><WrenchIcon className="h-4 w-4 mr-2" /> {t('view_operations', { defaultValue: 'View Operations' })}</>
                                     )}
                                 </Link>
 
@@ -268,14 +268,14 @@ function CarFleetPage() {
                                         <button 
                                             onClick={() => navigate(`/cars/edit/${car.id}`)}
                                             className="p-3 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-xl transition"
-                                            title="Edit Metadata"
+                                            title={t('edit_metadata', { defaultValue: 'Edit Metadata' })}
                                         >
                                             <PencilIcon className="h-5 w-5" />
                                         </button>
                                         <button 
                                             onClick={() => triggerDelete(car)}
                                             className="p-3 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition"
-                                            title="Purge Asset"
+                                            title={t('purge_asset_title', { defaultValue: 'Purge Asset' })}
                                         >
                                             <TrashIcon className="h-5 w-5" />
                                         </button>
@@ -287,8 +287,8 @@ function CarFleetPage() {
                 )) : (
                     <div className="col-span-full py-32 text-center bg-white dark:bg-gray-800 rounded-[3rem] border-2 border-dashed border-gray-100 dark:border-gray-700">
                         <TruckIcon className="h-16 w-16 text-gray-200 dark:text-gray-700 mx-auto mb-6" />
-                        <h3 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">No vehicles detected in sector</h3>
-                        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-2">{t('adjust_filters_or_new_vehicle')}</p>
+                        <h3 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">{t('no_vehicles_detected', { defaultValue: 'No vehicles detected in sector' })}</h3>
+                        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-2">{t('adjust_filters_or_new_vehicle', { defaultValue: 'Adjust filters or register a new vehicle.' })}</p>
                     </div>
                 )}
             </div>
@@ -297,9 +297,9 @@ function CarFleetPage() {
                 isOpen={isDeleteModalOpen}
                 onClose={() => setIsDeleteModalOpen(false)}
                 onConfirm={confirmDelete}
-                title="Purge Vehicle Asset"
-                message={`CRITICAL: Are you sure you want to permanently delete ${carToDelete?.license_plate}? This will purge its historical logs from the active registry.`}
-                confirmText="PERMANENTLY REMOVE"
+                title={t('purge_vehicle_asset', { defaultValue: 'Purge Vehicle Asset' })}
+                message={t('purge_vehicle_warning', { defaultValue: 'CRITICAL: Are you sure you want to permanently delete {{license}}? This will purge its historical logs from the active registry.' }).replace('{{license}}', carToDelete?.license_plate)}
+                confirmText={t('permanently_remove', { defaultValue: 'PERMANENTLY REMOVE' })}
                 type="danger"
             />
         </div>

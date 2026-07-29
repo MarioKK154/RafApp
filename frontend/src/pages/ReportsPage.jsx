@@ -49,7 +49,7 @@ function ReportsPage() {
         if (canViewReports) {
             axiosInstance.get('/projects/', { params: { limit: 1000 } })
                 .then(response => setProjects(response.data))
-                .catch(() => toast.error("Failed to synchronize project registry."));
+                .catch(() => toast.error(t('failed_sync_project_registry', { defaultValue: 'Failed to synchronize project registry.' })));
         }
     }, [canViewReports]);
 
@@ -64,7 +64,7 @@ function ReportsPage() {
             setReportData(response.data);
         } catch (error) {
             console.error('Report fetch failed:', error);
-            toast.error("Telemetry failure: Could not generate project summary.");
+            toast.error(t('telemetry_failure', { defaultValue: 'Telemetry failure: Could not generate project summary.' }));
             setReportData(null);
         } finally {
             setIsLoading(false);
@@ -75,8 +75,8 @@ function ReportsPage() {
         return (
             <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-8">
                 <ShieldCheckIcon className="h-16 w-16 text-gray-200 mb-4" />
-                <h2 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter">Access Restricted</h2>
-                <p className="text-sm text-gray-500 max-w-xs mt-2">Administrative credentials are required to access financial telemetry and cost analysis.</p>
+                <h2 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter">{t('access_restricted', { defaultValue: 'Access Restricted' })}</h2>
+                <p className="text-sm text-gray-500 max-w-xs mt-2">{t('administrative_credentials_required', { defaultValue: 'Administrative credentials are required to access financial telemetry and cost analysis.' })}</p>
             </div>
         );
     }
@@ -94,7 +94,7 @@ function ReportsPage() {
 
             {/* Selection Interface */}
             <div className="max-w-xl mb-12">
-                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-3 ml-1">Select Analysis Target</label>
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-3 ml-1">{t('select_analysis_target', { defaultValue: 'Select Analysis Target' })}</label>
                 <div className="relative group">
                     <BriefcaseIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-indigo-500 transition-colors" />
                     <select
@@ -105,7 +105,7 @@ function ReportsPage() {
                         }}
                         className="block w-full pl-12 pr-10 h-14 rounded-2xl border border-gray-200 dark:bg-gray-800 dark:border-gray-700 text-sm font-bold focus:ring-2 focus:ring-indigo-500 transition-all shadow-sm appearance-none outline-none cursor-pointer"
                     >
-                        <option value="">Select a project for summary breakdown...</option>
+                        <option value="">{t('select_project_summary', { defaultValue: 'Select a project for summary breakdown...' })}</option>
                         {projects.map(p => (
                             <option key={p.id} value={p.id}>
                                 {p.name} {isSuperuser ? `(ID: ${p.id})` : ''}
@@ -117,7 +117,7 @@ function ReportsPage() {
             </div>
 
             {isLoading ? (
-                <div className="py-20"><LoadingSpinner text="Compiling project telemetry..." /></div>
+                <div className="py-20"><LoadingSpinner text={t('compiling_project_telemetry', { defaultValue: 'Compiling project telemetry...' })} /></div>
             ) : reportData ? (
                 <div className="space-y-10 animate-in slide-in-from-bottom-4 duration-700">
                     
@@ -125,42 +125,42 @@ function ReportsPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                         <MetricCard 
                             icon={<BanknotesIcon />} 
-                            label="Allocated Budget" 
+                            label={t('allocated_budget', { defaultValue: 'Allocated Budget' })} 
                             value={formatCurrency(reportData.budget)} 
                         />
                         <MetricCard 
                             icon={<ArrowPathIcon />} 
-                            label="Realized Cost" 
+                            label={t('realized_cost', { defaultValue: 'Realized Cost' })} 
                             value={formatCurrency(reportData.calculated_cost)} 
                         />
                         <MetricCard 
                             icon={<ArrowsRightLeftIcon />} 
-                            label="Fiscal Variance" 
+                            label={t('fiscal_variance', { defaultValue: 'Fiscal Variance' })} 
                             value={formatCurrency(reportData.variance)} 
                             trend={reportData.variance >= 0 ? 'positive' : 'negative'}
                         />
                         <MetricCard 
                             icon={<ClockIcon />} 
-                            label="Labor Deployment" 
-                            value={`${reportData.total_hours} hrs`} 
+                            label={t('labor_deployment', { defaultValue: 'Labor Deployment' })} 
+                            value={`${reportData.total_hours} ${t('hrs', { defaultValue: 'hrs' })}`} 
                         />
                     </div>
 
                     {/* Breakdown Table */}
                     <div className="bg-white dark:bg-gray-800 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
                         <div className="p-8 border-b border-gray-50 dark:border-gray-700">
-                            <h2 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Labor Cost Breakdown</h2>
-                            <p className="text-xs text-gray-400 mt-1 font-bold uppercase tracking-widest">Technician contribution & resource valuation</p>
+                            <h2 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight">{t('labor_cost_breakdown', { defaultValue: 'Labor Cost Breakdown' })}</h2>
+                            <p className="text-xs text-gray-400 mt-1 font-bold uppercase tracking-widest">{t('technician_contribution', { defaultValue: 'Technician contribution & resource valuation' })}</p>
                         </div>
                         
                         <div className="overflow-x-auto">
                             <table className="w-full text-sm text-left">
                                 <thead className="text-[10px] text-gray-400 uppercase font-black bg-gray-50 dark:bg-gray-700/50">
                                     <tr>
-                                        <th className="py-5 px-8">Staff Member</th>
-                                        <th className="py-5 px-6 text-right">Duration (Hrs)</th>
-                                        <th className="py-5 px-6 text-right">Rate</th>
-                                        <th className="py-5 px-8 text-right">Subtotal</th>
+                                        <th className="py-5 px-8">{t('staff_member', { defaultValue: 'Staff Member' })}</th>
+                                        <th className="py-5 px-6 text-right">{t('duration_hrs', { defaultValue: 'Duration (Hrs)' })}</th>
+                                        <th className="py-5 px-6 text-right">{t('rate', { defaultValue: 'Rate' })}</th>
+                                        <th className="py-5 px-8 text-right">{t('subtotal', { defaultValue: 'Subtotal' })}</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-50 dark:divide-gray-700">
@@ -187,7 +187,7 @@ function ReportsPage() {
                                     ))}
                                     {reportData.detailed_logs.length === 0 && (
                                         <tr>
-                                            <td colSpan="4" className="py-20 text-center text-gray-400 italic">No labor logs recorded for this project target.</td>
+                                            <td colSpan="4" className="py-20 text-center text-gray-400 italic">{t('no_labor_logs', { defaultValue: 'No labor logs recorded for this project target.' })}</td>
                                         </tr>
                                     )}
                                 </tbody>
@@ -199,16 +199,15 @@ function ReportsPage() {
                     <div className="p-6 bg-indigo-50 dark:bg-indigo-900/10 rounded-3xl border border-indigo-100 dark:border-indigo-800 flex gap-4">
                         <InformationCircleIcon className="h-6 w-6 text-indigo-600 shrink-0" />
                         <p className="text-[10px] text-indigo-700 dark:text-indigo-300 leading-relaxed font-bold uppercase tracking-tight">
-                            Note: Calculated costs are based on finalized timelogs and active labor catalog rates at the time of session closure. 
-                            Material costs from procurement lists are currently handled in the Project BoQ section.
+                            {t('report_note', { defaultValue: 'Note: Calculated costs are based on finalized timelogs and active labor catalog rates at the time of session closure. Material costs from procurement lists are currently handled in the Project BoQ section.' })}
                         </p>
                     </div>
                 </div>
             ) : (
                 <div className="py-32 text-center">
                     <DocumentChartBarIcon className="h-12 w-12 text-gray-200 mx-auto mb-4" />
-                    <h3 className="text-lg font-black text-gray-400 uppercase tracking-tighter italic">Analytical Buffer Empty</h3>
-                    <p className="text-sm text-gray-400 mt-2">Select a deployment from the registry to initialize cost reporting.</p>
+                    <h3 className="text-lg font-black text-gray-400 uppercase tracking-tighter italic">{t('analytical_buffer_empty', { defaultValue: 'Analytical Buffer Empty' })}</h3>
+                    <p className="text-sm text-gray-400 mt-2">{t('select_deployment_initialize', { defaultValue: 'Select a deployment from the registry to initialize cost reporting.' })}</p>
                 </div>
             )}
         </div>

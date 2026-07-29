@@ -109,7 +109,7 @@ function ShopEditPage() {
                         </h1>
                         <div className="flex items-center gap-2 mt-2">
                             <span className="text-[10px] font-bold text-gray-400 uppercase flex items-center gap-1">
-                                <FingerPrintIcon className="h-3 w-3" /> Registry ID: {shopId}
+                                <FingerPrintIcon className="h-3 w-3" /> {t('registry_id_label', { defaultValue: 'Registry ID:' })} {shopId}
                             </span>
                         </div>
                     </div>
@@ -178,7 +178,7 @@ function ShopEditPage() {
                                         )}
                                         <label className="flex items-center gap-1 cursor-pointer bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 text-emerald-600 dark:text-emerald-400 px-2 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition">
                                             <CloudArrowUpIcon className="h-4 w-4" />
-                                            <span>Photo</span>
+                                            <span>{t('photo_label', { defaultValue: 'Photo' })}</span>
                                             <input 
                                                 type="file" 
                                                 accept="image/*" 
@@ -193,9 +193,9 @@ function ShopEditPage() {
                                                             headers: { 'Content-Type': 'multipart/form-data' }
                                                         });
                                                         setFormData(prev => ({ ...prev, contact_person_photo_url: res.data.url }));
-                                                        toast.success('Photo uploaded successfully');
+                                                        toast.success(t('photo_uploaded_success', { defaultValue: 'Photo uploaded successfully' }));
                                                     } catch (err) {
-                                                        toast.error('Failed to upload photo');
+                                                        toast.error(t('photo_upload_failed', { defaultValue: 'Failed to upload photo' }));
                                                     }
                                                 }} 
                                             />
@@ -221,7 +221,7 @@ function ShopEditPage() {
                                 <label className="block text-[10px] font-black text-gray-500 uppercase mb-1 ml-1">{t('digital_storefront_url')}</label>
                                 <div className="relative">
                                     <GlobeAltIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                                    <input type="url" name="website" value={formData.website} onChange={handleChange} placeholder="https://..." className="pl-12 block w-full h-12 rounded-2xl border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-indigo-500 text-sm" />
+                                    <input type="url" name="website" value={formData.website} onChange={handleChange} placeholder={t('placeholder_https', { defaultValue: 'https://...' })} className="pl-12 block w-full h-12 rounded-2xl border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-indigo-500 text-sm" />
                                 </div>
                             </div>
                         </div>

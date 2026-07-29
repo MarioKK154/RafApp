@@ -39,7 +39,7 @@ function ToolDetailsPage() {
             setTool(response.data);
         } catch (err) {
             console.error("Asset Sync Error:", err);
-            toast.error("Telemetry failure: Tool record unreachable.");
+            toast.error(t('toast_tool_fetch_failed', { defaultValue: 'Telemetry failure: Tool record unreachable.' }));
             navigate('/tools');
         } finally {
             setIsLoading(false);
@@ -60,7 +60,7 @@ function ToolDetailsPage() {
         }
     };
 
-    if (isLoading) return <LoadingSpinner text="Accessing asset logbook..." size="lg" />;
+    if (isLoading) return <LoadingSpinner text={t('accessing_asset_logbook', { defaultValue: 'Accessing asset logbook...' })} size="lg" />;
     if (!tool) return null;
 
     return (
@@ -73,7 +73,7 @@ function ToolDetailsPage() {
                             to="/tools" 
                             className="flex items-center text-xs font-black text-gray-400 hover:text-indigo-600 transition mb-2 uppercase tracking-widest"
                         >
-                            <ChevronLeftIcon className="h-3 w-3 mr-1" /> Hardware Registry
+                            <ChevronLeftIcon className="h-3 w-3 mr-1" /> {t('hardware_registry', { defaultValue: 'Hardware Registry' })}
                         </Link>
                         <div className="flex items-center gap-3">
                             <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
@@ -84,7 +84,7 @@ function ToolDetailsPage() {
                             </h1>
                         </div>
                         <p className="text-gray-500 dark:text-gray-400 text-sm mt-2 font-bold uppercase tracking-widest">
-                            {tool.brand || 'Generic'} • {tool.model || 'Standard Edition'}
+                            {tool.brand || t('generic_brand', { defaultValue: 'Generic' })} • {tool.model || t('standard_edition', { defaultValue: 'Standard Edition' })}
                         </p>
                     </div>
 
@@ -94,7 +94,7 @@ function ToolDetailsPage() {
                             className="inline-flex items-center px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-xl shadow-lg transition-all duration-150 ease-out hover:-translate-y-0.5 active:translate-y-0 active:shadow-md"
                         >
                             <PencilSquareIcon className="h-5 w-5 mr-1.5" /> 
-                            Modify Specs
+                            {t('modify_specs', { defaultValue: 'Modify Specs' })}
                         </Link>
                     )}
                 </div>
@@ -123,27 +123,27 @@ function ToolDetailsPage() {
                         
                         <div className="flex items-center justify-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-tighter">
                             <UserIcon className="h-4 w-4 text-indigo-500" />
-                            <span>Currently Held By:</span>
-                            <span className="text-gray-900 dark:text-white">{tool.current_user?.full_name || 'Central Storage'}</span>
+                            <span>{t('currently_held_by', { defaultValue: 'Currently Held By:' })}</span>
+                            <span className="text-gray-900 dark:text-white">{tool.current_user?.full_name || t('central_storage', { defaultValue: 'Central Storage' })}</span>
                         </div>
                     </section>
 
                     {/* Technical Specifications */}
                     <section className="bg-white dark:bg-gray-800 p-8 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-700 space-y-6">
                         <h2 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] border-b pb-2 flex items-center gap-2">
-                            <IdentificationIcon className="h-4 w-4" /> Technical Specs
+                            <IdentificationIcon className="h-4 w-4" /> {t('technical_specs', { defaultValue: 'Technical Specs' })}
                         </h2>
                         
                         <div className="space-y-4">
-                            <SpecItem icon={<FingerPrintIcon />} label="Registry ID" value={`#${tool.id}`} mono />
-                            <SpecItem icon={<IdentificationIcon />} label="Serial Number" value={tool.serial_number || 'N/A'} mono />
-                            <SpecItem icon={<CalendarIcon />} label="Purchase Date" value={tool.purchase_date ? new Date(tool.purchase_date).toLocaleDateString() : 'Unknown'} />
-                            <SpecItem icon={<ArrowPathRoundedSquareIcon />} label="Last Service" value={tool.last_service_date ? new Date(tool.last_service_date).toLocaleDateString() : 'Never'} />
+                            <SpecItem icon={<FingerPrintIcon />} label={t('registry_id', { defaultValue: 'Registry ID' })} value={`#${tool.id}`} mono />
+                            <SpecItem icon={<IdentificationIcon />} label={t('serial_number_label', { defaultValue: 'Serial Number' })} value={tool.serial_number || t('not_available_short', { defaultValue: 'N/A' })} mono />
+                            <SpecItem icon={<CalendarIcon />} label={t('purchase_date', { defaultValue: 'Purchase Date' })} value={tool.purchase_date ? new Date(tool.purchase_date).toLocaleDateString() : t('unknown', { defaultValue: 'Unknown' })} />
+                            <SpecItem icon={<ArrowPathRoundedSquareIcon />} label={t('last_service', { defaultValue: 'Last Service' })} value={tool.last_service_date ? new Date(tool.last_service_date).toLocaleDateString() : t('never', { defaultValue: 'Never' })} />
                         </div>
 
                         {tool.description && (
                             <div className="pt-4 border-t border-gray-50 dark:border-gray-700">
-                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Technical Description</p>
+                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">{t('technical_description', { defaultValue: 'Technical Description' })}</p>
                                 <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed italic">"{tool.description}"</p>
                             </div>
                         )}
@@ -155,8 +155,8 @@ function ToolDetailsPage() {
                     <section className="bg-white dark:bg-gray-800 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden h-full flex flex-col">
                         <div className="p-8 border-b border-gray-50 dark:border-gray-700 flex justify-between items-center bg-gray-50/30 dark:bg-gray-700/30">
                             <div>
-                                <h2 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Audit Logbook</h2>
-                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Lifecycle event tracking</p>
+                                <h2 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight">{t('audit_logbook', { defaultValue: 'Audit Logbook' })}</h2>
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">{t('lifecycle_event_tracking', { defaultValue: 'Lifecycle event tracking' })}</p>
                             </div>
                             <ArchiveBoxIcon className="h-8 w-8 text-gray-200 dark:text-gray-600" />
                         </div>
@@ -166,9 +166,9 @@ function ToolDetailsPage() {
                                 <table className="w-full text-sm text-left">
                                     <thead className="text-[10px] text-gray-400 uppercase font-black sticky top-0 bg-white dark:bg-gray-800 z-10 border-b dark:border-gray-700">
                                         <tr>
-                                            <th className="py-5 px-8">Timestamp</th>
-                                            <th className="py-5 px-6">Operational Event</th>
-                                            <th className="py-5 px-8">Executing Agent</th>
+                                            <th className="py-5 px-8">{t('timestamp', { defaultValue: 'Timestamp' })}</th>
+                                            <th className="py-5 px-6">{t('operational_event', { defaultValue: 'Operational Event' })}</th>
+                                            <th className="py-5 px-8">{t('executing_agent', { defaultValue: 'Executing Agent' })}</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-50 dark:divide-gray-700">
@@ -199,7 +199,7 @@ function ToolDetailsPage() {
                                                             <UserIcon className="h-3 w-3" />
                                                         </div>
                                                         <span className="font-bold text-gray-700 dark:text-gray-300">
-                                                            {log.user?.full_name || 'System Auto'}
+                                                            {log.user?.full_name || t('system_auto', { defaultValue: 'System Auto' })}
                                                         </span>
                                                     </div>
                                                 </td>
@@ -210,8 +210,8 @@ function ToolDetailsPage() {
                             ) : (
                                 <div className="py-32 text-center">
                                     <ClockIcon className="h-12 w-12 text-gray-100 dark:text-gray-700 mx-auto mb-4" />
-                                    <h3 className="text-lg font-black text-gray-400 uppercase tracking-tighter italic">Logbook Vacant</h3>
-                                    <p className="text-sm text-gray-400">No operational events have been registered for this asset.</p>
+                                    <h3 className="text-lg font-black text-gray-400 uppercase tracking-tighter italic">{t('logbook_vacant', { defaultValue: 'Logbook Vacant' })}</h3>
+                                    <p className="text-sm text-gray-400">{t('no_operational_events', { defaultValue: 'No operational events have been registered for this asset.' })}</p>
                                 </div>
                             )}
                         </div>
@@ -223,7 +223,7 @@ function ToolDetailsPage() {
                 <div className="mt-8 p-6 bg-orange-50 dark:bg-orange-900/10 rounded-[2.5rem] border border-orange-100 dark:border-orange-800 flex gap-4">
                     <ShieldCheckIcon className="h-6 w-6 text-orange-600 shrink-0" />
                     <p className="text-[10px] text-orange-700 dark:text-orange-300 leading-relaxed font-bold uppercase tracking-tight">
-                        Infrastructure Access: As System Root, you have view-only oversight of this tenant's hardware logs. Modifications should only be performed via the tenant PM profile unless maintenance is required.
+                        {t('system_root_tool_warning', { defaultValue: 'Infrastructure Access: As System Root, you have view-only oversight of this tenant\'s hardware logs. Modifications should only be performed via the tenant PM profile unless maintenance is required.' })}
                     </p>
                 </div>
             )}

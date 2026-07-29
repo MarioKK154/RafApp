@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
+import { useTranslation, Translation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import axiosInstance from '../api/axiosInstance';
 import { toast } from 'react-toastify';
@@ -1174,11 +1174,11 @@ function SuggestionsFeedbackCard({ title }) {
                 category,
                 content: content.trim()
             });
-            toast.success(isIcelandic ? 'Takk fyrir ábendinguna!' : 'Thanks for your feedback!');
+            toast.success(t('feedback_thanks', { defaultValue: 'Thanks for your feedback!' }));
             setContent('');
         } catch (err) {
             console.error("Failed to submit feedback:", err);
-            toast.error(err.response?.data?.detail || 'Failed to submit feedback.');
+            toast.error(err.response?.data?.detail || t('feedback_failed', { defaultValue: 'Failed to submit feedback.' }));
         } finally {
             setIsSubmitting(false);
         }
@@ -1193,27 +1193,27 @@ function SuggestionsFeedbackCard({ title }) {
                 <form onSubmit={handleSubmitFeedback} className="space-y-4">
                     <div>
                         <label className="block text-[8px] font-black text-gray-500 uppercase tracking-widest mb-1.5 ml-1">
-                            {isIcelandic ? 'Flokkur' : 'Category'}
+                            {t('category', { defaultValue: 'Category' })}
                         </label>
                         <select
                             value={category}
                             onChange={(e) => setCategory(e.target.value)}
                             className="w-full h-10 px-3 bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-indigo-950/20 text-gray-900 dark:text-white text-[10px] font-black uppercase tracking-widest rounded-xl focus:outline-none"
                         >
-                            <option value="Improvement">{isIcelandic ? 'Ábending' : 'Improvement'}</option>
-                            <option value="Bug">{isIcelandic ? 'Villa' : 'Bug Report'}</option>
-                            <option value="Feature Request">{isIcelandic ? 'Nýr eiginleiki' : 'Feature Request'}</option>
-                            <option value="Other">{isIcelandic ? 'Annað' : 'Other'}</option>
+                            <option value="Improvement">{t('improvement', { defaultValue: 'Improvement' })}</option>
+                            <option value="Bug">{t('bug_report', { defaultValue: 'Bug Report' })}</option>
+                            <option value="Feature Request">{t('feature_request', { defaultValue: 'Feature Request' })}</option>
+                            <option value="Other">{t('other', { defaultValue: 'Other' })}</option>
                         </select>
                     </div>
                     <div>
                         <label className="block text-[8px] font-black text-gray-500 uppercase tracking-widest mb-1.5 ml-1">
-                            {isIcelandic ? 'Þín tillaga' : 'Your suggestion'}
+                            {t('your_suggestion', { defaultValue: 'Your suggestion' })}
                         </label>
                         <textarea
                             value={content}
                             onChange={(e) => setContent(e.target.value)}
-                            placeholder={isIcelandic ? 'Hvernig getum við bætt RafApp?' : 'How can we make RafApp better?'}
+                            placeholder={t('feedback_placeholder', { defaultValue: 'How can we make RafApp better?' })}
                             rows={3}
                             required
                             className="w-full p-3 rounded-xl border border-indigo-950/20 dark:border-indigo-950/20 bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-white text-xs focus:outline-none resize-none leading-relaxed"
@@ -1224,7 +1224,7 @@ function SuggestionsFeedbackCard({ title }) {
                         disabled={isSubmitting || !content.trim()}
                         className="w-full h-11 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition flex items-center justify-center gap-2 disabled:opacity-50"
                     >
-                        {isSubmitting ? (isIcelandic ? 'Sendir...' : 'Sending...') : (isIcelandic ? 'Senda ábendingu' : 'Send Suggestion')}
+                        {isSubmitting ? t('sending', { defaultValue: 'Sending...' }) : t('send_suggestion', { defaultValue: 'Send Suggestion' })}
                     </button>
                 </form>
             </div>
@@ -1251,12 +1251,14 @@ class DashboardErrorBoundary extends React.Component {
     render() {
         if (this.state.hasError) {
             return (
+                <Translation>
+                    {(t) => (
                 <div className="container mx-auto p-8 max-w-xl text-center min-h-[60vh] flex flex-col items-center justify-center">
                     <div className="bg-white dark:bg-gray-900 p-8 rounded-3xl border border-gray-200 dark:border-gray-800 shadow-xl space-y-4">
                         <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center mx-auto text-xl font-bold">⚠️</div>
-                        <h2 className="text-lg font-black uppercase tracking-tight text-gray-900 dark:text-white">Dashboard Telemetry Recovered</h2>
+                        <h2 className="text-lg font-black uppercase tracking-tight text-gray-900 dark:text-white">{t('dashboard_error_title', { defaultValue: 'Dashboard Telemetry Recovered' })}</h2>
                         <p className="text-xs text-gray-400 font-bold leading-relaxed">
-                            An unexpected layout glitch occurred. Click below to reset your custom layout settings and restore the default operational view.
+                            {t('dashboard_error_desc', { defaultValue: 'An unexpected layout glitch occurred. Click below to reset your custom layout settings and restore the default operational view.' })}
                         </p>
                         {this.state.error && (
                             <div className="p-3 bg-red-950/40 border border-red-800/50 rounded-xl text-[10px] text-red-300 font-mono text-left overflow-x-auto max-h-32">
@@ -1267,10 +1269,12 @@ class DashboardErrorBoundary extends React.Component {
                             onClick={this.handleReset} 
                             className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs uppercase tracking-widest rounded-xl transition shadow-lg"
                         >
-                            Reset Dashboard & Reload
+                            {t('dashboard_error_reset', { defaultValue: 'Reset Dashboard & Reload' })}
                         </button>
                     </div>
                 </div>
+                    )}
+                </Translation>
             );
         }
         return this.props.children;

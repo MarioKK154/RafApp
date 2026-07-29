@@ -14,11 +14,10 @@ import PageHeader from '../components/PageHeader';
 
 function LawsPage() {
     const { t } = useTranslation();
-    // Structured data for legal resources
     const legalCategories = [
         {
-            title: "National Safety Framework",
-            description: "Core laws governing the security and safety of electrical installations in Iceland.",
+            title: t('national_safety_framework_title', { defaultValue: 'National Safety Framework' }),
+            description: t('national_safety_framework_desc', { defaultValue: 'Core laws governing the security and safety of electrical installations in Iceland.' }),
             icon: <ShieldCheckIcon className="h-6 w-6 text-indigo-600" />,
             links: [
                 { name: "Lög um öryggi raforkuvirkja (146/1996)", url: "https://www.althingi.is/lagas/153b/1996146.html" },
@@ -26,8 +25,8 @@ function LawsPage() {
             ]
         },
         {
-            title: "Building & Construction",
-            description: "Regulations handled by HMS regarding technical installation standards.",
+            title: t('building_construction_title', { defaultValue: 'Building & Construction' }),
+            description: t('building_construction_desc', { defaultValue: 'Regulations handled by HMS regarding technical installation standards.' }),
             icon: <BuildingLibraryIcon className="h-6 w-6 text-indigo-600" />,
             links: [
                 { name: "Byggingarreglugerð (112/2012)", url: "https://www.reglugerd.is/reglugerdir/allar/nr/112-2012" },
@@ -35,8 +34,8 @@ function LawsPage() {
             ]
         },
         {
-            title: "Technical Standards (ÍST)",
-            description: "Icelandic and European standards (EN) for wiring and grounding protocols.",
+            title: t('technical_standards_title', { defaultValue: 'Technical Standards (ÍST)' }),
+            description: t('technical_standards_desc', { defaultValue: 'Icelandic and European standards (EN) for wiring and grounding protocols.' }),
             icon: <DocumentTextIcon className="h-6 w-6 text-indigo-600" />,
             links: [
                 { name: "ÍST 200:2006 (Wiring Rules)", url: "https://www.stadlar.is/" },
@@ -60,10 +59,9 @@ function LawsPage() {
             <div className="mb-10 p-6 bg-orange-50 dark:bg-orange-900/20 border border-orange-100 dark:border-orange-800 rounded-[2rem] flex items-start gap-4">
                 <ExclamationTriangleIcon className="h-6 w-6 text-orange-600 shrink-0" />
                 <div className="min-w-0">
-                    <p className="text-[10px] font-black text-orange-700 dark:text-orange-400 uppercase tracking-widest mb-1">Mandatory Compliance</p>
+                    <p className="text-[10px] font-black text-orange-700 dark:text-orange-400 uppercase tracking-widest mb-1">{t('mandatory_compliance', { defaultValue: 'Mandatory Compliance' })}</p>
                     <p className="text-xs text-orange-600 dark:text-orange-300 font-medium leading-relaxed">
-                        Violating National Electrical Codes (ÍST 200) can result in the revocation of commercial licenses and system shut-downs. 
-                        Always consult the latest revisions on <a href="https://www.hms.is" target="_blank" className="underline font-bold">hms.is</a>.
+                        {t('mandatory_compliance_desc', { defaultValue: 'Violating National Electrical Codes (ÍST 200) can result in the revocation of commercial licenses and system shut-downs. Always consult the latest revisions on' })} <a href="https://www.hms.is" target="_blank" className="underline font-bold">hms.is</a>.
                     </p>
                 </div>
             </div>
@@ -111,8 +109,8 @@ function LawsPage() {
                 <div className="flex items-center gap-4">
                     <GlobeAltIcon className="h-8 w-8 text-gray-300" />
                     <div className="min-w-0">
-                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-tighter">Affiliated Bodies</p>
-                        <p className="text-xs font-bold text-gray-500">CENELEC / IEC International Standards</p>
+                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-tighter">{t('affiliated_bodies', { defaultValue: 'Affiliated Bodies' })}</p>
+                        <p className="text-xs font-bold text-gray-500">{t('affiliated_bodies_desc', { defaultValue: 'CENELEC / IEC International Standards' })}</p>
                     </div>
                 </div>
                 <div className="flex items-center gap-6">

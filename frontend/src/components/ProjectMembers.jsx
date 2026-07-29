@@ -53,9 +53,9 @@ function ProjectMembers({ projectId }) {
             setAllUsers(usersRes.data);
         } catch (error) {
             console.error('Personnel sync error:', error);
-            setError('Operational telemetry partially synced.');
+            setError(t('telemetry_sync_error', { defaultValue: 'Operational telemetry partially synced.' }));
         }
-    }, [projectId]);
+    }, [projectId, t]);
 
     useEffect(() => {
         const load = async () => {
@@ -74,12 +74,12 @@ function ProjectMembers({ projectId }) {
             await axiosInstance.post(`/projects/${projectId}/members`, { 
                 user_id: parseInt(selectedUserId, 10) 
             });
-            toast.success("Personnel deployed to site node.");
+            toast.success(t('personnel_deployed', { defaultValue: 'Personnel deployed to site node.' }));
             setSelectedUserId('');
             fetchData();
         } catch (error) {
             console.error('Add member failed:', error);
-            toast.error(error.response?.data?.detail || "Deployment failed.");
+            toast.error(error.response?.data?.detail || t('deployment_failed', { defaultValue: 'Deployment failed.' }));
         } finally {
             setIsSubmitting(false);
         }
@@ -89,11 +89,11 @@ function ProjectMembers({ projectId }) {
         if (!memberToRemove) return;
         try {
             await axiosInstance.delete(`/projects/${projectId}/members/${memberToRemove.id}`);
-            toast.success(`Access revoked for ${memberToRemove.full_name || 'Personnel'}.`);
+            toast.success(t('access_revoked_success', { defaultValue: 'Access revoked for {{name}}.', name: memberToRemove.full_name || t('personnel_generic', { defaultValue: 'Personnel' }) }));
             fetchData();
         } catch (error) {
             console.error('Revoke member failed:', error);
-            toast.error("Protocol failure: Could not revoke access.");
+            toast.error(t('protocol_failure_revoke', { defaultValue: 'Protocol failure: Could not revoke access.' }));
         } finally {
             setIsRemoveModalOpen(false);
             setMemberToRemove(null);
@@ -102,7 +102,7 @@ function ProjectMembers({ projectId }) {
 
     const availableUsersToAdd = allUsers.filter(u => !members.some(m => m.id === u.id));
 
-    if (isLoading) return <LoadingSpinner text="Retrieving personnel registry..." size="sm" />;
+    if (isLoading) return <LoadingSpinner text={t('retrieving_personnel', { defaultValue: 'Retrieving personnel registry...' })} size="sm" />;
 
     return (
         <div className="mt-6">
@@ -116,7 +116,7 @@ function ProjectMembers({ projectId }) {
                     <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
                         <UserGroupIcon className="h-6 w-6 text-indigo-600" />
                     </div>
-                    <h2 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">{t('personnel_deployment')}</h2>
+                    <h2 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">{t('personnel_deployment', { defaultValue: 'Personnel Deployment' })}</h2>
                 </div>
                 <div className="flex items-center gap-3 px-4 py-2 bg-gray-50 dark:bg-gray-900 rounded-full border border-gray-100 dark:border-gray-800">
                     <span className="relative flex h-2 w-2">
@@ -124,7 +124,7 @@ function ProjectMembers({ projectId }) {
                         <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
                     </span>
                     <span className="text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest leading-none">
-                        {activeLogs.length} Active On-Site
+                        {activeLogs.length} {t('active_onsite', { defaultValue: 'Active On-Site' })}
                     </span>
                 </div>
             </header>
@@ -135,7 +135,7 @@ function ProjectMembers({ projectId }) {
                     <form onSubmit={handleAddMember} className="flex flex-col md:flex-row gap-6 items-end">
                         <div className="flex-1 w-full space-y-2">
                             <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">
-                                Select Personnel for Deployment
+                                {t('select_personnel_deployment', { defaultValue: 'Select Personnel for Deployment' })}
                             </label>
                             <div className="relative group">
                                 <IdentificationIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-indigo-500 transition-colors" />
@@ -145,7 +145,7 @@ function ProjectMembers({ projectId }) {
                                     disabled={isSubmitting}
                                     className="modern-input pl-12 h-14 !rounded-2xl text-sm font-bold appearance-none cursor-pointer"
                                 >
-                                    <option value="">-- Choose Staff Node --</option>
+                                    <option value="">{t('choose_staff_node', { defaultValue: '-- Choose Staff Node --' })}</option>
                                     {availableUsersToAdd.map(u => (
                                         <option key={u.id} value={u.id} className="dark:bg-gray-800">
                                             {u.full_name || u.email} — [{u.role?.toUpperCase().replace('_', ' ')}]
@@ -160,7 +160,7 @@ function ProjectMembers({ projectId }) {
                             className="h-14 px-10 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-[0.2em] rounded-2xl transition transform active:scale-95 disabled:opacity-50 flex items-center justify-center gap-3"
                         >
                             {isSubmitting ? <ArrowPathIcon className="h-5 w-5 animate-spin" /> : <UserPlusIcon className="h-5 w-5 stroke-[2.5px]" />}
-                            Deploy to Node
+                            {t('deploy_to_node', { defaultValue: 'Deploy to Node' })}
                         </button>
                     </form>
                 </div>
@@ -196,7 +196,7 @@ function ProjectMembers({ projectId }) {
                                     
                                     <div className="min-w-0">
                                         <h3 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-tight truncate leading-none mb-1.5">
-                                            {member.full_name || 'System Asset'}
+                                            {member.full_name || t('system_asset', { defaultValue: 'System Asset' })}
                                         </h3>
                                         <div className="flex flex-col gap-1">
                                             {isAdminOrPM && (
@@ -208,12 +208,12 @@ function ProjectMembers({ projectId }) {
                                             {activeSession ? (
                                                 <div className="flex items-center gap-1.5 text-[9px] font-black text-green-600 dark:text-green-400 uppercase tracking-tighter animate-pulse">
                                                     <ClockIcon className="h-3 w-3" />
-                                                    Clocked In: {new Date(activeSession.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                    {t('clocked_in', { defaultValue: 'Clocked In:' })} {new Date(activeSession.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                 </div>
                                             ) : (
                                                 <div className="flex items-center gap-1.5 text-[9px] font-black text-gray-400 uppercase tracking-tighter">
                                                     <MapPinIcon className="h-3 w-3" />
-                                                    Status: Off-Site
+                                                    {t('status_offsite', { defaultValue: 'Status: Off-Site' })}
                                                 </div>
                                             )}
                                         </div>
@@ -224,7 +224,7 @@ function ProjectMembers({ projectId }) {
                                     <button
                                         onClick={() => { setMemberToRemove(member); setIsRemoveModalOpen(true); }}
                                         className="p-3 text-gray-300 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all transform active:scale-90"
-                                        title="Revoke Node Access"
+                                        title={t('revoke_node_access', { defaultValue: 'Revoke Node Access' })}
                                     >
                                         <UserMinusIcon className="h-5 w-5" />
                                     </button>
@@ -235,8 +235,8 @@ function ProjectMembers({ projectId }) {
                 ) : (
                     <div className="col-span-full py-24 text-center border-2 border-dashed border-gray-100 dark:border-gray-800 rounded-[3rem] bg-gray-50/30 dark:bg-gray-900/20">
                         <UserGroupIcon className="h-16 w-16 text-gray-200 dark:text-gray-800 mx-auto mb-4" />
-                        <h3 className="text-lg font-black text-gray-400 dark:text-gray-600 uppercase tracking-[0.2em] italic">Personnel Registry Empty</h3>
-                        <p className="text-[10px] font-bold text-gray-300 dark:text-gray-700 uppercase tracking-widest mt-2">Initialize staff deployment using the console above.</p>
+                        <h3 className="text-lg font-black text-gray-400 dark:text-gray-600 uppercase tracking-[0.2em] italic">{t('personnel_registry_empty', { defaultValue: 'Personnel Registry Empty' })}</h3>
+                        <p className="text-[10px] font-bold text-gray-300 dark:text-gray-700 uppercase tracking-widest mt-2">{t('initialize_staff_deployment', { defaultValue: 'Initialize staff deployment using the console above.' })}</p>
                     </div>
                 )}
             </div>
@@ -245,9 +245,12 @@ function ProjectMembers({ projectId }) {
                 isOpen={isRemoveModalOpen}
                 onClose={() => { setIsRemoveModalOpen(false); setMemberToRemove(null); }}
                 onConfirm={confirmRemoveMember}
-                title="Terminate Node Deployment"
-                message={`CRITICAL: Are you sure you want to revoke project access for ${memberToRemove?.full_name || 'this asset'}? This will terminate their ability to log time to this node.`}
-                confirmText="REVOKE ACCESS"
+                title={t('terminate_node_deployment', { defaultValue: 'Terminate Node Deployment' })}
+                message={t('revoke_access_message', { 
+                    defaultValue: 'CRITICAL: Are you sure you want to revoke project access for {{name}}? This will terminate their ability to log time to this node.', 
+                    name: memberToRemove?.full_name || t('this_asset', { defaultValue: 'this asset' }) 
+                })}
+                confirmText={t('revoke_access_btn', { defaultValue: 'REVOKE ACCESS' })}
                 type="danger"
             />
         </div>

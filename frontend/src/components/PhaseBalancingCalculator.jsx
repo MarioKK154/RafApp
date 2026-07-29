@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ScaleIcon, ExclamationTriangleIcon, CheckCircleIcon, PlusIcon } from '@heroicons/react/24/outline';
 
 const PHASES = ['L1', 'L2', 'L3'];
 
 function PhaseBalancingCalculator() {
+    const { t } = useTranslation();
     const [rows, setRows] = useState([
         { id: 1, name: 'Lighting', phase: 'L1', amps: 10 },
         { id: 2, name: 'Sockets', phase: 'L2', amps: 12 },
@@ -29,7 +31,7 @@ function PhaseBalancingCalculator() {
     const isWarning = imbalancePct > 15; // 15% threshold for warning
 
     const suggestion = (() => {
-        if (!isWarning) return 'Phase loading appears reasonably balanced.';
+        if (!isWarning) return t('phase_balanced_msg', { defaultValue: 'Phase loading appears reasonably balanced.' });
         const sorted = [...PHASES].sort((a, b) => totals[b] - totals[a]);
         const [heaviest, medium, lightest] = sorted;
         return `Warning: Phase ${heaviest} is significantly higher than ${lightest}. Consider moving one or more circuits (e.g. heating, hot water, EV charger) from ${heaviest} to ${lightest} or ${medium}.`;
@@ -52,7 +54,7 @@ function PhaseBalancingCalculator() {
         <div className="space-y-6">
             <div className="space-y-3">
                 <label className="block text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] ml-1">
-                    Circuits and Loads (A)
+                    {t('circuits_and_loads', { defaultValue: 'Circuits and Loads (A)' })}
                 </label>
                 <div className="space-y-2 max-h-56 overflow-y-auto pr-1 custom-scrollbar">
                     {rows.map(row => (
@@ -62,7 +64,7 @@ function PhaseBalancingCalculator() {
                         >
                             <input
                                 type="text"
-                                placeholder="Circuit name"
+                                placeholder={t('circuit_name_placeholder', { defaultValue: 'Circuit name' })}
                                 value={row.name}
                                 onChange={(e) => updateRow(row.id, 'name', e.target.value)}
                                 className="flex-1 h-9 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 text-xs font-bold text-gray-900 dark:text-white"
@@ -103,7 +105,7 @@ function PhaseBalancingCalculator() {
                     onClick={addRow}
                     className="mt-2 inline-flex items-center gap-2 px-3 py-1.5 bg-gray-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.18em] hover:bg-indigo-700 transition"
                 >
-                    <PlusIcon className="h-4 w-4" /> Add Circuit
+                    <PlusIcon className="h-4 w-4" /> {t('add_circuit_btn_phase', { defaultValue: 'Add Circuit' })}
                 </button>
             </div>
 
@@ -118,7 +120,7 @@ function PhaseBalancingCalculator() {
                         </p>
                         {average > 0 && (
                             <p className="text-[10px] text-gray-400 mt-1">
-                                {((totals[ph] - average) / average * 100).toFixed(1)}% from average
+                                {((totals[ph] - average) / average * 100).toFixed(1)}% {t('from_average', { defaultValue: 'from average' })}
                             </p>
                         )}
                     </div>
@@ -140,7 +142,7 @@ function PhaseBalancingCalculator() {
                 <div>
                     <p className="font-black uppercase tracking-[0.18em] text-[10px] mb-1 flex items-center gap-1">
                         <ScaleIcon className="h-4 w-4" />
-                        Phase Balance Status
+                        {t('phase_balance_status', { defaultValue: 'Phase Balance Status' })}
                     </p>
                     <p className="text-[11px] leading-relaxed">
                         {suggestion}

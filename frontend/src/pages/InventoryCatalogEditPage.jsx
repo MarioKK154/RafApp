@@ -304,7 +304,7 @@ function InventoryCatalogEditPage() {
                         to="/inventory" 
                         className="flex items-center text-[10px] font-black text-gray-400 hover:text-indigo-600 transition mb-3 uppercase tracking-[0.2em]"
                     >
-                        <ChevronLeftIcon className="h-3 w-3 mr-1" /> {isSuperuser ? "Terminate Edit / Return to Registry" : "Return to Registry"}
+                        <ChevronLeftIcon className="h-3 w-3 mr-1" /> {isSuperuser ? t('terminate_edit_return_registry', { defaultValue: 'Terminate Edit / Return to Registry' }) : t('return_to_registry', { defaultValue: 'Return to Registry' })}
                     </Link>
                     
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -362,7 +362,7 @@ function InventoryCatalogEditPage() {
                         ) : (
                             <div className="rounded-3xl border border-dashed border-gray-200 dark:border-gray-700 flex flex-col justify-center items-center p-12 text-gray-400 dark:text-gray-500 bg-gray-50/30 dark:bg-gray-900/10">
                                 <CubeIcon className="h-12 w-12 stroke-1 mb-2 text-gray-300 dark:text-gray-600" />
-                                <span className="text-[10px] font-black uppercase tracking-widest">No Material Image Available</span>
+                                <span className="text-[10px] font-black uppercase tracking-widest">{t('no_material_image', { defaultValue: 'No Material Image Available' })}</span>
                             </div>
                         )}
                     </div>
@@ -423,7 +423,7 @@ function InventoryCatalogEditPage() {
                                             />
                                         </div>
                                         <label className="h-14 px-4 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-2xl flex items-center justify-center cursor-pointer border border-gray-200 dark:border-gray-600 transition text-[10px] font-black uppercase tracking-widest select-none shrink-0">
-                                            {isUploadingPhoto ? 'Uploading...' : 'Upload File'}
+                                            {isUploadingPhoto ? t('uploading_dots', { defaultValue: 'Uploading...' }) : t('upload_file', { defaultValue: 'Upload File' })}
                                             <input 
                                                 type="file" 
                                                 accept="image/*" 
@@ -436,7 +436,7 @@ function InventoryCatalogEditPage() {
                                 </div>
                                 <div className="space-y-1 md:col-span-2">
                                     <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">
-                                        Central warehouse quantity
+                                        {t('central_warehouse_quantity', { defaultValue: 'Central warehouse quantity' })}
                                     </label>
                                     <input
                                         type="number"
@@ -450,7 +450,7 @@ function InventoryCatalogEditPage() {
                                         placeholder="0"
                                     />
                                     <p className="text-[9px] text-gray-400 mt-1 font-medium">
-                                        Stock held centrally before issuing to projects (admin / superuser).
+                                        {t('central_warehouse_desc', { defaultValue: 'Stock held centrally before issuing to projects (admin / superuser).' })}
                                     </p>
                                 </div>
                             </div>
@@ -512,34 +512,34 @@ function InventoryCatalogEditPage() {
 
                         {isSuperuser && (
                             <div className="space-y-6 pt-6 border-t border-gray-100 dark:border-gray-700">
-                                <h3 className="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-4 font-black">Material Categorization</h3>
+                                <h3 className="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-4 font-black">{t('material_categorization', { defaultValue: 'Material Categorization' })}</h3>
                                 
                                 {/* Master Category (Level 1) */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                     <div className="space-y-1">
-                                        <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">Master Category (Level 1)</label>
+                                        <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">{t('master_category_level_1', { defaultValue: 'Master Category (Level 1)' })}</label>
                                         <select 
                                             name="master_category_select"
                                             value={showNewMaster ? 'NEW' : formData.master_category} 
                                             onChange={handleMasterChange}
                                             className="modern-input h-14 font-black"
                                         >
-                                            <option value="">-- Select Master Category --</option>
+                                            <option value="">-- {t('select_master_category', { defaultValue: 'Select Master Category' })} --</option>
                                             {existingFilters.map(f => (
                                                 <option key={f.category} value={f.category}>{f.category_display || f.category}</option>
                                             ))}
-                                            <option value="NEW" className="text-indigo-600 font-bold">+ Create New Category...</option>
+                                            <option value="NEW" className="text-indigo-600 font-bold">{t('create_new_category', { defaultValue: '+ Create New Category...' })}</option>
                                         </select>
                                     </div>
                                     {showNewMaster && (
                                         <div className="space-y-1 animate-in slide-in-from-left duration-200">
-                                            <label className="block text-[10px] font-black text-indigo-500 uppercase mb-2 ml-1 tracking-widest">New Master Category Name</label>
+                                            <label className="block text-[10px] font-black text-indigo-500 uppercase mb-2 ml-1 tracking-widest">{t('new_master_category_name', { defaultValue: 'New Master Category Name' })}</label>
                                             <input 
                                                 type="text" 
                                                 name="master_category" 
                                                 value={formData.master_category} 
                                                 onChange={handleChange} 
-                                                placeholder="e.g. Strengir"
+                                                placeholder={t('placeholder_strengir', { defaultValue: 'e.g. Strengir' })}
                                                 className="modern-input h-14 font-black border-indigo-200 focus:border-indigo-500" 
                                             />
                                         </div>
@@ -549,7 +549,7 @@ function InventoryCatalogEditPage() {
                                 {/* Category / Subcategory (Level 2) */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                     <div className="space-y-1">
-                                        <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">Category / Subcategory (Level 2)</label>
+                                        <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">{t('category_subcategory_level_2', { defaultValue: 'Category / Subcategory (Level 2)' })}</label>
                                         <select 
                                             name="category_select"
                                             value={showNewCategory ? 'NEW' : formData.category} 
@@ -557,7 +557,7 @@ function InventoryCatalogEditPage() {
                                             disabled={!formData.master_category && !showNewMaster}
                                             className="modern-input h-14 font-black"
                                         >
-                                            <option value="">-- Select Category --</option>
+                                            <option value="">-- {t('select_category', { defaultValue: 'Select Category' })} --</option>
                                             {(() => {
                                                 const selectedMasterNode = existingFilters.find(f => f.category === formData.master_category);
                                                 const availableCategories = selectedMasterNode ? selectedMasterNode.subcategories : [];
@@ -566,31 +566,31 @@ function InventoryCatalogEditPage() {
                                                 ));
                                             })()}
                                             {(formData.master_category || showNewMaster) && (
-                                                <option value="NEW" className="text-indigo-600 font-bold">+ Create New Subcategory...</option>
+                                                <option value="NEW" className="text-indigo-600 font-bold">{t('create_new_subcategory', { defaultValue: '+ Create New Subcategory...' })}</option>
                                             )}
                                         </select>
                                     </div>
                                     {showNewCategory && (
                                         <div className="grid grid-cols-2 gap-4 animate-in slide-in-from-left duration-200 col-span-1">
                                             <div className="space-y-1">
-                                                <label className="block text-[8px] font-black text-indigo-500 uppercase mb-2 ml-1 tracking-widest">Category Key (EN)</label>
+                                                <label className="block text-[8px] font-black text-indigo-500 uppercase mb-2 ml-1 tracking-widest">{t('category_key_en', { defaultValue: 'Category Key (EN)' })}</label>
                                                 <input 
                                                     type="text" 
                                                     name="category" 
                                                     value={formData.category} 
                                                     onChange={handleChange} 
-                                                    placeholder="e.g. Power cables"
+                                                    placeholder={t('placeholder_power_cables', { defaultValue: 'e.g. Power cables' })}
                                                     className="modern-input h-14 font-black border-indigo-200 focus:border-indigo-500" 
                                                 />
                                             </div>
                                             <div className="space-y-1">
-                                                <label className="block text-[8px] font-black text-indigo-500 uppercase mb-2 ml-1 tracking-widest">Category Display (IS)</label>
+                                                <label className="block text-[8px] font-black text-indigo-500 uppercase mb-2 ml-1 tracking-widest">{t('category_display_is', { defaultValue: 'Category Display (IS)' })}</label>
                                                 <input 
                                                     type="text" 
                                                     name="category_en" 
                                                     value={formData.category_en} 
                                                     onChange={handleChange} 
-                                                    placeholder="e.g. Aflstrengir"
+                                                    placeholder={t('placeholder_aflstrengir', { defaultValue: 'e.g. Aflstrengir' })}
                                                     className="modern-input h-14 border-indigo-200 focus:border-indigo-500" 
                                                 />
                                             </div>
@@ -601,7 +601,7 @@ function InventoryCatalogEditPage() {
                                 {/* Subcategory / Sub-subcategory (Level 3) */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                     <div className="space-y-1">
-                                        <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">Sub-subcategory (Level 3 - Optional)</label>
+                                        <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">{t('sub_subcategory_level_3', { defaultValue: 'Sub-subcategory (Level 3 - Optional)' })}</label>
                                         <select 
                                             name="subcategory_select"
                                             value={showNewSubcategory ? 'NEW' : formData.subcategory} 
@@ -609,7 +609,7 @@ function InventoryCatalogEditPage() {
                                             disabled={!formData.category && !showNewCategory}
                                             className="modern-input h-14 font-black"
                                         >
-                                            <option value="">-- Select Sub-subcategory (None) --</option>
+                                            <option value="">-- {t('select_sub_subcategory', { defaultValue: 'Select Sub-subcategory (None)' })} --</option>
                                             {(() => {
                                                 const selectedMasterNode = existingFilters.find(f => f.category === formData.master_category);
                                                 const availableCategories = selectedMasterNode ? selectedMasterNode.subcategories : [];
@@ -620,31 +620,31 @@ function InventoryCatalogEditPage() {
                                                 ));
                                             })()}
                                             {(formData.category || showNewCategory) && (
-                                                <option value="NEW" className="text-indigo-600 font-bold">+ Create New Sub-subcategory...</option>
+                                                <option value="NEW" className="text-indigo-600 font-bold">{t('create_new_sub_subcategory', { defaultValue: '+ Create New Sub-subcategory...' })}</option>
                                             )}
                                         </select>
                                     </div>
                                     {showNewSubcategory && (
                                         <div className="grid grid-cols-2 gap-4 animate-in slide-in-from-left duration-200 col-span-1">
                                             <div className="space-y-1">
-                                                <label className="block text-[8px] font-black text-indigo-500 uppercase mb-2 ml-1 tracking-widest">Sub-subcat Key (EN)</label>
+                                                <label className="block text-[8px] font-black text-indigo-500 uppercase mb-2 ml-1 tracking-widest">{t('sub_subcat_key_en', { defaultValue: 'Sub-subcat Key (EN)' })}</label>
                                                 <input 
                                                     type="text" 
                                                     name="subcategory" 
                                                     value={formData.subcategory} 
                                                     onChange={handleChange} 
-                                                    placeholder="e.g. Copper power cables"
+                                                    placeholder={t('placeholder_copper_power_cables', { defaultValue: 'e.g. Copper power cables' })}
                                                     className="modern-input h-14 font-black border-indigo-200 focus:border-indigo-500" 
                                                 />
                                             </div>
                                             <div className="space-y-1">
-                                                <label className="block text-[8px] font-black text-indigo-500 uppercase mb-2 ml-1 tracking-widest">Sub-subcat Display (IS)</label>
+                                                <label className="block text-[8px] font-black text-indigo-500 uppercase mb-2 ml-1 tracking-widest">{t('sub_subcat_display_is', { defaultValue: 'Sub-subcat Display (IS)' })}</label>
                                                 <input 
                                                     type="text" 
                                                     name="subcategory_en" 
                                                     value={formData.subcategory_en} 
                                                     onChange={handleChange} 
-                                                    placeholder="e.g. Kopar aflstrengir"
+                                                    placeholder={t('placeholder_kopar_aflstrengir', { defaultValue: 'e.g. Kopar aflstrengir' })}
                                                     className="modern-input h-14 border-indigo-200 focus:border-indigo-500" 
                                                 />
                                             </div>
@@ -727,11 +727,11 @@ function InventoryCatalogEditPage() {
                     <section className="bg-white dark:bg-gray-800 p-8 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-700 space-y-6">
                         <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] flex items-center justify-between ml-1">
                             <span className="flex items-center gap-2">
-                                <ShoppingBagIcon className="h-4 w-4 text-indigo-500" /> Procurement Links
+                                <ShoppingBagIcon className="h-4 w-4 text-indigo-500" /> {t('procurement_links', { defaultValue: 'Procurement Links' })}
                             </span>
                             {!isSuperuser && (
                                 <span className="text-[8px] font-black text-gray-400 uppercase tracking-[0.2em]">
-                                    View-only – managed by system root
+                                    {t('view_only_managed_by_system', { defaultValue: 'View-only – managed by system root' })}
                                 </span>
                             )}
                         </label>
@@ -741,7 +741,7 @@ function InventoryCatalogEditPage() {
                                 <ArrowPathIcon className="h-5 w-5 animate-spin text-gray-400" />
                             </div>
                         ) : globalShops.length === 0 ? (
-                            <p className="text-xs text-gray-400 italic">No suppliers configured. Go to Inventory list to add suppliers.</p>
+                            <p className="text-xs text-gray-400 italic">{t('no_suppliers_configured', { defaultValue: 'No suppliers configured. Go to Inventory list to add suppliers.' })}</p>
                         ) : (
                             <div className="space-y-4">
                                 {globalShops.map((shop) => {
@@ -775,13 +775,13 @@ function InventoryCatalogEditPage() {
                                                         rel="noopener noreferrer"
                                                         className="text-[8px] font-black text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 uppercase tracking-wider transition-colors"
                                                     >
-                                                        Visit Page →
+                                                        {t('visit_page_arrow', { defaultValue: 'Visit Page →' })}
                                                     </a>
                                                 )}
                                             </div>
                                             
                                             <div className="space-y-1">
-                                                <span className="block text-[8px] font-black text-gray-400 uppercase tracking-wider ml-0.5">Webshop Link</span>
+                                                <span className="block text-[8px] font-black text-gray-400 uppercase tracking-wider ml-0.5">{t('webshop_link', { defaultValue: 'Webshop Link' })}</span>
                                                 {isSuperuser ? (
                                                     <input
                                                         type="url"
@@ -795,7 +795,7 @@ function InventoryCatalogEditPage() {
                                                     />
                                                 ) : (
                                                     <div className="h-9 flex items-center px-2 rounded-lg border border-gray-100 dark:border-gray-800 bg-gray-100/50 dark:bg-gray-950/30 text-xs text-gray-500 dark:text-gray-400 truncate">
-                                                        {urlVal || 'No link configured'}
+                                                        {urlVal || t('no_link_configured', { defaultValue: 'No link configured' })}
                                                     </div>
                                                 )}
                                             </div>
@@ -823,7 +823,7 @@ function InventoryCatalogEditPage() {
                             <div className="p-6 bg-orange-50 dark:bg-orange-900/10 rounded-[1.5rem] border border-orange-100 dark:border-orange-800/30 flex gap-3">
                                 <InformationCircleIcon className="h-6 w-6 text-orange-600 shrink-0" />
                                 <p className="text-[10px] text-orange-700 dark:text-orange-300 leading-relaxed font-black uppercase tracking-tight">
-                                    Critical Alert: Modifications to the Master Catalog affect all project BoQ templates and future procurement requests system-wide.
+                                    {t('master_catalog_warning', { defaultValue: 'Critical Alert: Modifications to the Master Catalog affect all project BoQ templates and future procurement requests system-wide.' })}
                                 </p>
                             </div>
                         </>
@@ -833,7 +833,7 @@ function InventoryCatalogEditPage() {
                         <div className="p-6 bg-indigo-50 dark:bg-indigo-900/10 rounded-[1.5rem] border border-indigo-100 dark:border-indigo-800/30 flex gap-3">
                             <ShieldCheckIcon className="h-6 w-6 text-indigo-600 shrink-0" />
                             <p className="text-[10px] text-indigo-700 dark:text-indigo-300 font-black uppercase tracking-tight leading-relaxed">
-                                Root Mode: Global Material modification authorized.
+                                {t('root_mode_auth', { defaultValue: 'Root Mode: Global Material modification authorized.' })}
                             </p>
                         </div>
                     )}

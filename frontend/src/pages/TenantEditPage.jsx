@@ -291,7 +291,7 @@ function TenantEditPage() {
                                 />
                             </div>
                             <div>
-                                <label className="block text-[10px] font-black text-gray-500 uppercase mb-1 ml-1 tracking-widest">Subdomain Slug</label>
+                                <label className="block text-[10px] font-black text-gray-500 uppercase mb-1 ml-1 tracking-widest">{t('subdomain_slug', { defaultValue: 'Subdomain Slug' })}</label>
                                 <div className="relative flex items-center">
                                     <input 
                                         type="text" 
@@ -306,7 +306,7 @@ function TenantEditPage() {
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-[10px] font-black text-gray-500 uppercase mb-1 ml-1 tracking-widest">Base Hourly Rate (ISK)</label>
+                                <label className="block text-[10px] font-black text-gray-500 uppercase mb-1 ml-1 tracking-widest">{t('base_hourly_rate_isk', { defaultValue: 'Base Hourly Rate (ISK)' })}</label>
                                 <input 
                                     type="number" 
                                     name="base_hourly_rate" 
@@ -513,14 +513,14 @@ function TenantEditPage() {
                             
                             {/* Registry Meta */}
                             <div className="grid grid-cols-2 gap-3 text-[10px] font-bold text-gray-500 uppercase tracking-widest bg-gray-50 dark:bg-gray-900/40 p-4 rounded-2xl">
-                                <div>Created: <span className="text-gray-800 dark:text-gray-200">{new Date(initialTenantData.created_at).toLocaleDateString()}</span></div>
-                                <div>Billing: {initialTenantData.has_overdue_invoices ? (
-                                    <span className="text-red-500 font-black">Overdue ({initialTenantData.overdue_amount} ISK)</span>
+                                <div>{t('created', { defaultValue: 'Created:' })} <span className="text-gray-800 dark:text-gray-200">{new Date(initialTenantData.created_at).toLocaleDateString()}</span></div>
+                                <div>{t('billing', { defaultValue: 'Billing:' })} {initialTenantData.has_overdue_invoices ? (
+                                    <span className="text-red-500 font-black">{t('overdue', { defaultValue: 'Overdue' })} ({initialTenantData.overdue_amount} ISK)</span>
                                 ) : (
-                                    <span className="text-emerald-500 font-black">Good Standing</span>
+                                    <span className="text-emerald-500 font-black">{t('good_standing', { defaultValue: 'Good Standing' })}</span>
                                 )}</div>
-                                <div>Discount: <span className="text-indigo-500">{initialTenantData.discount_percent ? `${initialTenantData.discount_percent}%` : 'None'}</span></div>
-                                <div>Status: <span className="text-emerald-500">Active</span></div>
+                                <div>{t('discount', { defaultValue: 'Discount:' })} <span className="text-indigo-500">{initialTenantData.discount_percent ? `${initialTenantData.discount_percent}%` : 'None'}</span></div>
+                                <div>{t('status', { defaultValue: 'Status:' })} <span className="text-emerald-500">{t('active', { defaultValue: 'Active' })}</span></div>
                             </div>
 
                             {/* Resource Counters */}
@@ -528,27 +528,27 @@ function TenantEditPage() {
                                 <div className="bg-gray-50 dark:bg-gray-900/50 p-2.5 rounded-2xl text-center border border-gray-100 dark:border-gray-700">
                                     <UsersIcon className="h-4 w-4 text-gray-400 mx-auto mb-1" />
                                     <div className="text-lg font-black text-gray-800 dark:text-gray-200">{initialTenantData.user_count || 0}</div>
-                                    <div className="text-[8px] font-bold text-gray-500 uppercase tracking-widest">Users</div>
+                                    <div className="text-[8px] font-bold text-gray-500 uppercase tracking-widest">{t('users', { defaultValue: 'Users' })}</div>
                                 </div>
                                 <div className="bg-gray-50 dark:bg-gray-900/50 p-2.5 rounded-2xl text-center border border-gray-100 dark:border-gray-700">
                                     <BriefcaseIcon className="h-4 w-4 text-gray-400 mx-auto mb-1" />
                                     <div className="text-lg font-black text-gray-800 dark:text-gray-200">{initialTenantData.project_count || 0}</div>
-                                    <div className="text-[8px] font-bold text-gray-500 uppercase tracking-widest">Projects</div>
+                                    <div className="text-[8px] font-bold text-gray-500 uppercase tracking-widest">{t('projects', { defaultValue: 'Projects' })}</div>
                                 </div>
                                 <div className="bg-gray-50 dark:bg-gray-900/50 p-2.5 rounded-2xl text-center border border-gray-100 dark:border-gray-700">
                                     <UserGroupIcon className="h-4 w-4 text-gray-400 mx-auto mb-1" />
                                     <div className="text-lg font-black text-gray-800 dark:text-gray-200">{initialTenantData.customer_count || 0}</div>
-                                    <div className="text-[8px] font-bold text-gray-500 uppercase tracking-widest">Clients</div>
+                                    <div className="text-[8px] font-bold text-gray-500 uppercase tracking-widest">{t('clients', { defaultValue: 'Clients' })}</div>
                                 </div>
                                 <div className="bg-gray-50 dark:bg-gray-900/50 p-2.5 rounded-2xl text-center border border-gray-100 dark:border-gray-700">
                                     <TruckIcon className="h-4 w-4 text-gray-400 mx-auto mb-1" />
                                     <div className="text-lg font-black text-gray-800 dark:text-gray-200">{initialTenantData.car_count || 0}</div>
-                                    <div className="text-[8px] font-bold text-gray-500 uppercase tracking-widest">Fleet</div>
+                                    <div className="text-[8px] font-bold text-gray-500 uppercase tracking-widest">{t('fleet', { defaultValue: 'Fleet' })}</div>
                                 </div>
                                 <div className="bg-gray-50 dark:bg-gray-900/50 p-2.5 rounded-2xl text-center border border-gray-100 dark:border-gray-700 col-span-2">
                                     <WrenchScrewdriverIcon className="h-4 w-4 text-gray-400 mx-auto mb-1" />
                                     <div className="text-lg font-black text-gray-800 dark:text-gray-200">{initialTenantData.tool_count || 0}</div>
-                                    <div className="text-[8px] font-bold text-gray-500 uppercase tracking-widest">Tools Assigned</div>
+                                    <div className="text-[8px] font-bold text-gray-500 uppercase tracking-widest">{t('tools_assigned', { defaultValue: 'Tools Assigned' })}</div>
                                 </div>
                             </div>
                         </section>
@@ -564,16 +564,16 @@ function TenantEditPage() {
                             {/* Invoices List */}
                             <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
                                 {isLoadingInvoices ? (
-                                    <p className="text-[10px] text-gray-400 italic">Loading invoices...</p>
+                                    <p className="text-[10px] text-gray-400 italic">{t('loading_invoices', { defaultValue: 'Loading invoices...' })}</p>
                                 ) : invoices.length === 0 ? (
-                                    <p className="text-[10px] text-gray-400 italic">No invoices issued yet.</p>
+                                    <p className="text-[10px] text-gray-400 italic">{t('no_invoices_issued_yet', { defaultValue: 'No invoices issued yet.' })}</p>
                                 ) : (
                                     invoices.map((inv) => (
                                         <div key={inv.id} className="p-3 bg-gray-50 dark:bg-gray-900/50 rounded-2xl border border-gray-100 dark:border-gray-700 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 text-xs">
                                             <div>
                                                 <div className="font-bold text-gray-900 dark:text-white flex items-center gap-1.5">
                                                     <span>{((inv.amount || 0) * 1.24).toLocaleString()} ISK</span>
-                                                    <span className="text-[8px] text-gray-400 font-normal">(Incl. 24% VSK)</span>
+                                                    <span className="text-[8px] text-gray-400 font-normal">{t('incl_24_vsk', { defaultValue: '(Incl. 24% VSK)' })}</span>
                                                     <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider ${
                                                         inv.status === 'Paid' 
                                                             ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-400'
@@ -603,10 +603,10 @@ function TenantEditPage() {
 
                             {/* Generate Invoice Form */}
                             <div className="border-t border-gray-100 dark:border-gray-700 pt-4 space-y-3">
-                                <h4 className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Issue New Invoice</h4>
+                                <h4 className="text-[9px] font-black text-gray-400 uppercase tracking-widest">{t('issue_new_invoice', { defaultValue: 'Issue New Invoice' })}</h4>
                                 <div className="grid grid-cols-2 gap-2">
                                     <div>
-                                        <label className="block text-[8px] font-black text-gray-500 uppercase mb-0.5">Amount (ISK)</label>
+                                        <label className="block text-[8px] font-black text-gray-500 uppercase mb-0.5">{t('amount_isk', { defaultValue: 'Amount (ISK)' })}</label>
                                         <input
                                             type="number"
                                             value={newInvoice.amount}
@@ -616,7 +616,7 @@ function TenantEditPage() {
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-[8px] font-black text-gray-500 uppercase mb-0.5">Due Date</label>
+                                        <label className="block text-[8px] font-black text-gray-500 uppercase mb-0.5">{t('due_date', { defaultValue: 'Due Date' })}</label>
                                         <input
                                             type="date"
                                             value={newInvoice.due_date}
@@ -627,7 +627,7 @@ function TenantEditPage() {
                                     </div>
                                 </div>
                                 <div>
-                                    <label className="block text-[8px] font-black text-gray-500 uppercase mb-0.5">Description</label>
+                                    <label className="block text-[8px] font-black text-gray-500 uppercase mb-0.5">{t('description', { defaultValue: 'Description' })}</label>
                                     <input
                                         type="text"
                                         value={newInvoice.description}
@@ -639,15 +639,15 @@ function TenantEditPage() {
                                 </div>
                                 <div className="flex gap-2">
                                     <div className="flex-1">
-                                        <label className="block text-[8px] font-black text-gray-500 uppercase mb-0.5">Initial Status</label>
+                                        <label className="block text-[8px] font-black text-gray-500 uppercase mb-0.5">{t('initial_status', { defaultValue: 'Initial Status' })}</label>
                                         <select
                                             value={newInvoice.status}
                                             onChange={e => setNewInvoice({ ...newInvoice, status: e.target.value })}
                                             className="block w-full h-8 px-2 rounded-xl text-xs border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-orange-500 font-bold"
                                         >
-                                            <option value="Pending">Pending</option>
-                                            <option value="Paid">Paid</option>
-                                            <option value="Overdue">Overdue</option>
+                                            <option value="Pending">{t('pending', { defaultValue: 'Pending' })}</option>
+                                            <option value="Paid">{t('paid', { defaultValue: 'Paid' })}</option>
+                                            <option value="Overdue">{t('overdue', { defaultValue: 'Overdue' })}</option>
                                         </select>
                                     </div>
                                     <button

@@ -46,7 +46,7 @@ export default function InventoryCatalogShopFilters({
         e.preventDefault();
         const trimmedName = newShopName.trim();
         if (!trimmedName) {
-            toast.error("Supplier name is required.");
+            toast.error(t('supplier_name_required', { defaultValue: 'Supplier name is required.' }));
             return;
         }
         setIsSaving(true);
@@ -55,14 +55,14 @@ export default function InventoryCatalogShopFilters({
                 name: trimmedName,
                 website_url: newShopUrl.trim() || null,
             });
-            toast.success(`Supplier "${trimmedName}" added successfully.`);
+            toast.success(t('supplier_added_successfully', { name: trimmedName, defaultValue: `Supplier "${trimmedName}" added successfully.` }));
             setNewShopName('');
             setNewShopUrl('');
             setIsAdding(false);
             await fetchShops();
         } catch (err) {
             console.error("Failed to create shop:", err);
-            toast.error(err.response?.data?.detail || "Failed to add supplier.");
+            toast.error(err.response?.data?.detail || t('failed_to_add_supplier', { defaultValue: 'Failed to add supplier.' }));
         } finally {
             setIsSaving(false);
         }
@@ -80,18 +80,18 @@ export default function InventoryCatalogShopFilters({
                         onClick={() => setIsAdding(true)}
                         className="inline-flex items-center gap-1 text-[9px] font-black text-indigo-600 hover:text-indigo-700 uppercase tracking-wider transition-colors"
                     >
-                        <PlusIcon className="h-3 w-3 animate-pulse" /> Add Supplier
+                        <PlusIcon className="h-3 w-3 animate-pulse" /> {t('add_supplier', { defaultValue: 'Add Supplier' })}
                     </button>
                 )}
             </div>
 
             {isAdding && (
                 <form onSubmit={handleAddShopSubmit} className="p-3.5 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 space-y-2.5 animate-in slide-in-from-top duration-200">
-                    <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest">New Supplier Details</div>
+                    <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest">{t('new_supplier_details', { defaultValue: 'New Supplier Details' })}</div>
                     <div className="grid grid-cols-2 gap-2">
                         <input
                             type="text"
-                            placeholder="Supplier Name *"
+                            placeholder={t('supplier_name', { defaultValue: 'Supplier Name *' })}
                             required
                             disabled={isSaving}
                             value={newShopName}
@@ -100,7 +100,7 @@ export default function InventoryCatalogShopFilters({
                         />
                         <input
                             type="url"
-                            placeholder="Website URL (optional)"
+                            placeholder={t('website_url_optional', { defaultValue: 'Website URL (optional)' })}
                             disabled={isSaving}
                             value={newShopUrl}
                             onChange={(e) => setNewShopUrl(e.target.value)}
@@ -121,14 +121,14 @@ export default function InventoryCatalogShopFilters({
                             disabled={isSaving}
                             className="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-[10px] font-black uppercase tracking-widest transition flex items-center gap-1"
                         >
-                            {isSaving ? 'Saving...' : <><CheckIcon className="h-3.5 w-3.5" /> Apply</>}
+                            {isSaving ? t('saving', { defaultValue: 'Saving...' }) : <><CheckIcon className="h-3.5 w-3.5" /> {t('apply', { defaultValue: 'Apply' })}</>}
                         </button>
                     </div>
                 </form>
             )}
 
             {isLoading ? (
-                <div className="text-xs text-gray-400 italic">Loading suppliers...</div>
+                <div className="text-xs text-gray-400 italic">{t('loading_suppliers', { defaultValue: 'Loading suppliers...' })}</div>
             ) : (
                 <div className="flex flex-wrap gap-2">
                     {shops.map((shop) => {

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import axiosInstance from '../api/axiosInstance';
 import { useAuth } from '../context/AuthContext';
 import LoadingSpinner from './LoadingSpinner';
@@ -10,6 +11,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 function ProjectLiveClockIns({ projectId }) {
+    const { t } = useTranslation();
     const [activeLogs, setActiveLogs] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
@@ -35,7 +37,7 @@ function ProjectLiveClockIns({ projectId }) {
         } catch (error) {
             // Handle cases where the endpoint might not be available or permissions changed
             if (error.response?.status !== 404 && error.response?.status !== 403) {
-                setError('Live sync interrupted.');
+                setError(t('live_sync_interrupted', { defaultValue: 'Live sync interrupted.' }));
                 console.error('Live clock-in fetch error:', error);
             } else {
                 setActiveLogs([]); 
@@ -70,7 +72,7 @@ function ProjectLiveClockIns({ projectId }) {
         const now = new Date();
         const diffMs = now - start;
         
-        if (diffMs < 0) return "Just started";
+        if (diffMs < 0) return t('just_started', { defaultValue: 'Just started' });
         
         const hours = Math.floor(diffMs / 3600000);
         const minutes = Math.floor((diffMs % 3600000) / 60000);
@@ -83,7 +85,7 @@ function ProjectLiveClockIns({ projectId }) {
     if (isLoading && activeLogs.length === 0) {
         return (
             <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
-                <LoadingSpinner text="Connecting to site feed..." size="sm"/>
+                <LoadingSpinner text={t('connecting_to_site_feed', { defaultValue: 'Connecting to site feed...' })} size="sm"/>
             </div>
         );
     }
@@ -94,13 +96,13 @@ function ProjectLiveClockIns({ projectId }) {
             <div className="flex items-center justify-between mb-5">
                 <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center">
                     <ClockIcon className="h-5 w-5 mr-2 text-indigo-600 animate-pulse"/> 
-                    Live Attendance
+                    {t('live_attendance', { defaultValue: 'Live Attendance' })}
                 </h3>
                 {activeLogs.length > 0 && (
                     <div className="flex items-center gap-1.5 px-2 py-1 bg-green-50 dark:bg-green-900/20 rounded-lg">
                         <SignalIcon className="h-3 w-3 text-green-600 dark:text-green-400 animate-bounce" />
                         <span className="text-[10px] font-black text-green-700 dark:text-green-400 uppercase tracking-widest">
-                            Live
+                            {t('live', { defaultValue: 'Live' })}
                         </span>
                     </div>
                 )}
@@ -135,10 +137,10 @@ function ProjectLiveClockIns({ projectId }) {
                                 </div>
                                 <div className="flex flex-col min-w-0">
                                     <span className="text-sm font-bold text-gray-800 dark:text-white truncate">
-                                        {log.user?.full_name || log.user?.email || 'Anonymous Worker'}
+                                        {log.user?.full_name || log.user?.email || t('anonymous_worker', { defaultValue: 'Anonymous Worker' })}
                                     </span>
                                     <span className="text-[10px] text-gray-500 dark:text-gray-400 uppercase font-medium tracking-tight">
-                                        {log.user?.role?.replace('_', ' ') || 'Staff'}
+                                        {log.user?.role?.replace('_', ' ') || t('staff', { defaultValue: 'Staff' })}
                                     </span>
                                 </div>
                             </div>
@@ -147,7 +149,7 @@ function ProjectLiveClockIns({ projectId }) {
                                 <span className="text-xs font-black text-indigo-600 dark:text-indigo-400">
                                     {calculateDuration(log.start_time)}
                                 </span>
-                                <span className="text-[9px] text-gray-400 uppercase">Elapsed</span>
+                                <span className="text-[9px] text-gray-400 uppercase">{t('elapsed', { defaultValue: 'Elapsed' })}</span>
                             </div>
                         </div>
                     ))}
@@ -156,7 +158,7 @@ function ProjectLiveClockIns({ projectId }) {
                 <div className="py-8 text-center flex flex-col items-center justify-center">
                     <UserGroupIcon className="h-8 w-8 text-gray-200 dark:text-gray-700 mb-2" />
                     <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">
-                        No one is currently clocked in.
+                        {t('no_one_clocked_in', { defaultValue: 'No one is currently clocked in.' })}
                     </p>
                 </div>
             )}
@@ -164,7 +166,7 @@ function ProjectLiveClockIns({ projectId }) {
             {/* Footer Status */}
             <div className="mt-5 pt-4 border-t border-gray-100 dark:border-gray-700">
                 <p className="text-[9px] text-center text-gray-400 uppercase font-bold tracking-widest">
-                    Syncing every 60s
+                    {t('syncing_every_60s', { defaultValue: 'Syncing every 60s' })}
                 </p>
             </div>
         </div>

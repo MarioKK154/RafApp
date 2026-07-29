@@ -573,10 +573,10 @@ function LandingPage() {
                 lead_error_is: feed.lead_error_is,
             };
             await axiosInstance.post('/system/landing-feed', payload);
-            toast.success(i18n.language.startsWith('en') ? 'Landing page design published successfully!' : 'Lendingarsíða vistuð!');
+            toast.success(t('landing_page_published', { defaultValue: 'Landing page design published successfully!' }));
             setEditMode(false);
         } catch (err) {
-            toast.error(err.response?.data?.detail || 'Failed to publish landing page design.');
+            toast.error(err.response?.data?.detail || t('failed_publish_landing', { defaultValue: 'Failed to publish landing page design.' }));
         }
     };
 
@@ -691,7 +691,7 @@ function LandingPage() {
                                     serverStatus === 'offline' ? 'bg-red-400' : 'bg-amber-400'
                                 }`} />
                             </span>
-                            <span>{serverStatus === 'online' ? 'Systems Online' : serverStatus === 'offline' ? 'System Offline' : 'Checking Status...'}</span>
+                            <span>{serverStatus === 'online' ? t('systems_online', { defaultValue: 'Systems Online' }) : serverStatus === 'offline' ? t('system_offline', { defaultValue: 'System Offline' }) : t('checking_status', { defaultValue: 'Checking Status...' })}</span>
                             <span className="text-[9px] text-[#0096FF] font-bold">↗</span>
                         </button>
                     </div>
@@ -714,7 +714,7 @@ function LandingPage() {
                                 onClick={() => setEditMode(!editMode)}
                                 className="bg-[#0096FF]/20 text-[#0096FF] px-4 py-1.5 rounded-full border border-[#0096FF]/30 text-xs font-black uppercase tracking-wider hover:bg-[#0096FF]/35 transition"
                             >
-                                {editMode ? (i18n.language.startsWith('en') ? 'Exit Customize' : 'Hætta í hönnunarham') : (i18n.language.startsWith('en') ? 'Customize Page' : 'Hanna síðu')}
+                                {editMode ? t('exit_customize', { defaultValue: 'Exit Customize' }) : t('customize_page', { defaultValue: 'Customize Page' })}
                             </button>
                         )}
 
@@ -722,7 +722,7 @@ function LandingPage() {
                             to={isAuthenticated ? "/dashboard" : "/login"} 
                             className="bg-[#0096FF] hover:bg-blue-500 text-white px-6 py-2 rounded-full transition shadow-lg shadow-[#0096FF]/30 font-bold tracking-widest uppercase text-xs"
                         >
-                            {isAuthenticated ? (i18n.language.startsWith('en') ? 'Dashboard' : 'Mínar síður') : (i18n.language.startsWith('en') ? 'Login' : 'Innskráning')}
+                            {isAuthenticated ? t('dashboard', { defaultValue: 'Dashboard' }) : t('login', { defaultValue: 'Login' })}
                         </Link>
                     </nav>
 
@@ -752,7 +752,7 @@ function LandingPage() {
                         
                         <button onClick={toggleLanguage} className="flex items-center justify-center gap-2 py-2 text-gray-300 font-bold">
                             <FlagIcon lang={i18n.language.startsWith('en') ? 'is' : 'en'} className="w-5 h-3.5 rounded-[2px] shadow-sm shrink-0" />
-                            <span>{i18n.language.startsWith('en') ? 'Skipta yfir í íslensku' : 'Switch to English'}</span>
+                            <span>{t('switch_language', { defaultValue: 'Switch Language' })}</span>
                         </button>
 
                         {isSuperadmin && (
@@ -763,7 +763,7 @@ function LandingPage() {
                                 }}
                                 className="py-2 text-[#0096FF] font-black uppercase"
                             >
-                                {editMode ? 'Exit Customize' : 'Customize Page'}
+                                {editMode ? t('exit_customize', { defaultValue: 'Exit Customize' }) : t('customize_page', { defaultValue: 'Customize Page' })}
                             </button>
                         )}
 
@@ -778,8 +778,8 @@ function LandingPage() {
             {editMode && (
                 <div className="fixed top-20 left-0 w-full bg-indigo-600 text-white z-50 px-6 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl animate-in slide-in-from-top-4 duration-300 border-b border-indigo-700">
                     <div>
-                        <h2 className="text-xs font-black uppercase tracking-widest">Landing Page Builder (Superadmin)</h2>
-                        <p className="text-[10px] text-indigo-200 mt-0.5">Edit text fields inline, upload photos, reorder cards with drag-and-drop, and publish directly to visitors.</p>
+                        <h2 className="text-xs font-black uppercase tracking-widest">{t('landing_page_builder', { defaultValue: 'Landing Page Builder (Superadmin)' })}</h2>
+                        <p className="text-[10px] text-indigo-200 mt-0.5">{t('landing_page_builder_desc', { defaultValue: 'Edit text fields inline, upload photos, reorder cards with drag-and-drop, and publish directly to visitors.' })}</p>
                     </div>
                     <div className="flex gap-3">
                         <button
@@ -789,13 +789,13 @@ function LandingPage() {
                             }}
                             className="px-4 py-2 bg-indigo-700 hover:bg-indigo-800 text-[10px] font-black uppercase tracking-widest rounded-xl transition"
                         >
-                            Discard
+                            {t('discard', { defaultValue: 'Discard' })}
                         </button>
                         <button
                             onClick={handleSaveLandingFeed}
                             className="px-5 py-2 bg-white text-indigo-600 hover:bg-gray-100 text-[10px] font-black uppercase tracking-widest rounded-xl shadow transition"
                         >
-                            Publish Changes
+                            {t('publish_changes', { defaultValue: 'Publish Changes' })}
                         </button>
                     </div>
                 </div>

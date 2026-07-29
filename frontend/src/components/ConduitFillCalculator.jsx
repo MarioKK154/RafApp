@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ArrowsRightLeftIcon, ExclamationTriangleIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
 
 const PI = Math.PI;
 
 function ConduitFillCalculator() {
+    const { t } = useTranslation();
     const [mode, setMode] = useState('conduit'); // 'conduit' | 'tray'
     const [conduitDiameter, setConduitDiameter] = useState(25); // mm, internal
     const [trayWidth, setTrayWidth] = useState(300); // mm
@@ -57,7 +59,7 @@ function ConduitFillCalculator() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="space-y-3">
                     <label className="block text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] ml-1">
-                        Geometry
+                        {t('geometry_label', { defaultValue: 'Geometry' })}
                     </label>
                     <div className="flex gap-2 mb-2">
                         <button
@@ -69,7 +71,7 @@ function ConduitFillCalculator() {
                                     : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300'
                             }`}
                         >
-                            Conduit
+                            {t('conduit_label', { defaultValue: 'Conduit' })}
                         </button>
                         <button
                             type="button"
@@ -80,14 +82,14 @@ function ConduitFillCalculator() {
                                     : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300'
                             }`}
                         >
-                            Cable Tray
+                            {t('cable_tray_label', { defaultValue: 'Cable Tray' })}
                         </button>
                     </div>
 
                     {mode === 'conduit' ? (
                         <>
                             <label className="block text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] ml-1 mt-2">
-                                Conduit Internal Diameter (mm)
+                                {t('conduit_internal_diameter', { defaultValue: 'Conduit Internal Diameter (mm)' })}
                             </label>
                             <input
                                 type="number"
@@ -97,13 +99,13 @@ function ConduitFillCalculator() {
                                 className="w-full h-12 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 text-sm font-black text-gray-900 dark:text-white"
                             />
                             <p className="text-[10px] text-gray-400 leading-relaxed">
-                                Use manufacturer internal diameter; metric flexible conduits and pipes vary by series.
+                                {t('conduit_diameter_hint', { defaultValue: 'Use manufacturer internal diameter; metric flexible conduits and pipes vary by series.' })}
                             </p>
                         </>
                     ) : (
                         <>
                             <label className="block text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] ml-1 mt-2">
-                                Tray Width & Usable Depth (mm)
+                                {t('tray_width_depth', { defaultValue: 'Tray Width & Usable Depth (mm)' })}
                             </label>
                             <div className="flex items-center gap-2">
                                 <input
@@ -123,7 +125,7 @@ function ConduitFillCalculator() {
                                 />
                             </div>
                             <p className="text-[10px] text-gray-400 leading-relaxed">
-                                Depth is the effective filling height you plan to use, not full side wall height.
+                                {t('tray_depth_hint', { defaultValue: 'Depth is the effective filling height you plan to use, not full side wall height.' })}
                             </p>
                         </>
                     )}
@@ -131,7 +133,7 @@ function ConduitFillCalculator() {
 
                 <div className="md:col-span-2 space-y-3">
                     <label className="block text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] ml-1">
-                        Conductors
+                        {t('conductors_label', { defaultValue: 'Conductors' })}
                     </label>
                     <div className="space-y-2 max-h-40 overflow-y-auto pr-1 custom-scrollbar">
                         {rows.map(row => (
@@ -179,24 +181,24 @@ function ConduitFillCalculator() {
                         onClick={addRow}
                         className="mt-2 inline-flex items-center gap-2 px-3 py-1.5 bg-gray-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.18em] hover:bg-indigo-700 transition"
                     >
-                        <ArrowsRightLeftIcon className="h-4 w-4" /> Add Circuit
+                        <ArrowsRightLeftIcon className="h-4 w-4" /> {t('add_circuit_btn', { defaultValue: 'Add Circuit' })}
                     </button>
                 </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-4">
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.18em] mb-1">Total Conductors</p>
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.18em] mb-1">{t('total_conductors', { defaultValue: 'Total Conductors' })}</p>
                     <p className="text-2xl font-black text-gray-900 dark:text-white">{totalConductors}</p>
                 </div>
                 <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-4">
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.18em] mb-1">Fill Percentage</p>
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.18em] mb-1">{t('fill_percentage', { defaultValue: 'Fill Percentage' })}</p>
                     <p className="text-2xl font-black text-gray-900 dark:text-white">
                         {sectionArea > 0 ? fillPercent.toFixed(1) : '--'}%
                     </p>
                 </div>
                 <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-4">
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.18em] mb-1">Recommended Limit</p>
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.18em] mb-1">{t('recommended_limit_label', { defaultValue: 'Recommended Limit' })}</p>
                     <p className="text-2xl font-black text-gray-900 dark:text-white">{recommendedLimit}%</p>
                     <p className="text-[10px] text-gray-400 mt-1">
                         {limitCaption}
@@ -218,11 +220,10 @@ function ConduitFillCalculator() {
                 )}
                 <div>
                     <p className="font-black uppercase tracking-[0.18em] text-[10px] mb-1">
-                        {overLimit ? 'Over Recommended Fill' : 'Within Recommended Fill'}
+                        {overLimit ? t('over_fill', { defaultValue: 'Over Recommended Fill' }) : t('within_fill', { defaultValue: 'Within Recommended Fill' })}
                     </p>
                     <p className="text-[11px] leading-relaxed">
-                        Always verify against local standards before installation. This tool provides indicative guidance only and
-                        does not replace national wiring rules.
+                        {t('fill_warning_text', { defaultValue: 'Always verify against local standards before installation. This tool provides indicative guidance only and does not replace national wiring rules.' })}
                     </p>
                 </div>
             </div>

@@ -71,7 +71,7 @@ const IskIcon = () => (
     <span className="text-[10px] font-black leading-none text-indigo-600 dark:text-indigo-400">kr.</span>
 );
 
-/** Catalog unit label: eining (standard hours) → e.g. "15 min", "Hourly rate" */
+/** Catalog unit label: eining (standard hours) → e.g. "15min", "Hourly rate" */
 function einingDurationLabel(unitsPerHour) {
     if (unitsPerHour == null) return null;
     const u = Number(unitsPerHour);
@@ -79,13 +79,15 @@ function einingDurationLabel(unitsPerHour) {
     if (u < 0) return null;
     const minPerUnit = u * 60;
     if (minPerUnit >= 60) {
-        const hrs = minPerUnit / 60;
-        return hrs >= 1 && Math.abs(hrs - Math.round(hrs)) < 0.01 ? `${Math.round(hrs)} hr` : `${hrs.toFixed(1)} hr`;
+        const totalMins = Math.round(minPerUnit);
+        const hrs = Math.floor(totalMins / 60);
+        const mins = totalMins % 60;
+        if (mins === 0) return `${hrs}hr`;
+        return `${hrs}hr ${mins}min`;
     }
     if (minPerUnit >= 1) {
-        return minPerUnit >= 10 && Math.abs(minPerUnit - Math.round(minPerUnit)) < 0.1
-            ? `${Math.round(minPerUnit)} min`
-            : `${minPerUnit.toFixed(1)} min`;
+        const rounded = Math.round(minPerUnit * 10) / 10;
+        return `${rounded}min`;
     }
     return '< 1 min';
 }
@@ -166,8 +168,8 @@ function OfferPage() {
         if (!Array.isArray(inventoryCatalog) || inventoryCatalog.length === 0) return [];
         const treeMap = new Map();
         inventoryCatalog.forEach((item) => {
-            const main = item.category || '(Uncategorized)';
-            const sub = item.subcategory || '(Uncategorized)';
+            const main = item.category || t('uncategorized', { defaultValue: '(Uncategorized)' });
+            const sub = item.subcategory || t('uncategorized', { defaultValue: '(Uncategorized)' });
             if (!treeMap.has(main)) {
                 treeMap.set(main, new Map());
             }
@@ -186,8 +188,8 @@ function OfferPage() {
     const materialCategoryItems = useMemo(() => {
         if (!materialSelectedMain || !materialSelectedSub) return [];
         return (inventoryCatalog || []).filter((i) => {
-            const main = i.category || '(Uncategorized)';
-            const sub = i.subcategory || '(Uncategorized)';
+            const main = i.category || t('uncategorized', { defaultValue: '(Uncategorized)' });
+            const sub = i.subcategory || t('uncategorized', { defaultValue: '(Uncategorized)' });
             return main === materialSelectedMain && sub === materialSelectedSub;
         });
     }, [inventoryCatalog, materialSelectedMain, materialSelectedSub]);
@@ -240,7 +242,7 @@ function OfferPage() {
             await reloadOfferFromServer();
         } catch (err) {
             console.error('Failed to add bundle:', err);
-            toast.error(err.response?.data?.detail || 'Failed to add assembly bundle.');
+            toast.error(err.response?.data?.detail || t('assembly_bundle_failed', { defaultValue: 'Failed to add assembly bundle.' }));
         } finally {
             setIsLoading(false);
         }
@@ -297,7 +299,7 @@ function OfferPage() {
                 if (!cancelled) {
                     setError('Failed to load offer.');
                     setOffer(null);
-                    toast.error('Could not load offer.');
+                    toast.error(t('load_offer_failed', { defaultValue: 'Could not load offer.' }));
                 }
             } finally {
                 if (!cancelled) setIsLoading(false);
@@ -447,10 +449,10 @@ function OfferPage() {
             const response = await axiosInstance.put(`/offers/${offerId}`, payload);
             setOffer(response.data);
             setIsEditingHeader(false);
-            toast.success('Commercial metadata updated.');
+            toast.success(t('metadata_updated_success', { defaultValue: 'Commercial metadata updated.' }));
         } catch (error) {
             console.error('Header save failed:', error);
-            toast.error('Metadata update failed.');
+            toast.error(t('metadata_update_failed', { defaultValue: 'Metadata update failed.' }));
         }
     };
 
@@ -458,10 +460,10 @@ function OfferPage() {
         try {
             const response = await axiosInstance.put(`/offers/${offerId}`, { status: newStatus });
             setOffer(response.data);
-            toast.success(`Bid transition: ${newStatus}`);
+            toast.success(`${t('bid_transition_success', { defaultValue: 'Bid transition: ' })}${newStatus}`);
         } catch (error) {
             console.error('Status change failed:', error);
-            toast.error('State transition rejected.');
+            toast.error(t('state_transition_rejected', { defaultValue: 'State transition rejected.' }));
         }
     };
 
@@ -479,7 +481,7 @@ function OfferPage() {
             const res = await axiosInstance.put(`/offers/${offerId}`, { work_load_ratio_codes: JSON.stringify(next) });
             setOffer(res.data);
         } catch (err) {
-            toast.error('Failed to update work conditions.');
+            toast.error(t('work_conditions_update_failed', { defaultValue: 'Failed to update work conditions.' }));
         }
     };
 
@@ -519,7 +521,7 @@ function OfferPage() {
         if (!selectedCatalogItem) return;
         const hasVariants = itemVariants.length > 0;
         if (hasVariants && !selectedVariant) {
-            toast.error('Select an item variant first.');
+            toast.error(t('select_variant_first', { defaultValue: 'Select an item variant first.' }));
             return;
         }
         const basePrice = selectedCatalogItem.tenant_price ?? selectedCatalogItem.reference_price ?? 0;
@@ -537,13 +539,13 @@ function OfferPage() {
         };
         try {
             await axiosInstance.post(`/offers/${offerId}/items`, payload);
-            toast.success('Line added to offer.');
+            toast.success(t('line_added_success', { defaultValue: 'Line added to offer.' }));
             setSelectedCatalogItem(null);
             setSelectedVariant(null);
             setAddQty(1);
             reloadOfferFromServer();
         } catch (err) {
-            toast.error(err.response?.data?.detail || 'Failed to add line.');
+            toast.error(err.response?.data?.detail || t('line_add_failed', { defaultValue: 'Failed to add line.' }));
         }
     };
 
@@ -552,11 +554,11 @@ function OfferPage() {
         const qty = Number(newItemQty) || 1;
         const price = parseFloat(newItemPrice);
         if (!newItemDesc.trim()) {
-            toast.error('Enter a description.');
+            toast.error(t('enter_description', { defaultValue: 'Enter a description.' }));
             return;
         }
         if (price < 0 || isNaN(price)) {
-            toast.error('Enter a valid unit price.');
+            toast.error(t('enter_valid_price', { defaultValue: 'Enter a valid unit price.' }));
             return;
         }
         const payload = {
@@ -568,7 +570,7 @@ function OfferPage() {
         };
         try {
             await axiosInstance.post(`/offers/${offerId}/items`, payload);
-            toast.success('Custom labor line added.');
+            toast.success(t('custom_labor_line_added', { defaultValue: 'Custom labor line added.' }));
             setNewItemDesc('');
             setNewItemQty(1);
             setNewItemPrice('');
@@ -576,7 +578,7 @@ function OfferPage() {
             setShowCustomLaborForm(false);
             reloadOfferFromServer();
         } catch (err) {
-            toast.error(err.response?.data?.detail || 'Failed to add line.');
+            toast.error(err.response?.data?.detail || t('line_add_failed', { defaultValue: 'Failed to add line.' }));
         }
     };
 
@@ -592,24 +594,24 @@ function OfferPage() {
 
         try {
             await axiosInstance.post(`/offers/${offerId}/items`, payload);
-            toast.success('Line item appended.');
+            toast.success(t('line_item_appended', { defaultValue: 'Line item appended.' }));
             setNewItemDesc(''); setNewItemQty(1); setNewItemPrice(''); 
             setNewItemInventoryId(''); setSelectedLaborCatalogId('');
             reloadOfferFromServer();
         } catch (error) {
             console.error('Add line item failed:', error);
-            toast.error('Failed to append line item.');
+            toast.error(t('line_item_append_failed', { defaultValue: 'Failed to append line item.' }));
         }
     };
 
     const handleRemoveLineItem = async (itemId) => {
         try {
             await axiosInstance.delete(`/offers/items/${itemId}`);
-            toast.success('Item purged from bid.');
+            toast.success(t('item_purged', { defaultValue: 'Item purged from bid.' }));
             reloadOfferFromServer();
         } catch (error) {
             console.error('Remove line item failed:', error);
-            toast.error('Removal failed.');
+            toast.error(t('removal_failed', { defaultValue: 'Removal failed.' }));
         }
     };
 
@@ -623,11 +625,11 @@ function OfferPage() {
         const qty = parseFloat(editingQty);
         const rate = parseFloat(editingRate);
         if (isNaN(qty) || qty <= 0) {
-            toast.error("Quantity must be greater than zero.");
+            toast.error(t('qty_greater_than_zero', { defaultValue: 'Quantity must be greater than zero.' }));
             return;
         }
         if (isNaN(rate) || rate < 0) {
-            toast.error("Unit price must be positive.");
+            toast.error(t('unit_price_positive', { defaultValue: 'Unit price must be positive.' }));
             return;
         }
         setIsSavingLine(true);
@@ -636,12 +638,12 @@ function OfferPage() {
                 quantity: qty,
                 unit_price: rate,
             });
-            toast.success("Line item updated.");
+            toast.success(t('line_item_updated', { defaultValue: 'Line item updated.' }));
             setEditingLineId(null);
             reloadOfferFromServer();
         } catch (err) {
             console.error("Failed to save line item edit:", err);
-            toast.error(err.response?.data?.detail || "Failed to update line item.");
+            toast.error(err.response?.data?.detail || t('line_item_update_failed', { defaultValue: 'Failed to update line item.' }));
         } finally {
             setIsSavingLine(false);
         }
@@ -666,11 +668,11 @@ function OfferPage() {
     const confirmDeleteOffer = async () => {
         try {
             await axiosInstance.delete(`/offers/${offerId}`);
-            toast.success(`Proposal ${offer?.offer_number} decommissioned.`);
+            toast.success(`${t('proposal_decommissioned', { defaultValue: 'Proposal ' })}${offer?.offer_number} ${t('decommissioned', { defaultValue: 'decommissioned.' })}`);
             navigate(`/projects/edit/${offer?.project_id}`);
         } catch (error) {
             console.error('Delete offer failed:', error);
-            toast.error("Purge protocol failed.");
+            toast.error(t('purge_protocol_failed', { defaultValue: 'Purge protocol failed.' }));
         }
     };
 
@@ -679,8 +681,8 @@ function OfferPage() {
     const laborTotal = useMemo(() => lineItems.filter(i => i.item_type === 'Labor').reduce((sum, i) => sum + i.total_price, 0) || 0, [lineItems]);
     const materialTotal = useMemo(() => lineItems.filter(i => i.item_type === 'Material').reduce((sum, i) => sum + i.total_price, 0) || 0, [lineItems]);
 
-    if (isLoading) return <LoadingSpinner text="Compiling financial telemetry..." size="lg" />;
-    if (!offer) return <div className="p-32 text-center font-black uppercase text-gray-400 tracking-widest italic">Registry ID Not Found</div>;
+    if (isLoading) return <LoadingSpinner text={t('compiling_financial_telemetry', { defaultValue: 'Compiling financial telemetry...' })} size="lg" />;
+    if (!offer) return <div className="p-32 text-center font-black uppercase text-gray-400 tracking-widest italic">{t('registry_id_not_found', { defaultValue: 'Registry ID Not Found' })}</div>;
 
     return (
         <div className="container mx-auto p-4 md:p-8 max-w-7xl animate-in fade-in duration-500">
@@ -694,7 +696,7 @@ function OfferPage() {
                 <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-6 py-5 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
                     <div>
                         <Link to={`/projects/edit/${offer.project_id}`} className="flex items-center text-xs font-black text-gray-400 hover:text-indigo-600 transition mb-2 uppercase tracking-widest">
-                            <ChevronLeftIcon className="h-3 w-3 mr-1" /> Site Infrastructure
+                            <ChevronLeftIcon className="h-3 w-3 mr-1" /> {t('site_infrastructure', { defaultValue: 'Site Infrastructure' })}
                         </Link>
                         <div className="flex items-center gap-3">
                             <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
@@ -705,7 +707,7 @@ function OfferPage() {
                                     {offer.offer_number}
                                 </h1>
                                 <p className="text-gray-500 font-bold uppercase tracking-widest text-[10px] mt-2 italic">
-                                    Commercial Proposal: {offer.title}
+                                    {t('commercial_proposal', { defaultValue: 'Commercial Proposal:' })} {offer.title}
                                 </p>
                             </div>
                         </div>
@@ -721,7 +723,7 @@ function OfferPage() {
                         </span>
                         <div className="flex items-center gap-2 text-[10px] font-bold text-gray-400 uppercase tracking-tighter">
                             <CalendarDaysIcon className="h-4 w-4" />
-                            Issued: {formatDate(offer.issue_date)}
+                            {t('issued_date_label', { defaultValue: 'Issued:' })} {formatDate(offer.issue_date)}
                         </div>
                         <button
                             type="button"
@@ -740,12 +742,12 @@ function OfferPage() {
                                     window.URL.revokeObjectURL(url);
                                 } catch (err) {
                                     console.error('Offer export failed:', err);
-                                    toast.error('Failed to export offer.');
+                                    toast.error(t('export_offer_failed', { defaultValue: 'Failed to export offer.' }));
                                 }
                             }}
                             className="mt-2 inline-flex items-center gap-2 px-4 py-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] text-gray-600 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition"
                         >
-                            <DocumentTextIcon className="h-4 w-4" /> Export PDF
+                            <DocumentTextIcon className="h-4 w-4" /> {t('export_pdf', { defaultValue: 'Export PDF' })}
                         </button>
                     </div>
                 </div>
@@ -758,12 +760,12 @@ function OfferPage() {
                     
                     {/* Financial Summary Bar */}
                     <div className={`grid grid-cols-1 ${canManageOffer ? 'md:grid-cols-4' : 'md:grid-cols-3'} gap-4`}>
-                        <SummaryCard label="Labor Subtotal" value={formatCurrency(laborTotal)} icon={<UserIcon />} />
-                        <SummaryCard label="Material Subtotal" value={formatCurrency(materialTotal)} icon={<TagIcon />} />
-                        <SummaryCard label="Proposal Valuation" value={formatCurrency(offer.total_amount)} icon={<CheckBadgeIcon />} highlight />
+                        <SummaryCard label={t('labor_subtotal', { defaultValue: 'Labor Subtotal' })} value={formatCurrency(laborTotal)} icon={<UserIcon />} />
+                        <SummaryCard label={t('material_subtotal', { defaultValue: 'Material Subtotal' })} value={formatCurrency(materialTotal)} icon={<TagIcon />} />
+                        <SummaryCard label={t('proposal_valuation', { defaultValue: 'Proposal Valuation' })} value={formatCurrency(offer.total_amount)} icon={<CheckBadgeIcon />} highlight />
                         {canManageOffer && (
                             <SummaryCard 
-                                label={i18n.language.startsWith('is') ? 'Áætluð Framlegð' : 'Gross Margin'} 
+                                label={t('gross_margin', { defaultValue: 'Gross Margin' })} 
                                 value={`${((offer.total_amount > 0 ? ((offer.total_amount - (materialTotal * 0.70 + (laborTotal / 12500) * 4500)) / offer.total_amount) * 100 : 0)).toFixed(1)}% (${formatCurrency(Math.max(0, offer.total_amount - (materialTotal * 0.70 + (laborTotal / 12500) * 4500)))})`} 
                                 icon={<BanknotesIcon />} 
                                 highlightMargin 
@@ -776,10 +778,10 @@ function OfferPage() {
                         <div className="p-5 bg-indigo-50/60 dark:bg-indigo-950/40 rounded-[2rem] border border-indigo-100 dark:border-indigo-900/60 space-y-3 shadow-inner">
                             <div className="flex items-center justify-between px-1">
                                 <span className="text-xs font-black uppercase tracking-wider text-indigo-900 dark:text-indigo-200">
-                                    ⚡ {i18n.language.startsWith('is') ? 'SART Snöggpakkar (Ísetning + Efni + Vinna)' : 'SART Quick Assembly Bundles'}
+                                    ⚡ {t('sart_quick_assembly_bundles', { defaultValue: 'SART Quick Assembly Bundles' })}
                                 </span>
                                 <span className="text-[9px] font-bold text-indigo-500 uppercase tracking-widest">
-                                    {i18n.language.startsWith('is') ? 'SART & RSÍ Kjarasamningar 2025/2026' : 'SART & RSÍ 2025/2026 Tariffs'}
+                                    {t('sart_rsi_tariffs', { defaultValue: 'SART & RSÍ 2025/2026 Tariffs' })}
                                 </span>
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -788,24 +790,24 @@ function OfferPage() {
                                     onClick={() => handleAddBundle('socket')}
                                     className="p-3.5 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 text-left hover:border-indigo-500 transition shadow-sm group hover:-translate-y-0.5"
                                 >
-                                    <span className="block text-xs font-black text-gray-900 dark:text-white group-hover:text-indigo-600 transition">🔌 Rofa / Tengis Dósapakki</span>
-                                    <span className="text-[9px] font-medium text-gray-400 block mt-0.5">Dós + Kapall + Tengill + 0.5h SART vinna</span>
+                                    <span className="block text-xs font-black text-gray-900 dark:text-white group-hover:text-indigo-600 transition">🔌 {t('sart_socket_bundle', { defaultValue: 'Rofa / Tengis Dósapakki' })}</span>
+                                    <span className="text-[9px] font-medium text-gray-400 block mt-0.5">{t('sart_socket_bundle_desc', { defaultValue: 'Dós + Kapall + Tengill + 0.5h SART vinna' })}</span>
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => handleAddBundle('spot')}
                                     className="p-3.5 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 text-left hover:border-indigo-500 transition shadow-sm group hover:-translate-y-0.5"
                                 >
-                                    <span className="block text-xs font-black text-gray-900 dark:text-white group-hover:text-indigo-600 transition">💡 Ífelldur LED Spottapakki</span>
-                                    <span className="text-[9px] font-medium text-gray-400 block mt-0.5">Spot + Driver + 0.4h SART vinna</span>
+                                    <span className="block text-xs font-black text-gray-900 dark:text-white group-hover:text-indigo-600 transition">💡 {t('sart_spot_bundle', { defaultValue: 'Ífelldur LED Spottapakki' })}</span>
+                                    <span className="text-[9px] font-medium text-gray-400 block mt-0.5">{t('sart_spot_bundle_desc', { defaultValue: 'Spot + Driver + 0.4h SART vinna' })}</span>
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => handleAddBundle('panel')}
                                     className="p-3.5 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 text-left hover:border-indigo-500 transition shadow-sm group hover:-translate-y-0.5"
                                 >
-                                    <span className="block text-xs font-black text-gray-900 dark:text-white group-hover:text-indigo-600 transition">⚡ 3-Fasa Aðaltaflu Pakki</span>
-                                    <span className="text-[9px] font-medium text-gray-400 block mt-0.5">Tafla + Lekastraumsrofi + 2.0h SART vinna</span>
+                                    <span className="block text-xs font-black text-gray-900 dark:text-white group-hover:text-indigo-600 transition">⚡ {t('sart_panel_bundle', { defaultValue: '3-Fasa Aðaltaflu Pakki' })}</span>
+                                    <span className="text-[9px] font-medium text-gray-400 block mt-0.5">{t('sart_panel_bundle_desc', { defaultValue: 'Tafla + Lekastraumsrofi + 2.0h SART vinna' })}</span>
                                 </button>
                             </div>
                         </div>
@@ -818,18 +820,18 @@ function OfferPage() {
                                 <div>
                                     <div className="flex items-center gap-2">
                                         <span className="px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-                                            SART / RSÍ Ákvæðisreikningar (ar.is)
+                                            {t('sart_rsi_calculator', { defaultValue: 'SART / RSÍ Ákvæðisreikningar (ar.is)' })}
                                         </span>
-                                        <span className="text-[10px] font-bold text-slate-400">Opinn Kjarasamningur 2025/2026</span>
+                                        <span className="text-[10px] font-bold text-slate-400">{t('open_tariff_agreement', { defaultValue: 'Opinn Kjarasamningur 2025/2026' })}</span>
                                     </div>
                                     <h3 className="text-lg font-black text-white uppercase tracking-tight mt-1">
-                                        {i18n.language.startsWith('is') ? 'Eininga & Taxtareiknir Verks' : 'Work Unit & Rate Calculator'}
+                                        {t('work_unit_rate_calculator', { defaultValue: 'Work Unit & Rate Calculator' })}
                                     </h3>
                                 </div>
                                 <div className="text-left sm:text-right">
-                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Samtals Einingar Verks</span>
+                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">{t('total_work_units', { defaultValue: 'Samtals Einingar Verks' })}</span>
                                     <span className="text-2xl font-black text-emerald-400 font-mono">
-                                        {lineItems.reduce((sum, item) => sum + ((item.eining_value || 0) * (item.quantity || 1)), 0).toFixed(2)} <span className="text-xs text-emerald-300">einingar</span>
+                                        {lineItems.reduce((sum, item) => sum + ((item.eining_value || 0) * (item.quantity || 1)), 0).toFixed(2)} <span className="text-xs text-emerald-300">{t('units', { defaultValue: 'einingar' })}</span>
                                     </span>
                                 </div>
                             </div>
@@ -837,7 +839,7 @@ function OfferPage() {
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
                                 <div className="bg-slate-800/80 p-4 rounded-2xl border border-slate-700/60">
                                     <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">
-                                        {i18n.language.startsWith('is') ? 'Samið Einingarverð (Verðlag kr/klst)' : 'Agreed Unit Rate (ISK/unit)'}
+                                        {t('agreed_unit_rate', { defaultValue: 'Agreed Unit Rate (ISK/unit)' })}
                                     </span>
                                     <div className="flex items-center gap-2">
                                         <input
@@ -854,20 +856,20 @@ function OfferPage() {
                                             disabled={!canEditOffer || isUpdatingRate}
                                             className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition whitespace-nowrap shadow-md shadow-indigo-600/30"
                                         >
-                                            {isUpdatingRate ? 'Uppfæri...' : (i18n.language.startsWith('is') ? 'Beita á allt' : 'Apply')}
+                                            {isUpdatingRate ? t('updating', { defaultValue: 'Uppfæri...' }) : t('apply', { defaultValue: 'Apply' })}
                                         </button>
                                     </div>
                                 </div>
 
                                 <div className="bg-slate-800/80 p-4 rounded-2xl border border-slate-700/60 flex flex-col justify-center">
-                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Reikniformúla SART / ar.is</span>
+                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">{t('calc_formula_title', { defaultValue: 'Reikniformúla SART / ar.is' })}</span>
                                     <p className="text-xs font-bold text-slate-200 mt-1">
-                                        Heildarverð = (Einingar × Magn) × Taxti
+                                        {t('calc_formula_desc', { defaultValue: 'Heildarverð = (Einingar × Magn) × Taxti' })}
                                     </p>
                                 </div>
 
                                 <div className="bg-slate-800/80 p-4 rounded-2xl border border-slate-700/60 flex flex-col justify-center">
-                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Reiknuð Vinnutala</span>
+                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">{t('calculated_labor_cost', { defaultValue: 'Reiknuð Vinnutala' })}</span>
                                     <p className="text-lg font-black text-indigo-400 font-mono mt-1">
                                         {formatCurrency(laborTotal)}
                                     </p>
@@ -912,7 +914,7 @@ function OfferPage() {
                                                         </span>
                                                         {item.is_provisional && (
                                                             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-700">
-                                                                📐 {i18n.language.startsWith('is') ? 'Áætluð vinna (Provisional)' : 'Provisional Item'}
+                                                                📐 {t('provisional_item', { defaultValue: 'Provisional Item' })}
                                                             </span>
                                                         )}
                                                     </div>
@@ -967,7 +969,7 @@ function OfferPage() {
                                                                     onClick={() => handleSaveLineEdit(item.id)}
                                                                     disabled={isSavingLine}
                                                                     className="p-1.5 text-green-600 hover:text-green-700 transition"
-                                                                    title="Save changes"
+                                                                    title={t('save_changes', { defaultValue: 'Save changes' })}
                                                                 >
                                                                     <CheckIcon className="h-4.5 w-4.5" />
                                                                 </button>
@@ -975,7 +977,7 @@ function OfferPage() {
                                                                     onClick={() => setEditingLineId(null)}
                                                                     disabled={isSavingLine}
                                                                     className="p-1.5 text-gray-400 hover:text-gray-600 transition"
-                                                                    title="Cancel edit"
+                                                                    title={t('cancel_edit', { defaultValue: 'Cancel edit' })}
                                                                 >
                                                                     <XMarkIcon className="h-4.5 w-4.5" />
                                                                 </button>
@@ -985,14 +987,14 @@ function OfferPage() {
                                                                 <button
                                                                     onClick={() => handleStartEditLine(item)}
                                                                     className="p-2 text-gray-400 hover:text-indigo-600 transition"
-                                                                    title="Edit line"
+                                                                    title={t('edit_line', { defaultValue: 'Edit line' })}
                                                                 >
                                                                     <PencilIcon className="h-4.5 w-4.5" />
                                                                 </button>
                                                                 <button
                                                                     onClick={() => handleRemoveLineItem(item.id)}
                                                                     className="p-2 text-gray-300 hover:text-red-650 transition"
-                                                                    title="Delete line"
+                                                                    title={t('delete_line', { defaultValue: 'Delete line' })}
                                                                 >
                                                                     <TrashIcon className="h-4.5 w-4.5" />
                                                                 </button>
@@ -1004,7 +1006,7 @@ function OfferPage() {
                                         );
                                     })}
                                     {lineItems.length === 0 && (
-                                        <tr><td colSpan="5" className="py-20 text-center text-gray-400 italic font-medium">Registry empty: No commercial lines defined.</td></tr>
+                                        <tr><td colSpan="5" className="py-20 text-center text-gray-400 italic font-medium">{t('registry_empty_commercial_lines', { defaultValue: 'Registry empty: No commercial lines defined.' })}</td></tr>
                                     )}
                                 </tbody>
                             </table>
@@ -1015,7 +1017,7 @@ function OfferPage() {
                     {canEditOffer && (
                         <section className="bg-white dark:bg-gray-800 p-8 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-700">
                             <h3 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-widest mb-6 flex items-center gap-2">
-                                <PlusIcon className="h-5 w-5 text-indigo-600" /> Add line to offer
+                                <PlusIcon className="h-5 w-5 text-indigo-600" /> {t('add_line_to_offer', { defaultValue: 'Add line to offer' })}
                             </h3>
 
                             {/* Tabs: Labor (catalog) | Material | Custom labor */}
@@ -1045,7 +1047,7 @@ function OfferPage() {
 
                             <div className="mb-6 p-4 rounded-2xl bg-gray-50 dark:bg-gray-900/40 border border-gray-100 dark:border-gray-700">
                                 <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">
-                                    Material supplier filter (Material tab browser)
+                                    {t('material_supplier_filter', { defaultValue: 'Material supplier filter (Material tab browser)' })}
                                 </p>
                                 <InventoryCatalogShopFilters
                                     selected={selectedShops}
@@ -1058,30 +1060,30 @@ function OfferPage() {
                             {/* Custom labor form: description, qty, unit (catalog-aligned), unit price */}
                             {showCustomLaborForm && (
                                 <form onSubmit={handleAddCustomLaborLine} className="space-y-4 p-4 rounded-2xl bg-white dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 mb-6">
-                                    <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Use the same units as catalog (per hour, per unit, or lump sum) so lines stay consistent.</p>
+                                    <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{t('custom_labor_unit_hint', { defaultValue: 'Use the same units as catalog (per hour, per unit, or lump sum) so lines stay consistent.' })}</p>
                                     <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
                                         <div className="md:col-span-6">
-                                            <label className="block text-[10px] font-black text-gray-500 uppercase mb-1">Description</label>
+                                            <label className="block text-[10px] font-black text-gray-500 uppercase mb-1">{t('description', { defaultValue: 'Description' })}</label>
                                             <input type="text" value={newItemDesc} onChange={(e) => setNewItemDesc(e.target.value)} className="modern-input" placeholder="e.g. Special installation" required />
                                         </div>
                                         <div className="md:col-span-2">
-                                            <label className="block text-[10px] font-black text-gray-500 uppercase mb-1">Quantity</label>
+                                            <label className="block text-[10px] font-black text-gray-500 uppercase mb-1">{t('quantity', { defaultValue: 'Quantity' })}</label>
                                             <input type="number" value={newItemQty} onChange={(e) => setNewItemQty(e.target.value)} min="0.01" step="any" className="modern-input text-center font-mono" required />
                                         </div>
                                         <div className="md:col-span-2">
-                                            <label className="block text-[10px] font-black text-gray-500 uppercase mb-1">Unit</label>
+                                            <label className="block text-[10px] font-black text-gray-500 uppercase mb-1">{t('unit', { defaultValue: 'Unit' })}</label>
                                             <select value={newItemUnit} onChange={(e) => setNewItemUnit(e.target.value)} className="modern-input">
                                                 {LABOR_UNIT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
                                             </select>
                                         </div>
                                         <div className="md:col-span-2">
-                                            <label className="block text-[10px] font-black text-gray-500 uppercase mb-1">Unit price (ISK)</label>
+                                            <label className="block text-[10px] font-black text-gray-500 uppercase mb-1">{t('unit_price_isk', { defaultValue: 'Unit price (ISK)' })}</label>
                                             <input type="number" value={newItemPrice} onChange={(e) => setNewItemPrice(e.target.value)} min="0" step="1" className="modern-input text-right font-mono" required />
                                         </div>
                                     </div>
                                     <div className="flex gap-2">
-                                        <button type="submit" className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-sm">Add line</button>
-                                        <button type="button" onClick={() => setShowCustomLaborForm(false)} className="px-6 py-2.5 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 font-bold rounded-xl text-sm">Cancel</button>
+                                        <button type="submit" className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-sm">{t('add_line_btn', { defaultValue: 'Add line' })}</button>
+                                        <button type="button" onClick={() => setShowCustomLaborForm(false)} className="px-6 py-2.5 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 font-bold rounded-xl text-sm">{t('cancel_btn', { defaultValue: 'Cancel' })}</button>
                                     </div>
                                 </form>
                             )}
@@ -1090,7 +1092,7 @@ function OfferPage() {
                             {newItemType === 'Material' && (
                                 <form onSubmit={handleAddLineItem} className="space-y-4 p-4 rounded-2xl bg-white dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700">
                                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">
-                                        Select material from Shop inventory
+                                        {t('select_material_shop', { defaultValue: 'Select material from Shop inventory' })}
                                     </p>
 
                                     <div className="flex flex-col lg:flex-row gap-6">
@@ -1104,7 +1106,7 @@ function OfferPage() {
                                             <nav className="max-h-[40vh] overflow-y-auto">
                                                 {materialCategories.length === 0 ? (
                                                     <p className="p-4 text-sm text-gray-500">
-                                                        No materials available in Shop inventory.
+                                                        {t('no_materials_available', { defaultValue: 'No materials available in Shop inventory.' })}
                                                     </p>
                                                 ) : (
                                                     <ul className="py-2">
@@ -1130,7 +1132,7 @@ function OfferPage() {
                                                                             ) : (
                                                                                 <FolderIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
                                                                             )}
-                                                                            {cat.main_category || '(Uncategorized)'}
+                                                                            {cat.main_category || t('uncategorized', { defaultValue: '(Uncategorized)' })}
                                                                         </span>
                                                                         <ChevronRightIcon
                                                                             className={`h-5 w-5 text-gray-400 flex-shrink-0 transition-transform ${
@@ -1161,7 +1163,7 @@ function OfferPage() {
                                                                                             }`}
                                                                                         >
                                                                                             <span className="truncate">
-                                                                                                {sub.sub_category || '(Uncategorized)'}
+                                                                                                {sub.sub_category || t('uncategorized', { defaultValue: '(Uncategorized)' })}
                                                                                             </span>
                                                                                             <span className="text-xs font-bold text-gray-400">
                                                                                                 {sub.count}
@@ -1180,20 +1182,20 @@ function OfferPage() {
                                             </nav>
                                         </aside>
 
-                                        {/* Items in selected category + Add line to offer */}
+                                        {/* Items in selected category + {t('add_line_to_offer', { defaultValue: 'Add line to offer' })} */}
                                         <main className="flex-1 min-w-0">
                                             {materialSelectedMain === null || materialSelectedSub === null ? (
                                                 <div className="flex flex-col items-center justify-center py-16 px-4 text-center rounded-2xl border border-dashed border-gray-200 dark:border-gray-600">
                                                     <FolderOpenIcon className="h-12 w-12 text-gray-300 dark:text-gray-600 mb-2" />
                                                     <p className="text-sm font-bold text-gray-500 dark:text-gray-400">
-                                                        Select a category → subcategory
+                                                        {t('select_category_subcategory', { defaultValue: 'Select a category → subcategory' })}
                                                     </p>
                                                 </div>
                                             ) : (
                                                 <>
                                                     {materialCategoryItems.length === 0 ? (
                                                         <p className="py-6 text-center text-gray-500 text-sm">
-                                                            No materials in this subcategory.
+                                                            {t('no_materials_in_subcategory', { defaultValue: 'No materials in this subcategory.' })}
                                                         </p>
                                                     ) : (
                                                         <div className="space-y-2 max-h-[35vh] overflow-y-auto pr-2 mb-4">
@@ -1321,7 +1323,7 @@ function OfferPage() {
                                 </form>
                             )}
 
-                            {/* Labor from catalog: category browser + items + work load ratios + Add line to offer */}
+                            {/* Labor from catalog: category browser + items + work load ratios + {t('add_line_to_offer', { defaultValue: 'Add line to offer' })} */}
                             {newItemType === 'Labor' && !showCustomLaborForm && (
                             <>
 
@@ -1329,7 +1331,7 @@ function OfferPage() {
                                         {/* Category sidebar (like Labor Catalog tab) */}
                                         <aside className="lg:w-72 flex-shrink-0 bg-gray-50 dark:bg-gray-900/50 rounded-2xl border border-gray-100 dark:border-gray-700 overflow-hidden">
                                             <div className="p-4 border-b border-gray-100 dark:border-gray-700">
-                                                <h4 className="text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest">Categories</h4>
+                                                <h4 className="text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest">{t('categories', { defaultValue: 'Categories' })}</h4>
                                             </div>
                                             <nav className="max-h-[40vh] overflow-y-auto">
                                                 {categoriesLoading ? (
@@ -1347,7 +1349,7 @@ function OfferPage() {
                                                                     <button type="button" onClick={() => setExpandedMain(isExpanded ? null : mainKey)} className="w-full flex items-center justify-between gap-2 px-4 py-3 text-left hover:bg-gray-100 dark:hover:bg-gray-700/50 transition">
                                                                         <span className="flex items-center gap-2 font-bold text-gray-900 dark:text-white truncate text-sm">
                                                                             {isExpanded ? <FolderOpenIcon className="h-5 w-5 text-indigo-500 flex-shrink-0" /> : <FolderIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />}
-                                                                            {cat.display_name || cat.main_category || '(Uncategorized)'}
+                                                                            {cat.display_name || cat.main_category || t('uncategorized', { defaultValue: '(Uncategorized)' })}
                                                                         </span>
                                                                         <ChevronRightIcon className={`h-5 w-5 text-gray-400 flex-shrink-0 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
                                                                     </button>
@@ -1359,7 +1361,7 @@ function OfferPage() {
                                                                                 return (
                                                                                     <li key={subKey || 'uncat'}>
                                                                                         <button type="button" onClick={() => { setSelectedMain(mainKey); setSelectedSub(subKey); setSelectedCatalogItem(null); }} className={`w-full flex justify-between gap-2 pl-10 pr-4 py-2.5 text-left text-sm transition ${isSelected ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-800 dark:text-indigo-200 font-semibold' : 'hover:bg-gray-100 dark:hover:bg-gray-700/50 text-gray-700 dark:text-gray-300'}`}>
-                                                                                            <span className="truncate">{sub.display_name || sub.sub_category || '(Uncategorized)'}</span>
+                                                                                            <span className="truncate">{sub.display_name || sub.sub_category || t('uncategorized', { defaultValue: '(Uncategorized)' })}</span>
                                                                                             <span className="text-xs font-bold text-gray-400">{sub.count}</span>
                                                                                         </button>
                                                                                     </li>
@@ -1375,12 +1377,12 @@ function OfferPage() {
                                             </nav>
                                         </aside>
 
-                                        {/* Items in selected category + selection + Add line to offer */}
+                                        {/* Items in selected category + selection + {t('add_line_to_offer', { defaultValue: 'Add line to offer' })} */}
                                         <main className="flex-1 min-w-0">
                                             {selectedMain === null || selectedSub === null ? (
                                                 <div className="flex flex-col items-center justify-center py-16 px-4 text-center rounded-2xl border border-dashed border-gray-200 dark:border-gray-600">
                                                     <FolderOpenIcon className="h-12 w-12 text-gray-300 dark:text-gray-600 mb-2" />
-                                                    <p className="text-sm font-bold text-gray-500 dark:text-gray-400">Select a category → subcategory</p>
+                                                    <p className="text-sm font-bold text-gray-500 dark:text-gray-400">{t('select_category_subcategory', { defaultValue: 'Select a category → subcategory' })}</p>
                                                 </div>
                                             ) : (
                                                 <>
@@ -1443,7 +1445,7 @@ function OfferPage() {
                                                             )}
                                                             <div className="flex flex-wrap items-end gap-4">
                                                                 <div className="w-24">
-                                                                    <label className="block text-[10px] font-black text-gray-500 uppercase mb-1">Quantity</label>
+                                                                    <label className="block text-[10px] font-black text-gray-500 uppercase mb-1">{t('quantity', { defaultValue: 'Quantity' })}</label>
                                                                     <input type="number" value={addQty} onChange={(e) => setAddQty(e.target.value)} min="0.01" step="any" className="modern-input text-center font-mono h-11" />
                                                                 </div>
                                                                 <button
@@ -1452,7 +1454,7 @@ function OfferPage() {
                                                                     disabled={itemVariants.length > 0 && !selectedVariant}
                                                                     className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-xl text-sm"
                                                                 >
-                                                                    Add line to offer
+                                                                    {t('add_line_to_offer', { defaultValue: 'Add line to offer' })}
                                                                 </button>
                                                             </div>
                                                         </div>

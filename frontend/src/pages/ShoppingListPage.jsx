@@ -55,7 +55,7 @@ function ShoppingListPage() {
                         setSelectedProjectId(relevantProjects[0].id.toString());
                     }
                 })
-                .catch(() => toast.error("Failed to synchronize project registry."))
+                .catch(() => toast.error(t('failed_sync_project_registry', { defaultValue: 'Failed to synchronize project registry.' })))
                 .finally(() => setIsProjectsLoading(false));
         } else {
             setIsProjectsLoading(false);
@@ -79,8 +79,8 @@ function ShoppingListPage() {
             setShoppingList(response.data);
         } catch (err) {
             console.error("Procurement calculation error:", err);
-            setError(`Failed to compile shopping list for Registry ID ${projectId}.`);
-            toast.error(`Analysis engine failure.`);
+            setError(t('failed_compile_shopping_list', { defaultValue: 'Failed to compile shopping list for Registry ID {{id}}' }).replace('{{id}}', projectId));
+            toast.error(t('analysis_engine_failure', { defaultValue: 'Analysis engine failure.' }));
         } finally {
             setIsLoading(false);
         }
@@ -97,7 +97,7 @@ function ShoppingListPage() {
             setMaterialRequests(response.data);
         } catch (err) {
             console.error('Material requests fetch error:', err);
-            toast.error('Failed to load manual material requests.');
+            toast.error(t('failed_load_manual_requests', { defaultValue: 'Failed to load manual material requests.' }));
         } finally {
             setIsRequestsLoading(false);
         }
@@ -108,14 +108,14 @@ function ShoppingListPage() {
         fetchMaterialRequests(selectedProjectId);
     }, [selectedProjectId, fetchShoppingList, fetchMaterialRequests]);
 
-    if (isProjectsLoading) return <LoadingSpinner text="Accessing procurement telemetry..." size="lg" />;
+    if (isProjectsLoading) return <LoadingSpinner text={t('accessing_procurement_telemetry', { defaultValue: 'Accessing procurement telemetry...' })} size="lg" />;
 
     if (!canViewPage) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-8">
                 <ExclamationCircleIcon className="h-16 w-16 text-gray-200 mb-4" />
-                <h2 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter">Access Denied</h2>
-                <p className="text-sm text-gray-500 max-w-xs mt-2">Personnel with Project Manager or Admin clearance only.</p>
+                <h2 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter">{t('access_denied_heading', { defaultValue: 'Access Denied' })}</h2>
+                <p className="text-sm text-gray-500 max-w-xs mt-2">{t('pm_or_admin_required', { defaultValue: 'Personnel with Project Manager or Admin clearance only.' })}</p>
             </div>
         );
     }
@@ -145,7 +145,7 @@ function ShoppingListPage() {
             
             <div className="max-w-2xl mb-12">
                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-3 ml-1">
-                    Select Deployment for BoQ Check
+                    {t('select_deployment_boq', { defaultValue: 'Select Deployment for BoQ Check' })}
                 </label>
                 <div className="relative group">
                     <BriefcaseIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-indigo-500 transition-colors" />
@@ -156,20 +156,20 @@ function ShoppingListPage() {
                         className="block w-full pl-12 pr-10 h-14 rounded-2xl border border-gray-200 dark:bg-gray-800 dark:border-gray-700 text-sm font-bold focus:ring-2 focus:ring-indigo-500 transition-all shadow-sm appearance-none outline-none cursor-pointer"
                         disabled={projects.length === 0}
                     >
-                        <option value="">Choose an active project to analyze stock gap...</option>
+                        <option value="">{t('choose_project_analyze', { defaultValue: 'Choose an active project to analyze stock gap...' })}</option>
                         {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                     </select>
                     <ChevronDownIcon className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
                 </div>
                 {projects.length === 0 && (
                     <p className="text-[10px] font-bold text-orange-600 uppercase tracking-widest mt-3 ml-1">
-                        {isAdmin ? "No project records found in registry." : "No projects assigned to your profile."}
+                        {isAdmin ? t('no_project_records', { defaultValue: 'No project records found in registry.' }) : t('no_projects_assigned', { defaultValue: 'No projects assigned to your profile.' })}
                     </p>
                 )}
             </div>
 
             {isLoading ? (
-                <div className="py-20"><LoadingSpinner text="Calculating material shortfall..." /></div>
+                <div className="py-20"><LoadingSpinner text={t('calculating_material_shortfall', { defaultValue: 'Calculating material shortfall...' })} /></div>
             ) : error ? (
                 <div className="p-6 bg-red-50 text-red-700 rounded-3xl text-sm font-bold border border-red-100 flex items-center gap-2">
                     <ExclamationCircleIcon className="h-5 w-5" /> {error}
@@ -179,13 +179,13 @@ function ShoppingListPage() {
                     {/* Summary Stats */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="bg-white dark:bg-gray-800 p-6 rounded-[2rem] border border-gray-100 dark:border-gray-700 shadow-sm">
-                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Unique SKUs</p>
+                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">{t('unique_skus', { defaultValue: 'Unique SKUs' })}</p>
                             <p className="text-2xl font-black text-gray-900 dark:text-white">{shoppingList.length}</p>
                         </div>
                         <div className="bg-white dark:bg-gray-800 p-6 rounded-[2rem] border border-gray-100 dark:border-gray-700 shadow-sm">
-                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Order Status</p>
+                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">{t('order_status', { defaultValue: 'Order Status' })}</p>
                             <p className={`text-2xl font-black ${shoppingList.some(i => i.quantity_to_order > 0) ? 'text-orange-500' : 'text-green-500'}`}>
-                                {shoppingList.some(i => i.quantity_to_order > 0) ? 'Orders Pending' : 'Fully Supplied'}
+                                {shoppingList.some(i => i.quantity_to_order > 0) ? t('orders_pending', { defaultValue: 'Orders Pending' }) : t('fully_supplied', { defaultValue: 'Fully Supplied' })}
                             </p>
                         </div>
                         <div className="bg-white dark:bg-gray-800 p-6 rounded-[2rem] border border-gray-100 dark:border-gray-700 shadow-sm flex items-center justify-center">
@@ -196,17 +196,17 @@ function ShoppingListPage() {
                     {/* Technical Data Table */}
                     <div className="bg-white dark:bg-gray-800 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
                         <div className="p-8 border-b border-gray-50 dark:border-gray-700">
-                            <h2 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Requirement Breakdown</h2>
+                            <h2 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight">{t('requirement_breakdown', { defaultValue: 'Requirement Breakdown' })}</h2>
                         </div>
                         
                         <div className="overflow-x-auto">
                             <table className="w-full text-sm text-left">
                                 <thead className="text-[10px] text-gray-400 uppercase font-black bg-gray-50 dark:bg-gray-700/50">
                                     <tr>
-                                        <th className="py-5 px-8">Material / Specifications</th>
-                                        <th className="py-5 px-6 text-right">Required (BoQ)</th>
-                                        <th className="py-5 px-6 text-right">Allocated Stock</th>
-                                        <th className="py-5 px-8 text-right">Delta (To Order)</th>
+                                        <th className="py-5 px-8">{t('material_specifications', { defaultValue: 'Material / Specifications' })}</th>
+                                        <th className="py-5 px-6 text-right">{t('required_boq', { defaultValue: 'Required (BoQ)' })}</th>
+                                        <th className="py-5 px-6 text-right">{t('allocated_stock', { defaultValue: 'Allocated Stock' })}</th>
+                                        <th className="py-5 px-8 text-right">{t('delta_to_order', { defaultValue: 'Delta (To Order)' })}</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-50 dark:divide-gray-700">
@@ -219,7 +219,7 @@ function ShoppingListPage() {
                                                     </div>
                                                     <div>
                                                         <p className="font-bold text-gray-900 dark:text-white">{inventoryDisplayName(item.inventory_item, i18n.language)}</p>
-                                                        <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">{item.unit || 'Standard Unit'}</p>
+                                                        <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">{item.unit || t('standard_unit', { defaultValue: 'Standard Unit' })}</p>
                                                     </div>
                                                 </div>
                                             </td>
@@ -235,7 +235,7 @@ function ShoppingListPage() {
                                                         {item.quantity_to_order > 0 ? `+ ${item.quantity_to_order.toFixed(1)}` : '0.0'}
                                                     </span>
                                                     {item.quantity_to_order > 0 && (
-                                                        <PushToGCButton entityType="material" entityId={item.id} buttonLabel="Request GC" />
+                                                        <PushToGCButton entityType="material" entityId={item.id} buttonLabel={t('request_gc', { defaultValue: 'Request GC' })} />
                                                     )}
                                                 </div>
                                             </td>
@@ -243,9 +243,9 @@ function ShoppingListPage() {
                                     ))}
                                     {shoppingList.length === 0 && (
                                         <tr>
-                                            <td colSpan="4" className="py-20 text-center text-gray-400 italic font-medium">
-                                                Registry Clear: Project BoQ is fully satisfied by current deployment stock.
-                                            </td>
+                                                <td colSpan="4" className="py-20 text-center text-gray-400 italic font-medium">
+                                                    {t('registry_clear_boq_satisfied', { defaultValue: 'Registry Clear: Project BoQ is fully satisfied by current deployment stock.' })}
+                                                </td>
                                         </tr>
                                     )}
                                 </tbody>
@@ -256,7 +256,7 @@ function ShoppingListPage() {
                     {/* Manual Material Requests (Team Leader Inputs) */}
                     {isRequestsLoading ? (
                         <div className="py-10">
-                            <LoadingSpinner text="Loading manual material requests..." />
+                            <LoadingSpinner text={t('loading_manual_requests', { defaultValue: 'Loading manual material requests...' })} />
                         </div>
                     ) : (
                         <div className="bg-white dark:bg-gray-800 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
@@ -267,15 +267,15 @@ function ShoppingListPage() {
                                     </div>
                                     <div>
                                         <h2 className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-tight">
-                                            Manual Requests from Site
+                                            {t('manual_requests_site', { defaultValue: 'Manual Requests from Site' })}
                                         </h2>
                                         <p className="text-[11px] text-gray-500 dark:text-gray-400 font-medium mt-1">
-                                            Team leader submissions that should be cross-checked against warehouse and other deployments before ordering.
+                                            {t('team_leader_submissions_desc', { defaultValue: 'Team leader submissions that should be cross-checked against warehouse and other deployments before ordering.' })}
                                         </p>
                                     </div>
                                 </div>
                                 <span className="text-[10px] font-black text-amber-600 uppercase tracking-[0.2em] bg-amber-50 dark:bg-amber-900/20 px-4 py-1 rounded-full border border-amber-100 dark:border-amber-700">
-                                    Open Requests: {materialRequests.length}
+                                    {t('open_requests', { defaultValue: 'Open Requests:' })} {materialRequests.length}
                                 </span>
                             </div>
 
@@ -283,11 +283,11 @@ function ShoppingListPage() {
                                 <table className="w-full text-sm text-left">
                                     <thead className="text-[10px] text-gray-400 uppercase font-black bg-gray-50 dark:bg-gray-700/50">
                                         <tr>
-                                            <th className="py-5 px-8">Material</th>
-                                            <th className="py-5 px-6 text-right">Requested Qty</th>
-                                            <th className="py-5 px-6">Requested By</th>
+                                            <th className="py-5 px-8">{t('material_label', { defaultValue: 'Material' })}</th>
+                                            <th className="py-5 px-6 text-right">{t('requested_qty', { defaultValue: 'Requested Qty' })}</th>
+                                            <th className="py-5 px-6">{t('requested_by', { defaultValue: 'Requested By' })}</th>
                                             <th className="py-5 px-6">{t('status')}</th>
-                                            <th className="py-5 px-8 text-right">Requested At</th>
+                                            <th className="py-5 px-8 text-right">{t('requested_at', { defaultValue: 'Requested At' })}</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-50 dark:divide-gray-700">
@@ -299,7 +299,7 @@ function ShoppingListPage() {
                                                     to={req.inventory_item ? `/inventory/edit/${req.inventory_item.id}` : '#'}
                                                     className={`font-bold text-gray-900 dark:text-white hover:text-indigo-600 transition-colors ${!req.inventory_item ? 'pointer-events-none cursor-default opacity-60' : ''}`}
                                                 >
-                                                    {req.inventory_item ? inventoryDisplayName(req.inventory_item, i18n.language) : 'Unknown material'}
+                                                    {req.inventory_item ? inventoryDisplayName(req.inventory_item, i18n.language) : t('unknown_material', { defaultValue: 'Unknown material' })}
                                                 </Link>
                                                 <div className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mt-1">
                                                     ID: {req.inventory_item?.id ?? '—'}
@@ -317,7 +317,7 @@ function ShoppingListPage() {
                                                         {req.requested_by
                                                             ? `${req.requested_by.first_name || ''} ${req.requested_by.last_name || ''}`.trim() ||
                                                               req.requested_by.email
-                                                            : 'Unknown'}
+                                                            : t('unknown', { defaultValue: 'Unknown' })}
                                                     </td>
                                                     <td className="py-5 px-6">
                                                         <span
@@ -344,7 +344,7 @@ function ShoppingListPage() {
                                         ) : (
                                             <tr>
                                                 <td colSpan="5" className="py-16 text-center text-gray-400 italic text-sm">
-                                                    No manual material requests logged for this deployment yet.
+                                                    {t('no_manual_requests_logged', { defaultValue: 'No manual material requests logged for this deployment yet.' })}
                                                 </td>
                                             </tr>
                                         )}

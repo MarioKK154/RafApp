@@ -144,7 +144,7 @@ export default function InventoryCategoryModal({ isOpen, onClose, selectedIds, o
                             <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
                                 <div className="flex items-center justify-between mb-4">
                                     <Dialog.Title as="h3" className="text-lg font-medium leading-6 text-gray-900">
-                                        Move / Edit Category
+                                        {t('move_edit_category', { defaultValue: 'Move / Edit Category' })}
                                     </Dialog.Title>
                                     <button onClick={onClose} className="text-gray-400 hover:text-gray-500">
                                         <XMarkIcon className="h-6 w-6" />
@@ -152,26 +152,26 @@ export default function InventoryCategoryModal({ isOpen, onClose, selectedIds, o
                                 </div>
 
                                 <div className="mt-2 text-sm text-gray-500 mb-4">
-                                    You are editing <strong>{selectedIds.length}</strong> item(s).
+                                    {t('you_are_editing', { defaultValue: 'You are editing' })} <strong>{selectedIds.length}</strong> {t('items_parentheses', { defaultValue: 'item(s).' })}
                                 </div>
 
                                 {isLoadingCategories ? (
-                                    <div className="text-sm text-gray-500">Loading categories...</div>
+                                    <div className="text-sm text-gray-500">{t('loading_categories', { defaultValue: 'Loading categories...' })}</div>
                                 ) : (
                                     <form onSubmit={handleSubmit} className="space-y-4">
                                         
                                         {/* Master Category */}
                                         <div className="p-3 bg-gray-50 rounded-lg border border-gray-200 transition-colors">
-                                            <label className="block text-sm font-bold text-gray-700 mb-1">Master Category</label>
+                                            <label className="block text-sm font-bold text-gray-700 mb-1">{t('master_category', { defaultValue: 'Master Category' })}</label>
                                             <select
                                                 className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm mb-2"
                                                 value={masterSelect}
                                                 onChange={(e) => setMasterSelect(e.target.value)}
                                             >
-                                                <option value="">-- Do not change --</option>
-                                                <option value="[NEW]">+ Create New Folder...</option>
-                                                <option value="[CLEAR]">- Clear (Remove) -</option>
-                                                <optgroup label="Existing Folders">
+                                                <option value="">-- {t('do_not_change', { defaultValue: 'Do not change' })} --</option>
+                                                <option value="[NEW]">{t('create_new_folder', { defaultValue: '+ Create New Folder...' })}</option>
+                                                <option value="[CLEAR]">{t('clear_remove', { defaultValue: '- Clear (Remove) -' })}</option>
+                                                <optgroup label={t('existing_folders', { defaultValue: 'Existing Folders' })}>
                                                     {availableMasters.map(m => <option key={m} value={m}>{m}</option>)}
                                                 </optgroup>
                                             </select>
@@ -182,24 +182,24 @@ export default function InventoryCategoryModal({ isOpen, onClose, selectedIds, o
                                                     className="block w-full rounded-md border-blue-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                                                     value={masterNew}
                                                     onChange={(e) => setMasterNew(e.target.value)}
-                                                    placeholder="Type new Master Category..."
+                                                    placeholder={t('type_new_master_category', { defaultValue: 'Type new Master Category...' })}
                                                 />
                                             )}
                                         </div>
 
                                         {/* Category */}
                                         <div className={`p-3 rounded-lg border transition-colors ${(!masterSelect || masterSelect === '[CLEAR]') ? 'bg-gray-100 border-gray-100 opacity-50 pointer-events-none' : 'bg-gray-50 border-gray-200'}`}>
-                                            <label className="block text-sm font-bold text-gray-700 mb-1">Category</label>
+                                            <label className="block text-sm font-bold text-gray-700 mb-1">{t('category', { defaultValue: 'Category' })}</label>
                                             <select
                                                 className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm mb-2"
                                                 value={categorySelect}
                                                 onChange={(e) => setCategorySelect(e.target.value)}
                                                 disabled={!masterSelect || masterSelect === '[CLEAR]'}
                                             >
-                                                <option value="">-- Do not change --</option>
-                                                <option value="[NEW]">+ Create New Folder...</option>
-                                                <option value="[CLEAR]">- Clear (Remove) -</option>
-                                                <optgroup label="Existing Folders (Filtered by Master)">
+                                                <option value="">-- {t('do_not_change', { defaultValue: 'Do not change' })} --</option>
+                                                <option value="[NEW]">{t('create_new_folder', { defaultValue: '+ Create New Folder...' })}</option>
+                                                <option value="[CLEAR]">{t('clear_remove', { defaultValue: '- Clear (Remove) -' })}</option>
+                                                <optgroup label={t('existing_folders_filtered_master', { defaultValue: 'Existing Folders (Filtered by Master)' })}>
                                                     {availableCategories.map(c => <option key={c} value={c}>{c}</option>)}
                                                 </optgroup>
                                             </select>
@@ -210,24 +210,24 @@ export default function InventoryCategoryModal({ isOpen, onClose, selectedIds, o
                                                     className="block w-full rounded-md border-blue-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                                                     value={categoryNew}
                                                     onChange={(e) => setCategoryNew(e.target.value)}
-                                                    placeholder="Type new Category..."
+                                                    placeholder={t('type_new_category', { defaultValue: 'Type new Category...' })}
                                                 />
                                             )}
                                         </div>
 
                                         {/* Subcategory */}
                                         <div className={`p-3 rounded-lg border transition-colors ${(!categorySelect || categorySelect === '[CLEAR]') ? 'bg-gray-100 border-gray-100 opacity-50 pointer-events-none' : 'bg-gray-50 border-gray-200'}`}>
-                                            <label className="block text-sm font-bold text-gray-700 mb-1">Subcategory</label>
+                                            <label className="block text-sm font-bold text-gray-700 mb-1">{t('subcategory', { defaultValue: 'Subcategory' })}</label>
                                             <select
                                                 className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm mb-2"
                                                 value={subcategorySelect}
                                                 onChange={(e) => setSubcategorySelect(e.target.value)}
                                                 disabled={!categorySelect || categorySelect === '[CLEAR]'}
                                             >
-                                                <option value="">-- Do not change --</option>
-                                                <option value="[NEW]">+ Create New Folder...</option>
-                                                <option value="[CLEAR]">- Clear (Remove) -</option>
-                                                <optgroup label="Existing Folders (Filtered by Category)">
+                                                <option value="">-- {t('do_not_change', { defaultValue: 'Do not change' })} --</option>
+                                                <option value="[NEW]">{t('create_new_folder', { defaultValue: '+ Create New Folder...' })}</option>
+                                                <option value="[CLEAR]">{t('clear_remove', { defaultValue: '- Clear (Remove) -' })}</option>
+                                                <optgroup label={t('existing_folders_filtered_cat', { defaultValue: 'Existing Folders (Filtered by Category)' })}>
                                                     {availableSubcategories.map(s => <option key={s} value={s}>{s}</option>)}
                                                 </optgroup>
                                             </select>
@@ -238,7 +238,7 @@ export default function InventoryCategoryModal({ isOpen, onClose, selectedIds, o
                                                     className="block w-full rounded-md border-blue-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                                                     value={subcategoryNew}
                                                     onChange={(e) => setSubcategoryNew(e.target.value)}
-                                                    placeholder="Type new Subcategory..."
+                                                    placeholder={t('type_new_subcategory', { defaultValue: 'Type new Subcategory...' })}
                                                 />
                                             )}
                                         </div>
@@ -249,14 +249,14 @@ export default function InventoryCategoryModal({ isOpen, onClose, selectedIds, o
                                                 onClick={onClose}
                                                 className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
                                             >
-                                                {t('common.cancel', 'Cancel')}
+                                                {t('cancel', { defaultValue: 'Cancel' })}
                                             </button>
                                             <button
                                                 type="submit"
                                                 disabled={isSaving}
                                                 className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
                                             >
-                                                {isSaving ? 'Saving...' : 'Apply Changes'}
+                                                {isSaving ? t('saving', { defaultValue: 'Saving...' }) : t('apply_changes', { defaultValue: 'Apply Changes' })}
                                             </button>
                                         </div>
                                     </form>

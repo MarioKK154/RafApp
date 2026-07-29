@@ -7,6 +7,7 @@ import { toast } from 'react-toastify';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ConfirmationModal from '../components/ConfirmationModal';
 import CreateOfferFromCatalogModal from '../components/CreateOfferFromCatalogModal';
+import OfferEngine from '../components/OfferEngine';
 import PageHeader from '../components/PageHeader';
 import {
     PlusIcon,
@@ -19,10 +20,13 @@ import {
     ArrowDownTrayIcon,
     ArrowPathIcon,
     ChevronRightIcon,
+    ChevronDownIcon,
+    ChevronUpIcon,
     FolderIcon,
     FolderOpenIcon,
     DocumentPlusIcon,
     CheckIcon,
+    CalculatorIcon,
 } from '@heroicons/react/24/outline';
 
 /** Format a decimal eining value: 1.25 → "1.250 ein." */
@@ -44,31 +48,36 @@ const formatISKRate = (value) => {
 };
 
 /** ar.is Eining: standard hours → time per unit. 0 = hourly rate; positive = u * 60 min per unit */
-function einingDurationLabel(unitsPerHour) {
+function einingDurationLabel(unitsPerHour, t) {
     if (unitsPerHour == null) return null;
     const u = Number(unitsPerHour);
-    if (u === 0) return 'Hourly rate';
+    if (u === 0) return t ? t('hourly_rate', { defaultValue: 'Hourly rate' }) : 'Hourly rate';
     if (u < 0) return null;
     const minPerUnit = u * 60;
     if (minPerUnit >= 60) {
-        const hrs = minPerUnit / 60;
-        return hrs >= 1 && Math.abs(hrs - Math.round(hrs)) < 0.01 ? `${Math.round(hrs)} hr` : `${hrs.toFixed(1)} hr`;
+        const totalMins = Math.round(minPerUnit);
+        const hrs = Math.floor(totalMins / 60);
+        const mins = totalMins % 60;
+        const hrLabel = t ? t('hour_abbr', { defaultValue: 'hr' }) : 'hr';
+        const minLabel = t ? t('min_abbr', { defaultValue: 'min' }) : 'min';
+        if (mins === 0) return `${hrs}${hrLabel}`;
+        return `${hrs}${hrLabel} ${mins}${minLabel}`;
     }
     if (minPerUnit >= 1) {
-        return minPerUnit >= 10 && Math.abs(minPerUnit - Math.round(minPerUnit)) < 0.1
-            ? `${Math.round(minPerUnit)} min`
-            : `${minPerUnit.toFixed(1)} min`;
+        const minLabel = t ? t('min_abbr', { defaultValue: 'min' }) : 'min';
+        const rounded = Math.round(minPerUnit * 10) / 10;
+        return `${rounded}${minLabel}`;
     }
-    return '< 1 min';
+    return t ? t('less_than_1_min', { defaultValue: '< 1 min' }) : '< 1 min';
 }
 
 /** Full label for list: "Eining: X ein. (Y)" so values match ar.is standard labels */
-function einingFullLabel(unitsPerHour) {
+function einingFullLabel(unitsPerHour, t) {
     if (unitsPerHour == null) return null;
     const u = Number(unitsPerHour);
-    if (u === 0) return 'Eining: hourly rate';
+    if (u === 0) return t ? t('hourly_rate', { defaultValue: 'Hourly rate' }) : 'Hourly rate';
     if (u < 0) return null;
-    const timeLabel = einingDurationLabel(u);
+    const timeLabel = einingDurationLabel(u, t);
     return timeLabel ? `${u.toFixed(2)} ein. (${timeLabel})` : null;
 }
 
@@ -186,13 +195,13 @@ function LaborCatalogListPage() {
         if (!itemToDelete) return;
         try {
             await axiosInstance.delete(`/labor-catalog/${itemToDelete.id}`);
-            toast.success(`Removed: ${itemToDelete.description}`);
+            toast.success(t('removed_item', { defaultValue: 'Removed: {{name}}', name: itemToDelete.description }));
             fetchCategories();
             if (selectedMain !== null && selectedSub !== null) {
                 fetchItems(selectedMain, selectedSub);
             }
         } catch (err) {
-            toast.error(err.response?.data?.detail || 'Failed to purge labor item.');
+            toast.error(err.response?.data?.detail || t('failed_to_purge_labor_item', { defaultValue: 'Failed to purge labor item.' }));
         } finally {
             setIsDeleteModalOpen(false);
             setItemToDelete(null);
@@ -209,6 +218,9 @@ function LaborCatalogListPage() {
             sub?.display_name ?? sub?.sub_category ?? selectedSub ?? '(Uncategorized)',
         ].join(' → ');
     };
+
+    // ── Offer Engine panel state ──────────────────────────────────────────
+    const [showOfferEngine, setShowOfferEngine] = useState(false);
 
     if (categoriesLoading) return <LoadingSpinner text={t('accessing_service_rates')} />;
 
@@ -233,7 +245,7 @@ function LaborCatalogListPage() {
                                     className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition shadow-lg shadow-indigo-500/30 transform active:scale-95 cursor-pointer"
                                 >
                                     <DocumentPlusIcon className="h-5 w-5" />
-                                    Create new offer
+                                    {t('create_new_offer', { defaultValue: 'Create new offer' })}
                                 </button>
                             )}
                             {canImportAndCreate && (
@@ -245,11 +257,11 @@ function LaborCatalogListPage() {
                                         onChange={(e) => setImportUpdateExisting(e.target.checked)}
                                         className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                                     />
-                                    <span>Update existing items</span>
+                                    <span>{t('update_existing_items', { defaultValue: 'Update existing items' })}</span>
                                 </label>
                                 <label className="inline-flex items-center px-4 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl transition cursor-pointer" title="Work load ratios (location/condition multipliers)">
                                     <ArrowDownTrayIcon className="h-5 w-5 mr-1.5" />
-                                    Import work load ratios
+                                    {t('import_work_load_ratios', { defaultValue: 'Import work load ratios' })}
                                     <input
                                         type="file"
                                         accept=".xlsx"
@@ -265,9 +277,9 @@ function LaborCatalogListPage() {
                                                 const res = await axiosInstance.post('/labor-catalog/import-work-load-ratios', form, {
                                                     headers: { 'Content-Type': 'multipart/form-data' },
                                                 });
-                                                toast.success(`Work load ratios: ${res.data.created} created, ${res.data.updated} updated`);
+                                                toast.success(t('work_load_ratios_imported', { defaultValue: 'Work load ratios: {{created}} created, {{updated}} updated', created: res.data.created, updated: res.data.updated }));
                                             } catch (err) {
-                                                toast.error(err.response?.data?.detail || 'Import failed.');
+                                                toast.error(err.response?.data?.detail || t('import_failed', { defaultValue: 'Import failed.' }));
                                             } finally {
                                                 setImporting(false);
                                                 e.target.value = '';
@@ -277,7 +289,7 @@ function LaborCatalogListPage() {
                                 </label>
                                 <label className="inline-flex items-center px-4 py-2.5 bg-slate-600 hover:bg-slate-700 text-white font-bold rounded-xl transition cursor-pointer" title="Main categories (provisional basis)">
                                     <ArrowDownTrayIcon className="h-5 w-5 mr-1.5" />
-                                    Import main categories
+                                    {t('import_main_categories', { defaultValue: 'Import main categories' })}
                                     <input
                                         type="file"
                                         accept=".xlsx"
@@ -293,9 +305,9 @@ function LaborCatalogListPage() {
                                                 const res = await axiosInstance.post('/labor-catalog/import-main-categories', form, {
                                                     headers: { 'Content-Type': 'multipart/form-data' },
                                                 });
-                                                toast.success(`Main categories: ${res.data.created} created, ${res.data.updated} updated`);
+                                                toast.success(t('main_categories_imported', { defaultValue: 'Main categories: {{created}} created, {{updated}} updated', created: res.data.created, updated: res.data.updated }));
                                             } catch (err) {
-                                                toast.error(err.response?.data?.detail || 'Import failed.');
+                                                toast.error(err.response?.data?.detail || t('import_failed', { defaultValue: 'Import failed.' }));
                                             } finally {
                                                 setImporting(false);
                                                 e.target.value = '';
@@ -310,11 +322,11 @@ function LaborCatalogListPage() {
                                         setImporting(true);
                                         try {
                                             const res = await axiosInstance.post('/labor-catalog/consolidate');
-                                            toast.success(`Consolidated: ${res.data.merged_groups} groups merged, ${res.data.deleted_items} duplicates removed, ${res.data.variants_created} variants created.`);
+                                            toast.success(t('consolidated_success', { defaultValue: 'Consolidated: {{merged}} groups merged, {{deleted}} duplicates removed, {{variants}} variants created.', merged: res.data.merged_groups, deleted: res.data.deleted_items, variants: res.data.variants_created }));
                                             fetchCategories();
                                             if (selectedMain !== null && selectedSub !== null) fetchItems(selectedMain, selectedSub);
                                         } catch (err) {
-                                            toast.error(err.response?.data?.detail || 'Consolidate failed.');
+                                            toast.error(err.response?.data?.detail || t('consolidate_failed', { defaultValue: 'Consolidate failed.' }));
                                         } finally {
                                             setImporting(false);
                                         }
@@ -323,7 +335,7 @@ function LaborCatalogListPage() {
                                     title="Merge duplicate items (same name + category) into one; each duplicate becomes a condition variant"
                                 >
                                     <ArrowPathIcon className="h-5 w-5 mr-1.5" />
-                                    Consolidate catalog
+                                    {t('consolidate_catalog', { defaultValue: 'Consolidate catalog' })}
                                 </button>
                                 <button
                                     onClick={() => navigate('/labor-catalog/new')}
@@ -343,8 +355,8 @@ function LaborCatalogListPage() {
                 <div className="mb-6 p-4 bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800 rounded-2xl flex flex-col gap-4">
                     <div className="flex flex-wrap items-center gap-4">
                         <div className="flex-1 min-w-[200px]">
-                            <label className="block text-[10px] font-black text-violet-700 dark:text-violet-300 uppercase tracking-widest mb-1">Base Electrician Hourly Rate (ISK)</label>
-                            <p className="text-xs text-violet-600 dark:text-violet-400 mb-2">Set one base hourly rate (e.g. 6500) to act as the baseline for all labor calculations and items.</p>
+                            <label className="block text-[10px] font-black text-violet-700 dark:text-violet-300 uppercase tracking-widest mb-1">{t('base_electrician_hourly_rate', { defaultValue: 'Base Electrician Hourly Rate (ISK)' })}</label>
+                            <p className="text-xs text-violet-600 dark:text-violet-400 mb-2">{t('base_rate_description', { defaultValue: 'Set one base hourly rate (e.g. 6500) to act as the baseline for all labor calculations and items.' })}</p>
                             <input
                                 type="number"
                                 min="0"
@@ -361,29 +373,29 @@ function LaborCatalogListPage() {
                             onClick={async () => {
                                 const price = parseFloat(tenantBasePriceInput);
                                 if (isNaN(price) || price < 0) {
-                                    toast.error('Enter a valid rate (e.g. 6500).');
+                                    toast.error(t('enter_valid_rate', { defaultValue: 'Enter a valid rate (e.g. 6500).' }));
                                     return;
                                 }
                                 setApplyingBasePrice(true);
                                 try {
                                     const res = await axiosInstance.post('/labor-catalog/apply-tenant-base-price', { price });
-                                    toast.success(`Saved Base Rate. Applied to ${res.data.updated} catalog items.`);
+                                    toast.success(t('saved_base_rate_applied', { defaultValue: 'Saved Base Rate. Applied to {{count}} catalog items.', count: res.data.updated }));
                                     if (selectedMain !== null && selectedSub !== null) fetchItems(selectedMain, selectedSub);
                                 } catch (err) {
-                                    toast.error(err.response?.data?.detail || 'Apply failed.');
+                                    toast.error(err.response?.data?.detail || t('apply_failed', { defaultValue: 'Apply failed.' }));
                                 } finally {
                                     setApplyingBasePrice(false);
                                 }
                             }}
                             className="saas-btn-primary px-6 py-2.5 disabled:opacity-50 rounded-xl text-sm transition"
                         >
-                            {applyingBasePrice ? 'Applying…' : 'Save & Apply'}
+                            {applyingBasePrice ? t('applying', { defaultValue: 'Applying...' }) : t('save_and_apply', { defaultValue: 'Save & Apply' })}
                         </button>
                     </div>
                     
                     {modifiers.length > 0 && (
                         <div className="mt-4 border-t border-violet-200 dark:border-violet-800 pt-4">
-                            <h4 className="text-xs font-bold text-violet-800 dark:text-violet-200 mb-3">ar.is Labor Surcharges (Álagshlutföll) System</h4>
+                            <h4 className="text-xs font-bold text-violet-800 dark:text-violet-200 mb-3">{t('aris_labor_surcharges_system', { defaultValue: 'ar.is Labor Surcharges (Álagshlutföll) System' })}</h4>
                             <div className="flex flex-wrap gap-2">
                                 {modifiers.map(m => (
                                     <span key={m.id} className="inline-flex items-center px-2 py-1 rounded-md bg-white dark:bg-gray-800 border border-violet-100 dark:border-violet-800 text-[10px] font-medium text-gray-600 dark:text-gray-300">
@@ -413,18 +425,18 @@ function LaborCatalogListPage() {
                             : 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-800 dark:text-emerald-200'
                     }`}
                 >
-                    <p className="font-bold">Import result</p>
+                    <p className="font-bold">{t('import_result', { defaultValue: 'Import result' })}</p>
                     <p>
-                        Created: {importResult.created} · Skipped: {importResult.skipped} · Updated: {importResult.updated || 0}
+                        {t('created', { defaultValue: 'Created' })}: {importResult.created} · {t('skipped', { defaultValue: 'Skipped' })}: {importResult.skipped} · {t('updated', { defaultValue: 'Updated' })}: {importResult.updated || 0}
                     </p>
                     {(importResult.error_count || importResult.errors?.length) > 0 && (
                         <>
                             <p className="text-amber-700 dark:text-amber-300 mt-1 font-semibold">
-                                {importResult.error_count ?? importResult.errors?.length} row(s) had errors.
+                                {importResult.error_count ?? importResult.errors?.length} {t('rows_had_errors', { defaultValue: 'row(s) had errors.' })}
                             </p>
                             {importResult.error_sample?.length > 0 && (
                                 <div className="mt-2 p-2 bg-white/50 dark:bg-black/20 rounded-lg text-xs font-mono overflow-x-auto">
-                                    <p className="font-bold mb-1">Sample errors (first 5):</p>
+                                    <p className="font-bold mb-1">{t('sample_errors_first_5', { defaultValue: 'Sample errors (first 5):' })}</p>
                                     {importResult.error_sample.map((msg, i) => (
                                         <p key={i} className="text-red-700 dark:text-red-300 break-all">
                                             {msg}
@@ -447,7 +459,7 @@ function LaborCatalogListPage() {
                     </div>
                     <nav className="max-h-[60vh] overflow-y-auto">
                         {categories.length === 0 ? (
-                            <p className="p-4 text-sm text-gray-500 dark:text-gray-400">No categories yet.</p>
+                            <p className="p-4 text-sm text-gray-500 dark:text-gray-400">{t('no_categories_yet', { defaultValue: 'No categories yet.' })}</p>
                         ) : (
                             <ul className="py-2">
                                 {categories.map((cat) => {
@@ -519,7 +531,7 @@ function LaborCatalogListPage() {
                                 {t('category') || 'Select a category'} → {t('subcategory', 'subcategory') || 'subcategory'}
                             </p>
                             <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
-                                Expand a main category in the menu, then click a subcategory to see its items.
+                                {t('select_category_instructions', { defaultValue: 'Expand a main category in the menu, then click a subcategory to see its items.' })}
                             </p>
                         </div>
                     ) : (
@@ -595,7 +607,7 @@ function LaborCatalogListPage() {
                                                             {item.tenant_price ? formatISKRate(item.tenant_price) : <span className="text-gray-300 dark:text-gray-600">—</span>}
                                                         </td>
                                                         <td className="py-4 px-4 text-[10px] text-gray-500 dark:text-gray-400">
-                                                            {einingFullLabel(item.units_per_hour) || '—'}
+                                                            {einingFullLabel(item.units_per_hour, t) || '—'}
                                                         </td>
                                                         {canManageCatalog && (
                                                             <td className="py-4 px-6" onClick={(e) => e.stopPropagation()}>
@@ -606,7 +618,7 @@ function LaborCatalogListPage() {
                                                                         title={
                                                                             isSuperuser
                                                                                 ? t('edit_service_details')
-                                                                                : t('set_your_price') || 'Set your price'
+                                                                                : t('set_your_price', { defaultValue: 'Set your price' })
                                                                         }
                                                                     >
                                                                         <PencilIcon className="h-5 w-5" />
@@ -633,7 +645,7 @@ function LaborCatalogListPage() {
                                                         colSpan={canManageCatalog ? 7 : 5}
                                                         className="py-16 text-center text-gray-500 dark:text-gray-400"
                                                     >
-                                                        No items in this category.
+                                                        {t('no_items_in_this_category', { defaultValue: 'No items in this category.' })}
                                                     </td>
                                                 </tr>
                                             )}
@@ -646,28 +658,66 @@ function LaborCatalogListPage() {
                 </main>
             </div>
 
+            {/* ── Offer Engine Panel ──────────────────────────────────────────── */}
+            <div className="mt-6 saas-card overflow-hidden">
+                <button
+                    type="button"
+                    onClick={() => setShowOfferEngine(v => !v)}
+                    className="w-full flex items-center justify-between p-5 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition"
+                >
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl">
+                            <CalculatorIcon className="h-4 w-4 text-indigo-600" />
+                        </div>
+                        <div className="text-left">
+                            <h3 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-tight">
+                                {t('offer_engine_title', { defaultValue: 'Offer Engine (ar.is Standard)' })}
+                            </h3>
+                            <p className="text-[10px] text-gray-400 mt-0.5">
+                                {t('offer_engine_subtitle', { defaultValue: 'RSÍ/SART certified labor costing with Reiknitala 2026' })}
+                            </p>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        {selectedItemIds.size > 0 && (
+                            <span className="px-2 py-0.5 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-[10px] font-black rounded uppercase">
+                                {selectedItemIds.size} {t('items_selected', { defaultValue: 'items selected' })}
+                            </span>
+                        )}
+                        {showOfferEngine ? <ChevronUpIcon className="h-4 w-4 text-gray-400" /> : <ChevronDownIcon className="h-4 w-4 text-gray-400" />}
+                    </div>
+                </button>
+                {showOfferEngine && (
+                    <div className="p-5 border-t border-gray-100 dark:border-gray-700">
+                        <OfferEngine
+                            initialItems={items.filter(i => selectedItemIds.has(i.id))}
+                        />
+                    </div>
+                )}
+            </div>
+
             {/* F2: Floating action bar when items are selected */}
             {canManageCatalog && selectedItemIds.size > 0 && (
                 <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-4 px-6 py-4 bg-indigo-700 dark:bg-indigo-800 text-white rounded-2xl shadow-2xl border border-indigo-500 animate-in slide-in-from-bottom-4 duration-300">
                     <div className="flex items-center gap-2">
                         <CheckIcon className="h-5 w-5 text-indigo-200" />
-                        <span className="font-bold">{selectedItemIds.size} item{selectedItemIds.size > 1 ? 's' : ''} selected</span>
+                        <span className="font-bold">{selectedItemIds.size}</span> {t('items_selected', { defaultValue: 'items selected' })}
                         <span className="text-indigo-300 text-sm ml-2">
                             Total: {formatEining(items.filter(i => selectedItemIds.has(i.id)).reduce((sum, i) => sum + (i.reference_price || 0), 0))}
                         </span>
                     </div>
                     <button
                         onClick={() => setIsOfferModalOpen(true)}
-                        className="flex items-center gap-2 px-5 py-2 bg-white text-indigo-700 font-black rounded-xl hover:bg-indigo-50 transition"
+                        className="flex items-center gap-2 px-5 py-2.5 bg-white text-indigo-700 hover:bg-indigo-50 font-black text-sm uppercase tracking-widest rounded-xl transition shadow-lg"
                     >
                         <DocumentPlusIcon className="h-5 w-5" />
-                        Create Offer
+                        {t('create_offer', { defaultValue: 'Create Offer' })}
                     </button>
                     <button
                         onClick={() => setSelectedItemIds(new Set())}
                         className="px-4 py-2 text-indigo-200 hover:text-white text-sm font-medium transition"
                     >
-                        Clear
+                        {t('clear', { defaultValue: 'Clear' })}
                     </button>
                 </div>
             )}

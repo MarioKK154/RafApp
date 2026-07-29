@@ -67,8 +67,8 @@ function ToolInventoryPage() {
             setTools(allTools);
         } catch (err) {
             console.error("Asset Registry Error:", err);
-            setError('Hardware registry synchronization failed.');
-            toast.error('Registry sync failure.');
+            setError(t('error_sync_failed', { defaultValue: 'Hardware registry synchronization failed.' }));
+            toast.error(t('toast_sync_failure', { defaultValue: 'Registry sync failure.' }));
         } finally {
             setIsLoading(false);
         }
@@ -105,20 +105,20 @@ function ToolInventoryPage() {
     const handleCheckout = async (toolId) => {
         try {
             await axiosInstance.post(`/tools/${toolId}/checkout`);
-            toast.success('Asset assigned to your profile.');
+            toast.success(t('toast_asset_assigned', { defaultValue: 'Asset assigned to your profile.' }));
             fetchTools();
         } catch (err) {
-            toast.error(err.response?.data?.detail || 'Checkout protocol rejected.');
+            toast.error(err.response?.data?.detail || t('checkout_rejected', { defaultValue: 'Checkout protocol rejected.' }));
         }
     };
 
     const handleCheckin = async (toolId) => {
         try {
             await axiosInstance.post(`/tools/${toolId}/checkin`);
-            toast.success('Asset returned to base storage.');
+            toast.success(t('toast_asset_returned', { defaultValue: 'Asset returned to base storage.' }));
             fetchTools();
         } catch (err) {
-            toast.error(err.response?.data?.detail || 'Return protocol rejected.');
+            toast.error(err.response?.data?.detail || t('return_rejected', { defaultValue: 'Return protocol rejected.' }));
         }
     };
 
@@ -131,10 +131,10 @@ function ToolInventoryPage() {
         if (!toolToDelete) return;
         try {
             await axiosInstance.delete(`/tools/${toolToDelete.id}`);
-            toast.success(`Asset purged from registry.`);
+            toast.success(t('toast_asset_purged', { defaultValue: 'Asset purged from registry.' }));
             fetchTools();
         } catch (err) {
-            toast.error(err.response?.data?.detail || 'Purge failed.');
+            toast.error(err.response?.data?.detail || t('purge_failed', { defaultValue: 'Purge failed.' }));
         } finally {
             setIsDeleteModalOpen(false);
             setToolToDelete(null);
@@ -152,7 +152,7 @@ function ToolInventoryPage() {
     };
 
     if (isLoading && tools.length === 0) {
-        return <LoadingSpinner text="Accessing hardware telemetry..." size="lg" />;
+        return <LoadingSpinner text={t('accessing_hardware_telemetry', { defaultValue: 'Accessing hardware telemetry...' })} size="lg" />;
     }
 
     return (
@@ -172,7 +172,7 @@ function ToolInventoryPage() {
                             onClick={() => navigate('/tools/new')}
                             className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition shadow-lg shadow-indigo-500/30 transform active:scale-95 cursor-pointer"
                         >
-                            <PlusIcon className="h-5 w-5" /> {t('register_new_asset')}
+                            <PlusIcon className="h-5 w-5" /> {t('register_new_asset', { defaultValue: 'Register New Asset' })}
                         </button>
                     )
                 }
@@ -184,14 +184,14 @@ function ToolInventoryPage() {
                     <MagnifyingGlassIcon className="h-5 w-5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2 group-focus-within:text-indigo-500 transition-colors" />
                     <input
                         type="text"
-                        placeholder="Search by ID, Serial Number, Manufacturer or Tool Name..."
+                        placeholder={t('search_tool_placeholder', { defaultValue: 'Search by ID, Serial Number, Manufacturer or Tool Name...' })}
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="block w-full pl-12 pr-4 h-12 rounded-2xl border border-gray-200 dark:bg-gray-800 dark:border-gray-700 text-sm font-bold focus:ring-2 focus:ring-indigo-500 transition-all outline-none shadow-sm"
                     />
                 </div>
                 <div className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl p-3 flex items-center justify-center gap-2 text-xs font-black uppercase tracking-widest text-gray-400 shadow-sm">
-                    <AdjustmentsHorizontalIcon className="h-4 w-4" /> {filteredTools.length} Units Online
+                    <AdjustmentsHorizontalIcon className="h-4 w-4" /> {filteredTools.length} {t('units_online', { defaultValue: 'Units Online' })}
                 </div>
             </div>
 
@@ -220,7 +220,7 @@ function ToolInventoryPage() {
                                 {tool.name}
                             </h2>
                             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">
-                                {tool.brand || 'Generic'} • {tool.model || 'OEM Standard'}
+                                {tool.brand || t('generic_brand', { defaultValue: 'Generic' })} • {tool.model || t('oem_standard', { defaultValue: 'OEM Standard' })}
                             </p>
                         </div>
 
@@ -236,7 +236,7 @@ function ToolInventoryPage() {
                                     />
                                 </div>
                                 <div className="min-w-0">
-                                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Registry Identifier</p>
+                                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">{t('registry_identifier', { defaultValue: 'Registry Identifier' })}</p>
                                     <p className="text-xs font-mono font-bold text-gray-700 dark:text-gray-300 truncate">
                                         {tool.serial_number || `REG-ID-${tool.id}`}
                                     </p>
@@ -244,7 +244,7 @@ function ToolInventoryPage() {
                                     <div className="flex items-center gap-2 mt-3">
                                         <UserIcon className="h-3.5 w-3.5 text-indigo-500" />
                                         <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-tight">
-                                            {tool.current_user?.full_name || 'Storage (Base)'}
+                                            {tool.current_user?.full_name || t('storage_base', { defaultValue: 'Storage (Base)' })}
                                         </span>
                                     </div>
                                 </div>
@@ -257,18 +257,18 @@ function ToolInventoryPage() {
                                         onClick={() => handleCheckout(tool.id)}
                                         className="w-full flex items-center justify-center gap-2 h-11 bg-green-600 hover:bg-green-700 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-xl transition shadow-lg shadow-green-100 dark:shadow-none"
                                     >
-                                        <ArrowUpOnSquareIcon className="h-4 w-4" /> Initialize Checkout
+                                        <ArrowUpOnSquareIcon className="h-4 w-4" /> {t('initialize_checkout', { defaultValue: 'Initialize Checkout' })}
                                     </button>
                                 ) : tool.status === 'In Use' && tool.current_user?.id === user.id ? (
                                     <button 
                                         onClick={() => handleCheckin(tool.id)}
                                         className="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition"
                                     >
-                                        <ArrowDownOnSquareIcon className="h-4 w-4" /> End Assignment
+                                        <ArrowDownOnSquareIcon className="h-4 w-4" /> {t('end_assignment', { defaultValue: 'End Assignment' })}
                                     </button>
                                 ) : (
                                     <div className="h-11 flex items-center justify-center border border-dashed border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50/50 dark:bg-gray-800/50">
-                                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest italic">Unit Occupied</span>
+                                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest italic">{t('unit_occupied', { defaultValue: 'Unit Occupied' })}</span>
                                     </div>
                                 )}
                             </div>
@@ -283,14 +283,14 @@ function ToolInventoryPage() {
                                 <button 
                                     onClick={() => navigate(`/tools/edit/${tool.id}`)} 
                                     className="p-2 bg-white dark:bg-gray-800 text-gray-400 hover:text-indigo-600 rounded-xl shadow-sm border border-gray-100 dark:border-gray-600 transition"
-                                    title="Modify Specs"
+                                    title={t('modify_specs', { defaultValue: 'Modify Specs' })}
                                 >
                                     <PencilIcon className="h-5 w-5" />
                                 </button>
                                 <button 
                                     onClick={() => triggerDelete(tool)} 
                                     className="p-2 bg-white dark:bg-gray-800 text-gray-400 hover:text-red-600 rounded-xl shadow-sm border border-gray-100 dark:border-gray-600 transition"
-                                    title="Purge Record"
+                                    title={t('purge_record', { defaultValue: 'Purge Record' })}
                                 >
                                     <TrashIcon className="h-5 w-5" />
                                 </button>
@@ -300,8 +300,8 @@ function ToolInventoryPage() {
                 )) : (
                     <div className="col-span-full py-32 text-center bg-white dark:bg-gray-800 rounded-[2.5rem] border-2 border-dashed border-gray-100 dark:border-gray-700">
                         <WrenchScrewdriverIcon className="h-12 w-12 text-gray-200 mx-auto mb-4" />
-                        <h3 className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">No Matches Found</h3>
-                        <p className="text-sm text-gray-400 mt-1">Adjust your search parameters or register a new hardware unit.</p>
+                        <h3 className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">{t('no_matches_found', { defaultValue: 'No Matches Found' })}</h3>
+                        <p className="text-sm text-gray-400 mt-1">{t('adjust_search_hardware', { defaultValue: 'Adjust your search parameters or register a new hardware unit.' })}</p>
                     </div>
                 )}
             </div>
@@ -311,9 +311,9 @@ function ToolInventoryPage() {
                 isOpen={isDeleteModalOpen}
                 onClose={() => setIsDeleteModalOpen(false)}
                 onConfirm={confirmDelete}
-                title="Purge Operational Unit"
-                message={`CRITICAL: Permanent removal of "${toolToDelete?.name}" from the hardware registry. Historical check-out telemetry will remain archived.`}
-                confirmText="Purge Unit"
+                title={t('purge_operational_unit', { defaultValue: 'Purge Operational Unit' })}
+                message={t('purge_hardware_warning', { defaultValue: 'CRITICAL: Permanent removal of "{{name}}" from the hardware registry. Historical check-out telemetry will remain archived.' }).replace('{{name}}', toolToDelete?.name || '')}
+                confirmText={t('purge_unit_confirm', { defaultValue: 'Purge Unit' })}
                 type="danger"
             />
         </div>

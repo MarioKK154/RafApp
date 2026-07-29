@@ -7,6 +7,7 @@ import ConduitFillCalculator from '../components/ConduitFillCalculator';
 import PhaseBalancingCalculator from '../components/PhaseBalancingCalculator';
 import VoltageDropCalculator from '../components/VoltageDropCalculator';
 import ShortCircuitCalculator from '../components/ShortCircuitCalculator';
+import OfferEngine from '../components/OfferEngine';
 import CreateTutorialModal from '../components/CreateTutorialModal';
 import PageHeader from '../components/PageHeader';
 import { 
@@ -100,7 +101,7 @@ function TutorialsPage() {
                                 </div>
                                 <div>
                                     <p className="text-[9px] font-black text-indigo-500 uppercase tracking-[0.2em]">
-                                        {CATEGORY_LABELS[activeTutorial.category] || activeTutorial.category}
+                                        {t('category_' + activeTutorial.category, { defaultValue: CATEGORY_LABELS[activeTutorial.category] || activeTutorial.category })}
                                     </p>
                                     <h2 className="text-sm md:text-base font-black text-gray-900 dark:text-white uppercase tracking-tight mt-1">
                                         {activeTutorial.title}
@@ -127,7 +128,7 @@ function TutorialsPage() {
                                 </p>
                             ) : (
                                 <p className="text-[12px] text-gray-500 italic">
-                                    No detailed text stored for this entry yet. Use the schematic/manual buttons if available.
+                                    {t('no_detailed_text', { defaultValue: 'No detailed text stored for this entry yet. Use the schematic/manual buttons if available.' })}
                                 </p>
                             )}
                         </div>
@@ -160,101 +161,98 @@ function TutorialsPage() {
                 <div className="lg:col-span-7 space-y-8">
                     
                     {/* Cable Sizing Module */}
-                    <section className="bg-white dark:bg-gray-800 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
-                        <div className="p-8 border-b border-gray-50 dark:border-gray-700 bg-gray-50/30 dark:bg-gray-700/30">
+                    <section className="saas-card overflow-hidden">
+                        <div className="p-6 border-b border-gray-100 dark:border-gray-700">
                             <div className="flex items-center gap-3">
                                 <div className="p-2 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl">
-                                    <BoltIcon className="h-5 w-5 text-indigo-600" />
+                                    <BoltIcon className="h-4 w-4 text-indigo-600" />
                                 </div>
                                 <div>
-                                    <h2 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight italic">Cable Sizing Terminal</h2>
-                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">IST 200 Standard Compliant</p>
+                                    <h2 className="text-base font-black text-gray-900 dark:text-white uppercase tracking-tight">{t('calc_cable_sizing_title', { defaultValue: 'Cable Sizing Terminal' })}</h2>
+                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">{t('calc_cable_sizing_subtitle', { defaultValue: 'IST 200 Standard Compliant' })}</p>
                                 </div>
                             </div>
                         </div>
-
-                        <div className="p-8">
-                            <div className="mb-8 p-5 bg-indigo-50 dark:bg-indigo-900/10 rounded-2xl border border-indigo-100 dark:border-indigo-800 flex gap-4">
-                                <InformationCircleIcon className="h-5 w-5 text-indigo-600 shrink-0" />
-                                <p className="text-[10px] text-indigo-700 dark:text-indigo-300 leading-relaxed font-bold uppercase tracking-tight">
-                                    Determines minimum cross-sectional area based on load amperage, run distance, and correction factors.
+                        <div className="p-6">
+                            <div className="mb-5 p-4 bg-indigo-50 dark:bg-indigo-900/10 rounded-xl border border-indigo-100 dark:border-indigo-800 flex gap-3">
+                                <InformationCircleIcon className="h-4 w-4 text-indigo-500 shrink-0 mt-0.5" />
+                                <p className="text-[11px] text-indigo-700 dark:text-indigo-300 leading-relaxed">
+                                    {t('calc_cable_sizing_desc', { defaultValue: 'Determines minimum cross-sectional area based on load amperage, run distance, and correction factors.' })}
                                 </p>
                             </div>
-
-                            <div className="bg-gray-50 dark:bg-gray-900/50 p-6 rounded-[2rem] border border-gray-100 dark:border-gray-800 shadow-inner">
-                                <CableSizingCalculator />
-                            </div>
+                            <CableSizingCalculator />
                         </div>
                     </section>
 
                     {/* Conduit Fill Module */}
-                    <section className="bg-white dark:bg-gray-800 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
-                        <div className="p-8 border-b border-gray-50 dark:border-gray-700 bg-gray-50/30 dark:bg-gray-700/30">
+                    <section className="saas-card overflow-hidden">
+                        <div className="p-6 border-b border-gray-100 dark:border-gray-700">
                             <div className="flex items-center gap-3">
                                 <div className="p-2 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl">
-                                    <BeakerIcon className="h-5 w-5 text-indigo-600" />
+                                    <BeakerIcon className="h-4 w-4 text-indigo-600" />
                                 </div>
                                 <div>
-                                    <h2 className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-tight italic">Conduit Fill Calculator</h2>
-                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Indicative fill based on conductor diameters</p>
+                                    <h2 className="text-base font-black text-gray-900 dark:text-white uppercase tracking-tight">{t('calc_conduit_fill_title', { defaultValue: 'Conduit Fill Calculator' })}</h2>
+                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">{t('calc_conduit_fill_subtitle', { defaultValue: 'Indicative fill based on conductor diameters' })}</p>
                                 </div>
                             </div>
                         </div>
-                        <div className="p-8 bg-gray-50 dark:bg-gray-900/40">
+                        <div className="p-6">
                             <ConduitFillCalculator />
                         </div>
                     </section>
 
                     {/* Phase Balancing Module */}
-                    <section className="bg-white dark:bg-gray-800 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
-                        <div className="p-8 border-b border-gray-50 dark:border-gray-700 bg-gray-50/30 dark:bg-gray-700/30">
+                    <section className="saas-card overflow-hidden">
+                        <div className="p-6 border-b border-gray-100 dark:border-gray-700">
                             <div className="flex items-center gap-3">
                                 <div className="p-2 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl">
-                                    <ChartBarIcon className="h-5 w-5 text-indigo-600" />
+                                    <ChartBarIcon className="h-4 w-4 text-indigo-600" />
                                 </div>
                                 <div>
-                                    <h2 className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-tight italic">Phase Balance Analyzer</h2>
-                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Visualize three-phase loading by circuit</p>
+                                    <h2 className="text-base font-black text-gray-900 dark:text-white uppercase tracking-tight">{t('calc_phase_balance_title', { defaultValue: 'Phase Balance Analyzer' })}</h2>
+                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">{t('calc_phase_balance_subtitle', { defaultValue: 'Visualize three-phase loading by circuit' })}</p>
                                 </div>
                             </div>
                         </div>
-                        <div className="p-8 bg-gray-50 dark:bg-gray-900/40">
+                        <div className="p-6">
                             <PhaseBalancingCalculator />
                         </div>
                     </section>
 
                     {/* Voltage Drop Module */}
-                    <section className="bg-white dark:bg-gray-800 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
-                        <div className="p-8 border-b border-gray-50 dark:border-gray-700 bg-gray-50/30 dark:bg-gray-700/30">
+                    <section className="saas-card overflow-hidden">
+                        <div className="p-6 border-b border-gray-100 dark:border-gray-700">
                             <div className="flex items-center gap-3">
                                 <div className="p-2 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl">
-                                    <CalculatorIcon className="h-5 w-5 text-indigo-600" />
+                                    <CalculatorIcon className="h-4 w-4 text-indigo-600" />
                                 </div>
                                 <div>
-                                    <h2 className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-tight italic">Voltage Drop Checker</h2>
-                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Quick drop estimation along feeders</p>
+                                    <h2 className="text-base font-black text-gray-900 dark:text-white uppercase tracking-tight">{t('calc_voltage_drop_title', { defaultValue: 'Voltage Drop Checker' })}</h2>
+                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">{t('calc_voltage_drop_subtitle', { defaultValue: 'Quick drop estimation along feeders' })}</p>
                                 </div>
                             </div>
                         </div>
-                        <div className="p-8 bg-gray-50 dark:bg-gray-900/40">
+                        <div className="p-6">
                             <VoltageDropCalculator />
                         </div>
                     </section>
 
+
                     {/* Short-Circuit Current Module */}
-                    <section className="bg-white dark:bg-gray-800 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
-                        <div className="p-8 border-b border-gray-50 dark:border-gray-700 bg-gray-50/30 dark:bg-gray-700/30">
+                    <section className="saas-card overflow-hidden">
+                        <div className="p-6 border-b border-gray-100 dark:border-gray-700">
                             <div className="flex items-center gap-3">
                                 <div className="p-2 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl">
-                                    <BoltIcon className="h-5 w-5 text-indigo-600" />
+                                    <BoltIcon className="h-4 w-4 text-indigo-600" />
                                 </div>
                                 <div>
-                                    <h2 className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-tight italic">Short-Circuit Estimator</h2>
-                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Approximate Ik at panel and breaker kA class</p>
+                                    <h2 className="text-base font-black text-gray-900 dark:text-white uppercase tracking-tight">{t('calc_short_circuit_title', { defaultValue: 'Short-Circuit Estimator' })}</h2>
+                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">{t('calc_short_circuit_subtitle', { defaultValue: 'Approximate Ik at panel and breaker kA class' })}</p>
                                 </div>
                             </div>
                         </div>
-                        <div className="p-8 bg-gray-50 dark:bg-gray-900/40">
+                        <div className="p-6">
                             <ShortCircuitCalculator />
                         </div>
                     </section>
@@ -262,76 +260,94 @@ function TutorialsPage() {
 
                 {/* RIGHT COLUMN: Library & Tutorials (5 cols) */}
                 <div className="lg:col-span-5 space-y-8">
-                    <section className="bg-white dark:bg-gray-800 p-8 rounded-[3rem] shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col h-full min-h-[700px]">
-                        <div className="flex items-center justify-between mb-8">
+                    <section className="saas-card p-6 flex flex-col h-full min-h-[700px]">
+                        <div className="flex items-center justify-between mb-6">
                             <div className="flex items-center gap-3">
                                 <div className="p-2 bg-indigo-600 rounded-xl">
-                                    <BookOpenIcon className="h-5 w-5 text-white" />
+                                    <BookOpenIcon className="h-4 w-4 text-white" />
                                 </div>
-                                <h2 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight italic">Registry</h2>
+                                <h2 className="text-base font-black text-gray-900 dark:text-white uppercase tracking-tight">{t('registry_title', { defaultValue: 'Registry' })}</h2>
                             </div>
                             <span className="text-[10px] font-black bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 px-3 py-1 rounded-full border border-indigo-100 dark:border-indigo-800">
-                                {filteredTutorials.length} Units
+                                {filteredTutorials.length}
                             </span>
                         </div>
 
-                        {/* Search Bar - Internal Library Style */}
+                        {/* Search Bar */}
                         <div className="relative mb-4">
-                            <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                            <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                             <input 
                                 type="text"
-                                placeholder="Search schematics..."
+                                placeholder={t('search_schematics', { defaultValue: 'Search schematics...' })}
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full h-12 bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-700 rounded-2xl pl-12 text-xs font-bold text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                                className="w-full h-10 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl pl-10 text-xs font-semibold text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500"
                             />
                         </div>
                         {/* Category filter */}
-                        <div className="mb-6 flex flex-wrap gap-2">
+                        <div className="mb-5 flex flex-wrap gap-2">
                             <button
                                 type="button"
                                 onClick={() => setSelectedCategory('All')}
-                                className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition ${selectedCategory === 'All' ? 'bg-indigo-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'}`}
+                                className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest transition ${selectedCategory === 'All' ? 'bg-indigo-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'}`}
                             >
-                                All
+                                {t('all_categories', { defaultValue: 'All' })}
                             </button>
                             {Object.entries(CATEGORY_LABELS).slice(0, 6).map(([key, label]) => (
                                 <button
                                     key={key}
                                     type="button"
                                     onClick={() => setSelectedCategory(key)}
-                                    className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition ${selectedCategory === key ? 'bg-indigo-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'}`}
+                                    className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest transition ${selectedCategory === key ? 'bg-indigo-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'}`}
                                 >
-                                    {label}
+                                    {t('category_' + key, { defaultValue: label })}
                                 </button>
                             ))}
                         </div>
 
-                        {/* Dynamic Protocol List */}
-                        <div className="space-y-3 overflow-y-auto pr-2 custom-scrollbar flex-grow max-h-[500px]">
+                        {/* Protocol List */}
+                        <div className="space-y-2 overflow-y-auto pr-1 custom-scrollbar flex-grow max-h-[500px]">
                             {filteredTutorials.length > 0 ? filteredTutorials.map(tutorial => (
                                 <TutorialLink key={tutorial.id} tutorial={tutorial} onOpen={() => setActiveTutorial(tutorial)} />
                             )) : (
                                 <div className="py-20 text-center text-gray-400 dark:text-gray-500">
                                     <SparklesIcon className="h-8 w-8 mx-auto mb-4" />
-                                    <p className="text-[10px] font-black uppercase tracking-widest">No matching protocols found.</p>
+                                    <p className="text-[10px] font-black uppercase tracking-widest">{t('no_matching_protocols', { defaultValue: 'No matching protocols found.' })}</p>
                                 </div>
                             )}
                         </div>
 
-                        {/* Telemetry Footer */}
-                        <div className="mt-10 pt-8 border-t border-gray-100 dark:border-gray-700">
-                            <div className="flex items-center gap-2 mb-3">
-                                <WrenchScrewdriverIcon className="h-4 w-4 text-indigo-500 dark:text-indigo-400" />
-                                <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">Support Registry</span>
+                        {/* Footer */}
+                        <div className="mt-8 pt-6 border-t border-gray-100 dark:border-gray-700">
+                            <div className="flex items-center gap-2 mb-2">
+                                <WrenchScrewdriverIcon className="h-4 w-4 text-indigo-500" />
+                                <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">{t('support_registry', { defaultValue: 'Support Registry' })}</span>
                             </div>
-                            <p className="text-[10px] text-gray-500 dark:text-gray-400 leading-relaxed font-medium uppercase italic">
-                                Knowledge base version 3.1.0 // Synced with Jan 2026 Safety Protocols.
+                            <p className="text-[10px] text-gray-400 dark:text-gray-500">
+                                {t('knowledge_base_version', { defaultValue: 'Knowledge base v3.1.0 · Jan 2026 Safety Protocols' })}
                             </p>
                         </div>
                     </section>
                 </div>
             </div>
+
+            {/* ── Offer Engine — full-width section ─────────────────────────────────── */}
+            <section className="saas-card overflow-hidden mt-8">
+                <div className="p-6 border-b border-gray-100 dark:border-gray-700">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl">
+                            <CalculatorIcon className="h-4 w-4 text-indigo-600" />
+                        </div>
+                        <div>
+                            <h2 className="text-base font-black text-gray-900 dark:text-white uppercase tracking-tight">{t('offer_engine_title', { defaultValue: 'Offer Engine (ar.is Standard)' })}</h2>
+                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">{t('offer_engine_subtitle', { defaultValue: 'RSÍ/SART certified labor costing with Reiknitala 2026' })}</p>
+                        </div>
+                    </div>
+                </div>
+                <div className="p-6">
+                    <OfferEngine />
+                </div>
+            </section>
         </div>
     );
 }
@@ -340,6 +356,7 @@ function TutorialsPage() {
  * COMPONENT: Protocol Item Link
  */
 function TutorialLink({ tutorial, onOpen }) {
+    const { t } = useTranslation();
     const getFullUrl = (path) => {
         const base = axiosInstance.defaults.baseURL || "";
         const cleanBase = base.includes('/api') ? base.split('/api')[0] : base;
@@ -350,7 +367,7 @@ function TutorialLink({ tutorial, onOpen }) {
         <div className="group w-full p-5 bg-gray-50 dark:bg-gray-700/50 rounded-3xl border border-gray-100 dark:border-gray-600 hover:border-indigo-400 dark:hover:border-indigo-500 transition-all duration-300 cursor-pointer" onClick={onOpen}>
             <div className="flex justify-between items-start mb-2">
                 <span className="text-[8px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest bg-indigo-50 dark:bg-indigo-900/30 px-2 py-0.5 rounded">
-                    {CATEGORY_LABELS[tutorial.category] || tutorial.category}
+                    {t('category_' + tutorial.category, { defaultValue: CATEGORY_LABELS[tutorial.category] || tutorial.category })}
                 </span>
                 <ArrowTopRightOnSquareIcon className="h-4 w-4 text-gray-400 dark:text-gray-500" />
             </div>
@@ -365,7 +382,7 @@ function TutorialLink({ tutorial, onOpen }) {
                         onClick={() => window.open(getFullUrl(tutorial.image_path), '_blank')}
                         className="flex-1 h-8 bg-gray-200 dark:bg-gray-600 hover:bg-indigo-600 rounded-lg text-[8px] font-black uppercase tracking-widest transition-colors flex items-center justify-center gap-2 text-gray-700 dark:text-gray-200 hover:text-white"
                     >
-                        <PhotoIcon className="h-3 w-3" /> Schematic
+                        <PhotoIcon className="h-3 w-3" /> {t('schematic', { defaultValue: 'Schematic' })}
                     </button>
                 )}
                 {tutorial.file_path && (
@@ -373,7 +390,7 @@ function TutorialLink({ tutorial, onOpen }) {
                         onClick={() => window.open(getFullUrl(tutorial.file_path), '_blank')}
                         className="flex-1 h-8 bg-red-50 dark:bg-red-900/20 hover:bg-red-600 rounded-lg text-[8px] font-black uppercase tracking-widest transition-colors border border-red-100 dark:border-red-900/30 flex items-center justify-center gap-2 text-red-700 dark:text-red-300 hover:text-white"
                     >
-                        <DocumentTextIcon className="h-3 w-3" /> Manual
+                        <DocumentTextIcon className="h-3 w-3" /> {t('manual', { defaultValue: 'Manual' })}
                     </button>
                 )}
             </div>
@@ -385,13 +402,14 @@ function TutorialLink({ tutorial, onOpen }) {
  * COMPONENT: Development Placeholder
  */
 function DummyTool({ icon, title }) {
+    const { t } = useTranslation();
     return (
         <div className="bg-white dark:bg-gray-800 p-8 rounded-[2.5rem] border border-gray-100 dark:border-gray-700 flex flex-col items-center justify-center text-center opacity-60 grayscale hover:grayscale-0 transition-all duration-500">
             <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded-2xl mb-4 text-gray-400">
                 {React.cloneElement(icon, { className: "h-6 w-6" })}
             </div>
             <h3 className="text-xs font-black text-gray-900 dark:text-white uppercase tracking-widest">{title}</h3>
-            <span className="text-[8px] font-black text-gray-300 uppercase tracking-[0.2em] mt-2 italic tracking-widest">System Development in Progress</span>
+            <span className="text-[8px] font-black text-gray-300 uppercase tracking-[0.2em] mt-2 italic tracking-widest">{t('system_dev_in_progress', { defaultValue: 'System Development in Progress' })}</span>
         </div>
     );
 }

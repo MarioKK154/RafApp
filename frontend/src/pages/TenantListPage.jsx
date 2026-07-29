@@ -144,7 +144,7 @@ function TenantListPage() {
                                 <tr>
                                     <th className="py-5 px-8">{t('identifier')}</th>
                                     <th className="py-5 px-6">{t('company_organization')}</th>
-                                    <th className="py-5 px-6">Stats & Billing</th>
+                                    <th className="py-5 px-6">{t('stats_billing', { defaultValue: 'Stats & Billing' })}</th>
                                     <th className="py-5 px-8 text-right">{t('registry_actions')}</th>
                                 </tr>
                             </thead>
@@ -186,10 +186,10 @@ function TenantListPage() {
                                                     <AdjustmentsHorizontalIcon className="h-3 w-3" /> Billing:{' '}
                                                     {tenant.has_overdue_invoices ? (
                                                         <span className="text-red-600">
-                                                            Overdue {tenant.overdue_amount?.toFixed(0)} ISK
+                                                            {t('overdue', { defaultValue: 'Overdue' })} {tenant.overdue_amount?.toFixed(0)} ISK
                                                         </span>
                                                     ) : (
-                                                        <span className="text-emerald-600">Up to date</span>
+                                                        <span className="text-emerald-600">{t('up_to_date', { defaultValue: 'Up to date' })}</span>
                                                     )}
                                                 </div>
                                                 <div className="flex items-center gap-1.5 text-[9px] font-bold text-gray-400 uppercase tracking-widest">
@@ -199,7 +199,7 @@ function TenantListPage() {
                                                             {tenant.discount_percent.toFixed(1)}%
                                                         </span>
                                                     ) : (
-                                                        <span className="text-gray-400">None</span>
+                                                        <span className="text-gray-400">{t('none', { defaultValue: 'None' })}</span>
                                                     )}
                                                 </div>
                                             </div>

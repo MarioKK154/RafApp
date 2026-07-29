@@ -42,6 +42,7 @@ function useDebounce(value, delay) {
 
 // ── Inline price cell ───────────────────────────────────────────────────────────
 function PriceCell({ shopId, itemId, existing, onSaved }) {
+    const { t } = useTranslation();
     const [editing, setEditing] = useState(false);
     const [price, setPrice] = useState(existing?.price ?? '');
     const [sku, setSku] = useState(existing?.sku ?? '');
@@ -63,7 +64,7 @@ function PriceCell({ shopId, itemId, existing, onSaved }) {
             onSaved();
             setEditing(false);
         } catch (e) {
-            toast.error(e.response?.data?.detail || 'Failed to save price');
+            toast.error(e.response?.data?.detail || t('failed_to_save_price', { defaultValue: 'Failed to save price' }));
         } finally {
             setSaving(false);
         }
@@ -76,7 +77,7 @@ function PriceCell({ shopId, itemId, existing, onSaved }) {
             onSaved();
             setEditing(false);
         } catch (e) {
-            toast.error('Failed to clear price');
+            toast.error(t('failed_to_clear_price', { defaultValue: 'Failed to clear price' }));
         } finally {
             setSaving(false);
         }
@@ -89,7 +90,7 @@ function PriceCell({ shopId, itemId, existing, onSaved }) {
                     type="number"
                     value={price}
                     onChange={e => setPrice(e.target.value)}
-                    placeholder="Price ISK"
+                    placeholder={t('price_isk_placeholder', { defaultValue: 'Price ISK' })}
                     className="w-full px-2 py-1 text-xs rounded-lg border border-indigo-300 dark:border-indigo-600 bg-white dark:bg-gray-800 focus:ring-1 focus:ring-indigo-500 outline-none"
                     autoFocus
                 />
@@ -97,7 +98,7 @@ function PriceCell({ shopId, itemId, existing, onSaved }) {
                     type="text"
                     value={sku}
                     onChange={e => setSku(e.target.value)}
-                    placeholder="SKU (optional)"
+                    placeholder={t('sku_optional_placeholder', { defaultValue: 'SKU (optional)' })}
                     className="w-full px-2 py-1 text-xs rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-1 focus:ring-indigo-500 outline-none"
                 />
                 <div className="flex gap-1 mt-0.5">
@@ -107,7 +108,7 @@ function PriceCell({ shopId, itemId, existing, onSaved }) {
                         className="flex-1 flex items-center justify-center gap-1 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md text-[10px] font-bold transition"
                     >
                         {saving ? <span className="animate-spin h-2 w-2 border border-white border-t-transparent rounded-full" /> : <CheckIcon className="h-3 w-3" />}
-                        Save
+                        {t('save_action', { defaultValue: 'Save' })}
                     </button>
                     {existing && (
                         <button
@@ -139,7 +140,7 @@ function PriceCell({ shopId, itemId, existing, onSaved }) {
                 }`}
         >
             <span className="font-semibold">
-                {existing?.price != null ? formatISK(existing.price) : '+ Add price'}
+                {existing?.price != null ? formatISK(existing.price) : t('add_price', { defaultValue: '+ Add price' })}
             </span>
             {existing?.sku && <span className="text-[9px] text-gray-400 font-mono">{existing.sku}</span>}
             <PencilIcon className="h-3 w-3 opacity-0 group-hover:opacity-70 flex-shrink-0 transition" />
@@ -149,6 +150,7 @@ function PriceCell({ shopId, itemId, existing, onSaved }) {
 
 // ── Add shop modal ───────────────────────────────────────────────────────────────
 function AddShopModal({ onClose, onCreated }) {
+    const { t } = useTranslation();
     const [name, setName] = useState('');
     const [url, setUrl] = useState('');
     const [saving, setSaving] = useState(false);
@@ -158,10 +160,10 @@ function AddShopModal({ onClose, onCreated }) {
         setSaving(true);
         try {
             const res = await axiosInstance.post('/api/shop-catalog/shops', { name, website_url: url || null });
-            toast.success(`Shop "${res.data.name}" added!`);
+            toast.success(`${t('shop_added_success', { defaultValue: 'Shop added:' })} "${res.data.name}"`);
             onCreated(res.data);
         } catch (err) {
-            toast.error(err.response?.data?.detail || 'Failed to create shop');
+            toast.error(err.response?.data?.detail || t('failed_to_create_shop', { defaultValue: 'Failed to create shop' }));
         } finally {
             setSaving(false);
         }
@@ -173,7 +175,7 @@ function AddShopModal({ onClose, onCreated }) {
                 <div className="flex items-center justify-between px-5 py-4 bg-gradient-to-r from-violet-600 to-indigo-600">
                     <div className="flex items-center gap-2">
                         <BuildingStorefrontIcon className="h-5 w-5 text-white" />
-                        <h2 className="text-sm font-black text-white">Add New Shop</h2>
+                        <h2 className="text-sm font-black text-white">{t('add_new_shop', { defaultValue: 'Add New Shop' })}</h2>
                     </div>
                     <button onClick={onClose} className="p-1 text-indigo-200 hover:text-white rounded-lg transition">
                         <XMarkIcon className="h-4 w-4" />
@@ -181,35 +183,35 @@ function AddShopModal({ onClose, onCreated }) {
                 </div>
                 <form onSubmit={submit} className="p-5 space-y-4">
                     <div>
-                        <label className="block text-xs font-black uppercase text-gray-400 tracking-widest mb-1">Shop Name *</label>
+                        <label className="block text-xs font-black uppercase text-gray-400 tracking-widest mb-1">{t('shop_name_req', { defaultValue: 'Shop Name *' })}</label>
                         <input
                             required
                             type="text"
                             value={name}
                             onChange={e => setName(e.target.value)}
-                            placeholder="e.g. Pólar"
+                            placeholder={t('shop_name_placeholder', { defaultValue: 'e.g. Pólar' })}
                             className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 text-sm"
                         />
                     </div>
                     <div>
-                        <label className="block text-xs font-black uppercase text-gray-400 tracking-widest mb-1">Website URL</label>
+                        <label className="block text-xs font-black uppercase text-gray-400 tracking-widest mb-1">{t('website_url', { defaultValue: 'Website URL' })}</label>
                         <div className="relative">
                             <GlobeAltIcon className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
                             <input
                                 type="url"
                                 value={url}
                                 onChange={e => setUrl(e.target.value)}
-                                placeholder="https://example.is"
+                                placeholder={t('website_url_placeholder', { defaultValue: 'https://example.is' })}
                                 className="w-full pl-9 pr-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 text-sm"
                             />
                         </div>
                     </div>
                     <div className="flex gap-3 pt-1">
                         <button type="button" onClick={onClose} className="flex-1 py-2 border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 rounded-xl text-sm font-semibold hover:bg-gray-50 dark:hover:bg-gray-700 transition">
-                            Cancel
+                            {t('cancel_action', { defaultValue: 'Cancel' })}
                         </button>
                         <button type="submit" disabled={saving} className="flex-1 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-xl text-sm transition disabled:opacity-50">
-                            {saving ? '...' : 'Add Shop'}
+                            {saving ? '...' : t('add_shop_btn', { defaultValue: 'Add Shop' })}
                         </button>
                     </div>
                 </form>
@@ -267,7 +269,7 @@ export default function ShopCatalogPage() {
                 if (cats.length) setCategories(cats);
             }
         } catch (e) {
-            toast.error('Failed to load items');
+            toast.error(t('failed_to_load_items', { defaultValue: 'Failed to load items' }));
         } finally {
             setLoading(false);
         }
@@ -288,9 +290,9 @@ export default function ShopCatalogPage() {
                             <BuildingStorefrontIcon className="h-7 w-7 text-violet-600 dark:text-violet-400" />
                         </div>
                         <div>
-                            <h1 className="text-2xl font-black text-gray-900 dark:text-white">Shop Price Catalog</h1>
+                            <h1 className="text-2xl font-black text-gray-900 dark:text-white">{t('shop_price_catalog', { defaultValue: 'Shop Price Catalog' })}</h1>
                             <p className="text-sm text-gray-500 dark:text-gray-400">
-                                Compare material prices across {shops.length} supplier{shops.length !== 1 ? 's' : ''}
+                                {t('compare_prices_across', { defaultValue: 'Compare material prices across' })} {shops.length} {shops.length !== 1 ? t('suppliers', { defaultValue: 'suppliers' }) : t('supplier', { defaultValue: 'supplier' })}
                             </p>
                         </div>
                     </div>
@@ -303,7 +305,7 @@ export default function ShopCatalogPage() {
                                 type="text"
                                 value={search}
                                 onChange={e => setSearch(e.target.value)}
-                                placeholder="Search items…"
+                                placeholder={t('search_items_placeholder', { defaultValue: 'Search items…' })}
                                 className="pl-10 pr-4 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 text-sm w-56"
                             />
                         </div>
@@ -314,14 +316,14 @@ export default function ShopCatalogPage() {
                                 onChange={e => setCategoryFilter(e.target.value)}
                                 className="px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 text-sm"
                             >
-                                <option value="">All Categories</option>
+                                <option value="">{t('all_categories_option', { defaultValue: 'All Categories' })}</option>
                                 {categories.map(c => <option key={c} value={c}>{c}</option>)}
                             </select>
                         )}
                         <button
                             onClick={() => fetchItems(true)}
                             className="p-2 rounded-xl border border-gray-200 dark:border-gray-600 text-gray-500 hover:text-indigo-600 hover:border-indigo-300 transition"
-                            title="Refresh"
+                            title={t('refresh_title', { defaultValue: 'Refresh' })}
                         >
                             <ArrowPathIcon className="h-5 w-5" />
                         </button>
@@ -331,7 +333,7 @@ export default function ShopCatalogPage() {
                                 className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-sm transition"
                             >
                                 <PlusIcon className="h-4 w-4" />
-                                Add Shop
+                                {t('add_shop_btn', { defaultValue: 'Add Shop' })}
                             </button>
                         )}
                     </div>
@@ -342,7 +344,7 @@ export default function ShopCatalogPage() {
             {shops.length > 0 && (
                 <div className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 px-6 py-3">
                     <div className="max-w-screen-2xl mx-auto flex items-center gap-3 flex-wrap">
-                        <span className="text-xs font-black text-gray-400 uppercase tracking-widest mr-1">Shops:</span>
+                        <span className="text-xs font-black text-gray-400 uppercase tracking-widest mr-1">{t('shops_label', { defaultValue: 'Shops:' })}</span>
                         {shops.map(shop => (
                             <a
                                 key={shop.id}
@@ -373,8 +375,8 @@ export default function ShopCatalogPage() {
                 ) : items.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-20 text-gray-400">
                         <BuildingStorefrontIcon className="h-16 w-16 mb-4 opacity-30" />
-                        <p className="text-lg font-semibold">No items found</p>
-                        <p className="text-sm">Try adjusting your search or category filter</p>
+                        <p className="text-lg font-semibold">{t('no_items_found', { defaultValue: 'No items found' })}</p>
+                        <p className="text-sm">{t('try_adjusting_search', { defaultValue: 'Try adjusting your search or category filter' })}</p>
                     </div>
                 ) : (
                     <div className="overflow-x-auto rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
@@ -382,13 +384,13 @@ export default function ShopCatalogPage() {
                             <thead className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
                                 <tr>
                                     <th className="px-4 py-4 text-left text-xs font-black uppercase text-gray-500 dark:text-gray-400 tracking-widest min-w-[200px]">
-                                        Item
+                                        {t('table_header_item', { defaultValue: 'Item' })}
                                     </th>
                                     <th className="px-3 py-4 text-left text-xs font-black uppercase text-gray-500 dark:text-gray-400 tracking-widest">
-                                        Category
+                                        {t('table_header_category', { defaultValue: 'Category' })}
                                     </th>
                                     <th className="px-3 py-4 text-left text-xs font-black uppercase text-gray-500 dark:text-gray-400 tracking-widest">
-                                        Unit
+                                        {t('table_header_unit', { defaultValue: 'Unit' })}
                                     </th>
                                     {shops.map(shop => (
                                         <th key={shop.id} className="px-3 py-4 text-center text-xs font-black uppercase text-indigo-600 dark:text-indigo-400 tracking-widest min-w-[130px]">
@@ -399,7 +401,7 @@ export default function ShopCatalogPage() {
                                         </th>
                                     ))}
                                     <th className="px-3 py-4 text-center text-xs font-black uppercase text-emerald-600 dark:text-emerald-400 tracking-widest min-w-[80px]">
-                                        Best
+                                        {t('table_header_best', { defaultValue: 'Best' })}
                                     </th>
                                 </tr>
                             </thead>
@@ -482,7 +484,7 @@ export default function ShopCatalogPage() {
                                     disabled={loading}
                                     className="px-6 py-2 text-sm font-bold text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-700 rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition disabled:opacity-50"
                                 >
-                                    {loading ? 'Loading…' : 'Load more items'}
+                                    {loading ? t('loading_dots', { defaultValue: 'Loading…' }) : t('load_more_items', { defaultValue: 'Load more items' })}
                                 </button>
                             </div>
                         )}

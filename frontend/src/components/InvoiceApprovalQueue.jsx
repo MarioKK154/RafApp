@@ -15,8 +15,7 @@ import {
 import { toast } from 'react-toastify';
 
 const InvoiceApprovalQueue = () => {
-    const { t, i18n } = useTranslation();
-    const isIcelandic = i18n.language.startsWith('is');
+    const { t } = useTranslation();
 
     const [approvals, setApprovals] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -64,22 +63,22 @@ const InvoiceApprovalQueue = () => {
                 ...newApproval,
                 amount: parseFloat(newApproval.amount)
             });
-            toast.success(isIcelandic ? 'Birgjareikningur skráður í samþykktarferli!' : 'Supplier invoice queued for approval!');
+            toast.success(t('supplier_invoice_queued', { defaultValue: 'Supplier invoice queued for approval!' }));
             setIsCreateOpen(false);
             setNewApproval({ supplier_name: 'Reykjafell', invoice_number: '', amount: '', category: 'Materials', notes: '' });
             fetchApprovals();
         } catch (err) {
-            toast.error(err.response?.data?.detail || 'Failed to queue invoice.');
+            toast.error(err.response?.data?.detail || t('failed_to_queue_invoice', { defaultValue: 'Failed to queue invoice.' }));
         }
     };
 
     const handleReview = async (id, status) => {
         try {
             await axiosInstance.patch(`/approvals/${id}`, { status });
-            toast.success(isIcelandic ? `Reikningur ${status === 'Approved' ? 'samþykktur' : 'hafnað'}!` : `Invoice ${status.toLowerCase()}!`);
+            toast.success(status === 'Approved' ? t('invoice_approved', { defaultValue: 'Invoice approved!' }) : t('invoice_rejected', { defaultValue: 'Invoice rejected!' }));
             fetchApprovals();
         } catch (err) {
-            toast.error('Failed to review invoice.');
+            toast.error(t('failed_to_review_invoice', { defaultValue: 'Failed to review invoice.' }));
         }
     };
 
@@ -107,7 +106,7 @@ const InvoiceApprovalQueue = () => {
                     </div>
                     <div>
                         <span className="text-[10px] font-black uppercase text-gray-400 tracking-widest block">
-                            {isIcelandic ? 'Í bið um samþykki' : 'Pending Approvals'}
+                            {t('pending_approvals', { defaultValue: 'Pending Approvals' })}
                         </span>
                         <div className="flex items-baseline gap-2">
                             <span className="text-xl font-black text-gray-900 dark:text-white">{pendingInvoices.length}</span>
@@ -124,7 +123,7 @@ const InvoiceApprovalQueue = () => {
                     </div>
                     <div>
                         <span className="text-[10px] font-black uppercase text-gray-400 tracking-widest block">
-                            {isIcelandic ? 'Samþykkt í mánuðinum' : 'Approved This Month'}
+                            {t('approved_this_month', { defaultValue: 'Approved This Month' })}
                         </span>
                         <div className="flex items-baseline gap-2">
                             <span className="text-xl font-black text-gray-900 dark:text-white">{approvedInvoices.length}</span>
@@ -138,7 +137,7 @@ const InvoiceApprovalQueue = () => {
                 <div className="bg-white dark:bg-gray-800 p-6 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-xs flex items-center justify-between">
                     <div>
                         <span className="text-[10px] font-black uppercase text-gray-400 tracking-widest block">
-                            {isIcelandic ? 'Birgjar (Wholesalers)' : 'Wholesalers'}
+                            {t('wholesalers', { defaultValue: 'Wholesalers' })}
                         </span>
                         <span className="text-xs font-bold text-gray-600 dark:text-gray-300">Reykjafell • Rónning • Ískraft</span>
                     </div>
@@ -146,7 +145,7 @@ const InvoiceApprovalQueue = () => {
                         onClick={() => setIsCreateOpen(true)}
                         className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition shadow-md shadow-indigo-500/20 transform active:scale-95 shrink-0"
                     >
-                        + {isIcelandic ? 'Nýr reikningur' : 'Queue Invoice'}
+                        + {t('queue_invoice', { defaultValue: 'Queue Invoice' })}
                     </button>
                 </div>
             </div>
@@ -157,12 +156,10 @@ const InvoiceApprovalQueue = () => {
                     <div>
                         <h3 className="text-xs font-black uppercase tracking-widest text-gray-900 dark:text-white flex items-center gap-2">
                             <BuildingStorefrontIcon className="h-4 w-4 text-indigo-500" />
-                            {isIcelandic ? 'Samþykktarkerfi Birgjareikninga' : 'Wholesaler Invoice Approval Pipeline'}
+                            {t('invoice_approval_pipeline', { defaultValue: 'Wholesaler Invoice Approval Pipeline' })}
                         </h3>
                         <p className="text-[11px] text-gray-400 font-medium mt-0.5">
-                            {isIcelandic 
-                                ? 'Yfirferð reikninga fyrir sjálfvirkan flutning í bókhaldskerfi (DK One).' 
-                                : 'Multi-level approval workflow before DK One ledger sync.'}
+                            {t('invoice_approval_desc', { defaultValue: 'Multi-level approval workflow before DK One ledger sync.' })}
                         </p>
                     </div>
                     <button onClick={fetchApprovals} className="p-2 text-gray-400 hover:text-indigo-600 transition" title="Refresh">
@@ -172,13 +169,13 @@ const InvoiceApprovalQueue = () => {
 
                 {isLoading ? (
                     <div className="text-center py-16 text-xs font-bold text-gray-400 animate-pulse">
-                        {isIcelandic ? 'Sæki samþykktarferli birgja...' : 'Loading wholesaler invoices...'}
+                        {t('loading_wholesaler_invoices', { defaultValue: 'Loading wholesaler invoices...' })}
                     </div>
                 ) : approvals.length === 0 ? (
                     <div className="text-center py-16 p-8 space-y-3">
                         <DocumentCheckIcon className="h-12 w-12 text-gray-300 mx-auto" />
                         <p className="text-xs font-black uppercase text-gray-400 tracking-wider">
-                            {isIcelandic ? 'Engir birgjareikningar í bið' : 'No Supplier Invoices Pending Approval'}
+                            {t('no_invoices_pending', { defaultValue: 'No Supplier Invoices Pending Approval' })}
                         </p>
                     </div>
                 ) : (
@@ -193,9 +190,9 @@ const InvoiceApprovalQueue = () => {
                                         <span className="text-xs font-mono font-bold text-gray-900 dark:text-white">
                                             #{appr.invoice_number}
                                         </span>
-                                        <span className="text-[10px] text-gray-400 font-medium">({appr.category || 'Materials'})</span>
+                                        <span className="text-[10px] text-gray-400 font-medium">({appr.category || t('materials', { defaultValue: 'Materials' })})</span>
                                     </div>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">{appr.notes || 'Innkauparikningur neysluveitu'}</p>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">{appr.notes || t('default_notes', { defaultValue: 'Purchase invoice' })}</p>
                                 </div>
 
                                 <div className="flex items-center gap-6">
@@ -204,7 +201,7 @@ const InvoiceApprovalQueue = () => {
                                             {Math.round(appr.amount || 0).toLocaleString()} kr.
                                         </span>
                                         <span className="text-[9px] font-black uppercase text-gray-400">
-                                            {appr.created_at ? new Date(appr.created_at).toLocaleDateString() : 'Í dag'}
+                                            {appr.created_at ? new Date(appr.created_at).toLocaleDateString() : t('today', { defaultValue: 'Today' })}
                                         </span>
                                     </div>
 
@@ -214,13 +211,13 @@ const InvoiceApprovalQueue = () => {
                                                 onClick={() => handleReview(appr.id, 'Approved')}
                                                 className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-[10px] uppercase tracking-wider rounded-xl transition shadow-md shadow-emerald-500/20"
                                             >
-                                                {isIcelandic ? 'Samþykkja' : 'Approve'}
+                                                {t('approve', { defaultValue: 'Approve' })}
                                             </button>
                                             <button
                                                 onClick={() => handleReview(appr.id, 'Rejected')}
                                                 className="px-3.5 py-2 bg-red-600 hover:bg-red-700 text-white font-black text-[10px] uppercase tracking-wider rounded-xl transition shadow-md shadow-red-500/20"
                                             >
-                                                {isIcelandic ? 'Hafna' : 'Reject'}
+                                                {t('reject', { defaultValue: 'Reject' })}
                                             </button>
                                         </div>
                                     ) : (
@@ -229,7 +226,7 @@ const InvoiceApprovalQueue = () => {
                                                 ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300' 
                                                 : 'bg-red-100 text-red-800 dark:bg-red-950/60 dark:text-red-300'
                                         }`}>
-                                            {appr.status === 'Approved' ? (isIcelandic ? '✅ Samþykkt' : 'Approved') : (isIcelandic ? '❌ Hafnað' : 'Rejected')}
+                                            {appr.status === 'Approved' ? `✅ ${t('approved', { defaultValue: 'Approved' })}` : `❌ ${t('rejected', { defaultValue: 'Rejected' })}`}
                                         </span>
                                     )}
                                 </div>
@@ -245,7 +242,7 @@ const InvoiceApprovalQueue = () => {
                     <div className="bg-white dark:bg-gray-800 w-full max-w-md rounded-3xl p-6 shadow-2xl space-y-4 border border-gray-100 dark:border-gray-700 my-auto relative">
                         <div className="flex justify-between items-center pb-3 border-b border-gray-100 dark:border-gray-700">
                             <h3 className="text-xs font-black uppercase tracking-widest text-gray-900 dark:text-white">
-                                {isIcelandic ? 'Skrá birgjareikning' : 'Queue Supplier Invoice'}
+                                {t('queue_supplier_invoice', { defaultValue: 'Queue Supplier Invoice' })}
                             </h3>
                             <button onClick={() => setIsCreateOpen(false)} className="text-gray-400 hover:text-gray-600">
                                 <XMarkIcon className="h-5 w-5" />
@@ -254,7 +251,7 @@ const InvoiceApprovalQueue = () => {
                         <form onSubmit={handleCreateApproval} className="space-y-3">
                             <div>
                                 <label className="block text-[9px] font-black uppercase text-gray-400 mb-1">
-                                    {isIcelandic ? 'Birgi (Wholesaler)*' : 'Wholesaler Name*'}
+                                    {t('wholesaler_name', { defaultValue: 'Wholesaler Name*' })}
                                 </label>
                                 <select
                                     value={newApproval.supplier_name}
@@ -269,7 +266,7 @@ const InvoiceApprovalQueue = () => {
                             <input
                                 type="text"
                                 required
-                                placeholder={isIcelandic ? 'Reikningsnúmer*' : 'Invoice Number*'}
+                                placeholder={t('invoice_number_req', { defaultValue: 'Invoice Number*' })}
                                 value={newApproval.invoice_number}
                                 onChange={(e) => setNewApproval({...newApproval, invoice_number: e.target.value})}
                                 className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 rounded-xl text-xs font-bold border-none"
@@ -277,13 +274,13 @@ const InvoiceApprovalQueue = () => {
                             <input
                                 type="number"
                                 required
-                                placeholder={isIcelandic ? 'Upphæð kr.*' : 'Amount (ISK)*'}
+                                placeholder={t('amount_isk_req', { defaultValue: 'Amount (ISK)*' })}
                                 value={newApproval.amount}
                                 onChange={(e) => setNewApproval({...newApproval, amount: e.target.value})}
                                 className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 rounded-xl text-xs font-mono font-bold border-none text-indigo-600 dark:text-indigo-400"
                             />
                             <textarea
-                                placeholder={isIcelandic ? 'Athugasemdir / Verknúmer...' : 'Notes / Project reference...'}
+                                placeholder={t('notes_project_ref', { defaultValue: 'Notes / Project reference...' })}
                                 value={newApproval.notes}
                                 onChange={(e) => setNewApproval({...newApproval, notes: e.target.value})}
                                 className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 rounded-xl text-xs font-bold border-none"
@@ -293,7 +290,7 @@ const InvoiceApprovalQueue = () => {
                                 type="submit"
                                 className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs uppercase tracking-widest rounded-xl transition shadow-md shadow-indigo-500/20"
                             >
-                                {isIcelandic ? 'Senda í samþykktarferli' : 'Queue for Approval'}
+                                {t('queue_for_approval', { defaultValue: 'Queue for Approval' })}
                             </button>
                         </form>
                     </div>
