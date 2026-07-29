@@ -56,16 +56,17 @@ function AccountingPage() {
     const [calcHours, setCalcHours] = useState('');
     const [calcHourlyRate, setCalcHourlyRate] = useState('');
     const [calcOvertimeHours, setCalcOvertimeHours] = useState('');
-    const [calcOvertimeMultiplier, setCalcOvertimeMultiplier] = useState('1.56');
+    const [calcOvertimeMultiplier, setCalcOvertimeMultiplier] = useState('1.56');  // Icelandic collective agreement OT rate 1 (56% premium)
     const [calcOvertime2Hours, setCalcOvertime2Hours] = useState('');
-    const [calcOvertime2Multiplier, setCalcOvertime2Multiplier] = useState('1.794');
+    const [calcOvertime2Multiplier, setCalcOvertime2Multiplier] = useState('1.794');  // OT rate 2 (79.4% premium, e.g. weekend/holiday)
     const [calcBonuses, setCalcBonuses] = useState('');
     const [calcBonusDescription, setCalcBonusDescription] = useState('');
     const [calcOtherDeductions, setCalcOtherDeductions] = useState('0');
     const [calcDeductionsDescription, setCalcDeductionsDescription] = useState('');
     const [calcSereignarsparnadurPercent, setCalcSereignarsparnadurPercent] = useState('0');
     const [calcApplyPersonalTaxCredit, setCalcApplyPersonalTaxCredit] = useState(true);
-    const [calcTaxYear, setCalcTaxYear] = useState('2026');
+    // M8 fix: default to current calendar year — no code change needed each January
+    const [calcTaxYear, setCalcTaxYear] = useState(() => String(new Date().getFullYear()));
     const [calcOrlofPercent, setCalcOrlofPercent] = useState('0');
 
     const [uploadUserId, setUploadUserId] = useState('');

@@ -8,6 +8,7 @@ import { LanguageIcon } from '@heroicons/react/24/outline';
 
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { PushNotificationProvider } from './context/PushNotificationContext';
+import { WeatherProvider } from './context/WeatherContext';
 import Sidebar, { HamburgerButton } from './components/Sidebar';
 import FlagIcon from './components/FlagIcon';
 import { useTenantBranding } from './hooks/useTenantBranding';
@@ -220,7 +221,11 @@ function AppShell() {
                         <span>
                             🚀 New version available.{' '}
                             <button
-                                onClick={() => window.location.reload(true)}
+                                onClick={() => {
+                                    // M9 fix: soft navigation instead of jarring reload(true) which is also deprecated.
+                                    // Re-assigning href triggers a clean browser navigation without dropping WS state mid-session.
+                                    window.location.href = window.location.href; // eslint-disable-line no-self-assign
+                                }}
                                 style={{ fontWeight: 900, textDecoration: 'underline', cursor: 'pointer' }}
                             >
                                 Click to refresh
@@ -432,7 +437,9 @@ function App() {
     return (
         <AuthProvider>
             <PushNotificationProvider>
-                <AppShell />
+                <WeatherProvider>
+                    <AppShell />
+                </WeatherProvider>
             </PushNotificationProvider>
         </AuthProvider>
     );

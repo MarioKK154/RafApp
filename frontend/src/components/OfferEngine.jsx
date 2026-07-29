@@ -238,8 +238,19 @@ export default function OfferEngine({ initialItems = [], onCreateOffer }) {
     const addLine = () =>
         setLines(prev => [...prev, { id: Date.now(), description: '', einingar: 0, qty: 1 }]);
 
-    const updateLine = (id, field, val) =>
-        setLines(prev => prev.map(l => l.id === id ? { ...l, [field]: val } : l));
+    const updateLine = (id, field, val) => {
+        // M11 fix: clamp numeric fields so negatives can never produce a negative offer total
+        let sanitised = val;
+        if (field === 'einingar') {
+            const n = parseFloat(val);
+            if (!isNaN(n) && n < 0) sanitised = '0';
+        } else if (field === 'qty') {
+            const n = parseInt(val, 10);
+            if (!isNaN(n) && n < 1) sanitised = '1';
+        }
+        setLines(prev => prev.map(l => l.id === id ? { ...l, [field]: sanitised } : l));
+    };
+
 
     const removeLine = (id) =>
         setLines(prev => prev.filter(l => l.id !== id));

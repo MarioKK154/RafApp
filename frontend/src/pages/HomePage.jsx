@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation, Translation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
+import { useWeather } from '../context/WeatherContext';
 import axiosInstance from '../api/axiosInstance';
 import { toast } from 'react-toastify';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -71,7 +72,8 @@ function HomePage() {
     const searchRef = useRef(null);
 
     // Weather State
-    const [weather, setWeather] = useState({ temp: 6, desc: 'Rigning', wind: 6 });
+    // M10 fix: read shared weather from WeatherContext — no independent fetch here
+    const weather = useWeather();
 
     // Customizer Edit Mode states
     const [editMode, setEditMode] = useState(false);
@@ -159,37 +161,6 @@ function HomePage() {
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    // Weather Fetching
-    useEffect(() => {
-        const fetchWeather = async () => {
-            try {
-                const res = await fetch("https://api.open-meteo.com/v1/forecast?latitude=64.1466&longitude=-21.9426&current=temperature_2m,weather_code,wind_speed_10m");
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data && data.current) {
-                        const temp = Math.round(data.current.temperature_2m);
-                        const code = data.current.weather_code;
-                        const wind = Math.round(data.current.wind_speed_10m);
-                        
-                        let desc = 'weather_clear';
-                        if ([1, 2, 3].includes(code)) desc = 'weather_cloudy';
-                        else if ([45, 48].includes(code)) desc = 'weather_fog';
-                        else if ([51, 53, 55].includes(code)) desc = 'weather_drizzle';
-                        else if ([61, 63, 65, 80, 81, 82].includes(code)) desc = 'weather_rain';
-                        else if ([71, 73, 75, 85, 86].includes(code)) desc = 'weather_snow';
-                        else if ([95, 96, 99].includes(code)) desc = 'weather_thunderstorm';
-                        
-                        setWeather({ temp, desc, wind });
-                    }
-                }
-            } catch (e) {
-                console.error("Weather load error", e);
-            }
-        };
-        fetchWeather();
-        const interval = setInterval(fetchWeather, 600000);
-        return () => clearInterval(interval);
-    }, []);
 
     const onDragStart = (index) => {
         setDraggedIndex(index);

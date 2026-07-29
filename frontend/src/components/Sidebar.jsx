@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
+import { useWeather } from '../context/WeatherContext';
 import defaultLogo from '../assets/logo.png';
 import axiosInstance from '../api/axiosInstance';
 import NotificationDropdown from './NotificationDropdown';
@@ -67,39 +68,8 @@ function Sidebar() {
     const { isAuthenticated, user: currentUser, logout } = useAuth();
     const [unreadMessages, setUnreadMessages]       = useState(0);
     const [unreadNotifications, setUnreadNotifications] = useState(0);
-    const [weather, setWeather] = useState({ temp: 6, desc: 'Rigning', wind: 6 });
-
-    useEffect(() => {
-        if (!isAuthenticated) return;
-        const fetchWeather = async () => {
-            try {
-                const res = await fetch("https://api.open-meteo.com/v1/forecast?latitude=64.1466&longitude=-21.9426&current=temperature_2m,weather_code,wind_speed_10m");
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data && data.current) {
-                        const temp = Math.round(data.current.temperature_2m);
-                        const code = data.current.weather_code;
-                        const wind = Math.round(data.current.wind_speed_10m);
-                        
-                        let desc = 'weather_clear';
-                        if ([1, 2, 3].includes(code)) desc = 'weather_cloudy';
-                        else if ([45, 48].includes(code)) desc = 'weather_fog';
-                        else if ([51, 53, 55].includes(code)) desc = 'weather_drizzle';
-                        else if ([61, 63, 65, 80, 81, 82].includes(code)) desc = 'weather_rain';
-                        else if ([71, 73, 75, 85, 86].includes(code)) desc = 'weather_snow';
-                        else if ([95, 96, 99].includes(code)) desc = 'weather_thunderstorm';
-                        
-                        setWeather({ temp, desc, wind });
-                    }
-                }
-            } catch (e) {
-                console.error("Weather load error", e);
-            }
-        };
-        fetchWeather();
-        const interval = setInterval(fetchWeather, 600000);
-        return () => clearInterval(interval);
-    }, [isAuthenticated]);
+    // M10 fix: weather now comes from shared WeatherContext — no duplicate API calls
+    const weather = useWeather();
 
     const mode = useBreakpoint();
 
