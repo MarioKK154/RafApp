@@ -211,14 +211,14 @@ function ShoppingListPage() {
                                 </thead>
                                 <tbody className="divide-y divide-gray-50 dark:divide-gray-700">
                                     {shoppingList.map(item => (
-                                        <tr key={item.inventory_item.id} className="group relative z-10 focus-within:z-[60] hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
+                                        <tr key={item.inventory_item?.id ?? item.id} className="group relative z-10 focus-within:z-[60] hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
                                             <td className="py-5 px-8">
                                                 <div className="flex items-center gap-3">
                                                     <div className="p-2 bg-gray-50 dark:bg-gray-700 rounded-xl group-hover:bg-indigo-50 transition-colors">
                                                         <CubeIcon className="h-5 w-5 text-gray-400 group-hover:text-indigo-600" />
                                                     </div>
                                                     <div>
-                                                        <p className="font-bold text-gray-900 dark:text-white">{inventoryDisplayName(item.inventory_item, i18n.language)}</p>
+                                                        <p className="font-bold text-gray-900 dark:text-white">{item.inventory_item ? inventoryDisplayName(item.inventory_item, i18n.language) : t('unknown_material', { defaultValue: 'Unknown material' })}</p>
                                                         <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">{item.unit || t('standard_unit', { defaultValue: 'Standard Unit' })}</p>
                                                     </div>
                                                 </div>

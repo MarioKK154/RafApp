@@ -178,7 +178,7 @@ function ProjectBoQ({ projectId }) {
 
     // Filter Logic: Prevent duplicate requirement registration
     const availableInventoryItems = inventoryItems.filter(
-        invItem => !boq?.items?.some(boqItem => boqItem.inventory_item.id === invItem.id)
+        invItem => !boq?.items?.some(boqItem => boqItem.inventory_item?.id === invItem.id)
     );
 
     return (

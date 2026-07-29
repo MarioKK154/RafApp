@@ -110,7 +110,7 @@ function GlobalInventoryPage() {
                 title={t('inventory', { defaultValue: 'Master Materials & Hardware Database' })}
                 subtitle={t('inventory_subtitle', { defaultValue: 'Central Supply Catalog, Supplier Pricing & Search' })}
                 stats={[
-                    { label: `${filteredCount} ${t('skus', { defaultValue: 'SKUs' })}`, dotColor: 'bg-green-400 animate-pulse' },
+                    { label: `${items.length} ${t('skus', { defaultValue: 'SKUs' })}`, dotColor: 'bg-green-400 animate-pulse' },
                 ]}
                 actions={
                     <div className="flex items-center gap-3">
