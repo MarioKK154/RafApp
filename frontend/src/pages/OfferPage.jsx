@@ -186,6 +186,48 @@ function OfferPage() {
     const canManageOffer = user && (['admin', 'project manager'].includes(user.role) || isSuperuser);
     const canEditOffer = canManageOffer && offer?.status === 'Draft';
 
+    const handleAddBundle = async (bundleType) => {
+        if (!offerId || !canEditOffer) return;
+        setIsLoading(true);
+        let itemsToAdd = [];
+
+        if (bundleType === 'socket') {
+            itemsToAdd = [
+                { item_type: 'Material', description: 'Ísetningardós í steypu/vegg (SART E-001)', quantity: 1, unit_price: 450, unit: 'stk' },
+                { item_type: 'Material', description: 'Dráttarkapall 3x1.5mm² (SART E-003)', quantity: 3, unit_price: 140, unit: 'm' },
+                { item_type: 'Material', description: '1-fasa veggtengill með jörð (SART E-004)', quantity: 1, unit_price: 1850, unit: 'stk' },
+                { item_type: 'Labor', description: 'Rafiðnaðarvinna - Frágangur og tenging tengils (SART taxti)', quantity: 0.5, unit_price: 12500, unit: 'klst' },
+            ];
+        } else if (bundleType === 'spot') {
+            itemsToAdd = [
+                { item_type: 'Material', description: 'Ífelldur LED spotti 7W IP44 (SART E-007)', quantity: 1, unit_price: 3200, unit: 'stk' },
+                { item_type: 'Material', description: 'Fastspennugjafi / Dimmer driver', quantity: 1, unit_price: 1950, unit: 'stk' },
+                { item_type: 'Labor', description: 'Rafiðnaðarvinna - Borun og tenging ljósa (SART taxti)', quantity: 0.4, unit_price: 12500, unit: 'klst' },
+            ];
+        } else if (bundleType === 'panel') {
+            itemsToAdd = [
+                { item_type: 'Material', description: 'Aðaltafla 12-eininga utanáliggjandi (SART E-006)', quantity: 1, unit_price: 18500, unit: 'stk' },
+                { item_type: 'Material', description: 'Lekastraumsrofi 40A/30mA 4P', quantity: 1, unit_price: 9800, unit: 'stk' },
+                { item_type: 'Material', description: 'Sjálfvari / Öryggi 16A 1P', quantity: 4, unit_price: 1400, unit: 'stk' },
+                { item_type: 'Labor', description: 'Rafiðnaðarvinna - Töflusetning og mælingar (SART taxti)', quantity: 2.0, unit_price: 12500, unit: 'klst' },
+            ];
+        }
+
+        try {
+            for (const item of itemsToAdd) {
+                await axiosInstance.post(`/offers/${offerId}/items`, item);
+            }
+            toast.success(i18n.language.startsWith('is') ? 'SART tilboðspakka bætt við!' : 'SART assembly bundle added!');
+            const updatedRes = await axiosInstance.get(`/offers/${offerId}`);
+            setOffer(updatedRes.data);
+        } catch (err) {
+            console.error('Failed to add bundle:', err);
+            toast.error('Failed to add assembly bundle.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     const {
         selectedShops,
         toggleShop,
@@ -676,11 +718,59 @@ function OfferPage() {
                 <div className="lg:col-span-8 space-y-8">
                     
                     {/* Financial Summary Bar */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className={`grid grid-cols-1 ${canManageOffer ? 'md:grid-cols-4' : 'md:grid-cols-3'} gap-4`}>
                         <SummaryCard label="Labor Subtotal" value={formatCurrency(laborTotal)} icon={<UserIcon />} />
                         <SummaryCard label="Material Subtotal" value={formatCurrency(materialTotal)} icon={<TagIcon />} />
                         <SummaryCard label="Proposal Valuation" value={formatCurrency(offer.total_amount)} icon={<CheckBadgeIcon />} highlight />
+                        {canManageOffer && (
+                            <SummaryCard 
+                                label={i18n.language.startsWith('is') ? 'Áætluð Framlegð' : 'Gross Margin'} 
+                                value={`${((offer.total_amount > 0 ? ((offer.total_amount - (materialTotal * 0.70 + (laborTotal / 12500) * 4500)) / offer.total_amount) * 100 : 0)).toFixed(1)}% (${formatCurrency(Math.max(0, offer.total_amount - (materialTotal * 0.70 + (laborTotal / 12500) * 4500)))})`} 
+                                icon={<BanknotesIcon />} 
+                                highlightMargin 
+                            />
+                        )}
                     </div>
+
+                    {/* SART Assembly Quick Bundles (PM & Admins Only) */}
+                    {canEditOffer && (
+                        <div className="p-5 bg-indigo-50/60 dark:bg-indigo-950/40 rounded-[2rem] border border-indigo-100 dark:border-indigo-900/60 space-y-3 shadow-inner">
+                            <div className="flex items-center justify-between px-1">
+                                <span className="text-xs font-black uppercase tracking-wider text-indigo-900 dark:text-indigo-200">
+                                    ⚡ {i18n.language.startsWith('is') ? 'SART Snöggpakkar (Ísetning + Efni + Vinna)' : 'SART Quick Assembly Bundles'}
+                                </span>
+                                <span className="text-[9px] font-bold text-indigo-500 uppercase tracking-widest">
+                                    {i18n.language.startsWith('is') ? 'SART & RSÍ Kjarasamningar 2025/2026' : 'SART & RSÍ 2025/2026 Tariffs'}
+                                </span>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => handleAddBundle('socket')}
+                                    className="p-3.5 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 text-left hover:border-indigo-500 transition shadow-sm group hover:-translate-y-0.5"
+                                >
+                                    <span className="block text-xs font-black text-gray-900 dark:text-white group-hover:text-indigo-600 transition">🔌 Rofa / Tengis Dósapakki</span>
+                                    <span className="text-[9px] font-medium text-gray-400 block mt-0.5">Dós + Kapall + Tengill + 0.5h SART vinna</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => handleAddBundle('spot')}
+                                    className="p-3.5 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 text-left hover:border-indigo-500 transition shadow-sm group hover:-translate-y-0.5"
+                                >
+                                    <span className="block text-xs font-black text-gray-900 dark:text-white group-hover:text-indigo-600 transition">💡 Ífelldur LED Spottapakki</span>
+                                    <span className="text-[9px] font-medium text-gray-400 block mt-0.5">Spot + Driver + 0.4h SART vinna</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => handleAddBundle('panel')}
+                                    className="p-3.5 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 text-left hover:border-indigo-500 transition shadow-sm group hover:-translate-y-0.5"
+                                >
+                                    <span className="block text-xs font-black text-gray-900 dark:text-white group-hover:text-indigo-600 transition">⚡ 3-Fasa Aðaltaflu Pakki</span>
+                                    <span className="text-[9px] font-medium text-gray-400 block mt-0.5">Tafla + Lekastraumsrofi + 2.0h SART vinna</span>
+                                </button>
+                            </div>
+                        </div>
+                    )}
 
                     {/* Technical Line Items Table */}
                     <section className="bg-white dark:bg-gray-800 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
@@ -1399,14 +1489,25 @@ function OfferPage() {
 /**
  * Technical Sub-Components
  */
-function SummaryCard({ label, value, icon, highlight = false }) {
+function SummaryCard({ label, value, icon, highlight = false, highlightMargin = false }) {
+    const bgStyle = highlight 
+        ? 'bg-indigo-600 text-white border-indigo-700' 
+        : highlightMargin 
+            ? 'bg-emerald-600 text-white border-emerald-700' 
+            : 'bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700';
+            
+    const iconBgStyle = (highlight || highlightMargin) ? 'bg-white/10' : 'bg-gray-50 dark:bg-gray-700';
+    const iconColor = (highlight || highlightMargin) ? 'text-white' : 'text-indigo-600';
+    const labelColor = (highlight || highlightMargin) ? 'text-emerald-100' : 'text-gray-400';
+    const valueColor = (highlight || highlightMargin) ? 'text-white' : 'text-gray-900 dark:text-white';
+
     return (
-        <div className={`p-6 rounded-[2rem] border shadow-sm transition-transform hover:-translate-y-1 ${highlight ? 'bg-indigo-600 text-white border-indigo-700' : 'bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700'}`}>
-            <div className={`p-2 rounded-xl w-fit mb-4 ${highlight ? 'bg-white/10' : 'bg-gray-50 dark:bg-gray-700'}`}>
-                {React.cloneElement(icon, { className: `h-5 w-5 ${highlight ? 'text-white' : 'text-indigo-600'}` })}
+        <div className={`p-6 rounded-[2rem] border shadow-sm transition-transform hover:-translate-y-1 ${bgStyle}`}>
+            <div className={`p-2 rounded-xl w-fit mb-4 ${iconBgStyle}`}>
+                {React.cloneElement(icon, { className: `h-5 w-5 ${iconColor}` })}
             </div>
-            <p className={`text-[10px] font-black uppercase tracking-widest ${highlight ? 'text-indigo-100' : 'text-gray-400'}`}>{label}</p>
-            <p className={`text-xl font-black ${highlight ? 'text-white' : 'text-gray-900 dark:text-white'}`}>{value}</p>
+            <p className={`text-[10px] font-black uppercase tracking-widest ${labelColor}`}>{label}</p>
+            <p className={`text-xl font-black ${valueColor}`}>{value}</p>
         </div>
     );
 }

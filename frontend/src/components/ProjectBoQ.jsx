@@ -7,16 +7,19 @@ import { toast } from 'react-toastify';
 import { useInventoryCatalogShopFilter } from '../hooks/useInventoryCatalogShopFilter';
 import LoadingSpinner from './LoadingSpinner';
 import InventoryCatalogShopFilters from './InventoryCatalogShopFilters';
+import { useNavigate } from 'react-router-dom';
 import { 
     PlusIcon, 
     TrashIcon, 
     ExclamationCircleIcon, 
     CheckCircleIcon,
     ArchiveBoxIcon,
-    ArrowPathIcon
+    ArrowPathIcon,
+    DocumentTextIcon
 } from '@heroicons/react/24/outline';
 
 function ProjectBoQ({ projectId }) {
+    const navigate = useNavigate();
     const { t, i18n } = useTranslation();
     const [boq, setBoq] = useState(null);
     const [inventoryItems, setInventoryItems] = useState([]);
@@ -30,9 +33,44 @@ function ProjectBoQ({ projectId }) {
     const [selectedItemId, setSelectedItemId] = useState('');
     const [quantityRequired, setQuantityRequired] = useState(1);
     const [boqSearchQuery, setBoqSearchQuery] = useState('');
+    const [isConvertingBoQ, setIsConvertingBoQ] = useState(false);
 
     // Authorization Clearance
     const canManageBoQ = user && (['admin', 'project manager'].includes(user.role) || user.is_superuser);
+
+    const handleConvertBoQToOffer = async () => {
+        const boqItems = boq?.items || [];
+        if (!projectId || boqItems.length === 0) return;
+        setIsConvertingBoQ(true);
+        const isIcelandic = i18n.language.startsWith('is');
+        try {
+            const newOfferRes = await axiosInstance.post('/offers/', {
+                project_id: Number(projectId),
+                client_name: `Verkefni #${projectId} - Efnistilboð`,
+                status: 'Draft',
+            });
+            const offerId = newOfferRes.data.id;
+
+            for (const item of boqItems) {
+                const desc = item.inventory_item ? item.inventory_item.name : (item.sku || 'Efnisvara');
+                const price = item.inventory_item?.unit_price || 1500;
+                await axiosInstance.post(`/offers/${offerId}/items`, {
+                    item_type: 'Material',
+                    description: desc,
+                    quantity: item.quantity_required,
+                    unit_price: price,
+                    unit: item.inventory_item?.unit || 'stk',
+                });
+            }
+            toast.success(isIcelandic ? 'Efnisskrá flutt í nýtt tilboð!' : 'BoQ successfully converted to draft offer!');
+            navigate(`/offers/${offerId}`);
+        } catch (err) {
+            console.error('Failed to convert BoQ to offer:', err);
+            toast.error(isIcelandic ? 'Gekk ekki að flytja efnisskrá í tilboð.' : 'Failed to convert BoQ to offer.');
+        } finally {
+            setIsConvertingBoQ(false);
+        }
+    };
 
     const {
         selectedShops,
@@ -152,10 +190,23 @@ function ProjectBoQ({ projectId }) {
                     </div>
                     <h2 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">{t('bill_of_quantities')}</h2>
                 </div>
-                <div className="flex items-center gap-3 px-4 py-2 bg-gray-50 dark:bg-gray-900 rounded-full border border-gray-100 dark:border-gray-800">
-                    <span className="text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest leading-none">
-                        {t('project_node', { defaultValue: 'Project' })}: {projectId}
-                    </span>
+                <div className="flex items-center gap-3">
+                    {canManageBoQ && (boq?.items?.length || 0) > 0 && (
+                        <button
+                            type="button"
+                            onClick={handleConvertBoQToOffer}
+                            disabled={isConvertingBoQ}
+                            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition shadow-md shadow-emerald-500/20 flex items-center gap-2"
+                        >
+                            <DocumentTextIcon className="h-4 w-4" />
+                            {i18n.language.startsWith('is') ? 'Flytja Efnisskrá í Tilboð' : 'Convert BoQ to Offer'}
+                        </button>
+                    )}
+                    <div className="px-4 py-2 bg-gray-50 dark:bg-gray-900 rounded-full border border-gray-100 dark:border-gray-800">
+                        <span className="text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest leading-none">
+                            {t('project_node', { defaultValue: 'Project' })}: {projectId}
+                        </span>
+                    </div>
                 </div>
             </header>
 

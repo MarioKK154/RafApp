@@ -328,6 +328,40 @@ def _ensure_timelogs_travel_hours_column() -> None:
         import logging
         logging.warning(f"Failed to add travel_hours column to time_logs table: {e}")
 
+@app.on_event("startup")
+def _seed_sart_piecework_rates() -> None:
+    """Seed official SART / RSÍ piecework tariffs and rates if none exist."""
+    from .database import SessionLocal
+    from datetime import date
+    db = SessionLocal()
+    try:
+        if db.query(models.PieceworkRate).count() == 0:
+            default_rate = models.PieceworkRate(
+                name="SART & RSÍ Kjarasamningar 2025-2026",
+                effective_from=date(2025, 1, 1),
+                reiknitala=2985.0
+            )
+            db.add(default_rate)
+            db.commit()
+
+        if db.query(models.PieceworkTaskCatalog).count() == 0:
+            tasks = [
+                models.PieceworkTaskCatalog(id="E-001", name="Dós í steypu / vegg", unit="stk", base_time_minutes=12.0, category="Ísetning"),
+                models.PieceworkTaskCatalog(id="E-002", name="Dós í léttan vegg", unit="stk", base_time_minutes=9.5, category="Ísetning"),
+                models.PieceworkTaskCatalog(id="E-003", name="Draga í pípukapla", unit="m", base_time_minutes=3.0, category="Lagnir"),
+                models.PieceworkTaskCatalog(id="E-004", name="Tengja 1-fasa rofa / tengil", unit="stk", base_time_minutes=10.0, category="Tengingar"),
+                models.PieceworkTaskCatalog(id="E-005", name="Tengja 3-fasa innstungu", unit="stk", base_time_minutes=25.0, category="Tengingar"),
+                models.PieceworkTaskCatalog(id="E-006", name="Stofntafla & lekastraumsrofi", unit="stk", base_time_minutes=35.0, category="Töflur"),
+                models.PieceworkTaskCatalog(id="E-007", name="Tengja ljósastæði / spottar", unit="stk", base_time_minutes=15.0, category="Lýsing"),
+            ]
+            db.add_all(tasks)
+            db.commit()
+    except Exception as e:
+        import logging
+        logging.warning(f"SART piecework seeding warning: {e}")
+    finally:
+        db.close()
+
 @app.get("/health/db")
 @limiter.limit("60/minute")
 def health_db(request: Request):
