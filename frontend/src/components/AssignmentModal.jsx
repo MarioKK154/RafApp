@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { XMarkIcon, CalendarDaysIcon, BriefcaseIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { format } from 'date-fns';
 import { toast } from 'react-toastify';
+import ConfirmationModal from './ConfirmationModal';
 
 const AssignmentModal = ({ isOpen, onClose, selectedUser, selectedDate, existingAssignment, onAssignmentCreated, leaveBlocks = [] }) => {
     const { t, i18n } = useTranslation();
@@ -47,6 +48,8 @@ const AssignmentModal = ({ isOpen, onClose, selectedUser, selectedDate, existing
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isLoadingOptions, setIsLoadingOptions] = useState(false);
+    // L11: state-driven confirmation instead of window.confirm
+    const [pendingRemove, setPendingRemove] = useState(null); // { type:'single'|'full', targetDateStr? }
 
     const leaveConflict = useMemo(() => {
         if (!selectedUser?.id || !leaveBlocks?.length || !formData.start_date || !formData.end_date) {
@@ -173,34 +176,34 @@ const AssignmentModal = ({ isOpen, onClose, selectedUser, selectedDate, existing
         const isMultiDay = existingAssignment.start_date !== existingAssignment.end_date;
 
         if (singleDayOnly && isMultiDay && targetDateStr) {
-            if (window.confirm(isIcelandic ? `Fjarlægja eingöngu daginn ${targetDateStr} hjá ${selectedUser?.full_name || 'starfsmanni'}?` : `Remove only ${targetDateStr} for ${selectedUser?.full_name || 'user'}?`)) {
-                setIsSubmitting(true);
-                try {
-                    await axiosInstance.delete(`/assignments/${existingAssignment.id}?target_date=${targetDateStr}`);
-                    toast.success(isIcelandic ? `Dagurinn ${targetDateStr} fjarlægður úr dagskrá!` : `Single day ${targetDateStr} unassigned!`);
-                    onAssignmentCreated();
-                    onClose();
-                } catch (err) {
-                    toast.error(err.response?.data?.detail || 'Failed to remove single day from schedule.');
-                } finally {
-                    setIsSubmitting(false);
-                }
-            }
+            // L11: queue single-day confirmation
+            setPendingRemove({ type: 'single', targetDateStr });
             return;
         }
+        // L11: queue full-assignment confirmation
+        setPendingRemove({ type: 'full', targetDateStr: null });
+    };
 
-        if (window.confirm(t('confirm_remove_assignment', { userName: selectedUser?.full_name, projectName: existingAssignment.project_name || 'Project' }))) {
-            setIsSubmitting(true);
-            try {
+    const confirmRemoveAssignment = async () => {
+        if (!pendingRemove || !existingAssignment?.id) return;
+        const { type, targetDateStr } = pendingRemove;
+        setPendingRemove(null);
+        const isIcelandic = i18n.language.startsWith('is');
+        setIsSubmitting(true);
+        try {
+            if (type === 'single' && targetDateStr) {
+                await axiosInstance.delete(`/assignments/${existingAssignment.id}?target_date=${targetDateStr}`);
+                toast.success(isIcelandic ? `Dagurinn ${targetDateStr} fjarlægður úr dagskrá!` : `Single day ${targetDateStr} unassigned!`);
+            } else {
                 await axiosInstance.delete(`/assignments/${existingAssignment.id}`);
                 toast.success(t('toast_assignment_purged'));
-                onAssignmentCreated();
-                onClose();
-            } catch (err) {
-                toast.error(err.response?.data?.detail || t('toast_delete_assignment_failed'));
-            } finally {
-                setIsSubmitting(false);
             }
+            onAssignmentCreated();
+            onClose();
+        } catch (err) {
+            toast.error(err.response?.data?.detail || t('toast_delete_assignment_failed'));
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -421,6 +424,23 @@ const AssignmentModal = ({ isOpen, onClose, selectedUser, selectedDate, existing
                 </form>
             </div>
         </div>
+
+        {/* L11: Confirmation modal for single-day and full assignment removal */}
+        <ConfirmationModal
+            isOpen={!!pendingRemove}
+            onClose={() => setPendingRemove(null)}
+            onConfirm={confirmRemoveAssignment}
+            title={pendingRemove?.type === 'single'
+                ? t('remove_single_day', { defaultValue: 'Remove Single Day' })
+                : t('remove_assignment', { defaultValue: 'Remove Assignment' })}
+            message={pendingRemove?.type === 'single'
+                ? (i18n.language.startsWith('is')
+                    ? `Fjarlægja eingöngu daginn ${pendingRemove.targetDateStr} hjá ${selectedUser?.full_name || 'starfsmanni'}?`
+                    : `Remove only ${pendingRemove?.targetDateStr} for ${selectedUser?.full_name || 'user'}?`)
+                : t('confirm_remove_assignment', { userName: selectedUser?.full_name, projectName: existingAssignment?.project_name || 'Project' })}
+            confirmText={t('remove', { defaultValue: 'Remove' })}
+            type="danger"
+        />
     );
 };
 

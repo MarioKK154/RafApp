@@ -525,7 +525,7 @@ function ProjectRiskAssessmentPage() {
                 title={t('remove_risk_entry', { defaultValue: 'Remove Risk Entry' })}
                 message={t('confirm_remove_risk', { defaultValue: 'Remove this risk entry from the register? This action cannot be undone.' })}
                 confirmText={t('remove', { defaultValue: 'Remove' })}
-                confirmColor="red"
+                type="danger"
             />
         </div>
     );

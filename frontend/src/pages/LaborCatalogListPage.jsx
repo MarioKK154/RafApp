@@ -108,8 +108,12 @@ function LaborCatalogListPage() {
     const [isOfferModalOpen, setIsOfferModalOpen] = useState(false);
     
     const isSuperuser = user?.is_superuser;
-    const canManageCatalog = user && (['admin', 'project manager'].includes(user.role) || isSuperuser);
+    // Only superusers can edit/delete catalog items and change values.
+    // Admin / PM can view the catalog but not modify it.
+    const canManageCatalog = isSuperuser;
     const canImportAndCreate = isSuperuser;
+    // Admin and PM can create offers from catalog items (read-only operation)
+    const canCreateOffer = isSuperuser || user?.role === 'admin' || user?.role === 'project manager';
     const canExportData = user?.can_export_data || user?.role === 'admin' || isSuperuser;
 
     const fetchCategories = useCallback(async () => {
@@ -234,9 +238,9 @@ function LaborCatalogListPage() {
                     { label: `${categories.length} ${t('categories', { defaultValue: 'Categories' })}`, dotColor: 'bg-green-400 animate-pulse' },
                 ]}
                 actions={
-                    (canImportAndCreate || canManageCatalog) && (
+                    (canImportAndCreate || canManageCatalog || canCreateOffer) && (
                         <div className="flex flex-wrap items-center gap-3">
-                            {canManageCatalog && (
+                            {canCreateOffer && (
                                 <button
                                     onClick={() => {
                                         setSelectedItemIds(new Set());

@@ -1,8 +1,9 @@
 import { useTranslation } from 'react-i18next';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import axiosInstance from '../api/axiosInstance';
 import { useAuth } from '../context/AuthContext';
 import PageHeader from '../components/PageHeader';
+import ConfirmationModal from '../components/ConfirmationModal';
 import { ChatBubbleLeftRightIcon, PlusIcon, PaperAirplaneIcon, UserGroupIcon, UserIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { toast } from 'react-toastify';
 
@@ -19,6 +20,9 @@ function ChatPage() {
     
     const ws = useRef(null);
     const messagesEndRef = useRef(null);
+    const reconnectTimer = useRef(null);     // L11/WS: backoff reconnect timer handle
+    const reconnectDelay = useRef(1000);      // starts at 1s, doubles up to 30s
+    const [pendingDeleteThreadId, setPendingDeleteThreadId] = useState(null);
 
     // Fetch initial threads and users for DM in parallel
     useEffect(() => {
@@ -49,54 +53,62 @@ function ChatPage() {
     useEffect(() => {
         if (!user || !user.id) return;
         
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const baseURL = axiosInstance.defaults.baseURL || window.location.origin;
-        const wsUrl = baseURL.replace(/^http/, 'ws') + '/chat/ws/';
-        
-        ws.current = new WebSocket(wsUrl);
+        // Build WS URL: replace http(s) with ws(s), append /chat/ws/{user_id}
+        // axiosInstance.defaults.baseURL already contains '/api' (e.g. https://rafapp-backend.onrender.com/api)
+        const baseURL = axiosInstance.defaults.baseURL || '';
+        const wsUrl = baseURL.replace(/^http/, 'ws') + `/chat/ws/${user.id}`;
 
-        ws.current.onopen = () => { /* WebSocket connected — onerror/onclose handle failures */ };
-        
-        ws.current.onmessage = (event) => {
-            try {
-                const data = JSON.parse(event.data);
-                if (data.event === 'new_message') {
-                    setMessages(prev => {
-                        if (prev.find(m => m.id === data.message_id)) return prev;
-                        return [...prev, {
-                            id: data.message_id,
-                            thread_id: data.thread_id,
-                            content: data.content,
-                            author_id: data.author_id,
-                            created_at: new Date().toISOString()
-                        }];
-                    });
+        const connectWS = () => {
+            const socket = new WebSocket(wsUrl);
+            ws.current = socket;
+
+            socket.onopen = () => {
+                reconnectDelay.current = 1000; // reset backoff on successful connect
+            };
+
+            socket.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    if (data.event === 'new_message') {
+                        setMessages(prev => {
+                            if (prev.find(m => m.id === data.message_id)) return prev;
+                            return [...prev, {
+                                id: data.message_id,
+                                thread_id: data.thread_id,
+                                content: data.content,
+                                author_id: data.author_id,
+                                created_at: new Date().toISOString()
+                            }];
+                        });
+                    }
+                } catch (err) {
+                    console.error('Failed to parse WS message', err);
                 }
-            } catch (err) {
-                console.error("Failed to parse WS message", err);
-            }
+            };
+
+            socket.onerror = () => {
+                // onerror is always followed by onclose, so we handle reconnect there
+            };
+
+            socket.onclose = (event) => {
+                ws.current = null;
+                if (event.code !== 1000) {
+                    // Abnormal close — reconnect with exponential backoff (max 30s)
+                    const delay = Math.min(reconnectDelay.current, 30000);
+                    reconnectDelay.current = delay * 2;
+                    toast.warn(
+                        t('chat_ws_disconnected', { defaultValue: 'Chat connection lost. Reconnecting...' }),
+                        { toastId: 'chat-ws-close', autoClose: delay }
+                    );
+                    reconnectTimer.current = setTimeout(connectWS, delay);
+                }
+            };
         };
 
-        ws.current.onerror = () => {
-            console.error('Chat WebSocket error');
-            toast.error(
-                t('chat_ws_error', { defaultValue: 'Chat connection error. Messages may not be delivered.' }),
-                { toastId: 'chat-ws-error', autoClose: 5000 }
-            );
-        };
-
-        ws.current.onclose = (event) => {
-            if (event.code !== 1000) {
-                // Abnormal close — backend dropped the connection
-                toast.warn(
-                    t('chat_ws_disconnected', { defaultValue: 'Chat disconnected. Refresh the page to reconnect.' }),
-                    { toastId: 'chat-ws-close', autoClose: 6000 }
-                );
-            }
-            ws.current = null;
-        };
+        connectWS();
 
         return () => {
+            clearTimeout(reconnectTimer.current);
             if (ws.current) ws.current.close(1000, 'Component unmounted');
         };
     }, [user]);
@@ -109,12 +121,13 @@ function ChatPage() {
     const fetchThreads = async () => {
         try {
             const res = await axiosInstance.get('/chat/threads');
-            setThreads(res.data);
-            if (res.data.length > 0 && !activeThread) {
-                selectThread(res.data[0]);
+            const data = Array.isArray(res.data) ? res.data : [];
+            setThreads(data);
+            if (data.length > 0 && !activeThread) {
+                selectThread(data[0]);
             }
         } catch (err) {
-            console.error("Failed to fetch threads", err);
+            console.error('Failed to fetch threads', err);
         }
     };
 
@@ -168,11 +181,14 @@ function ChatPage() {
         }
     };
 
-    const handleDeleteThread = async (e, threadId) => {
+    const handleDeleteThread = (e, threadId) => {
         if (e) e.stopPropagation();
-        if (!window.confirm(t('confirm_delete_conversation', { defaultValue: 'Ertu viss um að vilja eyða þessu samtali?' }))) {
-            return;
-        }
+        setPendingDeleteThreadId(threadId);
+    };
+
+    const confirmDeleteThread = async () => {
+        const threadId = pendingDeleteThreadId;
+        setPendingDeleteThreadId(null);
         try {
             await axiosInstance.delete(`/chat/threads/${threadId}`);
             setThreads(prev => {
@@ -183,7 +199,7 @@ function ChatPage() {
                 return updated;
             });
         } catch (err) {
-            console.error("Failed to delete thread", err);
+            console.error('Failed to delete thread', err);
         }
     };
 
@@ -396,6 +412,17 @@ function ChatPage() {
                 </div>
             )}
         </div>
+
+        {/* L11: Thread deletion confirmation modal */}
+        <ConfirmationModal
+            isOpen={!!pendingDeleteThreadId}
+            onClose={() => setPendingDeleteThreadId(null)}
+            onConfirm={confirmDeleteThread}
+            title={t('delete_conversation', { defaultValue: 'Delete Conversation' })}
+            message={t('confirm_delete_conversation', { defaultValue: 'Are you sure you want to delete this conversation? This cannot be undone.' })}
+            confirmText={t('delete', { defaultValue: 'Delete' })}
+            type="danger"
+        />
     );
 }
 

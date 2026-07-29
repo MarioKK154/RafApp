@@ -398,7 +398,7 @@ const SchedulingGridPage = () => {
                         : `Remove only ${format(pendingDelete.targetDate, 'yyyy-MM-dd')} for ${pendingDelete.userName}?`
                 ) : ''}
                 confirmText={t('remove', { defaultValue: 'Remove' })}
-                confirmColor="red"
+                type="danger"
             />
         </div>
     );

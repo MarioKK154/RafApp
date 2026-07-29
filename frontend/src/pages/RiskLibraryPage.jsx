@@ -413,7 +413,7 @@ function RiskLibraryPage() {
                 title={t('delete_risk_template', { defaultValue: 'Delete Risk Template' })}
                 message={t('confirm_delete_risk_template', { defaultValue: 'Delete this risk template from the library? This cannot be undone.' })}
                 confirmText={t('delete', { defaultValue: 'Delete' })}
-                confirmColor="red"
+                type="danger"
             />
         </div>
     );

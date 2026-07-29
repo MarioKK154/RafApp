@@ -445,7 +445,7 @@ def update_labor_item(
     item_id: int,
     item_update: schemas.LaborCatalogItemUpdate,
     db: DbDependency,
-    current_user: ManagerOrAdminDependency
+    current_user: SuperUserDependency
 ):
     """Updates a labor catalog item. Tenants may only set their price and unit; superadmin may edit all fields."""
     db_item = get_item_for_user(item_id, db, current_user)

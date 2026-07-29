@@ -8,6 +8,7 @@ import { PieChart, Pie, BarChart, Bar, Cell, XAxis, YAxis, Tooltip, Legend, Resp
 import LoadingSpinner from '../components/LoadingSpinner';
 import PageHeader from '../components/PageHeader';
 import InvoiceApprovalQueue from '../components/InvoiceApprovalQueue';
+import ConfirmationModal from '../components/ConfirmationModal';
 import { 
     BanknotesIcon, 
     CalendarIcon, 
@@ -28,6 +29,7 @@ function AccountingPage() {
     // Registry Data States
     const [payslips, setPayslips] = useState([]);
     const [leaveRequests, setLeaveRequests] = useState([]);
+    const [pendingDeleteExpenseId, setPendingDeleteExpenseId] = useState(null);
     const [pendingLeaves, setPendingLeaves] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('personal'); 
@@ -195,8 +197,13 @@ function AccountingPage() {
         }
     };
 
-    const handleDeleteExpense = async (expenseId) => {
-        if (!window.confirm(t('confirm_delete_entry', { defaultValue: 'Are you sure you want to delete this entry?' }))) return;
+    const handleDeleteExpense = (expenseId) => {
+        setPendingDeleteExpenseId(expenseId);
+    };
+
+    const confirmDeleteExpense = async () => {
+        const expenseId = pendingDeleteExpenseId;
+        setPendingDeleteExpenseId(null);
         try {
             await axiosInstance.delete(`/accounting/expenses/${expenseId}`);
             toast.success(t('expense_deleted_success', { defaultValue: 'Expense deleted' }));
@@ -930,7 +937,7 @@ function AccountingPage() {
                                             </td>
                                             <td className="px-6 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest">{t(lr.leave_type, { defaultValue: lr.leave_type })}</td>
                                             <td className="px-6 py-6 text-xs font-bold text-gray-600 dark:text-gray-300">
-                                                {new Date(lr.start_date).toLocaleDateString()} — {new Date(lr.end_date).toLocaleDateString()}
+                                                {new Date(lr.start_date).toLocaleDateString(i18n.language)} — {new Date(lr.end_date).toLocaleDateString(i18n.language)}
                                             </td>
                                             <td className="px-8 py-6 text-right">
                                                 <div className="flex justify-end gap-2">
@@ -1675,6 +1682,17 @@ function AccountingPage() {
                 </div>
             )}
         </div>
+
+        {/* L11: Expense deletion confirmation modal */}
+        <ConfirmationModal
+            isOpen={!!pendingDeleteExpenseId}
+            onClose={() => setPendingDeleteExpenseId(null)}
+            onConfirm={confirmDeleteExpense}
+            title={t('delete_expense_entry', { defaultValue: 'Delete Expense Entry' })}
+            message={t('confirm_delete_entry', { defaultValue: 'Are you sure you want to delete this expense entry? This cannot be undone.' })}
+            confirmText={t('delete', { defaultValue: 'Delete' })}
+            type="danger"
+        />
     );
 
 }

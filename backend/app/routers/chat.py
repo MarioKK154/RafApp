@@ -115,8 +115,14 @@ async def create_message(
                         "content": new_msg.content,
                         "author_id": new_msg.author_id
                     }))
-                except:
-                    pass
+                except Exception:
+                    # Remove stale/closed connection so the dict doesn't grow unboundedly
+                    try:
+                        active_connections[p_id].remove(connection)
+                        if not active_connections[p_id]:
+                            del active_connections[p_id]
+                    except (KeyError, ValueError):
+                        pass
 
     return new_msg
 
