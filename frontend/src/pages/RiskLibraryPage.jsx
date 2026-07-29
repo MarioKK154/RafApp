@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
 import LoadingSpinner from '../components/LoadingSpinner';
 import PageHeader from '../components/PageHeader';
+import ConfirmationModal from '../components/ConfirmationModal';
 import {
     ShieldExclamationIcon,
     PlusIcon,
@@ -16,6 +17,7 @@ function RiskLibraryPage() {
     const { t, i18n } = useTranslation();
     const { user } = useAuth();
     const [templates, setTemplates] = useState([]);
+    const [confirmDeleteTemplateId, setConfirmDeleteTemplateId] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
@@ -104,7 +106,12 @@ function RiskLibraryPage() {
     };
 
     const handleDeleteTemplate = async (templateId) => {
-        if (!window.confirm('Delete this risk template from the library?')) return;
+        setConfirmDeleteTemplateId(templateId);
+    };
+
+    const confirmDeleteTemplate = async () => {
+        const templateId = confirmDeleteTemplateId;
+        setConfirmDeleteTemplateId(null);
         try {
             await axiosInstance.delete(`/risk-assessments/templates/${templateId}`);
             setTemplates((prev) => prev.filter((t) => t.id !== templateId));
@@ -397,6 +404,17 @@ function RiskLibraryPage() {
                     </div>
                 )}
             </section>
+
+            {/* L11: Confirmation modal replaces window.confirm for template deletion */}
+            <ConfirmationModal
+                isOpen={!!confirmDeleteTemplateId}
+                onClose={() => setConfirmDeleteTemplateId(null)}
+                onConfirm={confirmDeleteTemplate}
+                title={t('delete_risk_template', { defaultValue: 'Delete Risk Template' })}
+                message={t('confirm_delete_risk_template', { defaultValue: 'Delete this risk template from the library? This cannot be undone.' })}
+                confirmText={t('delete', { defaultValue: 'Delete' })}
+                confirmColor="red"
+            />
         </div>
     );
 }

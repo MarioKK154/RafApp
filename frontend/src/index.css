@@ -4,6 +4,12 @@
 @tailwind components;
 @tailwind utilities;
 
+/* L15: Modal scroll-lock class — toggled via classList in Modal.jsx */
+html.modal-open,
+html.modal-open body {
+  overflow: hidden;
+}
+
 /* ============================================================
    RAFAPP DESIGN SYSTEM — Global Token Layer
    Automatically responds to OS dark/light preference

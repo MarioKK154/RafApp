@@ -16,6 +16,7 @@ import {
 import { toast } from 'react-toastify';
 import AssignmentModal from '../components/AssignmentModal'; 
 import PageHeader from '../components/PageHeader';
+import ConfirmationModal from '../components/ConfirmationModal';
 
 const SchedulingGridPage = () => {
     const { t, i18n } = useTranslation();
@@ -24,6 +25,8 @@ const SchedulingGridPage = () => {
     const [viewDate, setViewDate] = useState(new Date());
     const [users, setUsers] = useState([]);
     const [assignments, setAssignments] = useState([]);
+    // L11 fix: state-driven confirm instead of window.confirm
+    const [pendingDelete, setPendingDelete] = useState(null); // { id, projectName, userName, targetDate }
     // PM-visible user IDs derived from project membership (date-independent)
     const [pmVisibleUserIds, setPmVisibleUserIds] = useState(null); // null = not yet loaded
     const [selectedCity, setSelectedCity] = useState('All');
@@ -122,26 +125,28 @@ const SchedulingGridPage = () => {
     }, [users, pmVisibleUserIds, user, isAdmin, isPM]);
 
     // Handle Deletion of an Assignment Node (Single day by default)
-    const handleDeleteAssignment = async (assignmentId, projectName, userName, targetDate) => {
+    const handleDeleteAssignment = (assignmentId, projectName, userName, targetDate) => {
         if (!canEdit) {
             toast.info(t('toast_schedule_modifications_restricted'));
             return;
         }
+        // L11: store pending delete — ConfirmationModal will call confirmDeleteAssignment
+        setPendingDelete({ id: assignmentId, projectName, userName, targetDate });
+    };
+
+    const confirmDeleteAssignment = async () => {
+        if (!pendingDelete) return;
+        const { id: assignmentId, targetDate } = pendingDelete;
+        setPendingDelete(null);
         const isIcelandic = i18n.language.startsWith('is');
         const dateStr = format(targetDate, 'yyyy-MM-dd');
-        const confirmMsg = isIcelandic
-            ? `Fjarlægja eingöngu daginn ${dateStr} hjá ${userName}?`
-            : `Remove only ${dateStr} for ${userName}?`;
-
-        if (window.confirm(confirmMsg)) {
-            try {
-                await axiosInstance.delete(`/assignments/${assignmentId}?target_date=${dateStr}`);
-                toast.success(isIcelandic ? `Dagurinn ${dateStr} fjarlægður úr dagskrá!` : `Single day ${dateStr} unassigned!`);
-                fetchData(); // Refresh grid
-            } catch (error) {
-                console.error('Delete assignment failed:', error);
-                toast.error(error.response?.data?.detail || t('toast_delete_assignment_failed'));
-            }
+        try {
+            await axiosInstance.delete(`/assignments/${assignmentId}?target_date=${dateStr}`);
+            toast.success(isIcelandic ? `Dagurinn ${dateStr} fjarlægður úr dagskrá!` : `Single day ${dateStr} unassigned!`);
+            fetchData(); // Refresh grid
+        } catch (error) {
+            console.error('Delete assignment failed:', error);
+            toast.error(error.response?.data?.detail || t('toast_delete_assignment_failed'));
         }
     };
 
@@ -379,6 +384,21 @@ const SchedulingGridPage = () => {
                 existingAssignment={modalConfig.assignment}
                 leaveBlocks={leaveBlocks}
                 onAssignmentCreated={fetchData}
+            />
+
+            {/* L11: Confirmation modal for single-day assignment removal */}
+            <ConfirmationModal
+                isOpen={!!pendingDelete}
+                onClose={() => setPendingDelete(null)}
+                onConfirm={confirmDeleteAssignment}
+                title={t('remove_assignment_day', { defaultValue: 'Remove Assignment Day' })}
+                message={pendingDelete ? (
+                    i18n.language.startsWith('is')
+                        ? `Fjarlægja eingöngu daginn ${format(pendingDelete.targetDate, 'yyyy-MM-dd')} hjá ${pendingDelete.userName}?`
+                        : `Remove only ${format(pendingDelete.targetDate, 'yyyy-MM-dd')} for ${pendingDelete.userName}?`
+                ) : ''}
+                confirmText={t('remove', { defaultValue: 'Remove' })}
+                confirmColor="red"
             />
         </div>
     );

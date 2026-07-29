@@ -69,7 +69,7 @@ function LawsPage() {
             {/* Grid of Categories */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {legalCategories.map((category, index) => (
-                    <section key={index} className="bg-white dark:bg-gray-800 p-8 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col h-full group hover:shadow-xl transition-all duration-300">
+                    <section key={category.title} className="bg-white dark:bg-gray-800 p-8 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col h-full group hover:shadow-xl transition-all duration-300">
                         <div className="flex items-center justify-between mb-6">
                             <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded-2xl group-hover:bg-indigo-50 transition-colors">
                                 {category.icon}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import axiosInstance from '../api/axiosInstance';
 import { useAuth } from '../context/AuthContext';
@@ -25,6 +25,8 @@ function TaskPhotos({ taskId }) {
     const [selectedFile, setSelectedFile] = useState(null);
     const [description, setDescription] = useState('');
     const [isUploading, setIsUploading] = useState(false);
+    // L8 fix: useRef instead of document.getElementById to reset the file input
+    const fileInputRef = useRef(null);
     
     const { user, isAuthenticated } = useAuth();
 
@@ -86,8 +88,7 @@ function TaskPhotos({ taskId }) {
             setSelectedFile(null);
             setDescription('');
             // Reset the native file input
-            const fileInput = document.getElementById(`file-upload-${taskId}`);
-            if (fileInput) fileInput.value = '';
+            if (fileInputRef.current) fileInputRef.current.value = '';
             fetchPhotos();
         } catch (error) {
             toast.error(error.response?.data?.detail || t('upload_failed'));
@@ -153,6 +154,7 @@ function TaskPhotos({ taskId }) {
                         <div className="md:col-span-4">
                             <label className="block text-[10px] font-black text-gray-400 uppercase mb-1 ml-1">{t('select_image')}</label>
                             <input
+                                ref={fileInputRef}
                                 id={`file-upload-${taskId}`}
                                 type="file"
                                 accept="image/*"
@@ -196,7 +198,9 @@ function TaskPhotos({ taskId }) {
                                     alt={photo.description || photo.filename}
                                     className="w-full h-full object-cover"
                                     onError={(e) => {
-                                        e.target.src = 'https://via.placeholder.com/400x400?text=Private+Image';
+                                        e.target.onerror = null; // prevent infinite loop
+                                        // L9 fix: inline fallback — no external request, works offline
+                                        e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400' viewBox='0 0 400 400'%3E%3Crect width='400' height='400' fill='%23f3f4f6'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='14' fill='%239ca3af'%3EImage unavailable%3C/text%3E%3C/svg%3E";
                                     }}
                                 />
                                 {/* Hover Overlay */}

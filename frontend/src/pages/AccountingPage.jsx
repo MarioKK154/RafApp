@@ -358,7 +358,7 @@ function AccountingPage() {
                                         <div>
                                             <p className="font-bold text-gray-900 dark:text-white uppercase tracking-tight">{t(lr.leave_type, { defaultValue: lr.leave_type })}</p>
                                             <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">
-                                                {new Date(lr.start_date).toLocaleDateString()} — {new Date(lr.end_date).toLocaleDateString()}
+                                                {new Date(lr.start_date).toLocaleDateString(i18n.language)} — {new Date(lr.end_date).toLocaleDateString(i18n.language)}
                                             </p>
                                             {lr.manager_comment && (
                                                 <p className="text-[10px] text-orange-500 font-medium italic mt-1">
@@ -1550,7 +1550,7 @@ function AccountingPage() {
                                     {recentExpenses.map(e => (
                                         <div key={e.id} className="flex items-center justify-between">
                                             <span>
-                                                {new Date(e.date).toLocaleDateString()} ·{' '}
+                                                {new Date(e.date).toLocaleDateString(i18n.language)} ·{' '}
                                                 <span className="capitalize">{e.category}</span>{' '}
                                                 {e.description && `· ${e.description}`}
                                             </span>
@@ -1636,7 +1636,7 @@ function AccountingPage() {
                                                     </>
                                                 ) : (
                                                     <>
-                                                        <td className="px-4 py-3">{new Date(e.date).toLocaleDateString()}</td>
+                                                        <td className="px-4 py-3">{new Date(e.date).toLocaleDateString(i18n.language)}</td>
                                                         <td className="px-4 py-3 font-bold">
                                                             <span className={e.flow_type === 'in' ? 'text-emerald-600' : 'text-red-500'}>
                                                                 {e.flow_type === 'in' ? '+' : '-'}{e.amount.toLocaleString()} ISK

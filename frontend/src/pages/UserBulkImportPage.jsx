@@ -52,6 +52,14 @@ function UserBulkImportPage() {
         const file = event.target.files[0];
         
         if (file) {
+            // L4 fix: reject oversized CSVs before they lock the browser parsing a huge file
+            const MAX_CSV_BYTES = 5 * 1024 * 1024; // 5 MB
+            if (file.size > MAX_CSV_BYTES) {
+                toast.error(t('csv_too_large', { defaultValue: 'CSV file is too large (max 5 MB). Split into smaller batches.' }));
+                setSelectedFile(null);
+                event.target.value = null;
+                return;
+            }
             if (file.type === "text/csv" || file.name.endsWith('.csv')) {
                 setSelectedFile(file);
                 toast.info(`${t('ready_to_process')} ${file.name}`);

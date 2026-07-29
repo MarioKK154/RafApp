@@ -30,7 +30,8 @@ const REIKNITALA_TABLE = [
     { year: 2026, rate: 946.19, label: 'Jan 2026', current: true },
     { year: 2027, rate: 1002.96, label: 'Jan 2027' },
 ];
-const DEFAULT_REIKNITALA = 946.19;
+// L1 fix: derive default from table — update `current: true` entry when rates change, not this constant
+const DEFAULT_REIKNITALA = REIKNITALA_TABLE.find(r => r.current)?.rate ?? REIKNITALA_TABLE[REIKNITALA_TABLE.length - 1].rate;
 
 // ─── Official Álagshlutföll (Surcharges) from Ákvæðisgrundvöllur Álagshlutföll.xlsx ───
 // Types: 3 = project-wide modifier, 2 = per-item modifier
@@ -118,8 +119,9 @@ const SURCHARGE_GROUPS = [
 const DEFAULT_PAYROLL = 0.32; // 32% — statutory (Trygg. 6.35% + Líf. 11.5% + Orlof 10.17% + Sjúkl. 2.5%+)
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
+// L2 fix: Math.round before formatting eliminates IEEE 754 float drift (e.g. 946.19×1000 = 946190.0000001)
 const fmtISK = (v) =>
-    new Intl.NumberFormat('is-IS', { style: 'currency', currency: 'ISK', maximumFractionDigits: 0 }).format(v || 0);
+    new Intl.NumberFormat('is-IS', { style: 'currency', currency: 'ISK', maximumFractionDigits: 0 }).format(Math.round(v || 0));
 
 function fmtHours(totalEinningar) {
     // 1 eining = 1 minute of work (ar.is standard: 60 einingar = 1 hour)

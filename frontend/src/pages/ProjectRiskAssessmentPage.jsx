@@ -5,6 +5,7 @@ import axiosInstance from '../api/axiosInstance';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
 import LoadingSpinner from '../components/LoadingSpinner';
+import ConfirmationModal from '../components/ConfirmationModal';
 import {
     ShieldExclamationIcon,
     ChevronLeftIcon,
@@ -36,6 +37,7 @@ function ProjectRiskAssessmentPage() {
     const [libraryTemplates, setLibraryTemplates] = useState([]);
     const [isLoadingLibrary, setIsLoadingLibrary] = useState(false);
     const [selectedTemplateIds, setSelectedTemplateIds] = useState([]);
+    const [confirmDeleteId, setConfirmDeleteId] = useState(null);
     const [isApplyingTemplates, setIsApplyingTemplates] = useState(false);
 
     const canEdit =
@@ -115,7 +117,12 @@ function ProjectRiskAssessmentPage() {
     };
 
     const handleDeleteRisk = async (riskId) => {
-        if (!window.confirm('Remove this risk entry from the register?')) return;
+        setConfirmDeleteId(riskId);
+    };
+
+    const confirmDeleteRisk = async () => {
+        const riskId = confirmDeleteId;
+        setConfirmDeleteId(null);
         try {
             await axiosInstance.delete(`/risk-assessments/${riskId}`);
             setRiskItems((prev) => prev.filter((r) => r.id !== riskId));
@@ -172,7 +179,8 @@ function ProjectRiskAssessmentPage() {
             document.body.appendChild(link);
             link.click();
             link.remove();
-            window.URL.revokeObjectURL(url);
+            // L5 fix: revoke after the event loop tick so the browser has started the download
+            setTimeout(() => window.URL.revokeObjectURL(url), 0);
         } catch (error) {
             console.error('Risk assessment export failed:', error);
             toast.error('Failed to export risk assessment to PDF.');
@@ -508,9 +516,19 @@ function ProjectRiskAssessmentPage() {
                     </div>
                 )}
             </section>
+
+            {/* L11: Confirmation modal replaces window.confirm for risk deletion */}
+            <ConfirmationModal
+                isOpen={!!confirmDeleteId}
+                onClose={() => setConfirmDeleteId(null)}
+                onConfirm={confirmDeleteRisk}
+                title={t('remove_risk_entry', { defaultValue: 'Remove Risk Entry' })}
+                message={t('confirm_remove_risk', { defaultValue: 'Remove this risk entry from the register? This action cannot be undone.' })}
+                confirmText={t('remove', { defaultValue: 'Remove' })}
+                confirmColor="red"
+            />
         </div>
     );
 }
 
 export default ProjectRiskAssessmentPage;
-

@@ -34,7 +34,8 @@ function DrawingsPage() {
             const activeProjects = rawProjects.filter(p => p.status !== 'Completed');
             setProjects(activeProjects);
 
-            // 2. Fetch drawings count for each active project in parallel
+            // L12: N+1 pattern — Promise.all makes it parallel but still N requests.
+            // TODO: add GET /drawings/count-by-project backend endpoint to replace with 1 request.
             const counts = {};
             await Promise.all(
                 activeProjects.map(async (p) => {

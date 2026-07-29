@@ -17,14 +17,15 @@ function Modal({
 }) {
     const { t } = useTranslation();
     
-    // Prevent scrolling of the background body when modal is open
+    // L15 fix: use classList instead of inline style mutation.
+    // classList.add/remove is idempotent — multiple modals won't fight each other.
     useEffect(() => {
         if (isOpen) {
-            document.body.style.overflow = 'hidden';
+            document.documentElement.classList.add('modal-open');
         } else {
-            document.body.style.overflow = 'unset';
+            document.documentElement.classList.remove('modal-open');
         }
-        return () => { document.body.style.overflow = 'unset'; };
+        return () => { document.documentElement.classList.remove('modal-open'); };
     }, [isOpen]);
 
     if (!isOpen) {

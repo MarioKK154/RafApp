@@ -55,7 +55,7 @@ function ChatPage() {
         
         ws.current = new WebSocket(wsUrl);
 
-        ws.current.onopen = () => console.log("WebSocket connected for chat");
+        ws.current.onopen = () => { /* WebSocket connected — onerror/onclose handle failures */ };
         
         ws.current.onmessage = (event) => {
             try {

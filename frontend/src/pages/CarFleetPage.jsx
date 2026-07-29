@@ -191,7 +191,7 @@ function CarFleetPage() {
                                 src={car.image_url || '/default-car.png'}
                                 alt={`${car.make} ${car.model}`}
                                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
-                                onError={(e) => { e.target.src = 'https://via.placeholder.com/600x400?text=Vehicle+Asset+Pending'; }}
+                                onError={(e) => { e.target.onerror = null; e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='400' viewBox='0 0 600 400'%3E%3Crect width='600' height='400' fill='%23f3f4f6'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='16' fill='%239ca3af'%3EVehicle image unavailable%3C/text%3E%3C/svg%3E"; }}
                             />
                             <div className="absolute top-6 left-6">
                                 <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-[0.2em] shadow-2xl border ${getStatusStyle(car.status)}`}>

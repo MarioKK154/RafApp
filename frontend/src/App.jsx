@@ -207,7 +207,7 @@ function AppShell() {
                 
                 const storedBuildTime = localStorage.getItem('app_build_time');
                 if (storedBuildTime && storedBuildTime !== latestBuildTime) {
-                    console.log(`New version detected! Stored: ${storedBuildTime}, Latest: ${latestBuildTime}. Busting PWA cache...`);
+                    // New build detected — clear PWA cache and notify user
                     if ('caches' in window) {
                         const keys = await caches.keys();
                         await Promise.all(keys.map(key => caches.delete(key)));
