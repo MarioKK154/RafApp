@@ -212,7 +212,7 @@ const HMSInspectionModal = ({ isOpen, onClose, projectId }) => {
                                     step="0.1"
                                     placeholder="≥ 1.0 MΩ"
                                     value={newInsp.insulation_resistance_mOhm}
-                                    onChange={(e) => setNewInsp({...newInsp, insulation_resistance_mOhm: parseFloat(e.target.value)})}
+                                    onChange={(e) => setNewInsp({...newInsp, insulation_resistance_mOhm: e.target.value === '' ? null : parseFloat(e.target.value)})}
                                     className="w-full px-4 py-2.5 bg-white dark:bg-gray-800 rounded-xl text-xs font-mono font-bold border-none text-indigo-600 dark:text-indigo-400"
                                 />
                             </div>
@@ -225,7 +225,7 @@ const HMSInspectionModal = ({ isOpen, onClose, projectId }) => {
                                     step="0.01"
                                     placeholder="≤ 0.5 Ω"
                                     value={newInsp.ground_resistance_Ohm}
-                                    onChange={(e) => setNewInsp({...newInsp, ground_resistance_Ohm: parseFloat(e.target.value)})}
+                                    onChange={(e) => setNewInsp({...newInsp, ground_resistance_Ohm: e.target.value === '' ? null : parseFloat(e.target.value)})}
                                     className="w-full px-4 py-2.5 bg-white dark:bg-gray-800 rounded-xl text-xs font-mono font-bold border-none text-indigo-600 dark:text-indigo-400"
                                 />
                             </div>
@@ -238,7 +238,7 @@ const HMSInspectionModal = ({ isOpen, onClose, projectId }) => {
                                     step="0.1"
                                     placeholder="< 300 ms"
                                     value={newInsp.rcd_trip_time_ms}
-                                    onChange={(e) => setNewInsp({...newInsp, rcd_trip_time_ms: parseFloat(e.target.value)})}
+                                    onChange={(e) => setNewInsp({...newInsp, rcd_trip_time_ms: e.target.value === '' ? null : parseFloat(e.target.value)})}
                                     className="w-full px-4 py-2.5 bg-white dark:bg-gray-800 rounded-xl text-xs font-mono font-bold border-none text-indigo-600 dark:text-indigo-400"
                                 />
                             </div>
