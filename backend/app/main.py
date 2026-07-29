@@ -347,6 +347,24 @@ def _ensure_offer_line_items_unit_column() -> None:
         logging.warning(f"Failed to add unit column to offer_line_items table: {e}")
 
 @app.on_event("startup")
+def _ensure_offer_line_items_is_provisional_column() -> None:
+    """Ensure is_provisional column exists on offer_line_items table."""
+    from sqlalchemy import text
+    try:
+        with engine.begin() as conn:
+            if is_sqlite():
+                try:
+                    conn.execute(text("ALTER TABLE offer_line_items ADD COLUMN is_provisional BOOLEAN DEFAULT 0"))
+                except Exception as e:
+                    if "duplicate column name" not in str(e).lower():
+                        raise
+            else:
+                conn.execute(text("ALTER TABLE offer_line_items ADD COLUMN IF NOT EXISTS is_provisional BOOLEAN DEFAULT FALSE"))
+    except Exception as e:
+        import logging
+        logging.warning(f"Failed to add is_provisional column to offer_line_items table: {e}")
+
+@app.on_event("startup")
 def _seed_sart_piecework_rates() -> None:
     """Seed official SART / RSÍ piecework tariffs and rates if none exist."""
     from .database import SessionLocal

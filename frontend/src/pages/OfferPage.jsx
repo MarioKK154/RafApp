@@ -804,15 +804,22 @@ function OfferPage() {
                                             <tr key={item.id} className="group hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
                                                 <td className="py-5 px-8">
                                                     <p className="font-bold text-gray-900 dark:text-white tracking-tight">{item.description}</p>
-                                                    <span
-                                                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border mt-1 ${
-                                                            item.item_type === 'Labor'
-                                                                ? 'bg-indigo-50 text-indigo-700 border-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-200 dark:border-indigo-700'
-                                                                : 'bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-200 dark:border-emerald-700'
-                                                        }`}
-                                                    >
-                                                        {item.item_type}
-                                                    </span>
+                                                    <div className="flex items-center gap-2 mt-1 flex-wrap">
+                                                        <span
+                                                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${
+                                                                item.item_type === 'Labor'
+                                                                    ? 'bg-indigo-50 text-indigo-700 border-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-200 dark:border-indigo-700'
+                                                                    : 'bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-200 dark:border-emerald-700'
+                                                            }`}
+                                                        >
+                                                            {item.item_type}
+                                                        </span>
+                                                        {item.is_provisional && (
+                                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-700">
+                                                                📐 {i18n.language.startsWith('is') ? 'Áætluð vinna (Provisional)' : 'Provisional Item'}
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                 </td>
                                                 <td
                                                     className="py-5 px-4 text-right font-mono font-bold text-gray-600 cursor-pointer"

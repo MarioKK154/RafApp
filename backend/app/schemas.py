@@ -1576,6 +1576,7 @@ class OfferLineItemBase(BaseModel):
     labor_catalog_item_id: Optional[int] = None
     eining_value: Optional[float] = None
     unit: Optional[str] = "stk"
+    is_provisional: Optional[bool] = False
 
 class OfferLineItemCreate(OfferLineItemBase):
     pass
@@ -1589,6 +1590,7 @@ class OfferLineItemUpdate(BaseModel):
     labor_catalog_item_id: Optional[int] = None
     eining_value: Optional[float] = None
     unit: Optional[str] = None
+    is_provisional: Optional[bool] = None
 
 class OfferLineItemRead(OfferLineItemBase):
     id: int
