@@ -154,10 +154,10 @@ function TutorialsPage() {
                 }
             />
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <div className="space-y-12">
                 
-                {/* LEFT COLUMN: Engineering Calculators (7 cols) */}
-                <div className="lg:col-span-7 space-y-8">
+                {/* SECTION 1: Full-Width Engineering Calculators */}
+                <div className="space-y-8">
                     
                     {/* Cable Sizing Module */}
                     <section className="bg-white dark:bg-gray-800/90 rounded-3xl border border-gray-100 dark:border-gray-700/80 shadow-xl shadow-indigo-500/5 overflow-hidden backdrop-blur-md">
@@ -271,77 +271,81 @@ function TutorialsPage() {
                     </section>
                 </div>
 
-                {/* RIGHT COLUMN: Library & Tutorials (5 cols) */}
-                <div className="lg:col-span-5 space-y-8">
-                    <section className="saas-card p-6 flex flex-col h-full min-h-[700px]">
-                        <div className="flex items-center justify-between mb-6">
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-indigo-600 rounded-xl">
-                                    <BookOpenIcon className="h-4 w-4 text-white" />
-                                </div>
-                                <h2 className="text-base font-black text-gray-900 dark:text-white uppercase tracking-tight">{t('registry_title', { defaultValue: 'Registry' })}</h2>
+                {/* SECTION 2: Full-Width Registry & Tutorials at Bottom */}
+                <section className="bg-white dark:bg-gray-800/90 rounded-3xl border border-gray-100 dark:border-gray-700/80 p-6 md:p-8 shadow-xl shadow-indigo-500/5 backdrop-blur-md">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 pb-6 border-b border-gray-100 dark:border-gray-700/80">
+                        <div className="flex items-center gap-3.5">
+                            <div className="p-2.5 bg-indigo-600 text-white rounded-2xl shadow-md shadow-indigo-500/30">
+                                <BookOpenIcon className="h-5 w-5" />
                             </div>
-                            <span className="text-[10px] font-black bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 px-3 py-1 rounded-full border border-indigo-100 dark:border-indigo-800">
-                                {filteredTutorials.length}
-                            </span>
+                            <div>
+                                <h2 className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-tight">{t('registry_title', { defaultValue: 'Registry' })}</h2>
+                                <p className="text-xs text-gray-400 font-medium">Standardized Technical Schematics & Field Manuals</p>
+                            </div>
                         </div>
+                        <span className="text-xs font-black bg-indigo-50 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-300 px-3.5 py-1.5 rounded-full border border-indigo-100 dark:border-indigo-800/60 font-mono">
+                            {filteredTutorials.length} Protocols
+                        </span>
+                    </div>
 
-                        {/* Search Bar */}
-                        <div className="relative mb-4">
-                            <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    {/* Search & Category Filter Controls */}
+                    <div className="grid grid-cols-1 md:grid-cols-12 gap-4 mb-6">
+                        <div className="relative md:col-span-4">
+                            <MagnifyingGlassIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                             <input 
                                 type="text"
                                 placeholder={t('search_schematics', { defaultValue: 'Search schematics...' })}
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full h-10 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl pl-10 text-xs font-semibold text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                                className="w-full h-11 bg-gray-50 dark:bg-gray-900/60 border border-gray-200 dark:border-gray-700 rounded-xl pl-10 pr-4 text-xs font-semibold text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 transition-all placeholder:text-gray-400"
                             />
                         </div>
-                        {/* Category filter */}
-                        <div className="mb-5 flex flex-wrap gap-2">
+                        <div className="md:col-span-8 flex flex-wrap gap-2 items-center">
                             <button
                                 type="button"
                                 onClick={() => setSelectedCategory('All')}
-                                className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest transition ${selectedCategory === 'All' ? 'bg-indigo-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'}`}
+                                className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition cursor-pointer ${selectedCategory === 'All' ? 'bg-indigo-600 text-white shadow-sm' : 'bg-gray-100 dark:bg-gray-700/60 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'}`}
                             >
                                 {t('all_categories', { defaultValue: 'All' })}
                             </button>
-                            {Object.entries(CATEGORY_LABELS).slice(0, 6).map(([key, label]) => (
+                            {Object.entries(CATEGORY_LABELS).map(([key, label]) => (
                                 <button
                                     key={key}
                                     type="button"
                                     onClick={() => setSelectedCategory(key)}
-                                    className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest transition ${selectedCategory === key ? 'bg-indigo-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'}`}
+                                    className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition cursor-pointer ${selectedCategory === key ? 'bg-indigo-600 text-white shadow-sm' : 'bg-gray-100 dark:bg-gray-700/60 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'}`}
                                 >
                                     {t('category_' + key, { defaultValue: label })}
                                 </button>
                             ))}
                         </div>
+                    </div>
 
-                        {/* Protocol List */}
-                        <div className="space-y-2 overflow-y-auto pr-1 custom-scrollbar flex-grow max-h-[500px]">
-                            {filteredTutorials.length > 0 ? filteredTutorials.map(tutorial => (
+                    {/* Protocol List Grid */}
+                    {filteredTutorials.length > 0 ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {filteredTutorials.map(tutorial => (
                                 <TutorialLink key={tutorial.id} tutorial={tutorial} onOpen={() => setActiveTutorial(tutorial)} />
-                            )) : (
-                                <div className="py-20 text-center text-gray-400 dark:text-gray-500">
-                                    <SparklesIcon className="h-8 w-8 mx-auto mb-4" />
-                                    <p className="text-[10px] font-black uppercase tracking-widest">{t('no_matching_protocols', { defaultValue: 'No matching protocols found.' })}</p>
-                                </div>
-                            )}
+                            ))}
                         </div>
+                    ) : (
+                        <div className="py-16 text-center text-gray-400 dark:text-gray-500">
+                            <SparklesIcon className="h-8 w-8 mx-auto mb-3 opacity-60" />
+                            <p className="text-xs font-black uppercase tracking-widest">{t('no_matching_protocols', { defaultValue: 'No matching protocols found.' })}</p>
+                        </div>
+                    )}
 
-                        {/* Footer */}
-                        <div className="mt-8 pt-6 border-t border-gray-100 dark:border-gray-700">
-                            <div className="flex items-center gap-2 mb-2">
-                                <WrenchScrewdriverIcon className="h-4 w-4 text-indigo-500" />
-                                <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">{t('support_registry', { defaultValue: 'Support Registry' })}</span>
-                            </div>
-                            <p className="text-[10px] text-gray-400 dark:text-gray-500">
-                                {t('knowledge_base_version', { defaultValue: 'Knowledge base v3.1.0 · Jan 2026 Safety Protocols' })}
-                            </p>
+                    {/* Footer */}
+                    <div className="mt-8 pt-6 border-t border-gray-100 dark:border-gray-700/80 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <WrenchScrewdriverIcon className="h-4 w-4 text-indigo-500" />
+                            <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">{t('support_registry', { defaultValue: 'Support Registry' })}</span>
                         </div>
-                    </section>
-                </div>
+                        <p className="text-[10px] text-gray-400">
+                            {t('knowledge_base_version', { defaultValue: 'Knowledge base v3.1.0 · Jan 2026 Safety Protocols' })}
+                        </p>
+                    </div>
+                </section>
             </div>
         </div>
     );
