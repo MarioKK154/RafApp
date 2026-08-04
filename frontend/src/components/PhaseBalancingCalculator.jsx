@@ -5,9 +5,9 @@ import { ScaleIcon, ExclamationTriangleIcon, CheckCircleIcon, PlusIcon, TrashIco
 const PHASES = ['L1', 'L2', 'L3'];
 
 const PHASE_STYLES = {
-    L1: { badge: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20', bar: 'bg-amber-500' },
-    L2: { badge: 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-cyan-500/20', bar: 'bg-cyan-500' },
-    L3: { badge: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20', bar: 'bg-indigo-500' },
+    L1: { badge: 'bg-[#78350F]/10 text-[#78350F] dark:text-[#FDBA74] border-[#78350F]/30', bar: 'bg-[#78350F] dark:bg-[#D97706]' },
+    L2: { badge: 'bg-gray-900/10 text-gray-900 dark:text-gray-100 border-gray-900/30', bar: 'bg-gray-900 dark:bg-gray-200' },
+    L3: { badge: 'bg-slate-500/10 text-slate-600 dark:text-slate-300 border-slate-500/30', bar: 'bg-slate-500 dark:bg-slate-400' },
 };
 
 function PhaseBalancingCalculator() {
