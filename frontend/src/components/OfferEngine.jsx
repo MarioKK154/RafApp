@@ -485,8 +485,8 @@ export default function OfferEngine({ initialItems = [], onCreateOffer }) {
                 {lines.map((line, idx) => {
                     const lineEin = (parseFloat(line.einingar) || 0) * (parseFloat(line.qty) || 1);
                     return (
-                        <div key={line.id} className="grid grid-cols-12 gap-2 items-center p-2 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700 hover:border-indigo-200 dark:hover:border-indigo-700/50 transition-colors">
-                            <div className="col-span-5">
+                        <div key={line.id} style={{ zIndex: lines.length - idx + 10 }} className="relative grid grid-cols-12 gap-2 items-center p-2 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700 hover:border-indigo-200 dark:hover:border-indigo-700/50 transition-colors">
+                            <div className="col-span-5 relative">
                                 <CatalogSearchInput
                                     value={line.description}
                                     onChange={val => updateLine(line.id, 'description', val)}
