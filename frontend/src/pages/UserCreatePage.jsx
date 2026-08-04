@@ -41,6 +41,7 @@ function UserCreatePage() {
         hourly_rate: '',
         city: '', // ROADMAP: Standardized for multi-city scheduling
         role: ROLES_LIST[3], // Default to Electrician
+        custom_title: '',
         is_active: true,
         is_superuser: false,
         tenant_id: '',
@@ -217,6 +218,10 @@ function UserCreatePage() {
                             <select name="role" required value={formData.role} onChange={handleChange} disabled={isSubmitting} className="modern-input h-14 font-black uppercase text-[11px] tracking-widest appearance-none">
                                 {ROLES_LIST.map(r => <option key={r} value={r}>{r.toUpperCase()}</option>)}
                             </select>
+                        </Field>
+
+                        <Field label={t('custom_job_title', { defaultValue: 'Visual Job Title (Optional)' })} icon={<ShieldCheckIcon />}>
+                            <input type="text" name="custom_title" value={formData.custom_title} onChange={handleChange} disabled={isSubmitting} className="modern-input h-14 font-bold border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300" placeholder="e.g. CEO, CFO, Master Electrician" />
                         </Field>
 
                         {isSuperuser && (

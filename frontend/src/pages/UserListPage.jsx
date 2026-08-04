@@ -278,27 +278,34 @@ function UserListPage() {
                                 <div className="flex items-center gap-2 mt-1">
                                     <ShieldCheckIcon className="h-3.5 w-3.5 text-indigo-500" />
                                     <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">
-                                        {u.is_superuser
-                                            ? t('root_admin')
-                                            : (() => {
-                                                const roleKey = (u.role || '').toLowerCase();
-                                                switch (roleKey) {
-                                                    case 'admin':
-                                                        return t('role_admin');
-                                                    case 'project manager':
-                                                        return t('role_project_manager');
-                                                    case 'team leader':
-                                                        return t('role_team_leader');
-                                                    case 'electrician':
-                                                        return t('role_electrician');
-                                                    case 'accountant':
-                                                        return t('role_accountant');
-                                                    case 'subcontractor':
-                                                        return t('role_subcontractor');
-                                                    default:
-                                                        return u.role || '';
-                                                }
-                                            })()}
+                                        {u.custom_title ? (
+                                            <>
+                                                {u.custom_title}
+                                                <span className="text-[9px] font-bold text-gray-400 dark:text-gray-500 lowercase font-normal ml-1">({u.role?.replace('_', ' ')})</span>
+                                            </>
+                                        ) : (
+                                            u.is_superuser
+                                                ? t('root_admin')
+                                                : (() => {
+                                                    const roleKey = (u.role || '').toLowerCase();
+                                                    switch (roleKey) {
+                                                        case 'admin':
+                                                            return t('role_admin');
+                                                        case 'project manager':
+                                                            return t('role_project_manager');
+                                                        case 'team leader':
+                                                            return t('role_team_leader');
+                                                        case 'electrician':
+                                                            return t('role_electrician');
+                                                        case 'accountant':
+                                                            return t('role_accountant');
+                                                        case 'subcontractor':
+                                                            return t('role_subcontractor');
+                                                        default:
+                                                            return u.role || '';
+                                                    }
+                                                })()
+                                        )}
                                     </span>
                                 </div>
                                 <div className="flex items-center gap-2 mt-2">

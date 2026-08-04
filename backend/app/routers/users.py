@@ -61,6 +61,27 @@ async def read_users_me(
         data["impersonation_log_id"] = payload.get("impersonation_log_id")
     return schemas.UserRead(**data)
 
+
+@router.put("/me", response_model=schemas.UserRead)
+@limiter.limit("30/minute")
+async def update_current_user_profile(
+    request: Request,
+    user_update: schemas.UserUpdateSelf,
+    db: DbDependency,
+    current_user: CurrentUserDependency
+):
+    """Updates current user's profile information (full_name, custom_title, phone_number, location)."""
+    update_data = user_update.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        if hasattr(current_user, key):
+            setattr(current_user, key, value)
+    if "city" in update_data and update_data["city"]:
+        current_user.location = update_data["city"]
+    db.add(current_user)
+    db.commit()
+    db.refresh(current_user)
+    return current_user
+
 @router.post("/me/profile-picture", response_model=schemas.UserReadAdmin)
 @limiter.limit("10/minute")
 async def upload_profile_picture(request: Request, db: DbDependency, current_user: CurrentUserDependency, file: UploadFile = File(...)):

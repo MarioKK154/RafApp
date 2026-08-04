@@ -308,6 +308,13 @@ class UserRead(UserBase):
 class UserReadAdmin(UserRead):
     hourly_rate: Optional[float] = None
 
+class UserUpdateSelf(BaseModel):
+    full_name: Optional[str] = None
+    custom_title: Optional[str] = None
+    phone_number: Optional[str] = None
+    city: Optional[str] = None
+    location: Optional[str] = None
+
 class UserUpdateAdmin(BaseModel):
     email: Optional[EmailStr] = None
     full_name: Optional[str] = None

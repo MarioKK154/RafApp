@@ -78,6 +78,7 @@ function UserEditPage() {
         phone_number: '',
         city: '',
         role: '',
+        custom_title: '',
         is_active: true,
         is_superuser: false,
         hourly_rate: '',
@@ -125,6 +126,7 @@ function UserEditPage() {
                     phone_number: fetchedUser.phone_number ?? '',
                     city: fetchedUser.city ?? fetchedUser.location ?? '',
                     role: fetchedUser.role ?? '',
+                    custom_title: fetchedUser.custom_title ?? '',
                     is_active: fetchedUser.is_active ?? true,
                     is_superuser: fetchedUser.is_superuser ?? false,
                     hourly_rate: fetchedUser.hourly_rate ?? '',
@@ -341,6 +343,9 @@ function UserEditPage() {
                                         </option>
                                     ))}
                                 </select>
+                            </Field>
+                            <Field label={t('custom_job_title', { defaultValue: 'Visual Job Title (Optional)' })} icon={<ShieldCheckIcon />}>
+                                <input type="text" name="custom_title" value={formData.custom_title} onChange={handleChange} disabled={!canSaveChanges} className="modern-input h-14 font-bold border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300" placeholder="e.g. CEO, CFO, Master Electrician" />
                             </Field>
                             <Field label={t('hourly_labor_value')} icon={<BanknotesIcon />}>
                                 <input type="number" name="hourly_rate" value={formData.hourly_rate} onChange={handleChange} disabled={!canSaveChanges} className="modern-input h-14 font-mono text-emerald-600 font-black" />

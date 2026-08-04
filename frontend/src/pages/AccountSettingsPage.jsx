@@ -232,6 +232,43 @@ function AccountSettingsPage() {
         }
     };
 
+    const [isEditingProfile, setIsEditingProfile] = useState(false);
+    const [profileData, setProfileData] = useState({
+        full_name: '',
+        custom_title: '',
+        phone_number: '',
+        location: '',
+    });
+    const [isSubmittingProfile, setIsSubmittingProfile] = useState(false);
+
+    useEffect(() => {
+        if (user) {
+            setProfileData({
+                full_name: user.full_name || '',
+                custom_title: user.custom_title || '',
+                phone_number: user.phone_number || '',
+                location: user.location || '',
+            });
+        }
+    }, [user]);
+
+    const handleProfileSubmit = async (e) => {
+        e.preventDefault();
+        setIsSubmittingProfile(true);
+        try {
+            const res = await axiosInstance.put('/users/me', profileData);
+            toast.success("Profile & Visual Job Title updated!");
+            if (res.data && updateUser) {
+                updateUser(res.data);
+            }
+            setIsEditingProfile(false);
+        } catch (err) {
+            toast.error(err.response?.data?.detail || "Failed to update profile.");
+        } finally {
+            setIsSubmittingProfile(false);
+        }
+    };
+
     if (authIsLoading) return <LoadingSpinner text={t('syncing')} size="lg" />;
 
     return (
@@ -254,22 +291,103 @@ function AccountSettingsPage() {
                     
                     {/* Personnel Registry Card */}
                     <div className="bg-white dark:bg-gray-800 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
-                        <div className="p-8 border-b border-gray-50 dark:border-gray-700 flex items-center gap-3">
-                            <IdentificationIcon className="h-5 w-5 text-indigo-600" />
-                            <h2 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-widest">{t('personal_registry', { defaultValue: 'Personnel Records' })}</h2>
-                        </div>
-                        <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <InfoItem label={t('full_name')} value={user.full_name} icon={<UserIcon className="h-4 w-4" />} />
-                            <InfoItem label={t('email')} value={user.email} icon={<EnvelopeIcon className="h-4 w-4" />} />
-                            <InfoItem label={t('role', { defaultValue: 'Company Role' })} value={user.role} badge />
-                            <InfoItem label={t('custom_title', { defaultValue: 'Visual Job Title' })} value={user.custom_title || user.role} badge />
-                            <InfoItem label={t('employee_id', { defaultValue: 'Employee ID' })} value={user.employee_id} icon={<IdentificationIcon className="h-4 w-4" />} />
-                            <InfoItem label={t('kennitala', { defaultValue: 'National ID' })} value={user.kennitala} icon={<ShieldCheckIcon className="h-4 w-4" />} />
-                            <InfoItem label={t('phone', { defaultValue: 'Phone' })} value={user.phone_number} icon={<DevicePhoneMobileIcon className="h-4 w-4" />} />
-                            <div className="md:col-span-2">
-                                <InfoItem label={t('location', { defaultValue: 'Assigned Base' })} value={user.location} icon={<MapPinIcon className="h-4 w-4" />} />
+                        <div className="p-8 border-b border-gray-50 dark:border-gray-700 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <IdentificationIcon className="h-5 w-5 text-indigo-600" />
+                                <h2 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-widest">{t('personal_registry', { defaultValue: 'Personnel Records' })}</h2>
                             </div>
+                            <button
+                                type="button"
+                                onClick={() => setIsEditingProfile(prev => !prev)}
+                                className="px-4 py-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 font-black text-xs uppercase tracking-widest rounded-xl transition"
+                            >
+                                {isEditingProfile ? t('cancel', { defaultValue: 'Cancel' }) : t('edit_profile', { defaultValue: '✏️ Edit Profile' })}
+                            </button>
                         </div>
+
+                        {isEditingProfile ? (
+                            <form onSubmit={handleProfileSubmit} className="p-8 space-y-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">
+                                            {t('full_name', { defaultValue: 'Full Name' })}
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={profileData.full_name}
+                                            onChange={(e) => setProfileData(prev => ({ ...prev, full_name: e.target.value }))}
+                                            className="modern-input"
+                                            required
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase mb-2 ml-1 tracking-widest flex items-center gap-1.5">
+                                            <ShieldCheckIcon className="h-4 w-4" />
+                                            {t('custom_job_title', { defaultValue: 'Visual Job Title (e.g. CEO, CFO, Master Electrician)' })}
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={profileData.custom_title}
+                                            onChange={(e) => setProfileData(prev => ({ ...prev, custom_title: e.target.value }))}
+                                            placeholder="e.g. CEO, CFO, Chief Engineer"
+                                            className="modern-input font-bold border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300"
+                                        />
+                                        <p className="text-[9px] text-gray-400 mt-1 ml-1">Optional title shown on member badges, offers, and profile cards.</p>
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">
+                                            {t('phone', { defaultValue: 'Phone Number' })}
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={profileData.phone_number}
+                                            onChange={(e) => setProfileData(prev => ({ ...prev, phone_number: e.target.value }))}
+                                            className="modern-input"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">
+                                            {t('location', { defaultValue: 'Assigned Base / Location' })}
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={profileData.location}
+                                            onChange={(e) => setProfileData(prev => ({ ...prev, location: e.target.value }))}
+                                            className="modern-input"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="flex justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-700">
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsEditingProfile(false)}
+                                        className="px-5 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-bold text-xs uppercase rounded-xl"
+                                    >
+                                        {t('cancel', { defaultValue: 'Cancel' })}
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={isSubmittingProfile}
+                                        className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs uppercase tracking-widest rounded-xl transition shadow-lg disabled:opacity-50"
+                                    >
+                                        {isSubmittingProfile ? t('saving', { defaultValue: 'Saving...' }) : t('save_changes', { defaultValue: 'Save Profile' })}
+                                    </button>
+                                </div>
+                            </form>
+                        ) : (
+                            <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <InfoItem label={t('full_name')} value={user.full_name} icon={<UserIcon className="h-4 w-4" />} />
+                                <InfoItem label={t('email')} value={user.email} icon={<EnvelopeIcon className="h-4 w-4" />} />
+                                <InfoItem label={t('role', { defaultValue: 'Company Role' })} value={user.role} badge />
+                                <InfoItem label={t('custom_title', { defaultValue: 'Visual Job Title' })} value={user.custom_title || user.role} badge />
+                                <InfoItem label={t('employee_id', { defaultValue: 'Employee ID' })} value={user.employee_id} icon={<IdentificationIcon className="h-4 w-4" />} />
+                                <InfoItem label={t('kennitala', { defaultValue: 'National ID' })} value={user.kennitala} icon={<ShieldCheckIcon className="h-4 w-4" />} />
+                                <InfoItem label={t('phone', { defaultValue: 'Phone' })} value={user.phone_number} icon={<DevicePhoneMobileIcon className="h-4 w-4" />} />
+                                <div className="md:col-span-2">
+                                    <InfoItem label={t('location', { defaultValue: 'Assigned Base' })} value={user.location} icon={<MapPinIcon className="h-4 w-4" />} />
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* Security Credential Rotation Card */}
