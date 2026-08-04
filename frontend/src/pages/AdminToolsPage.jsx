@@ -838,7 +838,7 @@ function AdminToolsPage() {
                 <div className="space-y-12 animate-in fade-in duration-300">
                     <div className="space-y-4">
                         <h2 className="text-sm font-black text-gray-400 uppercase tracking-widest border-b border-gray-100 dark:border-gray-800 pb-2">
-                            Master Subscriptions & Payment Gateways
+                            {t('master_subscriptions_gateways', { defaultValue: 'Master Subscriptions & Payment Gateways' })}
                         </h2>
                         
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -848,35 +848,35 @@ function AdminToolsPage() {
                                     <div className="flex items-center gap-2">
                                         <CreditCardIcon className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
                                         <h3 className="text-xs font-black uppercase tracking-wider text-gray-900 dark:text-white">
-                                            Overdue Tenant Accounts
+                                            {t('overdue_tenant_accounts', { defaultValue: 'Overdue Tenant Accounts' })}
                                         </h3>
                                     </div>
                                     <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-red-500/20 text-red-500">
-                                        {billingOverdue?.length || 0} Flagged
+                                        {billingOverdue?.length || 0} {t('flagged', { defaultValue: 'Flagged' })}
                                     </span>
                                 </div>
                                 
                                 {isLoadingMetrics && <p className="text-xs text-gray-500">{t('loading_billing_data', { defaultValue: 'Loading billing data...' })}</p>}
                                 {!isLoadingMetrics && billingOverdue && billingOverdue.length > 0 ? (
                                     <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
-                                        {billingOverdue.map(t => (
-                                            <div key={t.id} className="p-3 bg-red-50 dark:bg-red-950/20 rounded-2xl border border-red-100 dark:border-red-900/40 flex items-center justify-between">
+                                        {billingOverdue.map(tData => (
+                                            <div key={tData.id} className="p-3 bg-red-50 dark:bg-red-950/20 rounded-2xl border border-red-100 dark:border-red-900/40 flex items-center justify-between">
                                                 <div>
-                                                    <p className="text-xs font-black text-gray-900 dark:text-white">{t.name}</p>
-                                                    <p className="text-[9px] font-bold text-red-500 uppercase tracking-widest">{t.overdue_invoices_count || 1} Overdue Invoice(s)</p>
+                                                    <p className="text-xs font-black text-gray-900 dark:text-white">{tData.name}</p>
+                                                    <p className="text-[9px] font-bold text-red-500 uppercase tracking-widest">{tData.overdue_invoices_count || 1} {t('overdue_invoice_count', { defaultValue: 'Overdue Invoice(s)' })}</p>
                                                 </div>
                                                 <button 
-                                                    onClick={() => navigate(`/tenants/${t.id}`)}
+                                                    onClick={() => navigate(`/tenants/${tData.id}`)}
                                                     className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white font-black text-[9px] uppercase tracking-widest rounded-xl transition"
                                                 >
-                                                    Review
+                                                    {t('review', { defaultValue: 'Review' })}
                                                 </button>
                                             </div>
                                         ))}
                                     </div>
                                 ) : (
                                     <p className="text-xs font-bold text-teal-600 dark:text-teal-400 italic py-4 text-center">
-                                        ✅ All active tenants are up to date on monthly payments!
+                                        {t('all_active_tenants_up_to_date', { defaultValue: '✅ All active tenants are up to date on monthly payments!' })}
                                     </p>
                                 )}
                             </div>
@@ -886,7 +886,7 @@ function AdminToolsPage() {
                                 <div className="flex items-center gap-2 border-b border-gray-100 dark:border-gray-700 pb-3">
                                     <BoltIcon className="h-5 w-5 text-amber-500" />
                                     <h3 className="text-xs font-black uppercase tracking-wider text-gray-900 dark:text-white">
-                                        Active Payment Gateways
+                                        {t('active_payment_gateways', { defaultValue: 'Active Payment Gateways' })}
                                     </h3>
                                 </div>
                                 <div className="space-y-3">
@@ -919,41 +919,41 @@ function AdminToolsPage() {
                                     <div className="flex items-center gap-2">
                                         <SparklesIcon className="h-5 w-5 text-indigo-500" />
                                         <h3 className="text-xs font-black uppercase tracking-wider text-gray-900 dark:text-white">
-                                            Subscription Seat Tiers (4 Plans)
+                                            {t('subscription_seat_tiers_4_plans', { defaultValue: 'Subscription Seat Tiers (4 Plans)' })}
                                         </h3>
                                     </div>
                                     <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400">
-                                        Active Tiers
+                                        {t('active_tiers', { defaultValue: 'Active Tiers' })}
                                     </span>
                                 </div>
                                 <div className="space-y-2.5 text-xs">
                                     <div className="p-2.5 bg-gray-50 dark:bg-gray-900 rounded-xl space-y-1">
                                         <div className="flex justify-between items-center">
-                                            <span className="font-bold text-gray-800 dark:text-gray-200 uppercase text-[10px]">Sóló & Lítil (1-10 users)</span>
-                                            <span className="font-black text-indigo-600 dark:text-indigo-400 font-mono">16.390 kr. / mán</span>
+                                            <span className="font-bold text-gray-800 dark:text-gray-200 uppercase text-[10px]">{t('tier_solo_small', { defaultValue: 'Solo & Small (1-10 users)' })}</span>
+                                            <span className="font-black text-indigo-600 dark:text-indigo-400 font-mono">16.390 {t('per_month_unit', { defaultValue: 'ISK / mo.' })}</span>
                                         </div>
-                                        <p className="text-[9px] text-gray-400">Grunnur: 2 notendur · +3.190 kr/notandi · Hámark: 41.910 kr</p>
+                                        <p className="text-[9px] text-gray-400">{t('tier_solo_small_details', { defaultValue: 'Base: 2 users · +3,190 ISK/user · Cap: 41,910 ISK' })}</p>
                                     </div>
                                     <div className="p-2.5 bg-gray-50 dark:bg-gray-900 rounded-xl space-y-1">
                                         <div className="flex justify-between items-center">
-                                            <span className="font-bold text-gray-800 dark:text-gray-200 uppercase text-[10px]">Meðalstór (11-25 users)</span>
-                                            <span className="font-black text-indigo-600 dark:text-indigo-400 font-mono">43.890 kr. / mán</span>
+                                            <span className="font-bold text-gray-800 dark:text-gray-200 uppercase text-[10px]">{t('tier_medium', { defaultValue: 'Medium (11-25 users)' })}</span>
+                                            <span className="font-black text-indigo-600 dark:text-indigo-400 font-mono">43.890 {t('per_month_unit', { defaultValue: 'ISK / mo.' })}</span>
                                         </div>
-                                        <p className="text-[9px] text-gray-400">Grunnur: 10 notendur · +2.750 kr/notandi · Hámark: 85.140 kr</p>
+                                        <p className="text-[9px] text-gray-400">{t('tier_medium_details', { defaultValue: 'Base: 10 users · +2,750 ISK/user · Cap: 85,140 ISK' })}</p>
                                     </div>
                                     <div className="p-2.5 bg-gray-50 dark:bg-gray-900 rounded-xl space-y-1">
                                         <div className="flex justify-between items-center">
-                                            <span className="font-bold text-gray-800 dark:text-gray-200 uppercase text-[10px]">Stórhópur (26-65 users)</span>
-                                            <span className="font-black text-indigo-600 dark:text-indigo-400 font-mono">82.390 kr. / mán</span>
+                                            <span className="font-bold text-gray-800 dark:text-gray-200 uppercase text-[10px]">{t('tier_large', { defaultValue: 'Large Group (26-65 users)' })}</span>
+                                            <span className="font-black text-indigo-600 dark:text-indigo-400 font-mono">82.390 {t('per_month_unit', { defaultValue: 'ISK / mo.' })}</span>
                                         </div>
-                                        <p className="text-[9px] text-gray-400">Grunnur: 25 notendur · +2.200 kr/notandi · Hámark: 170.390 kr</p>
+                                        <p className="text-[9px] text-gray-400">{t('tier_large_details', { defaultValue: 'Base: 25 users · +2,200 ISK/user · Cap: 170,390 ISK' })}</p>
                                     </div>
                                     <div className="p-2.5 bg-gray-50 dark:bg-gray-900 rounded-xl space-y-1">
                                         <div className="flex justify-between items-center">
-                                            <span className="font-bold text-gray-800 dark:text-gray-200 uppercase text-[10px]">Fyrirtæki (66+ users)</span>
-                                            <span className="font-black text-indigo-600 dark:text-indigo-400 font-mono">164.890 kr. / mán</span>
+                                            <span className="font-bold text-gray-800 dark:text-gray-200 uppercase text-[10px]">{t('tier_enterprise', { defaultValue: 'Enterprise (66+ users)' })}</span>
+                                            <span className="font-black text-indigo-600 dark:text-indigo-400 font-mono">164.890 {t('per_month_unit', { defaultValue: 'ISK / mo.' })}</span>
                                         </div>
-                                        <p className="text-[9px] text-gray-400">Grunnur: 65 notendur · +1.650 kr/notandi · Skalar með vexti</p>
+                                        <p className="text-[9px] text-gray-400">{t('tier_enterprise_details', { defaultValue: 'Base: 65 users · +1,650 ISK/user · Scales with growth' })}</p>
                                     </div>
                                 </div>
                             </div>
@@ -962,7 +962,7 @@ function AdminToolsPage() {
                         {/* Manual Subscription Input & Payment Tracking */}
                         <div className="space-y-6 pt-6 border-t border-gray-100 dark:border-gray-800">
                             <h2 className="text-sm font-black text-gray-400 uppercase tracking-widest pb-2">
-                                Manual Tenant Subscription Tracker & Payment Ledger
+                                {t('manual_subscription_tracker_ledger', { defaultValue: 'Manual Tenant Subscription Tracker & Payment Ledger' })}
                             </h2>
 
                             {/* Form to Log Payment */}
@@ -971,16 +971,16 @@ function AdminToolsPage() {
                                     <div className="flex items-center gap-2">
                                         <PlusIcon className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
                                         <h3 className="text-xs font-black uppercase tracking-wider text-gray-900 dark:text-white">
-                                            Skrá mánaðarlega áskrift / Manual Subscription Payment Entry
+                                            {t('manual_subscription_payment_entry', { defaultValue: 'Manual Subscription Payment Entry' })}
                                         </h3>
                                     </div>
-                                    <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Superuser Billing Console</span>
+                                    <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">{t('superuser_billing_console', { defaultValue: 'Superuser Billing Console' })}</span>
                                 </div>
 
                                 <form onSubmit={handleRecordManualInvoice} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                     <div>
                                         <label className="block text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1">
-                                            Fyrirtæki / Tenant
+                                            {t('tenant_company', { defaultValue: 'Tenant / Company' })}
                                         </label>
                                         <select
                                             value={selectedTenantIdForInvoice}
@@ -988,10 +988,10 @@ function AdminToolsPage() {
                                             required
                                             className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-xs text-gray-900 dark:text-white font-bold focus:ring-2 focus:ring-indigo-500"
                                         >
-                                            <option value="">-- Veldu fyrirtæki --</option>
-                                            {allTenants.map(t => (
-                                                <option key={t.id} value={t.id}>
-                                                    {t.name} (ID: {t.id} · {t.user_count || 1} notendur)
+                                            <option value="">{t('select_tenant_placeholder', { defaultValue: '-- Select Tenant --' })}</option>
+                                            {allTenants.map(tItem => (
+                                                <option key={tItem.id} value={tItem.id}>
+                                                    {tItem.name} (ID: {tItem.id} · {tItem.user_count || 1} {t('users', { defaultValue: 'users' })})
                                                 </option>
                                             ))}
                                         </select>
@@ -999,7 +999,7 @@ function AdminToolsPage() {
 
                                     <div>
                                         <label className="block text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1">
-                                            Upphæð án VSK (ISK)
+                                            {t('amount_excl_vat_isk', { defaultValue: 'Amount (excl. VAT ISK)' })}
                                         </label>
                                         <input
                                             type="number"
@@ -1013,7 +1013,7 @@ function AdminToolsPage() {
 
                                     <div>
                                         <label className="block text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1">
-                                            Gjalddagi / Due Date
+                                            {t('due_date', { defaultValue: 'Due Date' })}
                                         </label>
                                         <input
                                             type="date"
@@ -1026,30 +1026,30 @@ function AdminToolsPage() {
 
                                     <div className="lg:col-span-2">
                                         <label className="block text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1">
-                                            Lýsing / Tímabil
+                                            {t('description_period', { defaultValue: 'Description / Period' })}
                                         </label>
                                         <input
                                             type="text"
                                             value={manualInvoice.description}
                                             onChange={(e) => setManualInvoice(prev => ({ ...prev, description: e.target.value }))}
                                             required
-                                            placeholder="Mánaðarleg áskrift Ágúst 2026"
+                                            placeholder={t('placeholder_subscription_period', { defaultValue: 'e.g. Monthly Subscription August 2026' })}
                                             className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-xs text-gray-900 dark:text-white font-bold focus:ring-2 focus:ring-indigo-500"
                                         />
                                     </div>
 
                                     <div>
                                         <label className="block text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1">
-                                            Greiðslustaða / Payment Status
+                                            {t('payment_status', { defaultValue: 'Payment Status' })}
                                         </label>
                                         <select
                                             value={manualInvoice.status}
                                             onChange={(e) => setManualInvoice(prev => ({ ...prev, status: e.target.value }))}
                                             className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-xs text-gray-900 dark:text-white font-bold focus:ring-2 focus:ring-indigo-500"
                                         >
-                                            <option value="Paid">Greitt / Paid</option>
-                                            <option value="Pending">Í bið / Pending</option>
-                                            <option value="Overdue">Gjaldfallið / Overdue</option>
+                                            <option value="Paid">{t('status_paid', { defaultValue: 'Paid' })}</option>
+                                            <option value="Pending">{t('status_pending', { defaultValue: 'Pending' })}</option>
+                                            <option value="Overdue">{t('status_overdue', { defaultValue: 'Overdue' })}</option>
                                         </select>
                                     </div>
 
@@ -1059,7 +1059,7 @@ function AdminToolsPage() {
                                             disabled={isLoggingInvoice || !selectedTenantIdForInvoice}
                                             className="px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-black text-xs uppercase tracking-widest rounded-xl transition shadow-md disabled:opacity-50"
                                         >
-                                            {isLoggingInvoice ? 'Vista...' : '+ Skrá Áskriftarfærslu'}
+                                            {isLoggingInvoice ? t('saving_entry', { defaultValue: 'Saving...' }) : t('log_subscription_entry', { defaultValue: '+ Record Subscription Payment' })}
                                         </button>
                                     </div>
                                 </form>
@@ -1071,30 +1071,30 @@ function AdminToolsPage() {
                                     <div className="flex items-center gap-2">
                                         <ClockIcon className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
                                         <h3 className="text-xs font-black uppercase tracking-wider text-gray-900 dark:text-white">
-                                            Tenant Subscription Ledger ({allInvoices.length} Entries)
+                                            {t('tenant_subscription_ledger', { defaultValue: 'Tenant Subscription Ledger' })} ({allInvoices.length} {t('entries', { defaultValue: 'Entries' })})
                                         </h3>
                                     </div>
-                                    <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">All Historical Payments</span>
+                                    <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">{t('all_historical_payments', { defaultValue: 'All Historical Payments' })}</span>
                                 </div>
 
                                 {allInvoices.length === 0 ? (
-                                    <p className="text-xs text-gray-400 italic text-center py-6">Engar áskriftarfærslur skráðar í kerfinu ennþá.</p>
+                                    <p className="text-xs text-gray-400 italic text-center py-6">{t('no_subscription_entries_logged', { defaultValue: 'No subscription payments recorded in the system yet.' })}</p>
                                 ) : (
                                     <div className="overflow-x-auto">
                                         <table className="w-full text-left text-xs">
                                             <thead>
                                                 <tr className="border-b border-gray-100 dark:border-gray-700 text-[10px] font-black uppercase text-gray-400 tracking-wider">
-                                                    <th className="py-2.5 px-3">Tenant / Fyrirtæki</th>
-                                                    <th className="py-2.5 px-3">Lýsing</th>
-                                                    <th className="py-2.5 px-3">Gjalddagi</th>
-                                                    <th className="py-2.5 px-3 text-right">Upphæð (m/VSK)</th>
-                                                    <th className="py-2.5 px-3 text-center">Staða</th>
-                                                    <th className="py-2.5 px-3 text-right">Aðgerðir</th>
+                                                    <th className="py-2.5 px-3">{t('tenant_company', { defaultValue: 'Tenant / Company' })}</th>
+                                                    <th className="py-2.5 px-3">{t('description', { defaultValue: 'Description' })}</th>
+                                                    <th className="py-2.5 px-3">{t('due_date', { defaultValue: 'Due Date' })}</th>
+                                                    <th className="py-2.5 px-3 text-right">{t('amount_incl_vat', { defaultValue: 'Amount (incl. VAT)' })}</th>
+                                                    <th className="py-2.5 px-3 text-center">{t('status', { defaultValue: 'Status' })}</th>
+                                                    <th className="py-2.5 px-3 text-right">{t('actions', { defaultValue: 'Actions' })}</th>
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
                                                 {allInvoices.map(inv => {
-                                                    const tenantName = allTenants.find(t => t.id === inv.tenant_id)?.name || `Tenant #${inv.tenant_id}`;
+                                                    const tenantName = allTenants.find(tItem => tItem.id === inv.tenant_id)?.name || `Tenant #${inv.tenant_id}`;
                                                     const amountWithVat = (inv.amount * 1.24).toLocaleString('is-IS');
                                                     return (
                                                         <tr key={inv.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/50 transition">
@@ -1110,7 +1110,7 @@ function AdminToolsPage() {
                                                             </td>
                                                             <td className="py-3 px-3 text-right font-black font-mono text-indigo-600 dark:text-indigo-400">
                                                                 {inv.amount?.toLocaleString('is-IS')} kr.
-                                                                <span className="block text-[9px] text-gray-400 font-normal">m/VSK: {amountWithVat} kr.</span>
+                                                                <span className="block text-[9px] text-gray-400 font-normal">{t('incl_24_vat', { defaultValue: 'incl. 24% VAT' })}: {amountWithVat} kr.</span>
                                                             </td>
                                                             <td className="py-3 px-3 text-center">
                                                                 <span className={`inline-block px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider ${
@@ -1118,7 +1118,9 @@ function AdminToolsPage() {
                                                                     inv.status === 'Overdue' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
                                                                     'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
                                                                 }`}>
-                                                                    {inv.status}
+                                                                    {inv.status === 'Paid' ? t('status_paid', { defaultValue: 'Paid' }) :
+                                                                     inv.status === 'Overdue' ? t('status_overdue', { defaultValue: 'Overdue' }) :
+                                                                     t('status_pending', { defaultValue: 'Pending' })}
                                                                 </span>
                                                             </td>
                                                             <td className="py-3 px-3 text-right space-x-1">
@@ -1127,7 +1129,7 @@ function AdminToolsPage() {
                                                                         onClick={() => handleUpdateInvoiceStatus(inv.id, 'Paid')}
                                                                         className="px-2 py-1 bg-green-600 hover:bg-green-700 text-white font-bold text-[9px] uppercase rounded transition"
                                                                     >
-                                                                        Mark Paid
+                                                                        {t('mark_paid', { defaultValue: 'Mark Paid' })}
                                                                     </button>
                                                                 )}
                                                                 {inv.status !== 'Overdue' && (
@@ -1135,14 +1137,14 @@ function AdminToolsPage() {
                                                                         onClick={() => handleUpdateInvoiceStatus(inv.id, 'Overdue')}
                                                                         className="px-2 py-1 bg-red-600 hover:bg-red-700 text-white font-bold text-[9px] uppercase rounded transition"
                                                                     >
-                                                                        Mark Overdue
+                                                                        {t('mark_overdue', { defaultValue: 'Mark Overdue' })}
                                                                     </button>
                                                                 )}
                                                                 <button
                                                                     onClick={() => handleDeleteInvoice(inv.id)}
                                                                     className="px-2 py-1 bg-gray-200 hover:bg-red-500 hover:text-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-bold text-[9px] uppercase rounded transition"
                                                                 >
-                                                                    Eyða
+                                                                    {t('delete', { defaultValue: 'Delete' })}
                                                                 </button>
                                                             </td>
                                                         </tr>
