@@ -318,9 +318,9 @@ async def pay_tenant_invoice(
 async def update_tenant_invoice_status(
     request: Request,
     invoice_id: int,
-    new_status: str = Query(..., description="Paid, Pending, or Overdue"),
-    db: DbDependency = Depends(get_db),
-    current_user: CurrentUserDependency = Depends(security.require_superuser)
+    new_status: str,
+    db: DbDependency,
+    current_user: CurrentUserDependency
 ):
     """Updates status for a specific tenant invoice (superuser only)."""
     db_invoice = crud.get_billing_invoice(db, invoice_id=invoice_id)
@@ -347,8 +347,8 @@ async def update_tenant_invoice_status(
 async def delete_tenant_invoice(
     request: Request,
     invoice_id: int,
-    db: DbDependency = Depends(get_db),
-    current_user: CurrentUserDependency = Depends(security.require_superuser)
+    db: DbDependency,
+    current_user: CurrentUserDependency
 ):
     """Deletes a tenant invoice record (superuser only)."""
     db_invoice = crud.get_billing_invoice(db, invoice_id=invoice_id)
