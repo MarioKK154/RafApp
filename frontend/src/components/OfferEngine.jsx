@@ -5,6 +5,7 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import axiosInstance from '../api/axiosInstance';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '../context/AuthContext';
 import {
     WrenchScrewdriverIcon,
     ClockIcon,
@@ -301,14 +302,38 @@ function StepIndicator({ steps, currentStep, onGoTo }) {
 export default function OfferEngine({ initialItems = [], onCreateOffer }) {
     const { t, i18n } = useTranslation();
     const isIS = i18n.language?.toLowerCase().startsWith('is');
+    const { user: authUser } = useAuth();
 
     // ── Catalog: loaded once for live search in work lines
     const [catalog, setCatalog] = useState([]);
+    // ── Tenant + Projects: for PDF header and project assignment
+    const [tenantInfo, setTenantInfo] = useState(null);
+    const [projects, setProjects]     = useState([]);
+    const [selectedProjectId, setSelectedProjectId] = useState('');
+    const [offerTitle, setOfferTitle] = useState('');
+    const [isSaving, setIsSaving]     = useState(false);
+    const [isPdfLoading, setIsPdfLoading] = useState(false);
+    const [saveMsg, setSaveMsg]        = useState(null); // { type: 'ok'|'err', text }
+    const printRef = useRef(null);
+
     useEffect(() => {
+        // Catalog
         axiosInstance.get('/labor-catalog/?limit=2000')
             .then(res => setCatalog(Array.isArray(res.data) ? res.data : []))
-            .catch(() => {}); // silent fail — search just won't show results
+            .catch(() => {});
+        // Projects for assignment dropdown
+        axiosInstance.get('/projects/?limit=500')
+            .then(res => setProjects(Array.isArray(res.data) ? res.data : []))
+            .catch(() => {});
     }, []);
+
+    // Fetch tenant info once we know the user's tenant_id
+    useEffect(() => {
+        if (!authUser?.tenant_id) return;
+        axiosInstance.get(`/tenants/${authUser.tenant_id}`)
+            .then(res => setTenantInfo(res.data))
+            .catch(() => {});
+    }, [authUser?.tenant_id]);
 
     // ── Wizard state
     const [step, setStep] = useState(0);
@@ -942,11 +967,220 @@ export default function OfferEngine({ initialItems = [], onCreateOffer }) {
                 </div>
             </div>
 
+            {/* ── Offer title */}
+            <div>
+                <label className="block text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5">
+                    {t('offer_title_label', { defaultValue: 'Offer title (optional)' })}
+                </label>
+                <input
+                    type="text"
+                    value={offerTitle}
+                    onChange={e => setOfferTitle(e.target.value)}
+                    placeholder={t('offer_title_placeholder', { defaultValue: 'e.g. Electrical installation – Apartment 3B' })}
+                    className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                />
+            </div>
+
+            {/* ── Assign to project */}
+            <div className="bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
+                <div className="px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
+                    <h4 className="text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        {t('assign_to_project', { defaultValue: 'Assign to project (optional)' })}
+                    </h4>
+                </div>
+                <div className="p-4 space-y-3">
+                    <select
+                        value={selectedProjectId}
+                        onChange={e => setSelectedProjectId(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                    >
+                        <option value="">{t('select_project_placeholder', { defaultValue: '— Select a project —' })}</option>
+                        {projects.map(p => (
+                            <option key={p.id} value={p.id}>{p.name}</option>
+                        ))}
+                    </select>
+                    <button
+                        type="button"
+                        disabled={!selectedProjectId || isSaving}
+                        onClick={async () => {
+                            if (!selectedProjectId) return;
+                            setIsSaving(true);
+                            setSaveMsg(null);
+                            try {
+                                const payload = {
+                                    title: offerTitle || t('offer_engine_default_title', { defaultValue: 'Offer from Offer Engine' }),
+                                    project_id: Number(selectedProjectId),
+                                    total_price: finalPrice,
+                                    status: 'draft',
+                                    notes: JSON.stringify({
+                                        lines: lines.filter(l => l.description || parseFloat(l.einingar) > 0),
+                                        reiknitala,
+                                        surcharges: Array.from(activeSurcharges),
+                                        contractorMargin,
+                                        materialCost: C_mat,
+                                        directCosts: C_direct,
+                                        C_labor,
+                                        totalEinningar,
+                                        includeVAT,
+                                    }),
+                                };
+                                await axiosInstance.post('/offers/', payload);
+                                setSaveMsg({ type: 'ok', text: t('offer_saved_ok', { defaultValue: 'Offer saved to project!' }) });
+                                if (onCreateOffer) onCreateOffer(payload);
+                            } catch (err) {
+                                setSaveMsg({ type: 'err', text: t('offer_saved_err', { defaultValue: 'Failed to save offer. Please try again.' }) });
+                            } finally {
+                                setIsSaving(false);
+                            }
+                        }}
+                        className="w-full flex items-center justify-center gap-2 py-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 disabled:opacity-40 disabled:cursor-not-allowed text-white font-black text-sm uppercase tracking-widest rounded-xl transition shadow-lg shadow-indigo-500/20 active:scale-[0.99]"
+                    >
+                        <DocumentTextIcon className="h-5 w-5" />
+                        {isSaving ? t('saving', { defaultValue: 'Saving…' }) : t('assign_offer_btn', { defaultValue: 'Save Offer to Project' })}
+                    </button>
+                    {saveMsg && (
+                        <p className={`text-xs text-center font-semibold ${ saveMsg.type === 'ok' ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400' }`}>
+                            {saveMsg.text}
+                        </p>
+                    )}
+                </div>
+            </div>
+
+            {/* ── PDF Export */}
+            <button
+                type="button"
+                onClick={() => {
+                    // Build print content
+                    const now = new Date();
+                    const dateStr = now.toLocaleDateString(isIS ? 'is-IS' : 'en-GB', { year: 'numeric', month: 'long', day: 'numeric' });
+                    const companyName = tenantInfo?.name || authUser?.full_name || '';
+                    const rawLogoUrl = tenantInfo?.logo_url || '';
+                    const logoUrl = rawLogoUrl ? (rawLogoUrl.startsWith('http') ? rawLogoUrl : `${axiosInstance.defaults.baseURL?.replace('/api','') || ''}/${rawLogoUrl}`) : '';
+                    const userKennitala = authUser?.kennitala || '';
+                    const userEmail    = authUser?.email || '';
+                    const userPhone    = authUser?.phone_number || '';
+                    const userCity     = authUser?.city || authUser?.location || '';
+                    const title        = offerTitle || t('offer_engine_default_title', { defaultValue: 'Offer from Offer Engine' });
+                    const selectedProject = projects.find(p => String(p.id) === String(selectedProjectId));
+
+                    const activeLines = lines.filter(l => l.description || parseFloat(l.einingar) > 0);
+                    const activeSurchargeItems = SURCHARGE_GROUPS.flatMap(g => g.items).filter(i => activeSurcharges.has(i.id));
+
+                    const html = `
+<!DOCTYPE html>
+<html lang="${isIS ? 'is' : 'en'}">
+<head>
+  <meta charset="UTF-8" />
+  <title>${title}</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Helvetica Neue', Arial, sans-serif; color: #111; font-size: 11pt; }
+    .page { max-width: 210mm; margin: 0 auto; padding: 20mm 18mm; }
+    .header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 28px; border-bottom: 2px solid #4f46e5; padding-bottom: 18px; }
+    .logo { max-height: 56px; max-width: 180px; object-fit: contain; }
+    .company-block { text-align: right; }
+    .company-name { font-size: 16pt; font-weight: 900; color: #4f46e5; }
+    .company-meta { font-size: 8.5pt; color: #666; margin-top: 3px; line-height: 1.6; }
+    .offer-title { font-size: 18pt; font-weight: 900; color: #111; margin: 20px 0 4px; }
+    .offer-meta { font-size: 9pt; color: #666; margin-bottom: 22px; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+    th { background: #f0f0f9; color: #4f46e5; font-size: 8pt; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; padding: 7px 10px; text-align: left; border-bottom: 1px solid #ddd; }
+    td { padding: 7px 10px; font-size: 9.5pt; border-bottom: 1px solid #eee; }
+    .num { text-align: right; font-family: monospace; }
+    .section-title { font-size: 9pt; font-weight: 800; color: #444; text-transform: uppercase; letter-spacing: .1em; margin: 18px 0 6px; }
+    .breakdown { width: 100%; border-top: 1px solid #ddd; padding-top: 12px; }
+    .br-row { display: flex; justify-content: space-between; padding: 3px 0; font-size: 9.5pt; }
+    .br-row.total { font-weight: 900; font-size: 13pt; color: #4f46e5; border-top: 2px solid #4f46e5; margin-top: 8px; padding-top: 8px; }
+    .br-label { color: #555; }
+    .br-val { font-family: monospace; font-weight: 700; }
+    .footer { margin-top: 32px; padding-top: 12px; border-top: 1px solid #ddd; font-size: 8pt; color: #999; text-align: center; }
+    .badge { display: inline-block; background: #ede9fe; color: #4f46e5; padding: 2px 7px; border-radius: 4px; font-size: 8pt; font-weight: 800; margin-bottom: 6px; }
+  </style>
+</head>
+<body>
+<div class="page">
+  <div class="header">
+    <div>${logoUrl ? `<img src="${logoUrl}" class="logo" alt="logo" />` : `<div style="font-size:22pt;font-weight:900;color:#4f46e5">${companyName.slice(0,2).toUpperCase()}</div>`}</div>
+    <div class="company-block">
+      <div class="company-name">${companyName}</div>
+      <div class="company-meta">
+        ${userKennitala ? `<div>${isIS ? 'Kennitala' : 'Registration No.'}: ${userKennitala}</div>` : ''}
+        ${userEmail    ? `<div>${userEmail}</div>` : ''}
+        ${userPhone    ? `<div>${userPhone}</div>` : ''}
+        ${userCity     ? `<div>${userCity}</div>` : ''}
+      </div>
+    </div>
+  </div>
+
+  <div class="badge">ar.is / RSÍ / SART</div>
+  <div class="offer-title">${title}</div>
+  <div class="offer-meta">${isIS ? 'Dags.' : 'Date'}: ${dateStr}${selectedProject ? ` &nbsp;·&nbsp; ${isIS ? 'Verk' : 'Project'}: ${selectedProject.name}` : ''}</div>
+
+  <div class="section-title">${isIS ? 'Vinnulínur' : 'Work Lines'}</div>
+  <table>
+    <thead><tr>
+      <th>${isIS ? 'Lýsing' : 'Description'}</th>
+      <th class="num">${isIS ? 'Einingar' : 'Einingar'}</th>
+      <th class="num">${isIS ? 'Magn' : 'Qty'}</th>
+      <th class="num">${isIS ? 'Ein. samtals' : 'Total ein.'}</th>
+      <th class="num">${isIS ? 'Tími' : 'Time'}</th>
+    </tr></thead>
+    <tbody>
+      ${activeLines.map(l => {
+          const totalEin = (parseFloat(l.einingar)||0)*(parseFloat(l.qty)||1);
+          return `<tr>
+            <td>${l.description || '–'}</td>
+            <td class="num">${parseFloat(l.einingar)||0}</td>
+            <td class="num">${parseFloat(l.qty)||1}</td>
+            <td class="num">${totalEin.toFixed(2)}</td>
+            <td class="num">${fmtHours(totalEin)}</td>
+          </tr>`;
+      }).join('')}
+    </tbody>
+  </table>
+
+  ${activeSurchargeItems.length > 0 ? `
+  <div class="section-title">${isIS ? 'Álag' : 'Surcharges'}</div>
+  <table><thead><tr><th>${isIS ? 'Lýsing' : 'Description'}</th><th class="num">${isIS ? 'Hlutfall' : 'Rate'}</th></tr></thead>
+  <tbody>${activeSurchargeItems.map(s => `<tr><td>${s.emoji} ${isIS ? s.labelIs : s.label}</td><td class="num">+${(s.ratio*100).toFixed(0)}%</td></tr>`).join('')}</tbody>
+  </table>` : ''}
+
+  <div class="section-title">${isIS ? 'Sundurliðun' : 'Cost Breakdown'}</div>
+  <div class="breakdown">
+    <div class="br-row"><span class="br-label">${isIS ? 'Vinnukostnaður (Reiknitala ' + reiknitala.toFixed(2) + ' ISK/ein.)' : 'Labor (Reiknitala ' + reiknitala.toFixed(2) + ' ISK/ein.)'}</span><span class="br-val">${fmtISK(totalEinningar * reiknitala)}</span></div>
+    <div class="br-row"><span class="br-label">${isIS ? 'Launagjöld (+' + (DEFAULT_PAYROLL*100).toFixed(0) + '%)' : 'Payroll overhead (+' + (DEFAULT_PAYROLL*100).toFixed(0) + '%)'}</span><span class="br-val">${fmtISK(totalEinningar * reiknitala * DEFAULT_PAYROLL)}</span></div>
+    ${surchargeRatio > 0 ? `<div class="br-row"><span class="br-label" style="color:#d97706">${isIS ? 'Álag (+' + (surchargeRatio*100).toFixed(0) + '%)' : 'Surcharges (+' + (surchargeRatio*100).toFixed(0) + '%)'}</span><span class="br-val">${fmtISK(totalEinningar * reiknitala * surchargeRatio)}</span></div>` : ''}
+    <div class="br-row"><span class="br-label" style="font-weight:700">${isIS ? 'Vinnukostnaður samtals' : 'Total labor'}</span><span class="br-val">${fmtISK(C_labor)}</span></div>
+    ${C_mat > 0 ? `<div class="br-row"><span class="br-label">${isIS ? 'Efni' : 'Materials'}</span><span class="br-val">${fmtISK(C_mat)}</span></div>` : ''}
+    ${C_direct > 0 ? `<div class="br-row"><span class="br-label">${isIS ? 'Beinir kostnaðar' : 'Direct costs'}</span><span class="br-val">${fmtISK(C_direct)}</span></div>` : ''}
+    <div class="br-row"><span class="br-label">${isIS ? 'Samtals' : 'Subtotal'}</span><span class="br-val">${fmtISK(subtotal)}</span></div>
+    <div class="br-row"><span class="br-label" style="color:#7c3aed">${isIS ? 'Framlegð ('+contractorMargin+'%)' : 'Margin ('+contractorMargin+'%)'}</span><span class="br-val">${fmtISK(subtotal * contractorMargin / 100)}</span></div>
+    ${includeVAT ? `<div class="br-row"><span class="br-label">VSK (24%)</span><span class="br-val">${fmtISK(withMargin * 0.24)}</span></div>` : ''}
+    <div class="br-row total"><span>${isIS ? 'Heildarverð' : 'Final Total'}</span><span>${fmtISK(finalPrice)}</span></div>
+  </div>
+
+  <div class="footer">ar.is / RSÍ / SART — ${isIS ? 'Tilboð unnið samkvæmt kjarasamningi rafverktaka' : 'Offer prepared under the Icelandic electrical contractors collective agreement'} · ${dateStr}</div>
+</div>
+</body></html>`;
+
+                    const win = window.open('', '_blank', 'width=900,height=700');
+                    if (!win) return;
+                    win.document.write(html);
+                    win.document.close();
+                    win.focus();
+                    setTimeout(() => { win.print(); }, 600);
+                }}
+                className="w-full flex items-center justify-center gap-2 py-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-black text-sm uppercase tracking-widest rounded-xl transition shadow-lg shadow-emerald-500/20 active:scale-[0.99]"
+            >
+                <ArrowDownTrayIcon className="h-5 w-5" />
+                {t('export_pdf_btn', { defaultValue: 'Export to PDF' })}
+            </button>
+
             {onCreateOffer && (
                 <button
                     type="button"
                     onClick={() => onCreateOffer({ lines, reiknitala, activeSurcharges: Array.from(activeSurcharges), contractorMargin, materialCost: C_mat, directCosts: C_direct, C_labor, totalEinningar, finalPrice, includeVAT })}
-                    className="w-full flex items-center justify-center gap-2 py-3.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-black text-sm uppercase tracking-widest rounded-xl transition shadow-lg shadow-indigo-500/20 active:scale-[0.99]"
+                    className="w-full flex items-center justify-center gap-2 py-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-black text-sm uppercase tracking-widest rounded-xl transition shadow-lg shadow-indigo-500/20 active:scale-[0.99]"
                 >
                     <DocumentTextIcon className="h-5 w-5" />
                     {t('create_offer_btn', { defaultValue: 'Create Offer' })}
