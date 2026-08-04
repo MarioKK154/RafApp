@@ -902,3 +902,8 @@ html.modal-open body {
 .animate-glow-pulse {
   animation: glowPulse 6s ease-in-out infinite;
 }
+
+/* Toast Notification z-index override to ensure toasts appear above sidebars and modals */
+.Toastify__toast-container {
+  z-index: 999999 !important;
+}

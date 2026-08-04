@@ -1,19 +1,21 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import axiosInstance from '../api/axiosInstance';
 import { 
     BellIcon, 
     BellAlertIcon, 
     InboxStackIcon,
     ClockIcon,
-    ArrowRightIcon
+    ArrowRightIcon,
+    CheckBadgeIcon
 } from '@heroicons/react/24/outline';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'react-toastify';
 
 function NotificationDropdown() {
     const { t } = useTranslation();
+    const navigate = useNavigate();
     const [notifications, setNotifications] = useState([]);
     const [isOpen, setIsOpen] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
@@ -22,8 +24,9 @@ function NotificationDropdown() {
     const fetchNotifications = async () => {
         try {
             const res = await axiosInstance.get('/notifications/');
-            setNotifications(res.data);
-            setUnreadCount(res.data.filter(n => !n.is_read).length);
+            const data = Array.isArray(res.data) ? res.data : [];
+            setNotifications(data);
+            setUnreadCount(data.filter(n => !n.is_read).length);
         } catch (err) {
             console.error("Alert Sync Failure:", err);
         }
@@ -49,7 +52,6 @@ function NotificationDropdown() {
             fetchNotifications();
         } catch (error) {
             console.error('Mark notification read failed:', error);
-            toast.error("Registry update failed.");
         }
     };
 
@@ -64,13 +66,30 @@ function NotificationDropdown() {
         }
     };
 
+    const handleNotificationClick = (note) => {
+        markAsRead(note.id);
+        setIsOpen(false);
+        if (note.link) {
+            navigate(note.link);
+        }
+    };
+
+    const safeTimeAgo = (dateStr) => {
+        if (!dateStr) return '';
+        try {
+            return formatDistanceToNow(new Date(dateStr));
+        } catch {
+            return '';
+        }
+    };
+
     return (
         <div className="relative" ref={dropdownRef}>
             <button 
                 onClick={() => setIsOpen(!isOpen)}
                 className={`relative p-2.5 rounded-xl border transition-all duration-150 ease-out hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 ${
                     unreadCount > 0 
-                    ? 'bg-indigo-50 border-indigo-200 text-indigo-600' 
+                    ? 'bg-indigo-50 border-indigo-200 text-indigo-600 dark:bg-indigo-900/30 dark:border-indigo-800 dark:text-indigo-400' 
                     : 'bg-gray-50 dark:bg-gray-800 border-gray-100 dark:border-gray-700 text-gray-400 hover:text-gray-600'
                 }`}
             >
@@ -88,23 +107,19 @@ function NotificationDropdown() {
             </button>
 
             {isOpen && (
-                /* CHANGE: Changed 'right-0' to 'left-0' or use a fixed offset 
-                   to prevent it from going into the sidebar. 
-                   Increased z-index to 100.
-                */
-                <div className="absolute left-0 md:left-auto md:right-[-10rem] mt-4 w-80 md:w-96 bg-white dark:bg-gray-800 rounded-[2rem] shadow-2xl border border-gray-100 dark:border-gray-700 overflow-hidden z-[100] animate-in fade-in zoom-in-95 duration-200 origin-top-left">
+                <div className="absolute left-0 md:left-full md:ml-3 top-0 w-80 md:w-96 bg-white dark:bg-gray-800 rounded-[2rem] shadow-2xl border border-gray-100 dark:border-gray-700 overflow-hidden z-[9999] animate-in fade-in zoom-in-95 duration-200 origin-top-left">
                     <header className="px-6 py-5 bg-gray-50 dark:bg-gray-900/50 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
                         <div>
-                            <h3 className="text-xs font-black text-gray-900 dark:text-white uppercase tracking-[0.2em]">{t('deployment_alerts')}</h3>
-                            <p className="text-[9px] font-bold text-indigo-500 uppercase tracking-widest mt-0.5">{t('personnel_registry_sync')}</p>
+                            <h3 className="text-xs font-black text-gray-900 dark:text-white uppercase tracking-[0.2em]">{t('deployment_alerts', { defaultValue: 'Notifications & Alerts' })}</h3>
+                            <p className="text-[9px] font-bold text-indigo-500 uppercase tracking-widest mt-0.5">{t('personnel_registry_sync', { defaultValue: 'System Activity' })}</p>
                         </div>
                         {unreadCount > 0 && (
-                                <button 
+                            <button 
                                 onClick={markAllRead}
-                                className="p-2 rounded-lg text-indigo-600 transition-all duration-150 ease-out hover:bg-white dark:hover:bg-gray-700 hover:-translate-y-0.5 hover:shadow-sm active:translate-y-0"
-                                title={t('clear_all_title')}
+                                className="p-2 rounded-lg text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-all flex items-center gap-1 text-[10px] font-black uppercase tracking-wider"
+                                title={t('clear_all_title', { defaultValue: 'Mark all as read' })}
                             >
-                                <CheckCheckIcon className="h-5 w-5" />
+                                <CheckBadgeIcon className="h-5 w-5 text-indigo-600" />
                             </button>
                         )}
                     </header>
@@ -116,7 +131,7 @@ function NotificationDropdown() {
                                     <div 
                                         key={note.id} 
                                         className={`p-5 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-all duration-150 ease-out cursor-pointer group ${!note.is_read ? 'bg-indigo-50/30 dark:bg-indigo-900/5' : ''}`}
-                                        onClick={() => markAsRead(note.id)}
+                                        onClick={() => handleNotificationClick(note)}
                                     >
                                         <div className="flex gap-4">
                                             <div className={`mt-1 h-2 w-2 rounded-full shrink-0 ${!note.is_read ? 'bg-indigo-600 shadow-[0_0_8px_rgba(79,70,229,0.5)]' : 'bg-gray-300'}`} />
@@ -127,15 +142,14 @@ function NotificationDropdown() {
                                                 <div className="flex items-center justify-between">
                                                     <div className="flex items-center gap-1.5 text-[9px] font-black text-gray-400 uppercase tracking-widest">
                                                         <ClockIcon className="h-3 w-3" />
-                                                        {formatDistanceToNow(new Date(note.created_at))} {t('time_ago')}
+                                                        {safeTimeAgo(note.created_at)} {t('time_ago', { defaultValue: 'ago' })}
                                                     </div>
                                                     {note.link && (
-                                                        <Link 
-                                                            to={note.link}
+                                                        <span 
                                                             className="flex items-center gap-1 text-[9px] font-black text-indigo-600 uppercase tracking-widest group-hover:translate-x-1 transition-transform"
                                                         >
-                                                            {t('navigate_link')} <ArrowRightIcon className="h-3 w-3" />
-                                                        </Link>
+                                                            {t('navigate_link', { defaultValue: 'View' })} <ArrowRightIcon className="h-3 w-3" />
+                                                        </span>
                                                     )}
                                                 </div>
                                             </div>
@@ -146,8 +160,8 @@ function NotificationDropdown() {
                         ) : (
                             <div className="py-20 flex flex-col items-center justify-center text-center px-10">
                                 <InboxStackIcon className="h-12 w-12 text-gray-200 dark:text-gray-700 mb-4" />
-                                <h4 className="text-sm font-black text-gray-400 uppercase tracking-tighter italic">{t('sector_clear')}</h4>
-                                <p className="text-[10px] text-gray-300 font-bold uppercase tracking-widest mt-2">{t('no_active_alerts')}</p>
+                                <h4 className="text-sm font-black text-gray-400 uppercase tracking-tighter italic">{t('sector_clear', { defaultValue: 'No Notifications' })}</h4>
+                                <p className="text-[10px] text-gray-300 font-bold uppercase tracking-widest mt-2">{t('no_active_alerts', { defaultValue: 'You are all caught up.' })}</p>
                             </div>
                         )}
                     </div>
@@ -155,23 +169,15 @@ function NotificationDropdown() {
                     <footer className="p-4 bg-gray-50 dark:bg-gray-900/50 border-t border-gray-100 dark:border-gray-700 text-center">
                         <Link 
                             to="/notifications" 
+                            onClick={() => setIsOpen(false)}
                             className="text-[10px] font-black text-gray-400 hover:text-indigo-600 uppercase tracking-[0.2em] transition"
                         >
-                            {t('view_full_history')}
+                            {t('view_full_history', { defaultValue: 'View All Notifications' })}
                         </Link>
                     </footer>
                 </div>
             )}
         </div>
-    );
-}
-
-function CheckCheckIcon({ className }) {
-    return (
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className={className}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 17.25l1.5 1.5 5.25-7.5" />
-        </svg>
     );
 }
 
