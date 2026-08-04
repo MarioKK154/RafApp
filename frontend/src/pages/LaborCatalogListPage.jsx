@@ -238,20 +238,8 @@ function LaborCatalogListPage() {
                     { label: `${categories.length} ${t('categories', { defaultValue: 'Categories' })}`, dotColor: 'bg-green-400 animate-pulse' },
                 ]}
                 actions={
-                    (canImportAndCreate || canManageCatalog || canCreateOffer) && (
+                    (canImportAndCreate || canManageCatalog) && (
                         <div className="flex flex-wrap items-center gap-3">
-                            {canCreateOffer && (
-                                <button
-                                    onClick={() => {
-                                        setSelectedItemIds(new Set());
-                                        setIsOfferModalOpen(true);
-                                    }}
-                                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition shadow-lg shadow-indigo-500/30 transform active:scale-95 cursor-pointer"
-                                >
-                                    <DocumentPlusIcon className="h-5 w-5" />
-                                    {t('create_new_offer', { defaultValue: 'Create new offer' })}
-                                </button>
-                            )}
                             {canImportAndCreate && (
                                 <>
                                 <label className="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer">

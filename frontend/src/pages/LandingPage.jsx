@@ -661,13 +661,13 @@ function LandingPage() {
 
     const getCardPrice = (basePriceString) => {
         const num = parseInt(basePriceString.replace(/\D/g, ''), 10);
-        if (isNaN(num)) return basePriceString;
+        if (isNaN(num)) return { display: basePriceString, base: null };
         
         if (billingCycle === 'yearly') {
             const discounted = Math.round(num * 0.85);
-            return `${discounted.toLocaleString()} ISK`;
+            return { display: `${discounted.toLocaleString('is-IS')} ISK`, base: discounted };
         }
-        return `${num.toLocaleString()} ISK`;
+        return { display: `${num.toLocaleString('is-IS')} ISK`, base: num };
     };
 
     const calcResult = calculatePricing(calcUsers);
@@ -1296,14 +1296,33 @@ function LandingPage() {
                                         
                                         <div>
                                             <h3 className="text-2xl font-bold mb-4 text-left">{i18n.language.startsWith('en') ? (tier.name_en || tier.name) : (tier.name_is || tier.name)}</h3>
-                                            <div className="text-4xl font-black mb-1 text-[#0096FF] text-left">{getCardPrice(tier.price)}</div>
+                                            {(() => {
+                                                const cardPrice = getCardPrice(tier.price);
+                                                const withVskNum = cardPrice.base ? Math.round(cardPrice.base * 1.24) : null;
+                                                const isEn = i18n.language.startsWith('en');
+                                                return (
+                                                    <>
+                                                        <div className="text-4xl font-black mb-0.5 text-[#0096FF] text-left">{cardPrice.display || cardPrice}</div>
+                                                        <div className="flex items-baseline gap-2 mb-1">
+                                                            <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">
+                                                                {isEn ? 'excl. VSK' : 'án VSK'}
+                                                            </span>
+                                                            {withVskNum && (
+                                                                <span className="text-[10px] text-gray-500">
+                                                                    {isEn ? 'w/VSK:' : 'm/VSK:'} {withVskNum.toLocaleString('is-IS')} ISK
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </>
+                                                );
+                                            })()}
                                             {billingCycle === 'yearly' && !editMode && (
-                                                <span className="block text-[9px] font-bold text-green-400 uppercase tracking-wider text-left mb-6">
+                                                <span className="block text-[9px] font-bold text-green-400 uppercase tracking-wider text-left mb-4">
                                                     {i18n.language.startsWith('en') ? 'Billed annually (15% Off)' : 'Innheimt árlega (15% afsláttur)'}
                                                 </span>
                                             )}
                                             {billingCycle !== 'yearly' && !editMode && (
-                                                <div className="mb-6"></div>
+                                                <div className="mb-4"></div>
                                             )}
                                             
                                             {editMode ? (

@@ -196,7 +196,13 @@ function CatalogSearchInput({ value, onChange, onSelectCatalogItem, catalog, isI
 
     const selectItem = (item) => {
         const name = isIS ? (item.description || item.description_en || '') : (item.description_en || item.description || '');
-        const ein  = item.units_per_hour != null ? item.units_per_hour : (item.reference_price || 0);
+        // units_per_hour: how many units a worker can complete in 1 hour.
+        // 1 eining = 1 minute of work (ar.is: 60 einingar = 1 hour)
+        // So: einingar per unit = 60 / units_per_hour
+        let ein = 0;
+        if (item.units_per_hour != null && item.units_per_hour > 0) {
+            ein = Math.round((60 / item.units_per_hour) * 100) / 100; // e.g. 4 units/hr → 15 min/unit
+        }
         setQuery(name);
         setOpen(false);
         setResults([]);
@@ -234,7 +240,14 @@ function CatalogSearchInput({ value, onChange, onSelectCatalogItem, catalog, isI
                     <ul className="max-h-52 overflow-y-auto divide-y divide-gray-50 dark:divide-gray-700">
                         {results.map((item, idx) => {
                             const name = isIS ? (item.description || item.description_en || '') : (item.description_en || item.description || '');
-                            const ein  = item.units_per_hour != null ? item.units_per_hour : (item.reference_price || 0);
+                            // Convert units_per_hour → time per unit for display
+                            const uph = item.units_per_hour;
+                            let timeLabel = '';
+                            if (uph != null && uph > 0) {
+                                const minsPerUnit = 60 / uph;
+                                if (minsPerUnit >= 60) timeLabel = `${(minsPerUnit/60).toFixed(1).replace('.0','')} hr/unit`;
+                                else timeLabel = `${Math.round(minsPerUnit)} min/unit`;
+                            }
                             const cat  = isIS ? (item.sub_category || '') : (item.sub_category_en || item.sub_category || '');
                             return (
                                 <li
@@ -249,7 +262,7 @@ function CatalogSearchInput({ value, onChange, onSelectCatalogItem, catalog, isI
                                         {cat && <p className="text-[10px] text-gray-400 truncate">{cat}</p>}
                                     </div>
                                     <div className="shrink-0 text-right">
-                                        <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 font-mono">{ein} ein.</span>
+                                        <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 font-mono">{timeLabel || '—'}</span>
                                     </div>
                                 </li>
                             );
