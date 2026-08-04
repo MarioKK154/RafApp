@@ -245,6 +245,19 @@ async def upload_tenant_background(
     return JSONResponse({"url": url_path})
 
 
+@router.get("/invoices/all", response_model=List[schemas.BillingInvoiceRead])
+@limiter.limit("50/minute")
+async def get_all_system_invoices(
+    request: Request,
+    db: DbDependency,
+    current_user: CurrentUserDependency,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(200, ge=1, le=500)
+):
+    """Retrieves all invoices across all tenants in the system (superuser only)."""
+    return crud.get_all_billing_invoices(db, skip=skip, limit=limit)
+
+
 @router.get("/{tenant_id}/invoices", response_model=List[schemas.BillingInvoiceRead])
 @limiter.limit("50/minute")
 async def get_tenant_invoices(
@@ -298,3 +311,48 @@ async def pay_tenant_invoice(
     db.commit()
     db.refresh(db_invoice)
     return db_invoice
+
+
+@router.put("/invoices/{invoice_id}/status", response_model=schemas.BillingInvoiceRead)
+@limiter.limit("30/minute")
+async def update_tenant_invoice_status(
+    request: Request,
+    invoice_id: int,
+    new_status: str = Query(..., description="Paid, Pending, or Overdue"),
+    db: DbDependency = Depends(get_db),
+    current_user: CurrentUserDependency = Depends(security.require_superuser)
+):
+    """Updates status for a specific tenant invoice (superuser only)."""
+    db_invoice = crud.get_billing_invoice(db, invoice_id=invoice_id)
+    if not db_invoice:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invoice not found")
+    
+    if new_status not in ["Paid", "Pending", "Overdue"]:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Status must be Paid, Pending, or Overdue")
+        
+    from datetime import datetime, timezone
+    db_invoice.status = new_status
+    if new_status == "Paid" and not db_invoice.paid_at:
+        db_invoice.paid_at = datetime.now(timezone.utc)
+    elif new_status != "Paid":
+        db_invoice.paid_at = None
+    db.add(db_invoice)
+    db.commit()
+    db.refresh(db_invoice)
+    return db_invoice
+
+
+@router.delete("/invoices/{invoice_id}", status_code=status.HTTP_204_NO_CONTENT)
+@limiter.limit("30/minute")
+async def delete_tenant_invoice(
+    request: Request,
+    invoice_id: int,
+    db: DbDependency = Depends(get_db),
+    current_user: CurrentUserDependency = Depends(security.require_superuser)
+):
+    """Deletes a tenant invoice record (superuser only)."""
+    db_invoice = crud.get_billing_invoice(db, invoice_id=invoice_id)
+    if not db_invoice:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invoice not found")
+    crud.delete_billing_invoice(db, invoice_id=invoice_id)
+    return None

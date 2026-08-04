@@ -1920,8 +1920,20 @@ def get_billing_invoices_by_tenant(db: Session, tenant_id: int) -> List[models.B
     return db.query(models.BillingInvoice).filter(models.BillingInvoice.tenant_id == tenant_id).order_by(models.BillingInvoice.due_date.desc()).all()
 
 
+def get_all_billing_invoices(db: Session, skip: int = 0, limit: int = 200) -> List[models.BillingInvoice]:
+    return db.query(models.BillingInvoice).order_by(models.BillingInvoice.created_at.desc()).offset(skip).limit(limit).all()
+
+
 def get_billing_invoice(db: Session, invoice_id: int) -> Optional[models.BillingInvoice]:
     return db.query(models.BillingInvoice).filter(models.BillingInvoice.id == invoice_id).first()
+
+
+def delete_billing_invoice(db: Session, invoice_id: int) -> Optional[models.BillingInvoice]:
+    inv = get_billing_invoice(db, invoice_id)
+    if inv:
+        db.delete(inv)
+        db.commit()
+    return inv
 
 
 def get_overdue_billing_by_tenant(db: Session) -> List[Dict[str, Any]]:

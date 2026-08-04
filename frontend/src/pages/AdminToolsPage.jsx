@@ -83,6 +83,18 @@ function AdminToolsPage() {
     const [growth, setGrowth] = useState(null);
     const [systemLoad, setSystemLoad] = useState(null);
     const [billingOverdue, setBillingOverdue] = useState([]);
+    const [allTenants, setAllTenants] = useState([]);
+    const [allInvoices, setAllInvoices] = useState([]);
+    const [selectedTenantIdForInvoice, setSelectedTenantIdForInvoice] = useState('');
+    const [manualInvoice, setManualInvoice] = useState({
+        amount: 16390,
+        due_date: new Date().toISOString().split('T')[0],
+        status: 'Paid',
+        provider: 'Direct Bank Transfer (VSK)',
+        description: `Áskriftargjald ${new Date().toLocaleDateString('is-IS', { month: 'long', year: 'numeric' })}`
+    });
+    const [isLoggingInvoice, setIsLoggingInvoice] = useState(false);
+
     const [systemStatus, setSystemStatus] = useState(null);
     const [maintenanceMessage, setMaintenanceMessage] = useState('');
     const [impersonationLogs, setImpersonationLogs] = useState([]);
@@ -116,6 +128,93 @@ function AdminToolsPage() {
     const [suggestions, setSuggestions] = useState([]);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [aiAnalysis, setAiAnalysis] = useState(null);
+
+    const handleSelectTenantForInvoice = (tenantId) => {
+        setSelectedTenantIdForInvoice(tenantId);
+        const tObj = allTenants.find(t => String(t.id) === String(tenantId));
+        if (tObj) {
+            const users = tObj.user_count || 1;
+            let defaultAmount = 16390;
+            if (users <= 10) {
+                const extra = Math.max(0, users - 2);
+                const total = 16390 + extra * 3190;
+                defaultAmount = Math.min(41910, total);
+            } else if (users <= 25) {
+                const extra = Math.max(0, users - 10);
+                const total = 43890 + extra * 2750;
+                defaultAmount = Math.min(85140, total);
+            } else if (users <= 65) {
+                const extra = Math.max(0, users - 25);
+                const total = 82390 + extra * 2200;
+                defaultAmount = Math.min(170390, total);
+            } else {
+                const extra = Math.max(0, users - 65);
+                defaultAmount = 164890 + extra * 1650;
+            }
+            setManualInvoice(prev => ({
+                ...prev,
+                amount: defaultAmount,
+                description: `Mánaðarleg áskrift ${new Date().toLocaleDateString('is-IS', { month: 'long', year: 'numeric' })} (${users} notendur)`
+            }));
+        }
+    };
+
+    const handleRecordManualInvoice = async (e) => {
+        e.preventDefault();
+        if (!selectedTenantIdForInvoice) {
+            toast.warn('Vinsamlegast veldu fyrirtæki/tenant.');
+            return;
+        }
+        setIsLoggingInvoice(true);
+        try {
+            const payload = {
+                tenant_id: parseInt(selectedTenantIdForInvoice, 10),
+                amount: parseFloat(manualInvoice.amount),
+                due_date: manualInvoice.due_date,
+                status: manualInvoice.status,
+                provider: manualInvoice.provider,
+                description: manualInvoice.description
+            };
+            await axiosInstance.post(`/tenants/${selectedTenantIdForInvoice}/invoices`, payload);
+            toast.success("Mánaðarleg áskriftarfærsla skráð!");
+            const [invRes, billingRes] = await Promise.all([
+                axiosInstance.get('/tenants/invoices/all'),
+                axiosInstance.get('/admin/super/billing/overdue-tenants')
+            ]);
+            setAllInvoices(Array.isArray(invRes.data) ? invRes.data : []);
+            setBillingOverdue(Array.isArray(billingRes.data) ? billingRes.data : []);
+        } catch (err) {
+            toast.error(err.response?.data?.detail || "Gat ekki skráð áskriftarfærslu");
+        } finally {
+            setIsLoggingInvoice(false);
+        }
+    };
+
+    const handleUpdateInvoiceStatus = async (invoiceId, newStatus) => {
+        try {
+            await axiosInstance.put(`/tenants/invoices/${invoiceId}/status?new_status=${newStatus}`);
+            toast.success(`Færslu breytt í ${newStatus}`);
+            const [invRes, billingRes] = await Promise.all([
+                axiosInstance.get('/tenants/invoices/all'),
+                axiosInstance.get('/admin/super/billing/overdue-tenants')
+            ]);
+            setAllInvoices(Array.isArray(invRes.data) ? invRes.data : []);
+            setBillingOverdue(Array.isArray(billingRes.data) ? billingRes.data : []);
+        } catch (err) {
+            toast.error(err.response?.data?.detail || "Gat ekki uppfært stöðu");
+        }
+    };
+
+    const handleDeleteInvoice = async (invoiceId) => {
+        try {
+            await axiosInstance.delete(`/tenants/invoices/${invoiceId}`);
+            toast.success("Færslu eytt!");
+            const invRes = await axiosInstance.get('/tenants/invoices/all');
+            setAllInvoices(Array.isArray(invRes.data) ? invRes.data : []);
+        } catch (err) {
+            toast.error("Gat ekki eytt færslu");
+        }
+    };
 
     const handleDismissSuggestion = async (id) => {
         try {
@@ -203,7 +302,7 @@ function AdminToolsPage() {
             if (!isSuperuser) return;
             setIsLoadingMetrics(true);
             try {
-                const [heatmapRes, growthRes, loadRes, billingRes, statusRes, logsRes, auditRes, healthRes, bannerRes, landingFeedRes, suggestionsRes] = await Promise.all([
+                const [heatmapRes, growthRes, loadRes, billingRes, statusRes, logsRes, auditRes, healthRes, bannerRes, landingFeedRes, suggestionsRes, tenantsRes, invoicesRes] = await Promise.all([
                     axiosInstance.get('/admin/super/tenant-heatmap'),
                     axiosInstance.get('/admin/super/growth-metrics'),
                     axiosInstance.get('/admin/super/system-load'),
@@ -215,11 +314,15 @@ function AdminToolsPage() {
                     axiosInstance.get('/system/banner'),
                     axiosInstance.get('/system/landing-feed'),
                     axiosInstance.get('/admin/super/suggestions'),
+                    axiosInstance.get('/tenants/', { params: { limit: 200 } }),
+                    axiosInstance.get('/tenants/invoices/all', { params: { limit: 200 } }),
                 ]);
                 setHeatmap(heatmapRes.data);
                 setGrowth(growthRes.data);
                 setSystemLoad(loadRes.data);
                 setBillingOverdue(Array.isArray(billingRes.data) ? billingRes.data : []);
+                setAllTenants(Array.isArray(tenantsRes.data) ? tenantsRes.data : []);
+                setAllInvoices(Array.isArray(invoicesRes.data) ? invoicesRes.data : []);
                 setSystemStatus(statusRes.data);
                 setMaintenanceMessage(statusRes.data?.message || '');
                 setImpersonationLogs(Array.isArray(logsRes.data) ? logsRes.data : []);
@@ -808,28 +911,245 @@ function AdminToolsPage() {
                                 </div>
                             </div>
 
-                            {/* Monthly Pricing Tier Overview */}
+                            {/* Monthly Pricing Tier Overview - 4 Official Tiers */}
                             <div className="p-6 bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm space-y-4">
-                                <div className="flex items-center gap-2 border-b border-gray-100 dark:border-gray-700 pb-3">
-                                    <SparklesIcon className="h-5 w-5 text-indigo-500" />
-                                    <h3 className="text-xs font-black uppercase tracking-wider text-gray-900 dark:text-white">
-                                        Subscription Seat Tiers
-                                    </h3>
+                                <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-700 pb-3">
+                                    <div className="flex items-center gap-2">
+                                        <SparklesIcon className="h-5 w-5 text-indigo-500" />
+                                        <h3 className="text-xs font-black uppercase tracking-wider text-gray-900 dark:text-white">
+                                            Subscription Seat Tiers (4 Plans)
+                                        </h3>
+                                    </div>
+                                    <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400">
+                                        Active Tiers
+                                    </span>
                                 </div>
-                                <div className="space-y-2 text-xs">
-                                    <div className="flex justify-between p-2.5 bg-gray-50 dark:bg-gray-900 rounded-xl">
-                                        <span className="font-bold text-gray-700 dark:text-gray-300 uppercase text-[10px]">{t('starter_1_5_users', { defaultValue: 'Starter (1-5 users)' })}</span>
-                                        <span className="font-black text-indigo-600 dark:text-indigo-400">14.900 kr. / mo</span>
+                                <div className="space-y-2.5 text-xs">
+                                    <div className="p-2.5 bg-gray-50 dark:bg-gray-900 rounded-xl space-y-1">
+                                        <div className="flex justify-between items-center">
+                                            <span className="font-bold text-gray-800 dark:text-gray-200 uppercase text-[10px]">Sóló & Lítil (1-10 users)</span>
+                                            <span className="font-black text-indigo-600 dark:text-indigo-400 font-mono">16.390 kr. / mán</span>
+                                        </div>
+                                        <p className="text-[9px] text-gray-400">Grunnur: 2 notendur · +3.190 kr/notandi · Hámark: 41.910 kr</p>
                                     </div>
-                                    <div className="flex justify-between p-2.5 bg-gray-50 dark:bg-gray-900 rounded-xl">
-                                        <span className="font-bold text-gray-700 dark:text-gray-300 uppercase text-[10px]">{t('pro_6_20_users', { defaultValue: 'Pro (6-20 users)' })}</span>
-                                        <span className="font-black text-indigo-600 dark:text-indigo-400">{t('34_900_kr_mo', { defaultValue: '34.900 kr. / mo' })}</span>
+                                    <div className="p-2.5 bg-gray-50 dark:bg-gray-900 rounded-xl space-y-1">
+                                        <div className="flex justify-between items-center">
+                                            <span className="font-bold text-gray-800 dark:text-gray-200 uppercase text-[10px]">Meðalstór (11-25 users)</span>
+                                            <span className="font-black text-indigo-600 dark:text-indigo-400 font-mono">43.890 kr. / mán</span>
+                                        </div>
+                                        <p className="text-[9px] text-gray-400">Grunnur: 10 notendur · +2.750 kr/notandi · Hámark: 85.140 kr</p>
                                     </div>
-                                    <div className="flex justify-between p-2.5 bg-gray-50 dark:bg-gray-900 rounded-xl">
-                                        <span className="font-bold text-gray-700 dark:text-gray-300 uppercase text-[10px]">{t('enterprise_20_users', { defaultValue: 'Enterprise (20+ users)' })}</span>
-                                        <span className="font-black text-indigo-600 dark:text-indigo-400">{t('custom_billing', { defaultValue: 'Custom Billing' })}</span>
+                                    <div className="p-2.5 bg-gray-50 dark:bg-gray-900 rounded-xl space-y-1">
+                                        <div className="flex justify-between items-center">
+                                            <span className="font-bold text-gray-800 dark:text-gray-200 uppercase text-[10px]">Stórhópur (26-65 users)</span>
+                                            <span className="font-black text-indigo-600 dark:text-indigo-400 font-mono">82.390 kr. / mán</span>
+                                        </div>
+                                        <p className="text-[9px] text-gray-400">Grunnur: 25 notendur · +2.200 kr/notandi · Hámark: 170.390 kr</p>
+                                    </div>
+                                    <div className="p-2.5 bg-gray-50 dark:bg-gray-900 rounded-xl space-y-1">
+                                        <div className="flex justify-between items-center">
+                                            <span className="font-bold text-gray-800 dark:text-gray-200 uppercase text-[10px]">Fyrirtæki (66+ users)</span>
+                                            <span className="font-black text-indigo-600 dark:text-indigo-400 font-mono">164.890 kr. / mán</span>
+                                        </div>
+                                        <p className="text-[9px] text-gray-400">Grunnur: 65 notendur · +1.650 kr/notandi · Skalar með vexti</p>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+
+                        {/* Manual Subscription Input & Payment Tracking */}
+                        <div className="space-y-6 pt-6 border-t border-gray-100 dark:border-gray-800">
+                            <h2 className="text-sm font-black text-gray-400 uppercase tracking-widest pb-2">
+                                Manual Tenant Subscription Tracker & Payment Ledger
+                            </h2>
+
+                            {/* Form to Log Payment */}
+                            <div className="p-6 bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm space-y-4">
+                                <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-700 pb-3">
+                                    <div className="flex items-center gap-2">
+                                        <PlusIcon className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+                                        <h3 className="text-xs font-black uppercase tracking-wider text-gray-900 dark:text-white">
+                                            Skrá mánaðarlega áskrift / Manual Subscription Payment Entry
+                                        </h3>
+                                    </div>
+                                    <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Superuser Billing Console</span>
+                                </div>
+
+                                <form onSubmit={handleRecordManualInvoice} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    <div>
+                                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1">
+                                            Fyrirtæki / Tenant
+                                        </label>
+                                        <select
+                                            value={selectedTenantIdForInvoice}
+                                            onChange={(e) => handleSelectTenantForInvoice(e.target.value)}
+                                            required
+                                            className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-xs text-gray-900 dark:text-white font-bold focus:ring-2 focus:ring-indigo-500"
+                                        >
+                                            <option value="">-- Veldu fyrirtæki --</option>
+                                            {allTenants.map(t => (
+                                                <option key={t.id} value={t.id}>
+                                                    {t.name} (ID: {t.id} · {t.user_count || 1} notendur)
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1">
+                                            Upphæð án VSK (ISK)
+                                        </label>
+                                        <input
+                                            type="number"
+                                            value={manualInvoice.amount}
+                                            onChange={(e) => setManualInvoice(prev => ({ ...prev, amount: e.target.value }))}
+                                            required
+                                            step="100"
+                                            className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-xs text-gray-900 dark:text-white font-mono font-bold focus:ring-2 focus:ring-indigo-500"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1">
+                                            Gjalddagi / Due Date
+                                        </label>
+                                        <input
+                                            type="date"
+                                            value={manualInvoice.due_date}
+                                            onChange={(e) => setManualInvoice(prev => ({ ...prev, due_date: e.target.value }))}
+                                            required
+                                            className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-xs text-gray-900 dark:text-white font-bold focus:ring-2 focus:ring-indigo-500"
+                                        />
+                                    </div>
+
+                                    <div className="lg:col-span-2">
+                                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1">
+                                            Lýsing / Tímabil
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={manualInvoice.description}
+                                            onChange={(e) => setManualInvoice(prev => ({ ...prev, description: e.target.value }))}
+                                            required
+                                            placeholder="Mánaðarleg áskrift Ágúst 2026"
+                                            className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-xs text-gray-900 dark:text-white font-bold focus:ring-2 focus:ring-indigo-500"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1">
+                                            Greiðslustaða / Payment Status
+                                        </label>
+                                        <select
+                                            value={manualInvoice.status}
+                                            onChange={(e) => setManualInvoice(prev => ({ ...prev, status: e.target.value }))}
+                                            className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-xs text-gray-900 dark:text-white font-bold focus:ring-2 focus:ring-indigo-500"
+                                        >
+                                            <option value="Paid">Greitt / Paid</option>
+                                            <option value="Pending">Í bið / Pending</option>
+                                            <option value="Overdue">Gjaldfallið / Overdue</option>
+                                        </select>
+                                    </div>
+
+                                    <div className="lg:col-span-3 flex justify-end pt-2">
+                                        <button
+                                            type="submit"
+                                            disabled={isLoggingInvoice || !selectedTenantIdForInvoice}
+                                            className="px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-black text-xs uppercase tracking-widest rounded-xl transition shadow-md disabled:opacity-50"
+                                        >
+                                            {isLoggingInvoice ? 'Vista...' : '+ Skrá Áskriftarfærslu'}
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+
+                            {/* Payment Ledger History Table */}
+                            <div className="p-6 bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm space-y-4">
+                                <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-700 pb-3">
+                                    <div className="flex items-center gap-2">
+                                        <ClockIcon className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+                                        <h3 className="text-xs font-black uppercase tracking-wider text-gray-900 dark:text-white">
+                                            Tenant Subscription Ledger ({allInvoices.length} Entries)
+                                        </h3>
+                                    </div>
+                                    <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">All Historical Payments</span>
+                                </div>
+
+                                {allInvoices.length === 0 ? (
+                                    <p className="text-xs text-gray-400 italic text-center py-6">Engar áskriftarfærslur skráðar í kerfinu ennþá.</p>
+                                ) : (
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full text-left text-xs">
+                                            <thead>
+                                                <tr className="border-b border-gray-100 dark:border-gray-700 text-[10px] font-black uppercase text-gray-400 tracking-wider">
+                                                    <th className="py-2.5 px-3">Tenant / Fyrirtæki</th>
+                                                    <th className="py-2.5 px-3">Lýsing</th>
+                                                    <th className="py-2.5 px-3">Gjalddagi</th>
+                                                    <th className="py-2.5 px-3 text-right">Upphæð (m/VSK)</th>
+                                                    <th className="py-2.5 px-3 text-center">Staða</th>
+                                                    <th className="py-2.5 px-3 text-right">Aðgerðir</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                                                {allInvoices.map(inv => {
+                                                    const tenantName = allTenants.find(t => t.id === inv.tenant_id)?.name || `Tenant #${inv.tenant_id}`;
+                                                    const amountWithVat = (inv.amount * 1.24).toLocaleString('is-IS');
+                                                    return (
+                                                        <tr key={inv.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/50 transition">
+                                                            <td className="py-3 px-3 font-bold text-gray-900 dark:text-white">
+                                                                {tenantName}
+                                                            </td>
+                                                            <td className="py-3 px-3 text-gray-600 dark:text-gray-300">
+                                                                {inv.description}
+                                                                {inv.provider && <span className="block text-[9px] text-gray-400 font-mono">{inv.provider}</span>}
+                                                            </td>
+                                                            <td className="py-3 px-3 text-gray-500 font-mono text-[11px]">
+                                                                {inv.due_date}
+                                                            </td>
+                                                            <td className="py-3 px-3 text-right font-black font-mono text-indigo-600 dark:text-indigo-400">
+                                                                {inv.amount?.toLocaleString('is-IS')} kr.
+                                                                <span className="block text-[9px] text-gray-400 font-normal">m/VSK: {amountWithVat} kr.</span>
+                                                            </td>
+                                                            <td className="py-3 px-3 text-center">
+                                                                <span className={`inline-block px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider ${
+                                                                    inv.status === 'Paid' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
+                                                                    inv.status === 'Overdue' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
+                                                                    'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                                                                }`}>
+                                                                    {inv.status}
+                                                                </span>
+                                                            </td>
+                                                            <td className="py-3 px-3 text-right space-x-1">
+                                                                {inv.status !== 'Paid' && (
+                                                                    <button
+                                                                        onClick={() => handleUpdateInvoiceStatus(inv.id, 'Paid')}
+                                                                        className="px-2 py-1 bg-green-600 hover:bg-green-700 text-white font-bold text-[9px] uppercase rounded transition"
+                                                                    >
+                                                                        Mark Paid
+                                                                    </button>
+                                                                )}
+                                                                {inv.status !== 'Overdue' && (
+                                                                    <button
+                                                                        onClick={() => handleUpdateInvoiceStatus(inv.id, 'Overdue')}
+                                                                        className="px-2 py-1 bg-red-600 hover:bg-red-700 text-white font-bold text-[9px] uppercase rounded transition"
+                                                                    >
+                                                                        Mark Overdue
+                                                                    </button>
+                                                                )}
+                                                                <button
+                                                                    onClick={() => handleDeleteInvoice(inv.id)}
+                                                                    className="px-2 py-1 bg-gray-200 hover:bg-red-500 hover:text-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-bold text-[9px] uppercase rounded transition"
+                                                                >
+                                                                    Eyða
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                })}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
