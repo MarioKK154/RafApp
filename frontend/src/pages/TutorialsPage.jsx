@@ -160,22 +160,25 @@ function TutorialsPage() {
                 <div className="lg:col-span-7 space-y-8">
                     
                     {/* Cable Sizing Module */}
-                    <section className="saas-card overflow-hidden">
-                        <div className="p-6 border-b border-gray-100 dark:border-gray-700">
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl">
-                                    <BoltIcon className="h-4 w-4 text-indigo-600" />
+                    <section className="bg-white dark:bg-gray-800/90 rounded-3xl border border-gray-100 dark:border-gray-700/80 shadow-xl shadow-indigo-500/5 overflow-hidden backdrop-blur-md">
+                        <div className="p-6 border-b border-gray-100 dark:border-gray-700/80 flex items-center justify-between bg-gradient-to-r from-indigo-50/50 via-purple-50/30 to-transparent dark:from-indigo-950/20 dark:via-purple-950/10 dark:to-transparent">
+                            <div className="flex items-center gap-3.5">
+                                <div className="p-2.5 bg-indigo-600 text-white rounded-2xl shadow-md shadow-indigo-500/30">
+                                    <BoltIcon className="h-5 w-5" />
                                 </div>
                                 <div>
                                     <h2 className="text-base font-black text-gray-900 dark:text-white uppercase tracking-tight">{t('calc_cable_sizing_title', { defaultValue: 'Cable Sizing Terminal' })}</h2>
-                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">{t('calc_cable_sizing_subtitle', { defaultValue: 'IST 200 Standard Compliant' })}</p>
+                                    <p className="text-[10px] font-extrabold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mt-0.5">{t('calc_cable_sizing_subtitle', { defaultValue: 'IST 200 Standard Compliant' })}</p>
                                 </div>
                             </div>
+                            <span className="text-[10px] font-black uppercase tracking-widest px-3 py-1 bg-indigo-50 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-300 rounded-full border border-indigo-100 dark:border-indigo-800/60 hidden sm:inline-block">
+                                IEC / IST 200
+                            </span>
                         </div>
                         <div className="p-6">
-                            <div className="mb-5 p-4 bg-indigo-50 dark:bg-indigo-900/10 rounded-xl border border-indigo-100 dark:border-indigo-800 flex gap-3">
-                                <InformationCircleIcon className="h-4 w-4 text-indigo-500 shrink-0 mt-0.5" />
-                                <p className="text-[11px] text-indigo-700 dark:text-indigo-300 leading-relaxed">
+                            <div className="mb-6 p-4 bg-indigo-50/70 dark:bg-indigo-900/20 rounded-2xl border border-indigo-100 dark:border-indigo-800/40 flex gap-3 items-center">
+                                <InformationCircleIcon className="h-5 w-5 text-indigo-500 shrink-0" />
+                                <p className="text-xs text-indigo-800 dark:text-indigo-200 leading-relaxed font-medium">
                                     {t('calc_cable_sizing_desc', { defaultValue: 'Determines minimum cross-sectional area based on load amperage, run distance, and correction factors.' })}
                                 </p>
                             </div>
@@ -184,17 +187,20 @@ function TutorialsPage() {
                     </section>
 
                     {/* Conduit Fill Module */}
-                    <section className="saas-card overflow-hidden">
-                        <div className="p-6 border-b border-gray-100 dark:border-gray-700">
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl">
-                                    <BeakerIcon className="h-4 w-4 text-indigo-600" />
+                    <section className="bg-white dark:bg-gray-800/90 rounded-3xl border border-gray-100 dark:border-gray-700/80 shadow-xl shadow-indigo-500/5 overflow-hidden backdrop-blur-md">
+                        <div className="p-6 border-b border-gray-100 dark:border-gray-700/80 flex items-center justify-between bg-gradient-to-r from-indigo-50/50 via-teal-50/30 to-transparent dark:from-indigo-950/20 dark:via-teal-950/10 dark:to-transparent">
+                            <div className="flex items-center gap-3.5">
+                                <div className="p-2.5 bg-indigo-600 text-white rounded-2xl shadow-md shadow-indigo-500/30">
+                                    <BeakerIcon className="h-5 w-5" />
                                 </div>
                                 <div>
                                     <h2 className="text-base font-black text-gray-900 dark:text-white uppercase tracking-tight">{t('calc_conduit_fill_title', { defaultValue: 'Conduit Fill Calculator' })}</h2>
-                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">{t('calc_conduit_fill_subtitle', { defaultValue: 'Indicative fill based on conductor diameters' })}</p>
+                                    <p className="text-[10px] font-extrabold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mt-0.5">{t('calc_conduit_fill_subtitle', { defaultValue: 'Indicative fill based on conductor diameters' })}</p>
                                 </div>
                             </div>
+                            <span className="text-[10px] font-black uppercase tracking-widest px-3 py-1 bg-indigo-50 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-300 rounded-full border border-indigo-100 dark:border-indigo-800/60 hidden sm:inline-block">
+                                Geometry Engine
+                            </span>
                         </div>
                         <div className="p-6">
                             <ConduitFillCalculator />
@@ -202,17 +208,20 @@ function TutorialsPage() {
                     </section>
 
                     {/* Phase Balancing Module */}
-                    <section className="saas-card overflow-hidden">
-                        <div className="p-6 border-b border-gray-100 dark:border-gray-700">
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl">
-                                    <ChartBarIcon className="h-4 w-4 text-indigo-600" />
+                    <section className="bg-white dark:bg-gray-800/90 rounded-3xl border border-gray-100 dark:border-gray-700/80 shadow-xl shadow-indigo-500/5 overflow-hidden backdrop-blur-md">
+                        <div className="p-6 border-b border-gray-100 dark:border-gray-700/80 flex items-center justify-between bg-gradient-to-r from-indigo-50/50 via-amber-50/30 to-transparent dark:from-indigo-950/20 dark:via-amber-950/10 dark:to-transparent">
+                            <div className="flex items-center gap-3.5">
+                                <div className="p-2.5 bg-indigo-600 text-white rounded-2xl shadow-md shadow-indigo-500/30">
+                                    <ChartBarIcon className="h-5 w-5" />
                                 </div>
                                 <div>
                                     <h2 className="text-base font-black text-gray-900 dark:text-white uppercase tracking-tight">{t('calc_phase_balance_title', { defaultValue: 'Phase Balance Analyzer' })}</h2>
-                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">{t('calc_phase_balance_subtitle', { defaultValue: 'Visualize three-phase loading by circuit' })}</p>
+                                    <p className="text-[10px] font-extrabold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mt-0.5">{t('calc_phase_balance_subtitle', { defaultValue: 'Visualize three-phase loading by circuit' })}</p>
                                 </div>
                             </div>
+                            <span className="text-[10px] font-black uppercase tracking-widest px-3 py-1 bg-indigo-50 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-300 rounded-full border border-indigo-100 dark:border-indigo-800/60 hidden sm:inline-block">
+                                3Ø Balancer
+                            </span>
                         </div>
                         <div className="p-6">
                             <PhaseBalancingCalculator />
@@ -220,36 +229,41 @@ function TutorialsPage() {
                     </section>
 
                     {/* Voltage Drop Module */}
-                    <section className="saas-card overflow-hidden">
-                        <div className="p-6 border-b border-gray-100 dark:border-gray-700">
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl">
-                                    <CalculatorIcon className="h-4 w-4 text-indigo-600" />
+                    <section className="bg-white dark:bg-gray-800/90 rounded-3xl border border-gray-100 dark:border-gray-700/80 shadow-xl shadow-indigo-500/5 overflow-hidden backdrop-blur-md">
+                        <div className="p-6 border-b border-gray-100 dark:border-gray-700/80 flex items-center justify-between bg-gradient-to-r from-indigo-50/50 via-purple-50/30 to-transparent dark:from-indigo-950/20 dark:via-purple-950/10 dark:to-transparent">
+                            <div className="flex items-center gap-3.5">
+                                <div className="p-2.5 bg-indigo-600 text-white rounded-2xl shadow-md shadow-indigo-500/30">
+                                    <CalculatorIcon className="h-5 w-5" />
                                 </div>
                                 <div>
                                     <h2 className="text-base font-black text-gray-900 dark:text-white uppercase tracking-tight">{t('calc_voltage_drop_title', { defaultValue: 'Voltage Drop Checker' })}</h2>
-                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">{t('calc_voltage_drop_subtitle', { defaultValue: 'Quick drop estimation along feeders' })}</p>
+                                    <p className="text-[10px] font-extrabold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mt-0.5">{t('calc_voltage_drop_subtitle', { defaultValue: 'Quick drop estimation along feeders' })}</p>
                                 </div>
                             </div>
+                            <span className="text-[10px] font-black uppercase tracking-widest px-3 py-1 bg-indigo-50 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-300 rounded-full border border-indigo-100 dark:border-indigo-800/60 hidden sm:inline-block">
+                                Feeder Check
+                            </span>
                         </div>
                         <div className="p-6">
                             <VoltageDropCalculator />
                         </div>
                     </section>
 
-
                     {/* Short-Circuit Current Module */}
-                    <section className="saas-card overflow-hidden">
-                        <div className="p-6 border-b border-gray-100 dark:border-gray-700">
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl">
-                                    <BoltIcon className="h-4 w-4 text-indigo-600" />
+                    <section className="bg-white dark:bg-gray-800/90 rounded-3xl border border-gray-100 dark:border-gray-700/80 shadow-xl shadow-indigo-500/5 overflow-hidden backdrop-blur-md">
+                        <div className="p-6 border-b border-gray-100 dark:border-gray-700/80 flex items-center justify-between bg-gradient-to-r from-indigo-50/50 via-blue-50/30 to-transparent dark:from-indigo-950/20 dark:via-blue-950/10 dark:to-transparent">
+                            <div className="flex items-center gap-3.5">
+                                <div className="p-2.5 bg-indigo-600 text-white rounded-2xl shadow-md shadow-indigo-500/30">
+                                    <BoltIcon className="h-5 w-5" />
                                 </div>
                                 <div>
                                     <h2 className="text-base font-black text-gray-900 dark:text-white uppercase tracking-tight">{t('calc_short_circuit_title', { defaultValue: 'Short-Circuit Estimator' })}</h2>
-                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">{t('calc_short_circuit_subtitle', { defaultValue: 'Approximate Ik at panel and breaker kA class' })}</p>
+                                    <p className="text-[10px] font-extrabold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mt-0.5">{t('calc_short_circuit_subtitle', { defaultValue: 'Approximate Ik at panel and breaker kA class' })}</p>
                                 </div>
                             </div>
+                            <span className="text-[10px] font-black uppercase tracking-widest px-3 py-1 bg-indigo-50 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-300 rounded-full border border-indigo-100 dark:border-indigo-800/60 hidden sm:inline-block">
+                                Fault Rating
+                            </span>
                         </div>
                         <div className="p-6">
                             <ShortCircuitCalculator />
