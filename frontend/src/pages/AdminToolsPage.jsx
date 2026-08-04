@@ -26,7 +26,9 @@ import {
     BuildingOfficeIcon,
     CreditCardIcon,
     WrenchScrewdriverIcon,
-    ShieldCheckIcon
+    ShieldCheckIcon,
+    PlusIcon,
+    ClockIcon
 } from '@heroicons/react/24/outline';
 
 const CONFIRMATION_PHRASE = "PERFORM CLEAN SLATE";
