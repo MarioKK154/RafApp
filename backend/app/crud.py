@@ -87,6 +87,11 @@ def create_tenant(db: Session, tenant: schemas.TenantCreate) -> models.Tenant:
     db_tenant = models.Tenant(
         name=tenant.name,
         subdomain=tenant.subdomain.strip().lower() if tenant.subdomain else None,
+        kennitala=tenant.kennitala,
+        address=tenant.address,
+        ceo=tenant.ceo,
+        email=tenant.email,
+        phone_number=tenant.phone_number,
         logo_url=str(tenant.logo_url) if tenant.logo_url else None,
         background_image_url=str(tenant.background_image_url) if tenant.background_image_url else None,
         background_image_urls=json.dumps(bg_urls) if bg_urls else None,

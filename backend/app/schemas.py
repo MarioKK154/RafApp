@@ -171,6 +171,11 @@ class TotpDisableBody(BaseModel):
 class TenantBase(BaseModel):
     name: str = Field(..., min_length=1)
     subdomain: Optional[str] = None
+    kennitala: Optional[str] = None
+    address: Optional[str] = None
+    ceo: Optional[str] = None
+    email: Optional[str] = None
+    phone_number: Optional[str] = None
     base_hourly_rate: Optional[float] = 6500.0
     logo_url: Optional[HttpUrl | str] = None
     background_image_url: Optional[HttpUrl | str] = None
@@ -203,6 +208,11 @@ class TenantCreate(TenantBase):
 class TenantUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=1)
     subdomain: Optional[str] = None
+    kennitala: Optional[str] = None
+    address: Optional[str] = None
+    ceo: Optional[str] = None
+    email: Optional[str] = None
+    phone_number: Optional[str] = None
     base_hourly_rate: Optional[float] = None
     logo_url: Optional[HttpUrl | str | None] = None
     background_image_url: Optional[HttpUrl | str | None] = None
@@ -233,6 +243,7 @@ class UserBase(BaseModel):
     phone_number: Optional[str] = None
     city: Optional[str] = None # ROADMAP #3
     location: Optional[str] = None # Legacy support
+    custom_title: Optional[str] = None # Visual job title (e.g. CEO, CFO, Master Electrician)
 
 class UserCreateAdmin(UserBase):
     password: str
@@ -305,6 +316,7 @@ class UserUpdateAdmin(BaseModel):
     phone_number: Optional[str] = None
     city: Optional[str] = None
     location: Optional[str] = None
+    custom_title: Optional[str] = None
     hourly_rate: Optional[float] = None
     is_active: Optional[bool] = None
     is_superuser: Optional[bool] = None

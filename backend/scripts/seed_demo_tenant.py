@@ -117,6 +117,11 @@ def _ensure_tenant(db) -> models.Tenant:
             id=TENANT_ID,
             name="Rafverktakar Suðurnesja ehf.",
             subdomain="rafsud",
+            kennitala="540210-1230",
+            address="Stórhöfði 17, 110 Reykjavík",
+            ceo="Márió Ólafsson",
+            email="rafsud@rafsud.is",
+            phone_number="+354 555 1234",
             is_active=True,
             base_hourly_rate=4500.0,
             logo_url="https://tntvbultwjeyizswvqax.supabase.co/storage/v1/object/public/rafapp-uploads/tenant_assets/2/logo.png",
@@ -129,6 +134,11 @@ def _ensure_tenant(db) -> models.Tenant:
     else:
         tenant.name = "Rafverktakar Suðurnesja ehf."
         tenant.subdomain = "rafsud"
+        tenant.kennitala = "540210-1230"
+        tenant.address = "Stórhöfði 17, 110 Reykjavík"
+        tenant.ceo = "Márió Ólafsson"
+        tenant.email = "rafsud@rafsud.is"
+        tenant.phone_number = "+354 555 1234"
         tenant.is_active = True
         tenant.base_hourly_rate = 4500.0
         tenant.logo_url = "https://tntvbultwjeyizswvqax.supabase.co/storage/v1/object/public/rafapp-uploads/tenant_assets/2/logo.png"
@@ -149,20 +159,20 @@ def seed_demo_tenant(reset_existing: bool = True):
         pwd_hash = get_password_hash(DEFAULT_PASSWORD)
         now = _utc_now()
 
-        # 1. Create 12 Personnel Users with Photos
+        # 1. Create 12 Personnel Users with Photos & Custom Job Titles
         users_meta = [
-            {"email": "gunnar@rafsud.is", "full_name": "Gunnar Jónsson", "role": "admin", "emp_id": "EMP-001", "hourly": 6800, "photo": "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=400&auto=format&fit=crop"},
-            {"email": "helga@rafsud.is", "full_name": "Helga Magnúsdóttir", "role": "accountant", "emp_id": "EMP-002", "hourly": 4800, "photo": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&auto=format&fit=crop"},
-            {"email": "stefan@rafsud.is", "full_name": "Stefán Kárason", "role": "project manager", "emp_id": "EMP-003", "hourly": 5900, "photo": "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=400&auto=format&fit=crop"},
-            {"email": "david@rafsud.is", "full_name": "Davíð Ólafsson", "role": "team_lead", "emp_id": "EMP-004", "hourly": 5200, "photo": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop"},
-            {"email": "kristin@rafsud.is", "full_name": "Kristín Þorsteinsdóttir", "role": "team_lead", "emp_id": "EMP-005", "hourly": 5200, "photo": "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400&auto=format&fit=crop"},
-            {"email": "aron@rafsud.is", "full_name": "Aron Einarsson", "role": "electrician", "emp_id": "EMP-006", "hourly": 4500, "photo": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&auto=format&fit=crop"},
-            {"email": "bjarki@rafsud.is", "full_name": "Bjarki Hallgrímsson", "role": "electrician", "emp_id": "EMP-007", "hourly": 4500, "photo": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&auto=format&fit=crop"},
-            {"email": "katrin@rafsud.is", "full_name": "Katrín Guðmundsdóttir", "role": "electrician", "emp_id": "EMP-008", "hourly": 4400, "photo": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&auto=format&fit=crop"},
-            {"email": "tomas@rafsud.is", "full_name": "Tómas Helgason", "role": "electrician", "emp_id": "EMP-009", "hourly": 4300, "photo": "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&auto=format&fit=crop"},
-            {"email": "sigurdur@rafsud.is", "full_name": "Sigurður Vignisson", "role": "electrician", "emp_id": "EMP-010", "hourly": 4300, "photo": "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=400&auto=format&fit=crop"},
-            {"email": "viktor@rafsud.is", "full_name": "Viktor Pétursson", "role": "electrician", "emp_id": "EMP-011", "hourly": 3200, "photo": "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=400&auto=format&fit=crop"},
-            {"email": "elisabet@rafsud.is", "full_name": "Elísabet Sveinsdóttir", "role": "electrician", "emp_id": "EMP-012", "hourly": 3200, "photo": "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=400&auto=format&fit=crop"},
+            {"email": "gunnar@rafsud.is", "full_name": "Gunnar Jónsson", "role": "admin", "custom_title": "Chief Executive Officer (CEO)", "emp_id": "EMP-001", "hourly": 6800, "photo": "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=400&auto=format&fit=crop"},
+            {"email": "helga@rafsud.is", "full_name": "Helga Magnúsdóttir", "role": "accountant", "custom_title": "Chief Financial Officer (CFO)", "emp_id": "EMP-002", "hourly": 4800, "photo": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&auto=format&fit=crop"},
+            {"email": "stefan@rafsud.is", "full_name": "Stefán Kárason", "role": "project manager", "custom_title": "Senior Project Director", "emp_id": "EMP-003", "hourly": 5900, "photo": "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=400&auto=format&fit=crop"},
+            {"email": "david@rafsud.is", "full_name": "Davíð Ólafsson", "role": "team_lead", "custom_title": "Master Electrician & Site Lead", "emp_id": "EMP-004", "hourly": 5200, "photo": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop"},
+            {"email": "kristin@rafsud.is", "full_name": "Kristín Þorsteinsdóttir", "role": "team_lead", "custom_title": "Automation & Controls Lead", "emp_id": "EMP-005", "hourly": 5200, "photo": "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400&auto=format&fit=crop"},
+            {"email": "aron@rafsud.is", "full_name": "Aron Einarsson", "role": "electrician", "custom_title": "Senior Journeyman", "emp_id": "EMP-006", "hourly": 4500, "photo": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&auto=format&fit=crop"},
+            {"email": "bjarki@rafsud.is", "full_name": "Bjarki Hallgrímsson", "role": "electrician", "custom_title": "Journeyman Electrician", "emp_id": "EMP-007", "hourly": 4500, "photo": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&auto=format&fit=crop"},
+            {"email": "katrin@rafsud.is", "full_name": "Katrín Guðmundsdóttir", "role": "electrician", "custom_title": "Inspection Specialist", "emp_id": "EMP-008", "hourly": 4400, "photo": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&auto=format&fit=crop"},
+            {"email": "tomas@rafsud.is", "full_name": "Tómas Helgason", "role": "electrician", "custom_title": "HVAC & Smart Home Tech", "emp_id": "EMP-009", "hourly": 4300, "photo": "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&auto=format&fit=crop"},
+            {"email": "sigurdur@rafsud.is", "full_name": "Sigurður Vignisson", "role": "electrician", "custom_title": "Industrial Panel Electrician", "emp_id": "EMP-010", "hourly": 4300, "photo": "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=400&auto=format&fit=crop"},
+            {"email": "viktor@rafsud.is", "full_name": "Viktor Pétursson", "role": "electrician", "custom_title": "Apprentice Electrician", "emp_id": "EMP-011", "hourly": 3200, "photo": "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=400&auto=format&fit=crop"},
+            {"email": "elisabet@rafsud.is", "full_name": "Elísabet Sveinsdóttir", "role": "electrician", "custom_title": "Apprentice Electrician", "emp_id": "EMP-012", "hourly": 3200, "photo": "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=400&auto=format&fit=crop"},
         ]
 
         users_dict = {}
@@ -172,6 +182,7 @@ def seed_demo_tenant(reset_existing: bool = True):
                 hashed_password=pwd_hash,
                 full_name=u["full_name"],
                 role=u["role"],
+                custom_title=u.get("custom_title"),
                 tenant_id=tenant.id,
                 is_active=True,
                 is_superuser=False,

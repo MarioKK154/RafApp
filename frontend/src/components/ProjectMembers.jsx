@@ -202,7 +202,7 @@ function ProjectMembers({ projectId }) {
                                             {isAdminOrPM && (
                                                 <div className="flex items-center gap-1.5 text-[9px] font-black text-indigo-500 uppercase tracking-widest">
                                                     <ShieldCheckIcon className="h-3 w-3" />
-                                                    {member.role?.replace('_', ' ') || 'Technician'}
+                                                    {member.custom_title || member.role?.replace('_', ' ') || 'Technician'}
                                                 </div>
                                             )}
                                             {activeSession ? (

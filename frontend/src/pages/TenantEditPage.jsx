@@ -70,6 +70,11 @@ function TenantEditPage() {
                 setFormData({
                     name: tenant.name ?? '',
                     subdomain: tenant.subdomain ?? '',
+                    kennitala: tenant.kennitala ?? '',
+                    address: tenant.address ?? '',
+                    ceo: tenant.ceo ?? '',
+                    email: tenant.email ?? '',
+                    phone_number: tenant.phone_number ?? '',
                     logo_url: tenant.logo_url ?? '',
                     background_image_url: tenant.background_image_url ?? '',
                     background_image_urls: Array.isArray(tenant.background_image_urls) ? tenant.background_image_urls : [],
@@ -209,6 +214,12 @@ function TenantEditPage() {
         // Delta Detection: Only send modified fields
         const updatePayload = {};
         if (formData.name !== initialTenantData.name) updatePayload.name = formData.name;
+        if (formData.subdomain !== (initialTenantData.subdomain ?? '')) updatePayload.subdomain = formData.subdomain || null;
+        if (formData.kennitala !== (initialTenantData.kennitala ?? '')) updatePayload.kennitala = formData.kennitala || null;
+        if (formData.address !== (initialTenantData.address ?? '')) updatePayload.address = formData.address || null;
+        if (formData.ceo !== (initialTenantData.ceo ?? '')) updatePayload.ceo = formData.ceo || null;
+        if (formData.email !== (initialTenantData.email ?? '')) updatePayload.email = formData.email || null;
+        if (formData.phone_number !== (initialTenantData.phone_number ?? '')) updatePayload.phone_number = formData.phone_number || null;
         if (formData.logo_url !== (initialTenantData.logo_url ?? '')) updatePayload.logo_url = formData.logo_url || null;
         if (formData.background_image_url !== (initialTenantData.background_image_url ?? '')) updatePayload.background_image_url = formData.background_image_url || null;
         const initialBgUrls = Array.isArray(initialTenantData.background_image_urls) ? initialTenantData.background_image_urls : [];
@@ -315,6 +326,70 @@ function TenantEditPage() {
                                     onChange={handleChange} 
                                     disabled={isSubmitting}
                                     className="block w-full h-12 rounded-2xl border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-orange-500 font-bold" 
+                                />
+                            </div>
+                        </div>
+
+                        {/* Detailed Registration & Contact Information */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-gray-100 dark:border-gray-700">
+                            <div>
+                                <label className="block text-[10px] font-black text-gray-500 uppercase mb-1 ml-1 tracking-widest">{t('kennitala', { defaultValue: 'Kennitala (National ID)' })}</label>
+                                <input 
+                                    type="text" 
+                                    name="kennitala" 
+                                    placeholder="540210-1230"
+                                    value={formData.kennitala || ''} 
+                                    onChange={handleChange} 
+                                    disabled={isSubmitting}
+                                    className="block w-full h-12 rounded-2xl border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-orange-500 font-bold text-xs" 
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-[10px] font-black text-gray-500 uppercase mb-1 ml-1 tracking-widest">{t('ceo_name', { defaultValue: 'CEO / General Manager' })}</label>
+                                <input 
+                                    type="text" 
+                                    name="ceo" 
+                                    placeholder="Márió Ólafsson"
+                                    value={formData.ceo || ''} 
+                                    onChange={handleChange} 
+                                    disabled={isSubmitting}
+                                    className="block w-full h-12 rounded-2xl border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-orange-500 font-bold text-xs" 
+                                />
+                            </div>
+                            <div className="md:col-span-2">
+                                <label className="block text-[10px] font-black text-gray-500 uppercase mb-1 ml-1 tracking-widest">{t('address', { defaultValue: 'Company Address' })}</label>
+                                <input 
+                                    type="text" 
+                                    name="address" 
+                                    placeholder="Stórhöfði 17, 110 Reykjavík"
+                                    value={formData.address || ''} 
+                                    onChange={handleChange} 
+                                    disabled={isSubmitting}
+                                    className="block w-full h-12 rounded-2xl border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-orange-500 font-bold text-xs" 
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-[10px] font-black text-gray-500 uppercase mb-1 ml-1 tracking-widest">{t('company_email', { defaultValue: 'Company Email' })}</label>
+                                <input 
+                                    type="email" 
+                                    name="email" 
+                                    placeholder="rafsud@rafsud.is"
+                                    value={formData.email || ''} 
+                                    onChange={handleChange} 
+                                    disabled={isSubmitting}
+                                    className="block w-full h-12 rounded-2xl border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-orange-500 font-bold text-xs" 
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-[10px] font-black text-gray-500 uppercase mb-1 ml-1 tracking-widest">{t('company_phone', { defaultValue: 'Company Phone' })}</label>
+                                <input 
+                                    type="text" 
+                                    name="phone_number" 
+                                    placeholder="+354 555 1234"
+                                    value={formData.phone_number || ''} 
+                                    onChange={handleChange} 
+                                    disabled={isSubmitting}
+                                    className="block w-full h-12 rounded-2xl border-gray-200 dark:bg-gray-700 dark:text-white focus:ring-orange-500 font-bold text-xs" 
                                 />
                             </div>
                         </div>

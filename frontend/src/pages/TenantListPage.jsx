@@ -166,6 +166,15 @@ function TenantListPage() {
                                                 </div>
                                                 <div>
                                                     <span className="font-black text-gray-900 dark:text-white uppercase tracking-tight block">{tenant.name}</span>
+                                                    {tenant.kennitala && (
+                                                        <span className="text-[10px] font-mono text-gray-400 font-bold block">Kt: {tenant.kennitala}</span>
+                                                    )}
+                                                    {tenant.ceo && (
+                                                        <span className="text-[10px] text-gray-500 font-semibold block">CEO: {tenant.ceo}</span>
+                                                    )}
+                                                    {tenant.address && (
+                                                        <span className="text-[9px] text-gray-400 font-normal block truncate max-w-[220px]">{tenant.address}</span>
+                                                    )}
                                                     {tenant.subdomain && (
                                                         <span className="inline-block text-[9px] font-mono text-indigo-500 font-bold bg-indigo-50 dark:bg-indigo-900/30 px-2 py-0.5 rounded-md mt-0.5 border border-indigo-100 dark:border-indigo-800/50">
                                                             {tenant.subdomain}.rafapp.is

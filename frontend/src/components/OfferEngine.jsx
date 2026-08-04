@@ -1069,10 +1069,11 @@ export default function OfferEngine({ initialItems = [], onCreateOffer }) {
                     const companyName = tenantInfo?.name || authUser?.full_name || '';
                     const rawLogoUrl = tenantInfo?.logo_url || '';
                     const logoUrl = rawLogoUrl ? (rawLogoUrl.startsWith('http') ? rawLogoUrl : `${axiosInstance.defaults.baseURL?.replace('/api','') || ''}/${rawLogoUrl}`) : '';
-                    const userKennitala = authUser?.kennitala || '';
-                    const userEmail    = authUser?.email || '';
-                    const userPhone    = authUser?.phone_number || '';
-                    const userCity     = authUser?.city || authUser?.location || '';
+                    const tenantKt    = tenantInfo?.kennitala || authUser?.kennitala || '';
+                    const tenantAddr  = tenantInfo?.address || authUser?.city || authUser?.location || '';
+                    const tenantCeo   = tenantInfo?.ceo || '';
+                    const companyEmail = tenantInfo?.email || authUser?.email || '';
+                    const companyPhone = tenantInfo?.phone_number || authUser?.phone_number || '';
                     const title        = offerTitle || t('offer_engine_default_title', { defaultValue: 'Offer from Offer Engine' });
                     const selectedProject = projects.find(p => String(p.id) === String(selectedProjectId));
 
@@ -1117,10 +1118,11 @@ export default function OfferEngine({ initialItems = [], onCreateOffer }) {
     <div class="company-block">
       <div class="company-name">${companyName}</div>
       <div class="company-meta">
-        ${userKennitala ? `<div>${isIS ? 'Kennitala' : 'Registration No.'}: ${userKennitala}</div>` : ''}
-        ${userEmail    ? `<div>${userEmail}</div>` : ''}
-        ${userPhone    ? `<div>${userPhone}</div>` : ''}
-        ${userCity     ? `<div>${userCity}</div>` : ''}
+        ${tenantKt   ? `<div>${isIS ? 'Kt.' : 'Kt./Reg. No.'}: ${tenantKt}</div>` : ''}
+        ${tenantAddr ? `<div>${tenantAddr}</div>` : ''}
+        ${tenantCeo  ? `<div>${isIS ? 'Framkvæmdastjóri' : 'CEO'}: ${tenantCeo}</div>` : ''}
+        ${companyEmail ? `<div>${companyEmail}</div>` : ''}
+        ${companyPhone ? `<div>${companyPhone}</div>` : ''}
       </div>
     </div>
   </div>

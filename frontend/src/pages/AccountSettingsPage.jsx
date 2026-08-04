@@ -262,6 +262,7 @@ function AccountSettingsPage() {
                             <InfoItem label={t('full_name')} value={user.full_name} icon={<UserIcon className="h-4 w-4" />} />
                             <InfoItem label={t('email')} value={user.email} icon={<EnvelopeIcon className="h-4 w-4" />} />
                             <InfoItem label={t('role', { defaultValue: 'Company Role' })} value={user.role} badge />
+                            <InfoItem label={t('custom_title', { defaultValue: 'Visual Job Title' })} value={user.custom_title || user.role} badge />
                             <InfoItem label={t('employee_id', { defaultValue: 'Employee ID' })} value={user.employee_id} icon={<IdentificationIcon className="h-4 w-4" />} />
                             <InfoItem label={t('kennitala', { defaultValue: 'National ID' })} value={user.kennitala} icon={<ShieldCheckIcon className="h-4 w-4" />} />
                             <InfoItem label={t('phone', { defaultValue: 'Phone' })} value={user.phone_number} icon={<DevicePhoneMobileIcon className="h-4 w-4" />} />
