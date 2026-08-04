@@ -7,7 +7,6 @@ import ConduitFillCalculator from '../components/ConduitFillCalculator';
 import PhaseBalancingCalculator from '../components/PhaseBalancingCalculator';
 import VoltageDropCalculator from '../components/VoltageDropCalculator';
 import ShortCircuitCalculator from '../components/ShortCircuitCalculator';
-import OfferEngine from '../components/OfferEngine';
 import CreateTutorialModal from '../components/CreateTutorialModal';
 import PageHeader from '../components/PageHeader';
 import { 
@@ -330,24 +329,6 @@ function TutorialsPage() {
                     </section>
                 </div>
             </div>
-
-            {/* ── Offer Engine — full-width section ─────────────────────────────────── */}
-            <section className="saas-card overflow-hidden mt-8">
-                <div className="p-6 border-b border-gray-100 dark:border-gray-700">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl">
-                            <CalculatorIcon className="h-4 w-4 text-indigo-600" />
-                        </div>
-                        <div>
-                            <h2 className="text-base font-black text-gray-900 dark:text-white uppercase tracking-tight">{t('offer_engine_title', { defaultValue: 'Offer Engine (ar.is Standard)' })}</h2>
-                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">{t('offer_engine_subtitle', { defaultValue: 'RSÍ/SART certified labor costing with Reiknitala 2026' })}</p>
-                        </div>
-                    </div>
-                </div>
-                <div className="p-6">
-                    <OfferEngine />
-                </div>
-            </section>
         </div>
     );
 }

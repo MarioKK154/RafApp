@@ -2,7 +2,8 @@
 // ar.is / RSÍ / SART offer calculator — wizard-style, beginner-friendly
 // Formula: Final = (C_labor + C_materials + C_direct) × (1 + margin) × 1.24 (VAT)
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import axiosInstance from '../api/axiosInstance';
 import { useTranslation } from 'react-i18next';
 import {
     WrenchScrewdriverIcon,
@@ -20,6 +21,8 @@ import {
     DocumentTextIcon,
     ShieldCheckIcon,
     ArrowDownTrayIcon,
+    MagnifyingGlassIcon,
+    BookOpenIcon,
 } from '@heroicons/react/24/outline';
 import { CheckCircleIcon as CheckCircleSolid } from '@heroicons/react/24/solid';
 
@@ -144,6 +147,119 @@ function Tip({ children, icon: Icon = LightBulbIcon }) {
     );
 }
 
+// ─── Catalog Search Input ─────────────────────────────────────────────────────
+// Searches the labor catalog in both IS + EN, auto-fills einingar on selection.
+function CatalogSearchInput({ value, onChange, onSelectCatalogItem, catalog, isIS, placeholder }) {
+    const [query, setQuery] = useState(value);
+    const [results, setResults] = useState([]);
+    const [open, setOpen]     = useState(false);
+    const [highlight, setHighlight] = useState(-1);
+    const wrapRef = useRef(null);
+    const debounce = useRef(null);
+
+    // Keep local query in sync when parent clears/resets the line
+    useEffect(() => { setQuery(value); }, [value]);
+
+    // Close dropdown on outside click
+    useEffect(() => {
+        const handler = (e) => { if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false); };
+        document.addEventListener('mousedown', handler);
+        return () => document.removeEventListener('mousedown', handler);
+    }, []);
+
+    const search = useCallback((q) => {
+        clearTimeout(debounce.current);
+        if (!q || q.length < 2) { setResults([]); setOpen(false); return; }
+        debounce.current = setTimeout(() => {
+            const lower = q.toLowerCase();
+            const hits = catalog.filter(item => {
+                const is_name = (item.description || '').toLowerCase();
+                const en_name = (item.description_en || '').toLowerCase();
+                const cat_is  = (item.sub_category || '').toLowerCase();
+                const cat_en  = (item.sub_category_en || '').toLowerCase();
+                return is_name.includes(lower) || en_name.includes(lower) ||
+                       cat_is.includes(lower)  || cat_en.includes(lower);
+            }).slice(0, 12);
+            setResults(hits);
+            setOpen(hits.length > 0);
+            setHighlight(-1);
+        }, 300);
+    }, [catalog]);
+
+    const handleChange = (e) => {
+        const q = e.target.value;
+        setQuery(q);
+        onChange(q); // update parent immediately so custom text is captured
+        search(q);
+    };
+
+    const selectItem = (item) => {
+        const name = isIS ? (item.description || item.description_en || '') : (item.description_en || item.description || '');
+        const ein  = item.units_per_hour != null ? item.units_per_hour : (item.reference_price || 0);
+        setQuery(name);
+        setOpen(false);
+        setResults([]);
+        onSelectCatalogItem(name, ein);
+    };
+
+    const handleKeyDown = (e) => {
+        if (!open) return;
+        if (e.key === 'ArrowDown') { e.preventDefault(); setHighlight(h => Math.min(h + 1, results.length - 1)); }
+        if (e.key === 'ArrowUp')   { e.preventDefault(); setHighlight(h => Math.max(h - 1, 0)); }
+        if (e.key === 'Enter' && highlight >= 0) { e.preventDefault(); selectItem(results[highlight]); }
+        if (e.key === 'Escape') { setOpen(false); }
+    };
+
+    return (
+        <div ref={wrapRef} className="relative w-full">
+            <div className="relative">
+                <MagnifyingGlassIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400 pointer-events-none" />
+                <input
+                    type="text"
+                    value={query}
+                    onChange={handleChange}
+                    onKeyDown={handleKeyDown}
+                    onFocus={() => query.length >= 2 && results.length > 0 && setOpen(true)}
+                    placeholder={placeholder}
+                    className="w-full pl-8 pr-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                />
+            </div>
+            {open && results.length > 0 && (
+                <div className="absolute z-50 left-0 right-0 top-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl overflow-hidden">
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/30 border-b border-indigo-100 dark:border-indigo-800/40">
+                        <BookOpenIcon className="h-3 w-3 text-indigo-500" />
+                        <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">Catalog hits</span>
+                    </div>
+                    <ul className="max-h-52 overflow-y-auto divide-y divide-gray-50 dark:divide-gray-700">
+                        {results.map((item, idx) => {
+                            const name = isIS ? (item.description || item.description_en || '') : (item.description_en || item.description || '');
+                            const ein  = item.units_per_hour != null ? item.units_per_hour : (item.reference_price || 0);
+                            const cat  = isIS ? (item.sub_category || '') : (item.sub_category_en || item.sub_category || '');
+                            return (
+                                <li
+                                    key={item.id}
+                                    onMouseDown={() => selectItem(item)}
+                                    className={`flex items-start justify-between gap-2 px-3 py-2 cursor-pointer transition-colors ${
+                                        highlight === idx ? 'bg-indigo-50 dark:bg-indigo-900/30' : 'hover:bg-gray-50 dark:hover:bg-gray-700'
+                                    }`}
+                                >
+                                    <div className="min-w-0">
+                                        <p className="text-xs font-bold text-gray-900 dark:text-white truncate">{name}</p>
+                                        {cat && <p className="text-[10px] text-gray-400 truncate">{cat}</p>}
+                                    </div>
+                                    <div className="shrink-0 text-right">
+                                        <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 font-mono">{ein} ein.</span>
+                                    </div>
+                                </li>
+                            );
+                        })}
+                    </ul>
+                </div>
+            )}
+        </div>
+    );
+}
+
 // ─── Step Indicator ───────────────────────────────────────────────────────────
 function StepIndicator({ steps, currentStep, onGoTo }) {
     return (
@@ -185,6 +301,14 @@ function StepIndicator({ steps, currentStep, onGoTo }) {
 export default function OfferEngine({ initialItems = [], onCreateOffer }) {
     const { t, i18n } = useTranslation();
     const isIS = i18n.language?.toLowerCase().startsWith('is');
+
+    // ── Catalog: loaded once for live search in work lines
+    const [catalog, setCatalog] = useState([]);
+    useEffect(() => {
+        axiosInstance.get('/labor-catalog/?limit=2000')
+            .then(res => setCatalog(Array.isArray(res.data) ? res.data : []))
+            .catch(() => {}); // silent fail — search just won't show results
+    }, []);
 
     // ── Wizard state
     const [step, setStep] = useState(0);
@@ -253,6 +377,13 @@ export default function OfferEngine({ initialItems = [], onCreateOffer }) {
         setLines(prev => prev.map(l => l.id === id ? { ...l, [field]: sanitised } : l));
     };
 
+    // selectCatalogItem: called when user picks a catalog hit — fills description + einingar
+    const selectCatalogItem = (lineId, name, ein) => {
+        setLines(prev => prev.map(l =>
+            l.id === lineId ? { ...l, description: name, einingar: ein } : l
+        ));
+    };
+
 
     const removeLine = (id) =>
         setLines(prev => prev.filter(l => l.id !== id));
@@ -290,7 +421,7 @@ export default function OfferEngine({ initialItems = [], onCreateOffer }) {
     const renderStep0 = () => (
         <div className="space-y-4">
             <Tip>
-                {t('tip_step1', { defaultValue: 'Each work line represents one type of task. Enter the "einingar" (work units) from the Labor Catalog — these are standardized time values from the ar.is collective agreement. 60 einingar = 1 hour of work.' })}
+                {t('tip_step1', { defaultValue: 'Each work line represents one type of task. Type to search the catalog in Icelandic or English — clicking a result auto-fills the einingar. You can also type a custom description and set einingar manually.' })}
             </Tip>
 
             <div className="space-y-2">
@@ -298,6 +429,7 @@ export default function OfferEngine({ initialItems = [], onCreateOffer }) {
                 <div className="grid grid-cols-12 gap-2 px-1">
                     <div className="col-span-5 text-[10px] font-black text-gray-400 uppercase tracking-wider">
                         {t('work_description', { defaultValue: 'Work description' })}
+                        <span className="ml-1 text-indigo-400 normal-case font-normal">— {t('search_catalog_hint', { defaultValue: 'search catalog or type custom' })}</span>
                     </div>
                     <div className="col-span-3 text-[10px] font-black text-gray-400 uppercase tracking-wider text-center">
                         {t('einingar_col', { defaultValue: 'Einingar' })}
@@ -317,12 +449,13 @@ export default function OfferEngine({ initialItems = [], onCreateOffer }) {
                     return (
                         <div key={line.id} className="grid grid-cols-12 gap-2 items-center p-2 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700 hover:border-indigo-200 dark:hover:border-indigo-700/50 transition-colors">
                             <div className="col-span-5">
-                                <input
-                                    type="text"
+                                <CatalogSearchInput
                                     value={line.description}
-                                    onChange={e => updateLine(line.id, 'description', e.target.value)}
+                                    onChange={val => updateLine(line.id, 'description', val)}
+                                    onSelectCatalogItem={(name, ein) => selectCatalogItem(line.id, name, ein)}
+                                    catalog={catalog}
+                                    isIS={isIS}
                                     placeholder={t('line_desc_placeholder', { defaultValue: 'e.g. Install socket outlet' })}
-                                    className="w-full px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
                                 />
                             </div>
                             <div className="col-span-3">
