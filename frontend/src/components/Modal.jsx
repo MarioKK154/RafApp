@@ -13,7 +13,8 @@ function Modal({
     children, 
     confirmText = "Confirm", 
     confirmColor = "indigo", // Supports 'indigo', 'red', 'green'
-    showFooter = true 
+    showFooter = true,
+    size = 'md', // 'sm' | 'md' | 'lg' | 'xl'
 }) {
     const { t } = useTranslation();
     
@@ -61,7 +62,12 @@ function Modal({
 
                 {/* Modal Content */}
                 <div
-                    className="inline-block align-bottom bg-white dark:bg-gray-800 rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full mx-4"
+                    className={`inline-block align-bottom bg-white dark:bg-gray-800 rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:w-full mx-4 ${
+                        size === 'sm' ? 'sm:max-w-sm' :
+                        size === 'lg' ? 'sm:max-w-2xl' :
+                        size === 'xl' ? 'sm:max-w-4xl' :
+                        'sm:max-w-lg'
+                    }`}
                     onClick={(e) => e.stopPropagation()}
                 >
                     <div className="bg-white dark:bg-gray-800 px-6 pt-6 pb-4 sm:p-8">

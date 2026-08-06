@@ -90,24 +90,7 @@ class EventType(enum.Enum):
     task = "task"
     custom = "custom"
 
-class TutorialCategory(enum.Enum):
-    # Systems Logic
-    fire_system = "Fire Systems"
-    lights_system = "Lighting Systems"
-    dali_system = "DALI & Controls"
-    smart_home = "Smart Homes / IoT"
-    access_system = "Access & Security"
-    
-    # Power & Industrial
-    industrial = "Industrial & Motor Control"
-    distribution = "Panels & Distribution"
-    ev_charging = "EV Charging Infrastructure"
-    renewables = "Solar & Renewables"
-    
-    # Technical Standards
-    data_comms = "Data & Networking"
-    safety_code = "Safety & Regulatory Code"
-    tools_equip = "Tool & Equipment Manuals"
+# TutorialCategory enum removed — categories are now dynamic TutorialFolder records.
 
 # --- Association Tables ---
 
@@ -581,30 +564,62 @@ class Drawing(Base):
     uploader = relationship("User", back_populates="uploaded_drawings")
     folder: Mapped[Optional["DrawingFolder"]] = relationship(back_populates="drawings")
 
+class TutorialFolder(Base):
+    """Dynamic category folders for the knowledge base / tutorials.
+    Each folder name IS the category — created by admins at runtime."""
+    __tablename__ = "tutorial_folders"
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    name: Mapped[str] = mapped_column(String, nullable=False)
+    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    # parent_id allows sub-folders in the future
+    parent_id: Mapped[Optional[int]] = mapped_column(ForeignKey("tutorial_folders.id"), nullable=True)
+    # NULL tenant_id = global (visible to all tenants)
+    tenant_id: Mapped[Optional[int]] = mapped_column(ForeignKey("tenants.id"), nullable=True)
+    is_global: Mapped[bool] = mapped_column(Boolean, default=False)
+    sort_order: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=func.now())
+
+    tutorials: Mapped[list["Tutorial"]] = relationship(back_populates="folder", cascade="all, delete-orphan")
+    parent = relationship("TutorialFolder", remote_side=[id], back_populates="sub_folders")
+    sub_folders = relationship("TutorialFolder", back_populates="parent")
+
+    def __repr__(self):
+        return f"<TutorialFolder {self.name}>"
+
+
 class Tutorial(Base):
     __tablename__ = "tutorials"
 
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, nullable=False)
-    
-    # Use the SQLAlchemy Enum (Capital E) here
-    category = Column(Enum(TutorialCategory), default=TutorialCategory.industrial)
-    
+
+    # folder_id replaces the old enum category
+    folder_id = Column(Integer, ForeignKey("tutorial_folders.id", ondelete="SET NULL"), nullable=True)
+    # category string cached from folder.name for backwards compat & fast filtering
+    category = Column(String, nullable=True)
+
     description = Column(Text, nullable=True)
     tutorial_text = Column(Text, nullable=True)
-    image_path = Column(String, nullable=True)
-    file_path = Column(String, nullable=True)
-    
+    image_path = Column(String, nullable=True)   # local uploaded image
+    file_path = Column(String, nullable=True)    # local uploaded PDF/file
+    external_url = Column(String, nullable=True) # external link (standards PDFs, etc.)
+    original_filename = Column(String, nullable=True)  # friendly display name
+    file_size_bytes = Column(Integer, nullable=True)
+    content_type = Column(String, nullable=True)
+
+    is_global: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
-    
-    tenant_id = Column(Integer, ForeignKey("tenants.id"))
-    author_id = Column(Integer, ForeignKey("users.id"))
-    
+
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True)
+    author_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+
+    folder: Mapped[Optional["TutorialFolder"]] = relationship(back_populates="tutorials")
     author = relationship("User")
 
     def __repr__(self):
-        return f"<Tutorial {self.title} - {self.category}>"
+        return f"<Tutorial {self.title} - folder:{self.folder_id}>"
 
 class TimeLog(Base):
     __tablename__ = "time_logs"

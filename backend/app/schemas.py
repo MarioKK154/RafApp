@@ -9,7 +9,7 @@ from pydantic import computed_field
 from .models import (UserRole, ProjectStatus, TaskStatus, ToolStatus, 
                      ToolLogAction, CarStatus, CarLogAction, TyreType, 
                      OfferStatus, OfferLineItemType, DrawingStatus, LeaveStatus,
-                     EventType, TutorialCategory)
+                     EventType)
 
 _static_base = environ.get("STATIC_BASE_URL")
 if not _static_base:
@@ -853,28 +853,53 @@ class DrawingRead(DrawingBase):
     uploader_id: int
     model_config = ConfigDict(from_attributes=True)
 
-# --- Wiring Diagram Schemas (ROADMAP #5) ---
+# --- Tutorial Folder Schemas ---
 
-# For creating new entries
+class TutorialFolderCreate(BaseModel):
+    name: str
+    description: Optional[str] = None
+    is_global: bool = False
+    sort_order: int = 0
+
+class TutorialFolderRead(BaseModel):
+    id: int
+    name: str
+    description: Optional[str] = None
+    is_global: bool
+    sort_order: int
+    tenant_id: Optional[int] = None
+    created_at: datetime
+    tutorial_count: Optional[int] = None  # annotated at read-time
+    model_config = ConfigDict(from_attributes=True)
+
+# --- Wiring Diagram / Tutorial Schemas ---
+
 class WiringDiagramCreate(BaseModel):
     title: str
-    category: TutorialCategory
+    folder_id: Optional[int] = None
     description: Optional[str] = None
     tutorial_text: Optional[str] = None
+    external_url: Optional[str] = None
 
-# For reading data back (The one you have, updated)
 class WiringDiagramRead(BaseModel):
     id: int
     title: str
-    category: TutorialCategory
+    folder_id: Optional[int] = None
+    folder_name: Optional[str] = None   # denormalised from folder.name
+    category: Optional[str] = None      # cached folder name for filtering
     description: Optional[str] = None
     tutorial_text: Optional[str] = None
     image_path: Optional[str] = None
-    file_path: Optional[str] = None  # Added for PDF manuals
+    file_path: Optional[str] = None
+    external_url: Optional[str] = None
+    original_filename: Optional[str] = None
+    file_size_bytes: Optional[int] = None
+    content_type: Optional[str] = None
+    is_global: bool = False
     created_at: datetime
-    author_id: Optional[int] = None                  # Global tutorials may not have a specific author
-    tenant_id: Optional[int] = None                  # Global tutorials have tenant_id = None
-    
+    author_id: Optional[int] = None
+    tenant_id: Optional[int] = None
+
     model_config = ConfigDict(from_attributes=True)
 
 # --- Time Log Schemas ---
