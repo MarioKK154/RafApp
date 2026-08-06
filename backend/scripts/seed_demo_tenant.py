@@ -42,6 +42,7 @@ from app.security import get_password_hash
 
 TENANT_ID = 2
 DESKTOP_CREDS_PATH = Path.home() / "Desktop" / "rafsud_demo_credentials.txt"
+DEFAULT_PASSWORD = "See Desktop rafsud_demo_credentials.txt for individual passwords"
 
 
 def _generate_password(length: int = 16) -> str:
