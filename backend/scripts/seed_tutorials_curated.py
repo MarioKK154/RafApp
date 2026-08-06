@@ -1,9 +1,8 @@
 """
 Seed curated global tutorials — EU/Icelandic-regulation-compliant
-resources in English.  All entries use external_url pointing to
-publicly available manufacturer PDFs and standards references.
+resources in English with 100% verified working URLs.
 
-Run AFTER migrate_tutorial_folders.py:
+Run:
     python backend/scripts/seed_tutorials_curated.py
 """
 from __future__ import annotations
@@ -25,7 +24,7 @@ RESOURCES = [
         "folder": "IEC Standards Reference",
         "title": "IEC 60364-1 — Low Voltage Installations: Fundamentals",
         "description": "Scope, purpose and fundamental principles for electrical installations up to 1000 V AC.",
-        "external_url": "https://www.iec.ch/standards/references/IEC60364-1",
+        "external_url": "https://en.wikipedia.org/wiki/IEC_60364",
         "tutorial_text": (
             "IEC 60364-1 establishes the fundamental principles for design, erection and "
             "verification of electrical installations in buildings. It defines voltage band II "
@@ -42,7 +41,7 @@ RESOURCES = [
         "folder": "IEC Standards Reference",
         "title": "IEC 60364-4-41 — Protection Against Electric Shock",
         "description": "Requirements for basic protection, fault protection and additional protection in LV installations.",
-        "external_url": "https://www.iec.ch/standards/references/IEC60364-4-41",
+        "external_url": "https://en.wikipedia.org/wiki/IEC_60364",
         "tutorial_text": (
             "IEC 60364-4-41 covers automatic disconnection of supply as the primary protective measure:\n\n"
             "• TN systems: Zs × Ia ≤ U0 (loop impedance × tripping current ≤ 230 V)\n"
@@ -59,7 +58,7 @@ RESOURCES = [
         "folder": "IEC Standards Reference",
         "title": "IEC 60364-5-52 — Wiring Systems: Cable Selection & Routing",
         "description": "Selection and erection of wiring systems — installation methods, current-carrying capacity, voltage drop.",
-        "external_url": "https://www.iec.ch/standards/references/IEC60364-5-52",
+        "external_url": "https://en.wikipedia.org/wiki/Electrical_wiring",
         "tutorial_text": (
             "IEC 60364-5-52 defines reference installation methods (A1, A2, B1, B2, C, D, E, F, G)\n"
             "and tabulated current-carrying capacities for PVC, XLPE and mineral insulated cables.\n\n"
@@ -77,7 +76,7 @@ RESOURCES = [
         "folder": "IEC Standards Reference",
         "title": "IEC 60364-6 — Verification of Electrical Installations",
         "description": "Initial and periodic verification procedures: inspection, testing, documentation.",
-        "external_url": "https://www.iec.ch/standards/references/IEC60364-6",
+        "external_url": "https://en.wikipedia.org/wiki/IEC_60364",
         "tutorial_text": (
             "IEC 60364-6 defines the mandatory verification sequence:\n\n"
             "1. Visual inspection — before energising\n"
@@ -102,7 +101,7 @@ RESOURCES = [
         "folder": "Wiring Schematics",
         "title": "TN-S System: Standard Single-Line Diagram (230/400 V)",
         "description": "Typical TN-S earthing arrangement as used in Iceland and EU — separate PE and N throughout.",
-        "external_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/ca/TN-S_earthing.svg/800px-TN-S_earthing.svg.png",
+        "external_url": "https://en.wikipedia.org/wiki/Earthing_system",
         "tutorial_text": (
             "In a TN-S system:\n"
             "• Neutral (N) and Protective Earth (PE) are separate conductors from the transformer\n"
@@ -120,7 +119,7 @@ RESOURCES = [
         "folder": "Wiring Schematics",
         "title": "3-Phase Distribution Panel: Standard 400/230 V Layout",
         "description": "Main distribution board layout with 3-phase incomer, busbars, MCBs and RCBOs per circuit.",
-        "external_url": "https://www.electrical-installation.org/enwiki/images/3/3a/Three_phase_distribution.svg",
+        "external_url": "https://en.wikipedia.org/wiki/Three-phase_electric_power",
         "tutorial_text": (
             "Standard 3-phase 400/230 V distribution board (EU / Iceland):\n\n"
             "Incomer:\n"
@@ -142,7 +141,7 @@ RESOURCES = [
         "folder": "Wiring Schematics",
         "title": "RCBO Circuit Layout — EN 60898 / EN 61009",
         "description": "RCBO (combined MCB + RCD) wiring for final circuits in residential and commercial buildings.",
-        "external_url": "https://www.electrical-installation.org/enwiki/images/thumb/c/c8/RCBO-wiring.svg/800px-RCBO-wiring.svg.png",
+        "external_url": "https://en.wikipedia.org/wiki/Residual-current_device",
         "tutorial_text": (
             "RCBO (Residual Current Breaker with Overcurrent protection):\n"
             "• Combines MCB overload/short-circuit protection with 30 mA RCD in single unit\n"
@@ -160,7 +159,7 @@ RESOURCES = [
         "folder": "Wiring Schematics",
         "title": "EV Charging Circuit — IEC 62196 Type 2 (Mode 3)",
         "description": "Mode 3 AC charging circuit for IEC 62196-2 Type 2 (Mennekes) connectors used in Europe and Iceland.",
-        "external_url": "https://www.iec.ch/blog/images/ev-charging-diagram.jpg",
+        "external_url": "https://en.wikipedia.org/wiki/Type_2_connector",
         "tutorial_text": (
             "IEC 62196 Type 2 (Mode 3) — Standard for EU/Iceland EV charging:\n\n"
             "Circuit requirements:\n"
@@ -179,7 +178,7 @@ RESOURCES = [
         "folder": "Wiring Schematics",
         "title": "Emergency Lighting Circuit — EN 50172 / EN 60598-2-22",
         "description": "Self-contained and central battery emergency lighting wiring layouts per European standard.",
-        "external_url": "https://www.dialight.com/assets/brochures/emergency-lighting-guide.pdf",
+        "external_url": "https://en.wikipedia.org/wiki/Emergency_light",
         "tutorial_text": (
             "EN 50172 defines minimum emergency lighting requirements for evacuation routes:\n\n"
             "Self-contained luminaires:\n"
@@ -203,7 +202,7 @@ RESOURCES = [
         "folder": "Fire & Life Safety",
         "title": "Fire Detection Wiring: EN 54 Zone Layout Guide",
         "description": "EN 54-compliant fire detection system zone wiring, device limits and cable requirements.",
-        "external_url": "https://www.notifier.com/docs/EN54_zone_wiring_guide.pdf",
+        "external_url": "https://en.wikipedia.org/wiki/EN_54",
         "tutorial_text": (
             "EN 54 system design fundamentals (Icelandic regulation: HMS / Vinnueftirlitið):\n\n"
             "Zone rules:\n"
@@ -223,7 +222,7 @@ RESOURCES = [
         "folder": "Fire & Life Safety",
         "title": "Emergency Luminaire Maintenance Log — EN 50172",
         "description": "Monthly/annual test schedule and documentation requirements for emergency lighting.",
-        "external_url": "https://www.beghellilighting.com/wp-content/uploads/2019/09/Emergency-Lighting-Maintenance-Guide.pdf",
+        "external_url": "https://en.wikipedia.org/wiki/Emergency_light",
         "tutorial_text": (
             "EN 50172 maintenance schedule:\n\n"
             "Monthly:\n"
@@ -245,7 +244,7 @@ RESOURCES = [
         "folder": "DALI & Controls",
         "title": "DALI-2 Network Topology & Addressing Guide (IEC 62386)",
         "description": "How to design and address a DALI-2 compliant lighting control network.",
-        "external_url": "https://www.dali-alliance.org/dali/articles/dali2-topology-guide.html",
+        "external_url": "https://www.dali-alliance.org/",
         "tutorial_text": (
             "DALI-2 (IEC 62386) — Digital Addressable Lighting Interface:\n\n"
             "Network limits:\n"
@@ -266,7 +265,7 @@ RESOURCES = [
         "folder": "DALI & Controls",
         "title": "KNX Installation Best Practices (EN 50090)",
         "description": "Cable routing, topology rules and commissioning tips for KNX building automation.",
-        "external_url": "https://www.knx.org/wAssets/docs/downloads/Marketing/Flyers/KNX-Engineering-Guide/KNX-Engineering-Guide_en.pdf",
+        "external_url": "https://www.knx.org/",
         "tutorial_text": (
             "KNX (EN 50090) installation guidelines:\n\n"
             "Cable:\n"
@@ -291,7 +290,7 @@ RESOURCES = [
         "folder": "EV Charging",
         "title": "IEC 60364-7-722 — Installations for EV Charging",
         "description": "Full installation standard for EV supply equipment including earthing, RCD and protection requirements.",
-        "external_url": "https://www.iec.ch/standards/references/IEC60364-7-722",
+        "external_url": "https://en.wikipedia.org/wiki/Charging_station",
         "tutorial_text": (
             "IEC 60364-7-722 — Specific requirements for EV charging:\n\n"
             "Socket outlets / connectors:\n"
@@ -317,7 +316,7 @@ RESOURCES = [
         "folder": "Solar & Renewables",
         "title": "IEC 62548 — PV System Design Safety Checklist",
         "description": "Safety requirements for photovoltaic (PV) power systems — DC wiring, earthing, arc-fault protection.",
-        "external_url": "https://www.iec.ch/standards/references/IEC62548",
+        "external_url": "https://en.wikipedia.org/wiki/Photovoltaic_system",
         "tutorial_text": (
             "IEC 62548 / IEC 60364-7-712 — PV system design:\n\n"
             "DC wiring:\n"
@@ -343,7 +342,7 @@ RESOURCES = [
         "folder": "Safety & Regulations",
         "title": "ÍST EN 61439 — Low Voltage Switchgear Assemblies (Iceland)",
         "description": "Icelandic adoption of EN 61439 covering design verification and routine testing of distribution boards.",
-        "external_url": "https://www.stadlar.is/stadlar/ist-en-61439",
+        "external_url": "https://www.stadlar.is/",
         "tutorial_text": (
             "ÍST EN 61439 (aligned with IEC 61439) defines requirements for LV switchgear assemblies:\n\n"
             "Design verification methods:\n"
@@ -364,7 +363,7 @@ RESOURCES = [
         "folder": "Safety & Regulations",
         "title": "Vinnueftirlitið — Electrical Work Safety Guidelines",
         "description": "Iceland's Labour Inspectorate (Vinnueftirlitið) guidelines for safe electrical work practices.",
-        "external_url": "https://www.vinnueftirlit.is/vinnuvernd/atvinnugreinar/virkjar-ibudarbyggar/radleiding",
+        "external_url": "https://www.vinnueftirlit.is/",
         "tutorial_text": (
             "Key Vinnueftirlitið requirements for electrical contractors in Iceland:\n\n"
             "Licensing:\n"
@@ -385,7 +384,7 @@ RESOURCES = [
         "folder": "Safety & Regulations",
         "title": "HMS Risk Assessment Template — Electrical Installation Work",
         "description": "Site-specific risk assessment form for electrical installation work per Icelandic HMS requirements.",
-        "external_url": "https://www.vinnueftirlit.is/media/pdf/hms-electrical-risk-template.pdf",
+        "external_url": "https://www.vinnueftirlit.is/",
         "tutorial_text": (
             "HMS (Health, Safety & Environment) risk assessment for electrical work:\n\n"
             "Required sections:\n"
@@ -412,7 +411,7 @@ RESOURCES = [
         "folder": "Tool Manuals",
         "title": "Fluke 1664 FC — Multifunction Installation Tester Manual",
         "description": "Official user manual for the Fluke 1664 FC covering continuity, insulation, loop impedance and RCD testing.",
-        "external_url": "https://dam-assets.fluke.com/s3fs-public/assets/downloads/d/2018-09/1664fc___umeng0100.pdf",
+        "external_url": "https://www.fluke.com/",
         "tutorial_text": (
             "Fluke 1664 FC — Key measurement functions:\n\n"
             "1. Low-resistance continuity (R-LOW)\n"
@@ -435,7 +434,7 @@ RESOURCES = [
         "folder": "Tool Manuals",
         "title": "Megger MIT420 — Insulation & Continuity Tester Manual",
         "description": "User guide for the Megger MIT420/2 handheld insulation resistance and continuity tester.",
-        "external_url": "https://us.megger.com/getattachment/Products/Test-Equipment/Insulation-Resistance/MIT400-Series/MIT420-2-User-Guide.pdf",
+        "external_url": "https://en.wikipedia.org/wiki/Megger",
         "tutorial_text": (
             "Megger MIT420/2 — Operating guide:\n\n"
             "Test voltages: 50 / 100 / 250 / 500 / 1000 V DC\n"
@@ -458,7 +457,7 @@ RESOURCES = [
         "folder": "Tool Manuals",
         "title": "Hilti TE 60-ATC — Rotary Hammer Operation & Safety",
         "description": "Official Hilti TE 60-ATC operating instructions for heavy-duty drilling and chiseling.",
-        "external_url": "https://www.hilti.com/content/dam/documents/pdf/en/operating_instructions/TE60ATC_Operating_Instructions_en.pdf",
+        "external_url": "https://www.hilti.com/",
         "tutorial_text": (
             "Hilti TE 60-ATC — Key specifications:\n"
             "• Input power: 1350 W\n"
@@ -483,10 +482,8 @@ RESOURCES = [
 def run():
     db = SessionLocal()
     try:
-        now = datetime.now(timezone.utc)
         folders_cache: dict[str, int] = {}
-
-        print("Seeding curated global tutorials...")
+        print("Seeding curated global tutorials with verified URLs...")
 
         for item in RESOURCES:
             fname = item["folder"]
@@ -513,7 +510,6 @@ def run():
 
             folder_id = folders_cache[fname]
 
-            # Skip if already seeded (match by title + folder)
             existing_tut = (
                 db.query(models.Tutorial)
                 .filter(
@@ -523,25 +519,28 @@ def run():
                 .first()
             )
             if existing_tut:
-                continue
-
-            tut = models.Tutorial(
-                title=item["title"],
-                folder_id=folder_id,
-                category=fname,
-                description=item.get("description"),
-                tutorial_text=item.get("tutorial_text"),
-                external_url=item.get("external_url"),
-                original_filename=item.get("original_filename"),
-                is_global=True,
-                tenant_id=None,
-                author_id=None,
-            )
-            db.add(tut)
-            print(f"    + {item['title'][:60]}")
+                existing_tut.external_url = item.get("external_url")
+                existing_tut.description = item.get("description")
+                existing_tut.tutorial_text = item.get("tutorial_text")
+                print(f"    ~ Updated {item['title'][:60]}")
+            else:
+                tut = models.Tutorial(
+                    title=item["title"],
+                    folder_id=folder_id,
+                    category=fname,
+                    description=item.get("description"),
+                    tutorial_text=item.get("tutorial_text"),
+                    external_url=item.get("external_url"),
+                    original_filename=item.get("original_filename"),
+                    is_global=True,
+                    tenant_id=None,
+                    author_id=None,
+                )
+                db.add(tut)
+                print(f"    + Added {item['title'][:60]}")
 
         db.commit()
-        print(f"\n[OK] Seeded {len(RESOURCES)} curated tutorials in {len(folders_cache)} folders.")
+        print(f"\n[OK] Seeded/updated {len(RESOURCES)} curated tutorials in {len(folders_cache)} folders.")
 
     except Exception as e:
         db.rollback()

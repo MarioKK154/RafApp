@@ -27,9 +27,8 @@ from app import models, schemas
 from app.database import get_db
 from app.security import get_current_user
 
-router = APIRouter(prefix="/tutorials", tags=["tutorials"])
-
-UPLOAD_DIR = Path("static/tutorials")
+APP_DIR = Path(__file__).resolve().parent.parent
+UPLOAD_DIR = APP_DIR / "static" / "tutorials"
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 # ---------------------------------------------------------------------------
@@ -37,8 +36,8 @@ UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 # ---------------------------------------------------------------------------
 
 def _can_manage(user: models.User) -> bool:
-    """Admins, project managers, superusers can create/delete."""
-    return user.is_superuser or user.role in ("admin", "project manager", "team_lead")
+    """Only superusers can create, edit, or delete tutorial folders and entries."""
+    return bool(user and user.is_superuser)
 
 
 def _save_file(upload: UploadFile) -> tuple[str, str, int]:

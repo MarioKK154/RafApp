@@ -178,6 +178,7 @@ subdirs = [
     "licenses",
     "tenant_assets",
     "inventory_images/iskraft_images",
+    "tutorials",
 ]
 for folder in subdirs:
     (STATIC_DIR / folder).mkdir(parents=True, exist_ok=True)

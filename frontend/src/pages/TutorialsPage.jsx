@@ -86,7 +86,7 @@ function TutorialsPage() {
     const [folderModalOpen, setFolderModalOpen] = useState(false);
     const [defaultUploadFolder, setDefaultUploadFolder] = useState(null);
 
-    const canManage = user && (user.is_superuser || ['admin', 'project manager', 'team_lead'].includes(user.role));
+    const canManage = Boolean(user && user.is_superuser);
 
     // -------------------------------------------------------------------------
     // Data fetching
