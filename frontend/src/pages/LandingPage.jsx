@@ -154,9 +154,9 @@ function LandingPage() {
                 title: 'RSÍ/SART Certified Labor Rate Engine',
                 title_en: 'RSÍ/SART Certified Labor Rate Engine',
                 title_is: 'RSÍ/SART staðlað taxta- og tilboðskerfi',
-                text: 'Build client offers using ar.is certified labor rates (Reiknitala 2026: 946.19 ISK/ein.). Automatic surcharges for overtime, outdoor work, and night shifts with 24% VSK applied every time.',
-                text_en: 'Build client offers using ar.is certified labor rates (Reiknitala 2026: 946.19 ISK/ein.). Automatic surcharges for overtime, outdoor work, and night shifts with 24% VSK applied every time.',
-                text_is: 'Búðu til tilboð með viðurkenndum taxta frá ar.is (946,19 ISK/ein.). Sjálfvirkar álagsreglur fyrir yfirvinnu og næturskift — með 24% VSK í hvert skipti.',
+                text: 'Build client offers using ar.is RSÍ/SART labor rates. Automatic surcharges for overtime, outdoor work, and night shifts with 24% VSK applied every time.',
+                text_en: 'Build client offers using ar.is RSÍ/SART labor rates. Automatic surcharges for overtime, outdoor work, and night shifts with 24% VSK applied every time.',
+                text_is: 'Búðu til tilboð með taxta frá ar.is. Sjálfvirkar álagsreglur fyrir yfirvinnu og næturskift — með 24% VSK í hvert skipti.',
                 badge: 'v2.1', badge_color: 'yellow', date: 'Ágúst 2026', icon: 'calculator'
             },
             {
@@ -172,8 +172,8 @@ function LandingPage() {
                 title: 'Time Tracking & Automated Payroll',
                 title_en: 'Time Tracking & Automated Payroll',
                 title_is: 'Tímaskráning og launavinnsla',
-                text: 'Technicians clock in and out from mobile. Hours are automatically sorted by regular time, overtime, and collective agreement rules. Export one-click certified payslips to accounting.',
-                text_en: 'Technicians clock in and out from mobile. Hours are automatically sorted by regular time, overtime, and collective agreement rules. Export one-click certified payslips to accounting.',
+                text: 'Technicians clock in and out from mobile. Hours are automatically sorted by regular time, overtime, and collective agreement rules. Export approved payslips to accounting with one click.',
+                text_en: 'Technicians clock in and out from mobile. Hours are automatically sorted by regular time, overtime, and collective agreement rules. Export approved payslips to accounting with one click.',
                 text_is: 'Rafvirkjar stimpla sig inn og út á síma. Tímar flokkast sjálfkrafa í dagvinnu, yfirvinnu og kjarasamning. Flyttu út staðfest launamiðar með einum smelli.',
                 badge: 'LIVE', badge_color: 'green', date: 'Júní 2026', icon: 'clock', gif: '/demos/demo_timelogs.gif'
             },
@@ -208,9 +208,9 @@ function LandingPage() {
                 title: 'Fleet & Tool Telemetry',
                 title_en: 'Fleet & Tool Telemetry',
                 title_is: 'Bílafloti og verkfærastjórnun',
-                text: 'Vehicle registry with GPS tracking and service history. Tool check-in/check-out with QR codes. Maintenance alerts prevent equipment breakdowns mid-project.',
-                text_en: 'Vehicle registry with GPS tracking and service history. Tool check-in/check-out with QR codes. Maintenance alerts prevent equipment breakdowns mid-project.',
-                text_is: 'Bílaskrá með GPS og viðhaldsferil. Verkfæralán með QR-kóðum. Viðhaldsviðvaranir koma í veg fyrir bil á verkum.',
+                text: 'Vehicle registry with service history and maintenance logs. Tool and equipment tracking across field teams. Maintenance alerts help prevent breakdowns mid-project.',
+                text_en: 'Vehicle registry with service history and maintenance logs. Tool and equipment tracking across field teams. Maintenance alerts help prevent breakdowns mid-project.',
+                text_is: 'Bílaskrá með viðhaldsferli og verkfærastjórnun. Viðhaldsviðvaranir koma í veg fyrir bil á verkum.',
                 date: 'Júní 2026', icon: 'truck'
             }
         ],
@@ -400,7 +400,7 @@ function LandingPage() {
                 
 
                 setFeed(prev => ({
-                    news: Array.isArray(data.news) ? data.news : prev.news,
+                    news: Array.isArray(data.news) ? data.news.map((item, idx) => ({ ...(prev.news[idx] || {}), ...item })) : prev.news,
                     pricing_tiers: Array.isArray(data.pricing_tiers)
                         ? data.pricing_tiers.map((tier, idx) => {
                             const def = prev.pricing_tiers[idx] || {};
@@ -945,7 +945,7 @@ function LandingPage() {
                                 </div>
                             ) : (
                                 <>
-                                    <h1 className="text-5xl md:text-7xl font-black leading-tight mb-6">
+                                    <h1 className="text-4xl md:text-6xl xl:text-7xl font-black leading-tight mb-6 break-words">
                                         {i18n.language.startsWith('en') ? (feed.hero_title_en || feed.hero_title) : (feed.hero_title_is || feed.hero_title)}
                                     </h1>
                                     <p className="text-gray-400 text-lg md:text-xl mb-10 max-w-lg leading-relaxed">
@@ -1325,8 +1325,8 @@ function LandingPage() {
                                     icon: <CalculatorIcon className="h-5 w-5" />,
                                     old_en: 'Printed PDF price catalogs & manual quotes',
                                     old_is: 'Prentaðar verðskrár og handvirkir útreikningar',
-                                    new_en: 'ar.is RSÍ/SART certified offer engine (946.19 ISK/ein.)',
-                                    new_is: 'RSÍ/SART viðurkennt tilboðskerfi (946,19 ISK/ein.)',
+                                    new_en: 'ar.is RSÍ/SART offer engine with automatic VSK and surcharge rules',
+                                    new_is: 'ar.is RSÍ/SART tilboðskerfi með sjálfvirkum VSK og álagsreglum',
                                 },
                                 {
                                     icon: <ChartBarIcon className="h-5 w-5" />,
@@ -1393,11 +1393,11 @@ function LandingPage() {
                                 { icon: <CheckCircleIcon className="h-7 w-7" />, name_en: 'Tasks', name_is: 'Verkþættir', desc_en: 'Task board with status tracking and comment threads.', desc_is: 'Verkþáttaborð með stöðurakingu og athugasemdum.' },
                                 { icon: <CalendarDaysIcon className="h-7 w-7" />, name_en: 'Scheduling', name_is: 'Vaktaplan', desc_en: 'Weekly dispatch grid linked to project numbers.', desc_is: 'Vikuskráning tengd við verknúmer.' },
                                 { icon: <ClockIcon className="h-7 w-7" />, name_en: 'Timelogs', name_is: 'Tímaskrá', desc_en: 'Mobile clock-in/out with overtime sorting.', desc_is: 'Stimpun á síma með sjálfvirkri yfirvintuflokklun.' },
-                                { icon: <CalculatorIcon className="h-7 w-7" />, name_en: 'Accounting', name_is: 'Bókhald', desc_en: 'Payslip generation and certified hour export.', desc_is: 'Launamiðar og staðfest tímaútflutningur.' },
+                                { icon: <CalculatorIcon className="h-7 w-7" />, name_en: 'Accounting', name_is: 'Bókhald', desc_en: 'Payslip generation and hour export to accounting.', desc_is: 'Launamiðar og tímaútflutningur í bókhald.' },
                                 { icon: <DocumentTextIcon className="h-7 w-7" />, name_en: 'Drawings', name_is: 'Teikningar', desc_en: 'CAD drawing repository with IST 200 compliance.', desc_is: 'Teikningasafn samkv. IST 200:2016.' },
                                 { icon: <ShieldCheckIcon className="h-7 w-7" />, name_en: 'Risk Library', name_is: 'Áhættumat', desc_en: '33 IST 200:2016 risk templates with control measures.', desc_is: '33 IST 200:2016 áhættumatssniðmát.' },
                                 { icon: <BuildingOffice2Icon className="h-7 w-7" />, name_en: 'Materials', name_is: 'Efni & Birgjar', desc_en: 'Wholesaler catalog search and project shopping lists.', desc_is: 'Birgjaskrár og innkaupalistar á verk.' },
-                                { icon: <TruckIcon className="h-7 w-7" />, name_en: 'Fleet & Tools', name_is: 'Bílafloti & Tæki', desc_en: 'GPS vehicle tracking and QR tool check-in/out.', desc_is: 'GPS bílarakning og QR verkfæralán.' },
+                                { icon: <TruckIcon className="h-7 w-7" />, name_en: 'Fleet & Tools', name_is: 'Bílafloti & Tæki', desc_en: 'Vehicle registry, service history, and tool management.', desc_is: 'Bílaskrá, viðhaldsferill og verkfærastjórnun.' },
                             ].map((mod, idx) => (
                                 <div key={idx} className="relative group cursor-default">
                                     <div className="bg-gray-800/70 border border-gray-700/80 group-hover:border-[#0096FF]/50 rounded-2xl p-5 flex flex-col items-center text-center transition-all duration-300 group-hover:bg-gray-800 group-hover:shadow-[0_0_20px_rgba(0,150,255,0.1)]">
