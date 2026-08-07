@@ -400,7 +400,7 @@ function LandingPage() {
                 
 
                 setFeed(prev => ({
-                    news: Array.isArray(data.news) ? data.news.map((item, idx) => ({ ...(prev.news[idx] || {}), ...item })) : prev.news,
+                    news: prev.news, // News is locally managed with rich metadata (GIFs, badges, icons); server data ignored
                     pricing_tiers: Array.isArray(data.pricing_tiers)
                         ? data.pricing_tiers.map((tier, idx) => {
                             const def = prev.pricing_tiers[idx] || {};
@@ -1452,7 +1452,7 @@ function LandingPage() {
                                     className="w-full h-2 rounded-full accent-[#0096FF] bg-gray-700 cursor-pointer"
                                 />
                                 <div className="flex justify-between text-xs text-gray-500 mt-2">
-                                    <span>1</span><span>50</span><span>100</span><span>200</span>
+                                    <span>1</span><span>11</span><span>26</span><span>66</span>
                                 </div>
                             </div>
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
