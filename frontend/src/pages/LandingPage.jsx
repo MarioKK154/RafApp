@@ -1446,24 +1446,24 @@ function LandingPage() {
                                 <input
                                     type="range"
                                     min={1}
-                                    max={50}
+                                    max={200}
                                     value={teamSize}
                                     onChange={e => setTeamSize(Number(e.target.value))}
                                     className="w-full h-2 rounded-full accent-[#0096FF] bg-gray-700 cursor-pointer"
                                 />
                                 <div className="flex justify-between text-xs text-gray-500 mt-2">
-                                    <span>1</span><span>10</span><span>25</span><span>50</span>
+                                    <span>1</span><span>50</span><span>100</span><span>200</span>
                                 </div>
                             </div>
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                                 <div className="bg-gray-800/80 rounded-2xl p-5 text-center border border-gray-700/50">
-                                    <div className="text-2xl font-black text-white tabular-nums">{Math.round(teamSize * 8.5)}h</div>
+                                    <div className="text-2xl font-black text-white tabular-nums">{Math.round(teamSize * 5)}h</div>
                                     <div className="text-xs text-gray-400 mt-1.5 leading-snug">
                                         {i18n.language.startsWith('en') ? 'Hours saved / month' : 'Tímar sparaðir / mán.'}
                                     </div>
                                 </div>
                                 <div className="bg-[#0096FF]/5 border border-[#0096FF]/15 rounded-2xl p-5 text-center">
-                                    <div className="text-2xl font-black text-[#0096FF] tabular-nums">{(Math.round(teamSize * 8.5) * 3500).toLocaleString('is-IS')}</div>
+                                    <div className="text-2xl font-black text-[#0096FF] tabular-nums">{(Math.round(teamSize * 5) * 3000).toLocaleString('is-IS')}</div>
                                     <div className="text-xs text-gray-400 mt-1.5 leading-snug">
                                         {i18n.language.startsWith('en') ? 'Est. value ISK / month' : 'Áætlað gildi ISK / mán.'}
                                     </div>
@@ -1475,7 +1475,7 @@ function LandingPage() {
                                     </div>
                                 </div>
                                 <div className="bg-emerald-900/20 border border-emerald-500/20 rounded-2xl p-5 text-center">
-                                    <div className="text-2xl font-black text-emerald-400 tabular-nums">{Math.max(0, Math.round(teamSize * 8.5) * 3500 - calcPlatformCost(teamSize)).toLocaleString('is-IS')}</div>
+                                    <div className="text-2xl font-black text-emerald-400 tabular-nums">{Math.max(0, Math.round(teamSize * 5) * 3000 - calcPlatformCost(teamSize)).toLocaleString('is-IS')}</div>
                                     <div className="text-xs text-emerald-400/60 mt-1.5 leading-snug">
                                         {i18n.language.startsWith('en') ? 'Est. net savings / month' : 'Áætlaður sparnaður / mán.'}
                                     </div>
@@ -1483,8 +1483,8 @@ function LandingPage() {
                             </div>
                             <p className="text-gray-600 text-xs text-center leading-relaxed">
                                 {i18n.language.startsWith('en')
-                                    ? '* Based on industry estimates of ~8.5 admin hours saved per electrician/month at 3,500 ISK/hr. Platform cost uses published pricing tiers. Actual results vary.'
-                                    : '* Byggt á iðnaðarmatinu ~8,5 stjórnunartímar sparaðir á rafvirka á mánuði við 3.500 ISK/klst. Raunleg niðurstaða kann að vera frábrugðin.'
+                                    ? '* Based on conservative estimates of ~5 admin hours saved per electrician/month at 3,000 ISK/hr. Platform cost uses published pricing tiers. Actual results vary.'
+                                    : '* Byggt á áætlun um ~5 stjórnunartíma sparaða á rafvirka á mánuði við 3.000 ISK/klst. Raunleg niðurstaða kann að vera frábrugðin.'
                                 }
                             </p>
                         </div>
