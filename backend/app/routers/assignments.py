@@ -115,7 +115,6 @@ def purge_assignment(
                 user_id=db_assignment.user_id,
                 start_date=target_date + timedelta(days=1),
                 end_date=old_end,
-                role=db_assignment.role,
                 notes=db_assignment.notes
             )
             db.add(segment_2)

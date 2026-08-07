@@ -289,7 +289,7 @@ function CalendarPage() {
     const handleCreateEvent = async (e) => {
         e.preventDefault();
         const startTime = new Date(formData.start);
-        if (startTime < new Date()) {
+        if (startTime < new Date(Date.now() - 15 * 60 * 1000)) {
             toast.error(t('cannot_schedule_past', { defaultValue: 'Cannot schedule events in the past.' }));
             return;
         }
@@ -359,7 +359,10 @@ function CalendarPage() {
                 actions={
                     <button
                         onClick={() => {
-                            setFormData({ title: '', event_type: 'custom', start: format(new Date(), "yyyy-MM-dd'T'HH:mm"), end: format(new Date(), "yyyy-MM-dd'T'HH:mm"), description: '', location: '', attendeeIds: [] });
+                            const now = new Date();
+                            const startStr = format(addDays(now, 1), "yyyy-MM-dd'T'10:00");
+                            const endStr = format(addDays(now, 1), "yyyy-MM-dd'T'11:00");
+                            setFormData({ title: '', event_type: 'custom', start: startStr, end: endStr, description: '', location: '', attendeeIds: [] });
                             setModalMode('create');
                             setIsModalOpen(true);
                         }}

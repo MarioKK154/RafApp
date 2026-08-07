@@ -2252,7 +2252,7 @@ def create_notification(db: Session, user_id: int, message: str, link: Optional[
     db_note = models.Notification(user_id=user_id, message=message, link=link)
     db.add(db_note); db.commit(); db.refresh(db_note); return db_note
 
-def get_notifications(db: Session, user_id: int, unread_only: bool = True, skip: int = 0, limit: int = 50) -> List[models.Notification]:
+def get_notifications(db: Session, user_id: int, unread_only: bool = False, skip: int = 0, limit: int = 50) -> List[models.Notification]:
     query = db.query(models.Notification).filter(models.Notification.user_id == user_id)
     if unread_only: query = query.filter(models.Notification.is_read == False)
     return query.order_by(desc(models.Notification.created_at)).offset(skip).limit(limit).all()

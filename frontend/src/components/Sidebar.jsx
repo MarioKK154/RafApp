@@ -181,7 +181,7 @@ function Sidebar() {
             height: '100vh',
             display: 'flex',
             flexDirection: 'column',
-            overflow: 'hidden',
+            overflow: 'visible',
         };
 
     const navItemClickProps = isOverlay ? { onClick: closeMobile } : {};
@@ -203,7 +203,7 @@ function Sidebar() {
                 />
             )}
 
-            <aside style={asideStyle} className="flex flex-col h-screen z-50">
+            <aside style={asideStyle} className="flex flex-col h-screen">
                 {/* ── Header ── */}
                 <div
                     style={{ borderBottom: '1px solid var(--border-subtle)', minHeight: '72px' }}

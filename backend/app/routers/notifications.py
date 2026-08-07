@@ -8,6 +8,7 @@ from ..database import get_db
 from ..security import get_current_user 
 
 from pydantic import BaseModel
+from datetime import datetime, timedelta, timezone
 import logging
 
 router = APIRouter(
@@ -27,9 +28,11 @@ def get_unread_count(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
+    since = datetime.now(timezone.utc) - timedelta(hours=24)
     count = db.query(models.Notification).filter(
         models.Notification.user_id == current_user.id,
-        models.Notification.is_read == False
+        models.Notification.is_read == False,
+        models.Notification.created_at >= since
     ).count()
     return {"count": count}
 
@@ -41,7 +44,36 @@ def read_notifications(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
-    return crud.get_notifications(db, user_id=current_user.id, unread_only=unread_only, skip=skip, limit=limit)
+    # Only return notifications from the last 24 hours
+    since = datetime.now(timezone.utc) - timedelta(hours=24)
+    query = db.query(models.Notification).filter(
+        models.Notification.user_id == current_user.id,
+        models.Notification.created_at >= since
+    )
+    if unread_only:
+        query = query.filter(models.Notification.is_read == False)
+    from sqlalchemy import desc
+    return query.order_by(desc(models.Notification.created_at)).offset(skip).limit(limit).all()
+
+# NOTE: /read-all MUST be defined BEFORE /{notification_id}/read to avoid
+# FastAPI matching the literal string "read-all" as an integer path param.
+@router.put("/read-all", response_model=List[schemas.NotificationRead])
+def mark_all_notifications_as_read(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    db.query(models.Notification).filter(
+        models.Notification.user_id == current_user.id,
+        models.Notification.is_read == False
+    ).update({"is_read": True}, synchronize_session=False)
+    db.commit()
+    # Return the updated list so the frontend doesn't need a second request
+    since = datetime.now(timezone.utc) - timedelta(hours=24)
+    from sqlalchemy import desc
+    return db.query(models.Notification).filter(
+        models.Notification.user_id == current_user.id,
+        models.Notification.created_at >= since
+    ).order_by(desc(models.Notification.created_at)).limit(50).all()
 
 @router.put("/{notification_id}/read", response_model=schemas.NotificationRead)
 def mark_notification_as_read(
@@ -62,18 +94,6 @@ def mark_notification_as_read(
     db.refresh(db_note)
     return db_note
 
-@router.put("/read-all", response_model=List[schemas.NotificationRead])
-def mark_all_notifications_as_read(
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
-):
-    db.query(models.Notification).filter(
-        models.Notification.user_id == current_user.id,
-        models.Notification.is_read == False
-    ).update({"is_read": True}, synchronize_session=False)
-    db.commit()
-    # Return the updated list so the frontend doesn't need a second request
-    return crud.get_notifications(db, user_id=current_user.id, unread_only=False, skip=0, limit=50)
 
 @router.post("/subscribe", status_code=201)
 def subscribe_to_push(
