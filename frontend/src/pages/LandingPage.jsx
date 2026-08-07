@@ -10,7 +10,20 @@ import {
     LanguageIcon,
     ArrowTopRightOnSquareIcon,
     Bars3Icon,
-    XMarkIcon
+    XMarkIcon,
+    ChartBarIcon,
+    ClockIcon,
+    DocumentTextIcon,
+    CalendarDaysIcon,
+    WrenchScrewdriverIcon,
+    CalculatorIcon,
+    TruckIcon,
+    BuildingOffice2Icon,
+    PresentationChartLineIcon,
+    CpuChipIcon,
+    Cog6ToothIcon,
+    ChatBubbleLeftRightIcon,
+    UserGroupIcon,
 } from '@heroicons/react/24/outline';
 import axiosInstance from '../api/axiosInstance';
 import defaultLogo from '../assets/logo.png';
@@ -71,6 +84,15 @@ function LandingPage() {
     const [activeFeatureTab, setActiveFeatureTab] = useState('gantt');
     const [isSimulatedClockedIn, setIsSimulatedClockedIn] = useState(true);
     const [simulatedHours, setSimulatedHours] = useState(38.5);
+    const [teamSize, setTeamSize] = useState(8);
+
+    const calcPlatformCost = (n) => {
+        if (n <= 2) return 16390;
+        if (n <= 10) return Math.min(16390 + (n - 2) * 3190, 41910);
+        if (n <= 25) return Math.min(43890 + (n - 10) * 2750, 85140);
+        if (n <= 65) return Math.min(82390 + (n - 25) * 2200, 170390);
+        return 164890 + (n - 65) * 1650;
+    };
 
     const handleMouseMoveHero = (e) => {
         const card = e.currentTarget;
@@ -111,52 +133,85 @@ function LandingPage() {
     const [feed, setFeed] = useState({
         news: [
             {
-                title: 'Interactive Gantt & Task Scheduler',
-                title_en: 'Interactive Gantt & Task Scheduler',
-                title_is: 'Gagnvirk skipulags- og Gantt-kort',
-                text: 'Project managers can now schedule milestones, map task dependencies, and allocate technicians directly on the interactive Gantt chart. Schedules sync instantly to field technicians\' mobile calendars.',
-                text_en: 'Project managers can now schedule milestones, map task dependencies, and allocate technicians directly on the interactive Gantt chart. Schedules sync instantly to field technicians\' mobile calendars.',
-                text_is: 'Verkstjórar geta nú skipulagt áfanga, tengt verkþætti og úthlutað mönnum beint á verk í Gantt-kortinu. Skráningar samstillast strax í síma starfsmanna.'
+                title: 'Live Dashboard & KPI Command Center',
+                title_en: 'Live Dashboard & KPI Command Center',
+                title_is: 'Lifandi mælaborð og KPI yfirlit',
+                text: 'Monitor active projects, crew status, open task counts, and weekly hours in real time from a single command center. Every KPI updates automatically as your team logs work.',
+                text_en: 'Monitor active projects, crew status, open task counts, and weekly hours in real time from a single command center. Every KPI updates automatically as your team logs work.',
+                text_is: 'Fylgstu með virkum verkefnum, stöðu starfsmanna, opnum verkþáttum og vikutíma í rauntíma á einum stað. Hvert KPI uppfærist sjálfkrafa þegar teymið vinnur.',
+                badge: 'LIVE', badge_color: 'green', date: 'Ágúst 2026', icon: 'chart', gif: '/demos/demo_dashboard.gif'
             },
             {
-                title: 'Relevance-Sorted Materials Search',
-                title_en: 'Relevance-Sorted Materials Search',
-                title_is: 'Snjöll og hraðvirk efnisleit',
-                text: 'Search our materials index with a smart sorting engine that prioritizes exact matches (e.g. \'nym-j\') and lists similar items (e.g. halogen-free cables) lower down. Eliminates catalog search friction.',
-                text_en: 'Search our materials index with a smart sorting engine that prioritizes exact matches (e.g. \'nym-j\') and lists similar items (e.g. halogen-free cables) lower down. Eliminates catalog search friction.',
-                text_is: 'Leitaðu í efnisskrá með snjallri leit sem forgangsraðar nákvæmum niðurstöðum (t.d. \'nym-j\') en sýnir svipaðar vörur neðar.'
+                title: 'Interactive Gantt & Project Scheduling',
+                title_en: 'Interactive Gantt & Project Scheduling',
+                title_is: 'Gagnvirkur Gantt og verkskipulag',
+                text: 'Schedule milestones, map task dependencies, and assign technicians directly on the Gantt chart. Changes sync instantly to every team member\'s mobile calendar.',
+                text_en: 'Schedule milestones, map task dependencies, and assign technicians directly on the Gantt chart. Changes sync instantly to every team member\'s mobile calendar.',
+                text_is: 'Skipulagðu áfanga, tengdu verkþætti og úthlutar mannaflanum beint í Gantt-rit. Breytingar samstillast strax við síma starfsmanna.',
+                badge: 'NEW', badge_color: 'blue', date: 'Ágúst 2026', icon: 'presentation', gif: '/demos/demo_gantt.gif'
             },
             {
-                title: 'Advanced HR & Leave Pipeline',
-                title_en: 'Advanced HR & Leave Pipeline',
-                title_is: 'Tíma- og orlofsstjórnun á vettvangi',
-                text: 'Track electrician logs, check-in locations, and request reviews in a unified workspace. Approve leave requests and export certified hours directly to accounting for payroll.',
-                text_en: 'Track electrician logs, check-in locations, and request reviews in a unified workspace. Approve leave requests and export certified hours directly to accounting for payroll.',
-                text_is: 'Fylgstu með stimplunum, staðsetningu og yfirferð í samræmdu vinnusvæði. Samþykktu orlof og flyttu út tíma í bókhald.'
+                title: 'RSÍ/SART Certified Labor Rate Engine',
+                title_en: 'RSÍ/SART Certified Labor Rate Engine',
+                title_is: 'RSÍ/SART staðlað taxta- og tilboðskerfi',
+                text: 'Build client offers using ar.is certified labor rates (Reiknitala 2026: 946.19 ISK/ein.). Automatic surcharges for overtime, outdoor work, and night shifts with 24% VSK applied every time.',
+                text_en: 'Build client offers using ar.is certified labor rates (Reiknitala 2026: 946.19 ISK/ein.). Automatic surcharges for overtime, outdoor work, and night shifts with 24% VSK applied every time.',
+                text_is: 'Búðu til tilboð með viðurkenndum taxta frá ar.is (946,19 ISK/ein.). Sjálfvirkar álagsreglur fyrir yfirvinnu og næturskift — með 24% VSK í hvert skipti.',
+                badge: 'v2.1', badge_color: 'yellow', date: 'Ágúst 2026', icon: 'calculator'
             },
             {
-                title: 'Live Equipment Telemetry & Tool Registry',
-                title_en: 'Live Equipment Telemetry & Tool Registry',
-                title_is: 'Stafræn verkfæraskrá og mælingar',
-                text: 'Track tool checkouts, monitor maintenance statuses, and prevent high-value hardware losses across field teams.',
-                text_en: 'Track tool checkouts, monitor maintenance statuses, and prevent high-value hardware losses across field teams.',
-                text_is: 'Fylgstu með hvaða rafvirkjar eru með hvaða tæki í láni, skráðu verkfæri í viðgerð og komdu í veg fyrir tap á verðmætum búnaði.'
+                title: 'IST 200:2016 Risk Assessment Library',
+                title_en: 'IST 200:2016 Risk Assessment Library',
+                title_is: 'Áhættumat og öryggissniðmát — IST 200:2016',
+                text: '33 pre-built risk templates across 8 categories — from cable routing to high-voltage switchgear. Each template includes control measures and compliance notes.',
+                text_en: '33 pre-built risk templates across 8 categories — from cable routing to high-voltage switchgear. Each template includes control measures and compliance notes.',
+                text_is: '33 tilbúin áhættumatssniðmát í 8 flokkum — frá kaplalögn til háspennubúnaðar. Hvert sniðmát inniheldur öryggisráðstafanir og samræmist IST 200:2016.',
+                badge: '33 TEMPLATES', badge_color: 'purple', date: 'Ágúst 2026', icon: 'shield', gif: '/demos/demo_risk.gif'
             },
             {
-                title: 'Payroll & Accounting Export Engine',
-                title_en: 'Payroll & Accounting Export Engine',
-                title_is: 'Bein tenging við launavinnslu og bókhald',
-                text: 'Automatically map electrician hours, overtime rates, and statutory agreements directly into accounting and payroll.',
-                text_en: 'Automatically map electrician hours, overtime rates, and statutory agreements directly into accounting and payroll.',
-                text_is: 'Kerfið flokkar vinnustundir sjálfkrafa eftir yfirvinnu, dagvinnu og kjarasamningum. Flyttu staðfestar tímaskráningar beint í bókhald.'
+                title: 'Time Tracking & Automated Payroll',
+                title_en: 'Time Tracking & Automated Payroll',
+                title_is: 'Tímaskráning og launavinnsla',
+                text: 'Technicians clock in and out from mobile. Hours are automatically sorted by regular time, overtime, and collective agreement rules. Export one-click certified payslips to accounting.',
+                text_en: 'Technicians clock in and out from mobile. Hours are automatically sorted by regular time, overtime, and collective agreement rules. Export one-click certified payslips to accounting.',
+                text_is: 'Rafvirkjar stimpla sig inn og út á síma. Tímar flokkast sjálfkrafa í dagvinnu, yfirvinnu og kjarasamning. Flyttu út staðfest launamiðar með einum smelli.',
+                badge: 'LIVE', badge_color: 'green', date: 'Júní 2026', icon: 'clock', gif: '/demos/demo_timelogs.gif'
             },
             {
-                title: 'Mobile Blueprints & Photo Proof Engine',
-                title_en: 'Mobile Blueprints & Photo Proof Engine',
-                title_is: 'Teikningasafn og ljósmyndaskráning í síma',
-                text: 'Field technicians can view technical CAD blueprints, annotate revisions, and upload high-res completion photos directly from mobile.',
-                text_en: 'Field technicians can view technical CAD blueprints, annotate revisions, and upload high-res completion photos directly from mobile.',
-                text_is: 'Rafvirkjar geta skoðað nýjustu teikningar í símanum, merkt við framvindu og hlaðið upp myndum af frágangi beint á verknúmer.'
+                title: 'Field Dispatch & Scheduling Calendar',
+                title_en: 'Field Dispatch & Scheduling Calendar',
+                title_is: 'Vaktaplan og dagatal vettvangs',
+                text: 'Drag-and-drop weekly scheduling grid shows crew availability at a glance. Link shifts to project numbers. Integrated calendar handles meetings, site visits, and leave.',
+                text_en: 'Drag-and-drop weekly scheduling grid shows crew availability at a glance. Link shifts to project numbers. Integrated calendar handles meetings, site visits, and leave.',
+                text_is: 'Vikuskráning með dragi-og-slepptu sem sýnir mætingu á einu augnabragði. Tengdu vaktir við verknúmer. Samþætt dagatal tekur við fundum og leyfisdögum.',
+                badge: 'NEW', badge_color: 'blue', date: 'Júní 2026', icon: 'calendar', gif: '/demos/demo_calendar.gif'
+            },
+            {
+                title: 'Technical Drawings Repository',
+                title_en: 'Technical Drawings Repository',
+                title_is: 'Teikningasafn og skjalakerfi',
+                text: 'Store and retrieve CAD drawings, wiring schematics, and IST 200:2016 compliant documents per project. Field technicians access the latest revision from their phones — no printing required.',
+                text_en: 'Store and retrieve CAD drawings, wiring schematics, and IST 200:2016 compliant documents per project. Field technicians access the latest revision from their phones — no printing required.',
+                text_is: 'Geymdu og sæktu teikningar og lagnalegar á verknúmer. Rafvirkjar nálgast nýjustu leiðréttingar í síma — án prentunnar.',
+                date: 'Ágúst 2026', icon: 'document'
+            },
+            {
+                title: 'Materials Catalog & Wholesalers',
+                title_en: 'Materials Catalog & Wholesalers',
+                title_is: 'Efnisskrá og birgjar',
+                text: 'Search Icelandic wholesaler catalogs (Rafey, Seyðisfoss, Elcon) with a smart relevance engine that surfaces exact matches first. Build shopping lists per project and compare across suppliers.',
+                text_en: 'Search Icelandic wholesaler catalogs (Rafey, Seyðisfoss, Elcon) with a smart relevance engine that surfaces exact matches first. Build shopping lists per project and compare across suppliers.',
+                text_is: 'Leitaðu í vörulistum íslenskra birgja (Rafey, Seyðisfoss, Elcon). Snjöll leit sýnir nákvæmar niðurstöður fyrst. Búðu til innkaupalistar á verknúmer.',
+                date: 'Júní 2026', icon: 'building'
+            },
+            {
+                title: 'Fleet & Tool Telemetry',
+                title_en: 'Fleet & Tool Telemetry',
+                title_is: 'Bílafloti og verkfærastjórnun',
+                text: 'Vehicle registry with GPS tracking and service history. Tool check-in/check-out with QR codes. Maintenance alerts prevent equipment breakdowns mid-project.',
+                text_en: 'Vehicle registry with GPS tracking and service history. Tool check-in/check-out with QR codes. Maintenance alerts prevent equipment breakdowns mid-project.',
+                text_is: 'Bílaskrá með GPS og viðhaldsferil. Verkfæralán með QR-kóðum. Viðhaldsviðvaranir koma í veg fyrir bil á verkum.',
+                date: 'Júní 2026', icon: 'truck'
             }
         ],
         pricing_tiers: [
@@ -1053,7 +1108,7 @@ function LandingPage() {
                                 feed.news.map((item, idx) => (
                                     <div 
                                         key={idx} 
-                                        className={`bg-gray-800 rounded-3xl p-8 border transition group relative ${editMode ? 'border-dashed border-indigo-500/80 cursor-move' : 'border-gray-700 hover:border-[#0096FF]/50'}`}
+                                        className={`rounded-3xl border transition group relative overflow-hidden ${editMode ? 'bg-gray-800 p-8 border-dashed border-indigo-500/80 cursor-move' : 'bg-gray-800/50 border-gray-700 hover:border-[#0096FF]/50 hover:shadow-[0_0_30px_rgba(0,150,255,0.07)]'}`}
                                         draggable={editMode}
                                         onDragStart={() => setDraggedIndex(idx)}
                                         onDragOver={handleDragOver}
@@ -1135,19 +1190,63 @@ function LandingPage() {
                                                      </div>
                                                  </div>
                                              </div>
-                                         ) : (
-                                             <>
-                                                 <div className="mb-4 text-[#0096FF]">
-                                                     <ShieldCheckIcon className="h-8 w-8" />
-                                                 </div>
-                                                 <h3 className="text-xl font-bold mb-3 group-hover:text-[#0096FF] transition text-left">
-                                                     {i18n.language.startsWith('en') ? (item.title_en || item.title) : (item.title_is || item.title)}
-                                                 </h3>
-                                                 <p className="text-gray-400 text-sm leading-relaxed text-left">
-                                                     {i18n.language.startsWith('en') ? (item.text_en || item.text) : (item.text_is || item.text)}
-                                                 </p>
-                                             </>
-                                        )}
+                                          ) : (
+                                              <>
+                                                  {item.gif && (
+                                                      <div className="overflow-hidden h-44 bg-gray-900/50">
+                                                          <img
+                                                              src={item.gif}
+                                                              alt={i18n.language.startsWith('en') ? (item.title_en || item.title) : (item.title_is || item.title)}
+                                                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                                                              loading="lazy"
+                                                          />
+                                                      </div>
+                                                  )}
+                                                  <div className={item.gif ? 'p-6' : 'p-8'}>
+                                                      <div className="flex items-center justify-between mb-4">
+                                                          <div className="flex items-center gap-2">
+                                                              <div className="p-2 rounded-xl bg-[#0096FF]/10 text-[#0096FF]">
+                                                                  {(() => {
+                                                                      const iconMap = {
+                                                                          chart: <ChartBarIcon className="h-5 w-5" />,
+                                                                          presentation: <PresentationChartLineIcon className="h-5 w-5" />,
+                                                                          shield: <ShieldCheckIcon className="h-5 w-5" />,
+                                                                          clock: <ClockIcon className="h-5 w-5" />,
+                                                                          document: <DocumentTextIcon className="h-5 w-5" />,
+                                                                          calendar: <CalendarDaysIcon className="h-5 w-5" />,
+                                                                          wrench: <WrenchScrewdriverIcon className="h-5 w-5" />,
+                                                                          calculator: <CalculatorIcon className="h-5 w-5" />,
+                                                                          truck: <TruckIcon className="h-5 w-5" />,
+                                                                          building: <BuildingOffice2Icon className="h-5 w-5" />,
+                                                                      };
+                                                                      return iconMap[item.icon] || <ShieldCheckIcon className="h-5 w-5" />;
+                                                                  })()}
+                                                              </div>
+                                                              {item.badge && (
+                                                                  <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border ${
+                                                                      item.badge_color === 'green' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                                                                      item.badge_color === 'blue' ? 'bg-[#0096FF]/10 text-[#0096FF] border-[#0096FF]/20' :
+                                                                      item.badge_color === 'yellow' ? 'bg-amber-400/10 text-amber-400 border-amber-400/20' :
+                                                                      item.badge_color === 'purple' ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' :
+                                                                      'bg-gray-700 text-gray-400 border-gray-600'
+                                                                  }`}>
+                                                                      {item.badge}
+                                                                  </span>
+                                                              )}
+                                                          </div>
+                                                          {item.date && (
+                                                              <span className="text-[10px] text-gray-500 font-medium tabular-nums">{item.date}</span>
+                                                          )}
+                                                      </div>
+                                                      <h3 className="text-lg font-bold mb-2 group-hover:text-[#0096FF] transition text-left leading-snug">
+                                                          {i18n.language.startsWith('en') ? (item.title_en || item.title) : (item.title_is || item.title)}
+                                                      </h3>
+                                                      <p className="text-gray-400 text-sm leading-relaxed text-left">
+                                                          {i18n.language.startsWith('en') ? (item.text_en || item.text) : (item.text_is || item.text)}
+                                                      </p>
+                                                  </div>
+                                              </>
+                                         )}
                                     </div>
                                 ))
                             ) : (
@@ -1181,7 +1280,217 @@ function LandingPage() {
                         </div>
                     </div>
                 </section>
- 
+
+                {/* What RafApp Replaces Section */}
+                <section className="py-24 bg-gray-950 border-t border-gray-800">
+                    <div className="max-w-7xl mx-auto px-6">
+                        <div className="text-center mb-16">
+                            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-[#0096FF] mb-3 block">
+                                {i18n.language.startsWith('en') ? 'The Old Way vs. RafApp' : 'Gamli máti vs. RafApp'}
+                            </span>
+                            <h2 className="text-3xl md:text-5xl font-black mb-4 text-white">
+                                {i18n.language.startsWith('en') ? 'One Platform. Six Tools Replaced.' : 'Eitt kerfi. Sex verkfæri úr sögunni.'}
+                            </h2>
+                            <p className="text-gray-400 max-w-2xl mx-auto text-base">
+                                {i18n.language.startsWith('en')
+                                    ? 'RafApp consolidates the fragmented tools electrical contractors rely on into a single, unified platform built for the Icelandic industry.'
+                                    : 'RafApp sameinar dreifð verkfæri sem rafverktakar reiða sig á í eina samræmda lausn sem er smíðuð fyrir íslenska iðnaðinn.'
+                                }
+                            </p>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                            {[
+                                {
+                                    icon: <ClockIcon className="h-5 w-5" />,
+                                    old_en: 'Excel timesheets & paper logs',
+                                    old_is: 'Excel tímaskrár og pappírsskráningar',
+                                    new_en: 'Digital time tracking with 1-click payroll export',
+                                    new_is: 'Stafræn tímaskráning — einn smellur í bókhald',
+                                },
+                                {
+                                    icon: <CalendarDaysIcon className="h-5 w-5" />,
+                                    old_en: 'Phone calls & WhatsApp crew dispatch',
+                                    old_is: 'Símasamtöl og WhatsApp skipulag',
+                                    new_en: 'Live scheduling grid with drag-and-drop dispatch',
+                                    new_is: 'Lifandi vaktaplan með dragi-og-slepptu skipulagi',
+                                },
+                                {
+                                    icon: <ShieldCheckIcon className="h-5 w-5" />,
+                                    old_en: 'Handwritten paper risk assessment forms',
+                                    old_is: 'Handskrifaðar áhættumatsskrár',
+                                    new_en: '33 IST 200:2016 digital risk templates, ready to attach',
+                                    new_is: '33 stafræn IST 200:2016 sniðmát, tilbúin til notkunar',
+                                },
+                                {
+                                    icon: <CalculatorIcon className="h-5 w-5" />,
+                                    old_en: 'Printed PDF price catalogs & manual quotes',
+                                    old_is: 'Prentaðar verðskrár og handvirkir útreikningar',
+                                    new_en: 'ar.is RSÍ/SART certified offer engine (946.19 ISK/ein.)',
+                                    new_is: 'RSÍ/SART viðurkennt tilboðskerfi (946,19 ISK/ein.)',
+                                },
+                                {
+                                    icon: <ChartBarIcon className="h-5 w-5" />,
+                                    old_en: 'Whiteboard project schedules & sticky notes',
+                                    old_is: 'Hvítartafla og límmiðar á skrifborðið',
+                                    new_en: 'Live Gantt chart with milestone dependencies',
+                                    new_is: 'Lifandi Gantt-rit með verkþáttatenglsum',
+                                },
+                                {
+                                    icon: <DocumentTextIcon className="h-5 w-5" />,
+                                    old_en: 'Printed drawings and USB-stick schematics',
+                                    old_is: 'Prentaðar teikningar og USB-lyklar',
+                                    new_en: 'Cloud drawing repository — latest revision always on mobile',
+                                    new_is: 'Skýjateikningasafn — nýjasta útgáfa alltaf í síma',
+                                },
+                            ].map((item, idx) => (
+                                <div key={idx} className="bg-gray-900/70 rounded-2xl border border-gray-800 overflow-hidden group hover:border-[#0096FF]/25 transition-all duration-300">
+                                    <div className="px-6 pt-5 pb-4 border-b border-gray-800/80">
+                                        <span className="text-[9px] font-black uppercase tracking-widest text-red-400/60 mb-2 block">
+                                            {i18n.language.startsWith('en') ? 'Before RafApp' : 'Áður en RafApp'}
+                                        </span>
+                                        <p className="text-gray-500 text-sm line-through decoration-red-400/30">
+                                            {i18n.language.startsWith('en') ? item.old_en : item.old_is}
+                                        </p>
+                                    </div>
+                                    <div className="px-6 py-5">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <div className="text-[#0096FF] group-hover:scale-110 transition-transform duration-300">{item.icon}</div>
+                                            <span className="text-[9px] font-black uppercase tracking-widest text-[#0096FF]/70">
+                                                {i18n.language.startsWith('en') ? 'With RafApp' : 'Með RafApp'}
+                                            </span>
+                                        </div>
+                                        <p className="text-white font-semibold text-sm leading-snug">
+                                            {i18n.language.startsWith('en') ? item.new_en : item.new_is}
+                                        </p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+
+                {/* Platform Architecture Map Section */}
+                <section className="py-24 bg-gray-900 border-t border-gray-800">
+                    <div className="max-w-7xl mx-auto px-6">
+                        <div className="text-center mb-16">
+                            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-[#0096FF] mb-3 block">
+                                {i18n.language.startsWith('en') ? 'Platform Architecture' : 'Uppbygging kerfisins'}
+                            </span>
+                            <h2 className="text-3xl md:text-5xl font-black mb-4">
+                                {i18n.language.startsWith('en') ? 'Everything Connected. Nothing Siloed.' : 'Allt tengt saman. Engar eyður.'}
+                            </h2>
+                            <p className="text-gray-400 max-w-2xl mx-auto text-base">
+                                {i18n.language.startsWith('en')
+                                    ? '10 integrated modules that share data in real time — from project creation all the way to payslip generation.'
+                                    : '10 samþætt kerfi sem deila gögnum í rauntíma — frá verkstofnun til launamiðla.'
+                                }
+                            </p>
+                        </div>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                            {[
+                                { icon: <ChartBarIcon className="h-7 w-7" />, name_en: 'Dashboard', name_is: 'Mælaborð', desc_en: 'Live KPIs, crew status, and quick action shortcuts.', desc_is: 'Lifandi KPI, staða starfsmanna og styttileiðir.' },
+                                { icon: <PresentationChartLineIcon className="h-7 w-7" />, name_en: 'Projects', name_is: 'Verkefni', desc_en: 'Project list, Gantt chart, milestones, and budgets.', desc_is: 'Verklisti, Gantt-rit, áfangar og fjárhagsáætlun.' },
+                                { icon: <CheckCircleIcon className="h-7 w-7" />, name_en: 'Tasks', name_is: 'Verkþættir', desc_en: 'Task board with status tracking and comment threads.', desc_is: 'Verkþáttaborð með stöðurakingu og athugasemdum.' },
+                                { icon: <CalendarDaysIcon className="h-7 w-7" />, name_en: 'Scheduling', name_is: 'Vaktaplan', desc_en: 'Weekly dispatch grid linked to project numbers.', desc_is: 'Vikuskráning tengd við verknúmer.' },
+                                { icon: <ClockIcon className="h-7 w-7" />, name_en: 'Timelogs', name_is: 'Tímaskrá', desc_en: 'Mobile clock-in/out with overtime sorting.', desc_is: 'Stimpun á síma með sjálfvirkri yfirvintuflokklun.' },
+                                { icon: <CalculatorIcon className="h-7 w-7" />, name_en: 'Accounting', name_is: 'Bókhald', desc_en: 'Payslip generation and certified hour export.', desc_is: 'Launamiðar og staðfest tímaútflutningur.' },
+                                { icon: <DocumentTextIcon className="h-7 w-7" />, name_en: 'Drawings', name_is: 'Teikningar', desc_en: 'CAD drawing repository with IST 200 compliance.', desc_is: 'Teikningasafn samkv. IST 200:2016.' },
+                                { icon: <ShieldCheckIcon className="h-7 w-7" />, name_en: 'Risk Library', name_is: 'Áhættumat', desc_en: '33 IST 200:2016 risk templates with control measures.', desc_is: '33 IST 200:2016 áhættumatssniðmát.' },
+                                { icon: <BuildingOffice2Icon className="h-7 w-7" />, name_en: 'Materials', name_is: 'Efni & Birgjar', desc_en: 'Wholesaler catalog search and project shopping lists.', desc_is: 'Birgjaskrár og innkaupalistar á verk.' },
+                                { icon: <TruckIcon className="h-7 w-7" />, name_en: 'Fleet & Tools', name_is: 'Bílafloti & Tæki', desc_en: 'GPS vehicle tracking and QR tool check-in/out.', desc_is: 'GPS bílarakning og QR verkfæralán.' },
+                            ].map((mod, idx) => (
+                                <div key={idx} className="relative group cursor-default">
+                                    <div className="bg-gray-800/70 border border-gray-700/80 group-hover:border-[#0096FF]/50 rounded-2xl p-5 flex flex-col items-center text-center transition-all duration-300 group-hover:bg-gray-800 group-hover:shadow-[0_0_20px_rgba(0,150,255,0.1)]">
+                                        <div className="mb-3 text-[#0096FF] group-hover:scale-110 transition-transform duration-300">
+                                            {mod.icon}
+                                        </div>
+                                        <span className="text-xs font-bold text-gray-300 group-hover:text-white transition-colors">
+                                            {i18n.language.startsWith('en') ? mod.name_en : mod.name_is}
+                                        </span>
+                                    </div>
+                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-52 bg-gray-950 border border-[#0096FF]/30 rounded-xl p-3 text-xs text-gray-300 opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none z-20 shadow-xl">
+                                        <div className="font-bold text-white mb-1">{i18n.language.startsWith('en') ? mod.name_en : mod.name_is}</div>
+                                        {i18n.language.startsWith('en') ? mod.desc_en : mod.desc_is}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+
+                {/* ROI Estimator Section */}
+                <section className="py-24 bg-gray-950 border-t border-gray-800">
+                    <div className="max-w-4xl mx-auto px-6">
+                        <div className="text-center mb-12">
+                            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-[#0096FF] mb-3 block">
+                                {i18n.language.startsWith('en') ? 'Value Estimator' : 'Hagræðisreiknar'}
+                            </span>
+                            <h2 className="text-3xl md:text-5xl font-black mb-4">
+                                {i18n.language.startsWith('en') ? 'How much could you save?' : 'Hvað gætu þér sparast?'}
+                            </h2>
+                            <p className="text-gray-400 max-w-xl mx-auto text-base">
+                                {i18n.language.startsWith('en')
+                                    ? 'Estimate your monthly time and cost savings based on your team size. All figures are indicative.'
+                                    : 'Mettu mánaðarlega tíma- og kostnaðarsparnað út frá stærð teymis. Allar tölur eru áætlaðar.'
+                                }
+                            </p>
+                        </div>
+                        <div className="bg-gray-900/80 border border-gray-800 rounded-3xl p-8 md:p-12">
+                            <div className="mb-10">
+                                <div className="flex justify-between items-center mb-5">
+                                    <label className="text-white font-bold text-lg">
+                                        {i18n.language.startsWith('en') ? 'Electricians on your team' : 'Rafvirkjar í teymi þínu'}
+                                    </label>
+                                    <span className="text-[#0096FF] text-4xl font-black tabular-nums">{teamSize}</span>
+                                </div>
+                                <input
+                                    type="range"
+                                    min={1}
+                                    max={50}
+                                    value={teamSize}
+                                    onChange={e => setTeamSize(Number(e.target.value))}
+                                    className="w-full h-2 rounded-full accent-[#0096FF] bg-gray-700 cursor-pointer"
+                                />
+                                <div className="flex justify-between text-xs text-gray-500 mt-2">
+                                    <span>1</span><span>10</span><span>25</span><span>50</span>
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                                <div className="bg-gray-800/80 rounded-2xl p-5 text-center border border-gray-700/50">
+                                    <div className="text-2xl font-black text-white tabular-nums">{Math.round(teamSize * 8.5)}h</div>
+                                    <div className="text-xs text-gray-400 mt-1.5 leading-snug">
+                                        {i18n.language.startsWith('en') ? 'Hours saved / month' : 'Tímar sparaðir / mán.'}
+                                    </div>
+                                </div>
+                                <div className="bg-[#0096FF]/5 border border-[#0096FF]/15 rounded-2xl p-5 text-center">
+                                    <div className="text-2xl font-black text-[#0096FF] tabular-nums">{(Math.round(teamSize * 8.5) * 3500).toLocaleString('is-IS')}</div>
+                                    <div className="text-xs text-gray-400 mt-1.5 leading-snug">
+                                        {i18n.language.startsWith('en') ? 'Est. value ISK / month' : 'Áætlað gildi ISK / mán.'}
+                                    </div>
+                                </div>
+                                <div className="bg-gray-800/80 rounded-2xl p-5 text-center border border-gray-700/50">
+                                    <div className="text-2xl font-black text-gray-300 tabular-nums">{calcPlatformCost(teamSize).toLocaleString('is-IS')}</div>
+                                    <div className="text-xs text-gray-400 mt-1.5 leading-snug">
+                                        {i18n.language.startsWith('en') ? 'Platform ISK / month' : 'Kerfi ISK / mán.'}
+                                    </div>
+                                </div>
+                                <div className="bg-emerald-900/20 border border-emerald-500/20 rounded-2xl p-5 text-center">
+                                    <div className="text-2xl font-black text-emerald-400 tabular-nums">{Math.max(0, Math.round(teamSize * 8.5) * 3500 - calcPlatformCost(teamSize)).toLocaleString('is-IS')}</div>
+                                    <div className="text-xs text-emerald-400/60 mt-1.5 leading-snug">
+                                        {i18n.language.startsWith('en') ? 'Est. net savings / month' : 'Áætlaður sparnaður / mán.'}
+                                    </div>
+                                </div>
+                            </div>
+                            <p className="text-gray-600 text-xs text-center leading-relaxed">
+                                {i18n.language.startsWith('en')
+                                    ? '* Based on industry estimates of ~8.5 admin hours saved per electrician/month at 3,500 ISK/hr. Platform cost uses published pricing tiers. Actual results vary.'
+                                    : '* Byggt á iðnaðarmatinu ~8,5 stjórnunartímar sparaðir á rafvirka á mánuði við 3.500 ISK/klst. Raunleg niðurstaða kann að vera frábrugðin.'
+                                }
+                            </p>
+                        </div>
+                    </div>
+                </section>
+
                 {/* Pricing Section */}
                 <section id="pricing" className="py-20 bg-[#1a202c]">
                     <div className="max-w-7xl mx-auto px-6">
