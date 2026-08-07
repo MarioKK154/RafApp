@@ -43,6 +43,92 @@ function resolveMediaUrl(url) {
     return `${rootBase}${u.startsWith('/') ? u : `/${u}`}`;
 }
 
+// NEWS_ITEMS: module-level constant — the public landing page ALWAYS renders from this.
+// It is completely immune to API responses, setFeed calls, and React state changes.
+const NEWS_ITEMS = [
+    {
+        title: 'Live Dashboard & KPI Command Center',
+        title_en: 'Live Dashboard & KPI Command Center',
+        title_is: 'Lifandi mælaborð og KPI yfirlit',
+        text: 'Monitor active projects, crew status, open task counts, and weekly hours in real time from a single command center. Every KPI updates automatically as your team logs work.',
+        text_en: 'Monitor active projects, crew status, open task counts, and weekly hours in real time from a single command center. Every KPI updates automatically as your team logs work.',
+        text_is: 'Fylgstu með virkum verkefnum, stöðu starfsmanna, opnum verkþáttum og vikutíma í rauntíma á einum stað. Hvert KPI uppfærist sjálfkrafa þegar teymið vinnur.',
+        badge: 'LIVE', badge_color: 'green', date: 'Ágúst 2026', icon: 'chart', gif: '/demos/demo_dashboard.gif'
+    },
+    {
+        title: 'Interactive Gantt & Project Scheduling',
+        title_en: 'Interactive Gantt & Project Scheduling',
+        title_is: 'Gagnvirkur Gantt og verkskipulag',
+        text: 'Schedule milestones, map task dependencies, and assign technicians directly on the Gantt chart. Changes sync instantly to every team member\'s mobile calendar.',
+        text_en: 'Schedule milestones, map task dependencies, and assign technicians directly on the Gantt chart. Changes sync instantly to every team member\'s mobile calendar.',
+        text_is: 'Skipulagðu áfanga, tengdu verkþætti og úthlutar mannaflanum beint í Gantt-rit. Breytingar samstillast strax við síma starfsmanna.',
+        badge: 'NEW', badge_color: 'blue', date: 'Ágúst 2026', icon: 'presentation', gif: '/demos/demo_gantt.gif'
+    },
+    {
+        title: 'RSÍ/SART Labor Rate Engine',
+        title_en: 'RSÍ/SART Labor Rate Engine',
+        title_is: 'RSÍ/SART staðlað taxta- og tilboðskerfi',
+        text: 'Build client offers using ar.is RSÍ/SART labor rates. Automatic surcharges for overtime, outdoor work, and night shifts with 24% VSK applied every time.',
+        text_en: 'Build client offers using ar.is RSÍ/SART labor rates. Automatic surcharges for overtime, outdoor work, and night shifts with 24% VSK applied every time.',
+        text_is: 'Búðu til tilboð með taxta frá ar.is. Sjálfvirkar álagsreglur fyrir yfirvinnu og næturskift — með 24% VSK í hvert skipti.',
+        badge: 'v2.1', badge_color: 'yellow', date: 'Ágúst 2026', icon: 'calculator'
+    },
+    {
+        title: 'IST 200:2016 Risk Assessment Library',
+        title_en: 'IST 200:2016 Risk Assessment Library',
+        title_is: 'Áhættumat og öryggissniðmát — IST 200:2016',
+        text: '33 pre-built risk templates across 8 categories — from cable routing to high-voltage switchgear. Each template includes control measures and compliance notes.',
+        text_en: '33 pre-built risk templates across 8 categories — from cable routing to high-voltage switchgear. Each template includes control measures and compliance notes.',
+        text_is: '33 tilbúin áhættumatssniðmát í 8 flokkum — frá kaplalögn til háspennubúnaðar. Hvert sniðmát inniheldur öryggisráðstafanir og samræmist IST 200:2016.',
+        badge: '33 TEMPLATES', badge_color: 'purple', date: 'Ágúst 2026', icon: 'shield', gif: '/demos/demo_risk.gif'
+    },
+    {
+        title: 'Time Tracking & Automated Payroll',
+        title_en: 'Time Tracking & Automated Payroll',
+        title_is: 'Tímaskráning og launavinnsla',
+        text: 'Technicians clock in and out from mobile. Hours are automatically sorted by regular time, overtime, and collective agreement rules. Export approved payslips to accounting with one click.',
+        text_en: 'Technicians clock in and out from mobile. Hours are automatically sorted by regular time, overtime, and collective agreement rules. Export approved payslips to accounting with one click.',
+        text_is: 'Rafvirkjar stimpla sig inn og út á síma. Tímar flokkast sjálfkrafa í dagvinnu, yfirvinnu og kjarasamning. Flyttu út staðfest launamiðar með einum smelli.',
+        badge: 'LIVE', badge_color: 'green', date: 'Júní 2026', icon: 'clock', gif: '/demos/demo_timelogs.gif'
+    },
+    {
+        title: 'Field Dispatch & Scheduling Calendar',
+        title_en: 'Field Dispatch & Scheduling Calendar',
+        title_is: 'Vaktaplan og dagatal vettvangs',
+        text: 'Drag-and-drop weekly scheduling grid shows crew availability at a glance. Link shifts to project numbers. Integrated calendar handles meetings, site visits, and leave.',
+        text_en: 'Drag-and-drop weekly scheduling grid shows crew availability at a glance. Link shifts to project numbers. Integrated calendar handles meetings, site visits, and leave.',
+        text_is: 'Vikuskráning með dragi-og-slepptu sem sýnir mætingu á einu augnabragði. Tengdu vaktir við verknúmer. Samþætt dagatal tekur við fundum og leyfisdögum.',
+        badge: 'NEW', badge_color: 'blue', date: 'Júní 2026', icon: 'calendar', gif: '/demos/demo_calendar.gif'
+    },
+    {
+        title: 'Technical Drawings Repository',
+        title_en: 'Technical Drawings Repository',
+        title_is: 'Teikningasafn og skjalakerfi',
+        text: 'Store and retrieve CAD drawings, wiring schematics, and IST 200:2016 compliant documents per project. Field technicians access the latest revision from their phones — no printing required.',
+        text_en: 'Store and retrieve CAD drawings, wiring schematics, and IST 200:2016 compliant documents per project. Field technicians access the latest revision from their phones — no printing required.',
+        text_is: 'Geymdu og sæktu teikningar og lagnalegar á verknúmer. Rafvirkjar nálgast nýjustu leiðréttingar í síma — án prentunnar.',
+        date: 'Ágúst 2026', icon: 'document'
+    },
+    {
+        title: 'Materials Catalog & Wholesalers',
+        title_en: 'Materials Catalog & Wholesalers',
+        title_is: 'Efnisskrá og birgjar',
+        text: 'Search Icelandic wholesaler catalogs (Rafey, Seyðisfoss, Elcon) with a smart relevance engine that surfaces exact matches first. Build shopping lists per project and compare across suppliers.',
+        text_en: 'Search Icelandic wholesaler catalogs (Rafey, Seyðisfoss, Elcon) with a smart relevance engine that surfaces exact matches first. Build shopping lists per project and compare across suppliers.',
+        text_is: 'Leitaðu í vörulistum íslenskra birgja (Rafey, Seyðisfoss, Elcon). Snjöll leit sýnir nákvæmar niðurstöður fyrst. Búðu til innkaupalistar á verknúmer.',
+        date: 'Júní 2026', icon: 'building'
+    },
+    {
+        title: 'Fleet & Tool Telemetry',
+        title_en: 'Fleet & Tool Telemetry',
+        title_is: 'Bílafloti og verkfærastjórnun',
+        text: 'Vehicle registry with service history and maintenance logs. Tool and equipment tracking across field teams. Maintenance alerts help prevent breakdowns mid-project.',
+        text_en: 'Vehicle registry with service history and maintenance logs. Tool and equipment tracking across field teams. Maintenance alerts help prevent breakdowns mid-project.',
+        text_is: 'Bílaskrá með viðhaldsferli og verkfærastjórnun. Viðhaldsviðvaranir koma í veg fyrir bil á verkum.',
+        date: 'Júní 2026', icon: 'truck'
+    }
+];
+
 function LandingPage() {
     const { t, i18n } = useTranslation();
     const { isAuthenticated, user } = useAuth();
@@ -1104,8 +1190,8 @@ function LandingPage() {
                             )}
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                            {feed.news.length > 0 ? (
-                                feed.news.map((item, idx) => (
+                            {(editMode ? feed.news : NEWS_ITEMS).length > 0 ? (
+                                (editMode ? feed.news : NEWS_ITEMS).map((item, idx) => (
                                     <div 
                                         key={idx} 
                                         className={`rounded-3xl border transition group relative overflow-hidden ${editMode ? 'bg-gray-800 p-8 border-dashed border-indigo-500/80 cursor-move' : 'bg-gray-800/50 border-gray-700 hover:border-[#0096FF]/50 hover:shadow-[0_0_30px_rgba(0,150,255,0.07)]'}`}
@@ -2076,11 +2162,18 @@ function LandingPage() {
                                                 <input
                                                     type="range"
                                                     min="1"
-                                                    max="100"
+                                                    max="200"
                                                     value={calcUsers}
                                                     onChange={(e) => setCalcUsers(parseInt(e.target.value))}
                                                     className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-[#0096FF]"
                                                 />
+                                                <div className="flex justify-between text-[9px] text-gray-600 mt-1 px-0.5 select-none">
+                                                    <span>1</span>
+                                                    <span>11</span>
+                                                    <span>26</span>
+                                                    <span>66</span>
+                                                    <span>200</span>
+                                                </div>
                                             </div>
                                             <div className="bg-gray-900 rounded-2xl p-4 min-w-[180px] text-center border border-gray-800">
                                                 <span className="block text-[8px] font-black text-gray-500 uppercase tracking-wider">{i18n.language.startsWith('en') ? (feed.calculator_tier_label_en || 'Active Tier') : (feed.calculator_tier_label_is || 'Áskriftarleið')}</span>
