@@ -88,6 +88,8 @@ def _tut_read(tut: models.Tutorial) -> schemas.WiringDiagramRead:
     )
 
 
+router = APIRouter(prefix="/tutorials", tags=["tutorials"])
+
 # ---------------------------------------------------------------------------
 # Folder endpoints
 # ---------------------------------------------------------------------------
